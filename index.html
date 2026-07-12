@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Backend Engineer's Field Library — 4 Playbooks, 270 Topics</title>
+<meta name="description" content="Four battle-tested playbooks — PostgreSQL, Ruby &amp; Rails, EKS·ECR·CircleCI, and Linux &amp; Networking — one connected mental model for the whole backend stack.">
+<style>
+:root{
+  --bg:#0b0e14; --panel:#11151f; --card:#121826; --card2:#0f1420;
+  --border:#242c3d; --border2:#2e3850;
+  --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488;
+  --pg:#38bdf8; --rb:#f43f5e; --aws:#ff9d2e; --lnx:#4ade80;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(1100px 500px at 15% -8%, #0f1b2e 0%, transparent 55%),
+    radial-gradient(1000px 460px at 88% -12%, #1c1018 0%, transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.6; font-size:16px; min-height:100vh;
+}
+.wrap{max-width:1040px; margin:0 auto; padding:0 20px 90px}
+
+/* hero */
+.hero{padding:76px 0 20px; text-align:center}
+.kicker{
+  display:inline-block; font-size:.72rem; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--muted); border:1px solid var(--border); background:#0e1420;
+  padding:6px 15px; border-radius:999px; font-weight:600;
+}
+h1{
+  font-size:3rem; margin:20px 0 14px; letter-spacing:-.025em; line-height:1.08;
+  background:linear-gradient(100deg,#38bdf8,#4ade80 32%,#ff9d2e 66%,#f43f5e);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+@media(max-width:560px){h1{font-size:2.1rem}}
+.lede{color:var(--muted); max-width:660px; margin:0 auto 22px; font-size:1.08rem}
+.stats{display:flex; gap:26px; justify-content:center; flex-wrap:wrap; margin-top:10px}
+.stat{text-align:center}
+.stat b{display:block; font-size:1.7rem; font-weight:800; color:var(--text); line-height:1}
+.stat span{font-size:.74rem; letter-spacing:.12em; text-transform:uppercase; color:var(--dim)}
+
+/* grid */
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:48px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+
+a.card{
+  display:block; text-decoration:none; color:inherit;
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:0; overflow:hidden; position:relative; transition:.18s;
+}
+a.card:hover{transform:translateY(-3px); border-color:var(--accent); box-shadow:0 12px 40px -18px var(--accent)}
+.accent{height:4px; background:var(--accent)}
+.card-in{padding:22px 24px 24px}
+.card-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.pill{
+  font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--accent); border:1px solid var(--accent); border-radius:999px;
+  padding:3px 10px; opacity:.85; white-space:nowrap;
+}
+.count{font-family:ui-monospace,Menlo,monospace; font-weight:800; font-size:.82rem; color:var(--dim)}
+h2{font-size:1.34rem; margin:14px 0 6px; letter-spacing:-.01em; color:var(--text)}
+.desc{color:var(--muted); font-size:.95rem; margin-bottom:16px}
+.chips{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px}
+.chip{
+  font-size:.73rem; color:var(--muted); background:var(--card2);
+  border:1px solid var(--border); border-radius:999px; padding:3px 9px;
+}
+.open{
+  display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:.9rem;
+  color:var(--accent);
+}
+.open .arw{transition:.18s}
+a.card:hover .open .arw{transform:translateX(4px)}
+
+.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)}
+
+/* connective tissue */
+.section{margin-top:60px}
+.section h3{
+  font-size:.82rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+  font-weight:700; display:flex; align-items:center; gap:12px; margin-bottom:18px;
+}
+.section h3::before{content:""; width:26px; height:3px; background:var(--border2); border-radius:2px}
+.panel{
+  background:var(--card); border:1px solid var(--border); border-radius:14px; padding:22px 24px;
+  color:#c2ccdb; font-size:.96rem;
+}
+.panel p{margin:0 0 12px}
+.panel p:last-child{margin:0}
+.panel b{color:var(--text)}
+.panel code{
+  font-family:ui-monospace,Menlo,monospace; font-size:.85em; background:#0c1018;
+  border:1px solid var(--border); padding:1px 6px; border-radius:5px; color:#8fd3ff;
+}
+.thread{color:var(--lnx); font-weight:600}
+
+/* path */
+.path{display:grid; grid-template-columns:repeat(4,1fr); gap:12px}
+@media(max-width:760px){.path{grid-template-columns:1fr 1fr}}
+.step{
+  background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px;
+  position:relative;
+}
+.step .n{
+  font-family:ui-monospace,Menlo,monospace; font-weight:800; font-size:.8rem;
+  color:var(--dim); border:1px solid var(--border); border-radius:8px;
+  width:26px; height:26px; display:flex; align-items:center; justify-content:center; margin-bottom:10px;
+}
+.step h4{font-size:.98rem; margin-bottom:4px}
+.step p{font-size:.84rem; color:var(--muted)}
+.step.pg h4{color:var(--pg)} .step.rb h4{color:var(--rb)}
+.step.aws h4{color:var(--aws)} .step.lnx h4{color:var(--lnx)}
+
+footer{margin-top:64px; text-align:center; color:var(--dim); font-size:.85rem; line-height:1.7}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="kicker">A Backend Engineer's Field Library</span>
+  <h1>Four playbooks.<br>One mental model.</h1>
+  <p class="lede">The whole backend stack — the database, the framework, the deploy pipeline, and the machine underneath — as battle-tested patterns. Every topic has a real example, a plain-English analogy, and the gotcha that bites at 2am.</p>
+  <div class="stats">
+    <div class="stat"><b>4</b><span>Playbooks</span></div>
+    <div class="stat"><b>270</b><span>Topics</span></div>
+    <div class="stat"><b>270</b><span>Analogies</span></div>
+    <div class="stat"><b>270</b><span>Gotchas</span></div>
+  </div>
+</header>
+
+<div class="grid">
+
+  <a class="card pg" href="https://baluraut.github.io/postgres-pro-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Data Layer</span><span class="count">46 topics</span></div>
+      <h2>PostgreSQL Pro Playbook</h2>
+      <p class="desc">The patterns a 20-year Postgres veteran reaches for daily — UPSERT, window functions, JSONB, indexing, partitioning, locking, and query tuning.</p>
+      <div class="chips"><span class="chip">UPSERT</span><span class="chip">JSONB + GIN</span><span class="chip">Window functions</span><span class="chip">Keyset pagination</span><span class="chip">EXPLAIN</span><span class="chip">Zero-downtime DDL</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="card rb" href="https://baluraut.github.io/ruby-rails-pro-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Framework</span><span class="count">104 topics</span></div>
+      <h2>Ruby &amp; Rails Pro Playbook</h2>
+      <p class="desc">52 Ruby + 52 Rails topics — from blocks, Enumerable, and metaprogramming to ActiveRecord, N+1, Hotwire, background jobs, auth, and shipping to production.</p>
+      <div class="chips"><span class="chip">Blocks &amp; Enumerable</span><span class="chip">ActiveRecord</span><span class="chip">N+1 &amp; includes</span><span class="chip">Hotwire</span><span class="chip">Service objects</span><span class="chip">Testing</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="card aws" href="https://baluraut.github.io/eks-ecr-circleci-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Ship It</span><span class="count">60 topics</span></div>
+      <h2>EKS · ECR · CircleCI Playbook</h2>
+      <p class="desc">Containers to a production Kubernetes rolling deploy — Docker, ECR, the full K8s core, EKS internals (IRSA, Karpenter, ALB), and CircleCI pipelines that ship it.</p>
+      <div class="chips"><span class="chip">Multi-stage builds</span><span class="chip">Deployments</span><span class="chip">Probes &amp; HPA</span><span class="chip">IRSA</span><span class="chip">Karpenter</span><span class="chip">OIDC pipelines</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="card lnx" href="https://baluraut.github.io/linux-networking-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">The Machine</span><span class="count">60 topics</span></div>
+      <h2>Linux &amp; Networking Playbook</h2>
+      <p class="desc">The layer under everything — files, processes, signals, the shell toolbelt, systemd, cgroups — then TCP/IP, DNS, TLS, firewalls, and a debug-in-layers runbook.</p>
+      <div class="chips"><span class="chip">Everything is a file</span><span class="chip">grep/awk/sed</span><span class="chip">The OOM killer</span><span class="chip">TCP handshake</span><span class="chip">DNS &amp; dig</span><span class="chip">tcpdump</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+</div>
+
+<div class="section">
+  <h3>How they connect</h3>
+  <div class="panel">
+    <p>These aren't four separate subjects — they're <b>one stack, seen from four heights</b>, and the playbooks cross-reference each other on purpose.</p>
+    <p>A slow endpoint is a <span class="thread">Rails N+1</span> that becomes a <span class="thread">Postgres query plan</span> you read with <code>EXPLAIN</code>. That app runs in a <span class="thread">container</span> — which is just a <span class="thread">Linux process</span> wearing namespaces and a cgroup, so a Kubernetes <code>OOMKilled</code> (exit 137) and a bare-metal OOM killer are the <b>same event</b>. Postgres <code>jsonb</code> reappears as Rails <code>store_accessor</code>; keyset pagination shows up in both the database and <code>find_each</code>; a CIDR block is a CIDR block whether it's a subnet or a VPC. "Connection refused vs timed out" decodes a failed deploy the same way it decodes a broken socket.</p>
+    <p>Learn a pattern in one playbook and you'll <b>recognize it in the next</b> — which is exactly how a stack stops being four things you memorized and becomes one thing you understand.</p>
+  </div>
+</div>
+
+<div class="section">
+  <h3>A suggested path</h3>
+  <div class="path">
+    <div class="step lnx"><div class="n">1</div><h4>The Machine</h4><p>Start at the bottom: files, processes, the shell, and how packets move. Everything above stands on this.</p></div>
+    <div class="step pg"><div class="n">2</div><h4>The Data</h4><p>Postgres next — the store your app lives and dies by. Learn to make it fast and correct before building on it.</p></div>
+    <div class="step rb"><div class="n">3</div><h4>The App</h4><p>Ruby &amp; Rails — turn data and requests into a product, with the AR and performance instincts the DB taught you.</p></div>
+    <div class="step aws"><div class="n">4</div><h4>Ship It</h4><p>Containers, EKS, and CircleCI — take it all to production, on rails you can debug when it pages you.</p></div>
+  </div>
+</div>
+
+<footer>
+  <p>Built for Balasaheb · 4 playbooks · 270 topics · every one with a real example, an analogy, and a gotcha.</p>
+  <p>Each playbook is a standalone page — host them as GitHub Pages repos and this library links them together.</p>
+</footer>
+
+</div>
+</body>
+</html>
