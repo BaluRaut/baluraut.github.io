@@ -1,10 +1,10 @@
 # The Backend Engineer's Field Library
 
-A landing page tying together twelve battle-tested playbooks — **12 playbooks, 453 topics, one connected mental model** for the whole modern stack.
+A landing page tying together thirteen battle-tested playbooks — **13 playbooks, 483 topics, one connected mental model** for the whole modern stack.
 
 🔗 **Live:** https://baluraut.github.io/field-library/
 
-## The twelve playbooks
+## The thirteen playbooks
 
 | Playbook | Topics | Covers |
 | --- | --- | --- |
@@ -19,15 +19,16 @@ A landing page tying together twelve battle-tested playbooks — **12 playbooks,
 | [Event-Driven Architecture Playbook](https://baluraut.github.io/event-driven-playbook/) | 16 | Queues, streams, Kafka, sagas, outbox, CQRS, DLQs |
 | [Node.js &amp; TypeScript Playbook](https://baluraut.github.io/nodejs-typescript-playbook/) | 30 | Event loop, async, streams, the TS type system, shipping |
 | [React &amp; TypeScript Playbook](https://baluraut.github.io/react-typescript-playbook/) | 30 | JSX, hooks, rendering, state, typing React, a11y |
+| [Application Security Playbook](https://baluraut.github.io/security-playbook/) | 30 | XSS, CSRF, SQLi, access control, SSRF, secrets, TLS, incident response |
 | [System Design &amp; Technical Leadership Playbook](https://baluraut.github.io/system-design-leadership-playbook/) | 30 | Scaling, SLOs, tradeoffs, code review, mentoring, RFCs |
 
 ## Why one library
 
-These aren't four subjects — they're one stack seen from four heights, and the playbooks cross-reference each other on purpose: a Rails N+1 becomes a Postgres query plan; a container is a Linux process with a cgroup, so a Kubernetes `OOMKilled` and a bare-metal OOM are the same event; jsonb reappears as `store_accessor`; a CIDR block is a CIDR block whether it's a subnet or a VPC.
+These aren't thirteen separate subjects — they're one stack seen from thirteen heights, and the playbooks cross-reference each other on purpose: a Rails N+1 becomes a Postgres query plan; a container is a Linux process with a cgroup, so a Kubernetes `OOMKilled` and a bare-metal OOM are the same event; jsonb reappears as `store_accessor`; a CIDR block is a CIDR block whether it's a subnet or a VPC; and a prompt-injection defense is the same least-privilege and input-validation instinct the Application Security playbook teaches as its own layer.
 
 ## View locally
 
-Open `index.html` in a browser. Its cards link to the other four sites once they're published.
+Open `index.html` in a browser. Its cards link to the other sites once they're published.
 
 ## Publish (GitHub Pages)
 
