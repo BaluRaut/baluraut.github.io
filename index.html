@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Backend Engineer's Field Library — 10 Playbooks, 445 Topics</title>
+<title>The Backend Engineer's Field Library — 12 Playbooks, 453 Topics</title>
 <meta name="description" content="Ten battle-tested playbooks — PostgreSQL, Ruby &amp; Rails, EKS·ECR·CircleCI, Linux &amp; Networking, MCP Servers, Agentic AI, Distributed Systems, Node.js &amp; TypeScript, React &amp; TypeScript, and System Design &amp; Leadership — one connected mental model for the whole modern stack.">
 <style>
 :root{
@@ -11,7 +11,7 @@
   --border:#242c3d; --border2:#2e3850;
   --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488;
   --pg:#38bdf8; --rb:#f43f5e; --aws:#ff9d2e; --lnx:#4ade80; --ai:#a78bfa; --mcp:#22d3ee;
-  --ds:#818cf8; --node:#84cc16; --react:#2dd4bf; --sys:#f472b6;
+  --ds:#818cf8; --node:#84cc16; --react:#2dd4bf; --sys:#f472b6; --evt:#fbbf24; --net:#06b6d4;
 }
 *{box-sizing:border-box; margin:0; padding:0}
 html{scroll-behavior:smooth}
@@ -78,7 +78,7 @@ h2{font-size:1.34rem; margin:14px 0 6px; letter-spacing:-.01em; color:var(--text
 .open .arw{transition:.18s}
 a.card:hover .open .arw{transform:translateX(4px)}
 
-.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)} .ai{--accent:var(--ai)} .mcp{--accent:var(--mcp)} .ds{--accent:var(--ds)} .node{--accent:var(--node)} .react{--accent:var(--react)} .sys{--accent:var(--sys)}
+.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)} .ai{--accent:var(--ai)} .mcp{--accent:var(--mcp)} .ds{--accent:var(--ds)} .node{--accent:var(--node)} .react{--accent:var(--react)} .sys{--accent:var(--sys)} .evt{--accent:var(--evt)} .net{--accent:var(--net)}
 
 /* connective tissue */
 .section{margin-top:60px}
@@ -126,13 +126,13 @@ footer a{color:var(--muted)}
 
 <header class="hero">
   <span class="kicker">A Backend Engineer's Field Library</span>
-  <h1>Ten playbooks.<br>One mental model.</h1>
-  <p class="lede">The whole modern stack — the machine, the database, the frameworks, the deploy pipeline, distributed systems, the AI layer, and the leadership to ship it — as battle-tested patterns. Every topic has a real example, a plain-English analogy, and the gotcha that bites at 2am.</p>
+  <h1>Twelve playbooks.<br>One mental model.</h1>
+  <p class="lede">The whole modern stack — the machine, the wire, the database, the frameworks, the deploy pipeline, distributed systems, event-driven messaging, the AI layer, and the leadership to ship it — as battle-tested patterns. Every topic has a real example, a plain-English analogy, and the gotcha that bites at 2am.</p>
   <div class="stats">
-    <div class="stat"><b>10</b><span>Playbooks</span></div>
-    <div class="stat"><b>445</b><span>Topics</span></div>
-    <div class="stat"><b>620</b><span>Analogies</span></div>
-    <div class="stat"><b>445</b><span>Gotchas</span></div>
+    <div class="stat"><b>12</b><span>Playbooks</span></div>
+    <div class="stat"><b>453</b><span>Topics</span></div>
+    <div class="stat"><b>636</b><span>Analogies</span></div>
+    <div class="stat"><b>453</b><span>Gotchas</span></div>
   </div>
 </header>
 
@@ -171,13 +171,24 @@ footer a{color:var(--muted)}
     </div>
   </a>
 
-  <a class="card lnx" href="https://baluraut.github.io/linux-networking-playbook/">
+  <a class="card lnx" href="https://baluraut.github.io/linux-playbook/">
     <div class="accent"></div>
     <div class="card-in">
-      <div class="card-top"><span class="pill">The Machine</span><span class="count">60 topics</span></div>
-      <h2>Linux &amp; Networking Playbook</h2>
-      <p class="desc">The layer under everything — files, processes, signals, the shell toolbelt, systemd, cgroups — then TCP/IP, DNS, TLS, firewalls, and a debug-in-layers runbook.</p>
-      <div class="chips"><span class="chip">Everything is a file</span><span class="chip">grep/awk/sed</span><span class="chip">The OOM killer</span><span class="chip">TCP handshake</span><span class="chip">DNS &amp; dig</span><span class="chip">tcpdump</span></div>
+      <div class="card-top"><span class="pill">The Machine</span><span class="count">34 topics</span></div>
+      <h2>Linux Playbook</h2>
+      <p class="desc">The machine under everything — files, processes, signals, the shell toolbelt (grep/awk/sed), systemd, journalctl, the OOM killer, cgroups. Real commands, real output, the gotcha that pages you.</p>
+      <div class="chips"><span class="chip">Everything is a file</span><span class="chip">grep/awk/sed</span><span class="chip">The OOM killer</span><span class="chip">systemd</span><span class="chip">strace</span><span class="chip">cgroups</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="card net" href="https://baluraut.github.io/networking-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">The Wire</span><span class="count">26 topics</span></div>
+      <h2>Networking Playbook</h2>
+      <p class="desc">The wire under everything — IP &amp; CIDR, the TCP handshake, UDP, DNS, TLS, HTTP, proxies, NAT, firewalls, tcpdump, and a debug-in-layers "is it down?" runbook.</p>
+      <div class="chips"><span class="chip">IP &amp; CIDR</span><span class="chip">TCP handshake</span><span class="chip">DNS &amp; dig</span><span class="chip">TLS</span><span class="chip">tcpdump</span><span class="chip">Connection refused vs timed out</span></div>
       <span class="open">Open playbook <span class="arw">→</span></span>
     </div>
   </a>
@@ -207,10 +218,21 @@ footer a{color:var(--muted)}
   <a class="card ds" href="https://baluraut.github.io/distributed-systems-playbook/">
     <div class="accent"></div>
     <div class="card-in">
-      <div class="card-top"><span class="pill">The Architecture Layer</span><span class="count">30 topics</span></div>
-      <h2>Distributed Systems &amp; Event-Driven Playbook</h2>
-      <p class="desc">The patterns for when one machine isn't enough — CAP &amp; consistency, Kafka, delivery semantics, event sourcing, CQRS, the saga &amp; outbox patterns, caching, retries, circuit breakers, and testing distributed systems.</p>
-      <div class="chips"><span class="chip">CAP &amp; consistency</span><span class="chip">Kafka</span><span class="chip">Idempotency</span><span class="chip">Sagas</span><span class="chip">Outbox</span><span class="chip">Circuit breakers</span></div>
+      <div class="card-top"><span class="pill">The Architecture Layer</span><span class="count">22 topics</span></div>
+      <h2>Distributed Systems Playbook</h2>
+      <p class="desc">The machinery for when one machine isn't enough — CAP &amp; consistency, consensus, replication, sharding, quorums, conflict resolution, caching, retries, circuit breakers, bulkheads, and testing distributed systems.</p>
+      <div class="chips"><span class="chip">CAP &amp; consistency</span><span class="chip">Consensus</span><span class="chip">Sharding</span><span class="chip">Quorums</span><span class="chip">Circuit breakers</span><span class="chip">Bulkheads</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="card evt" href="https://baluraut.github.io/event-driven-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">The Messaging Layer</span><span class="count">16 topics</span></div>
+      <h2>Event-Driven Architecture Playbook</h2>
+      <p class="desc">How services talk without falling over — sync vs async, queues vs streams, Kafka, delivery semantics, idempotent consumers, event sourcing, CQRS, the saga &amp; outbox patterns, DLQs, and schema evolution.</p>
+      <div class="chips"><span class="chip">Queues vs streams</span><span class="chip">Kafka</span><span class="chip">Idempotency</span><span class="chip">Event sourcing</span><span class="chip">Sagas</span><span class="chip">Outbox</span></div>
       <span class="open">Open playbook <span class="arw">→</span></span>
     </div>
   </a>
@@ -253,11 +275,11 @@ footer a{color:var(--muted)}
 <div class="section">
   <h3>How they connect</h3>
   <div class="panel">
-    <p>These aren't ten separate subjects — they're <b>one stack, seen from ten heights</b>, and the playbooks cross-reference each other on purpose.</p>
+    <p>These aren't twelve separate subjects — they're <b>one stack, seen from twelve heights</b>, and the playbooks cross-reference each other on purpose.</p>
     <p>A slow endpoint is a <span class="thread">Rails N+1</span> that becomes a <span class="thread">Postgres query plan</span> you read with <code>EXPLAIN</code>. That app runs in a <span class="thread">container</span> — which is just a <span class="thread">Linux process</span> wearing namespaces and a cgroup, so a Kubernetes <code>OOMKilled</code> (exit 137) and a bare-metal OOM killer are the <b>same event</b>. Postgres <code>jsonb</code> reappears as Rails <code>store_accessor</code>; keyset pagination shows up in both the database and <code>find_each</code>; a CIDR block is a CIDR block whether it's a subnet or a VPC. "Connection refused vs timed out" decodes a failed deploy the same way it decodes a broken socket.</p>
     <p>And the newest layer sits right on top, now as <b>two playbooks</b>: an <span class="thread">AI agent</span> is a loop that calls <span class="thread">tools</span> — which it reaches through <span class="thread">MCP servers</span> you deploy on EKS, secure like any endpoint, and query against the same Postgres. Build the servers in one playbook, the agents that use them in the other. A prompt-injection defense is <span class="thread">least privilege</span> and <span class="thread">input validation</span> — the same instincts the security topics teach everywhere else. The agent isn't a different world; it's the whole stack, with a language model in the loop.</p>
     <p>And it keeps going up: those services become a <span class="thread">distributed system</span> where a retried request needs <span class="thread">idempotency</span> and a queue needs an <span class="thread">outbox</span>; the app itself is <span class="thread">Node &amp; TypeScript</span> on the server and <span class="thread">React</span> in the browser, both catching bugs with the same type system; and above all of it sits the judgment to design at <span class="thread">scale</span> and <span class="thread">lead the people</span> who build it — estimation, SLOs, tradeoffs, code review, and RFCs.</p>
-    <p>Learn a pattern in one playbook and you'll <b>recognize it in the next</b> — which is exactly how a stack stops being ten things you memorized and becomes one thing you understand.</p>
+    <p>Learn a pattern in one playbook and you'll <b>recognize it in the next</b> — which is exactly how a stack stops being twelve things you memorized and becomes one thing you understand.</p>
   </div>
 </div>
 
@@ -274,7 +296,7 @@ footer a{color:var(--muted)}
 </div>
 
 <footer>
-  <p>Built for Balasaheb · 10 playbooks · 445 topics · every one with a real example, an analogy, and a gotcha.</p>
+  <p>Built for Balasaheb · 12 playbooks · 453 topics · every one with a real example, an analogy, and a gotcha.</p>
   <p>Each playbook is a standalone page — host them as GitHub Pages repos and this library links them together.</p>
 </footer>
 
