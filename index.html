@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Backend Engineer's Field Library — 6 Playbooks, 325 Topics</title>
-<meta name="description" content="Six battle-tested playbooks — PostgreSQL, Ruby &amp; Rails, EKS·ECR·CircleCI, Linux &amp; Networking, MCP Servers, and Agentic AI — one connected mental model for the whole modern backend stack.">
+<title>The Backend Engineer's Field Library — 10 Playbooks, 445 Topics</title>
+<meta name="description" content="Ten battle-tested playbooks — PostgreSQL, Ruby &amp; Rails, EKS·ECR·CircleCI, Linux &amp; Networking, MCP Servers, Agentic AI, Distributed Systems, Node.js &amp; TypeScript, React &amp; TypeScript, and System Design &amp; Leadership — one connected mental model for the whole modern stack.">
 <style>
 :root{
   --bg:#0b0e14; --panel:#11151f; --card:#121826; --card2:#0f1420;
   --border:#242c3d; --border2:#2e3850;
   --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488;
   --pg:#38bdf8; --rb:#f43f5e; --aws:#ff9d2e; --lnx:#4ade80; --ai:#a78bfa; --mcp:#22d3ee;
+  --ds:#818cf8; --node:#84cc16; --react:#2dd4bf; --sys:#f472b6;
 }
 *{box-sizing:border-box; margin:0; padding:0}
 html{scroll-behavior:smooth}
@@ -77,7 +78,7 @@ h2{font-size:1.34rem; margin:14px 0 6px; letter-spacing:-.01em; color:var(--text
 .open .arw{transition:.18s}
 a.card:hover .open .arw{transform:translateX(4px)}
 
-.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)} .ai{--accent:var(--ai)} .mcp{--accent:var(--mcp)}
+.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)} .ai{--accent:var(--ai)} .mcp{--accent:var(--mcp)} .ds{--accent:var(--ds)} .node{--accent:var(--node)} .react{--accent:var(--react)} .sys{--accent:var(--sys)}
 
 /* connective tissue */
 .section{margin-top:60px}
@@ -125,13 +126,13 @@ footer a{color:var(--muted)}
 
 <header class="hero">
   <span class="kicker">A Backend Engineer's Field Library</span>
-  <h1>Six playbooks.<br>One mental model.</h1>
-  <p class="lede">The whole backend stack — the database, the framework, the deploy pipeline, the machine underneath, and the AI layer on top — as battle-tested patterns. Every topic has a real example, a plain-English analogy, and the gotcha that bites at 2am.</p>
+  <h1>Ten playbooks.<br>One mental model.</h1>
+  <p class="lede">The whole modern stack — the machine, the database, the frameworks, the deploy pipeline, distributed systems, the AI layer, and the leadership to ship it — as battle-tested patterns. Every topic has a real example, a plain-English analogy, and the gotcha that bites at 2am.</p>
   <div class="stats">
-    <div class="stat"><b>6</b><span>Playbooks</span></div>
-    <div class="stat"><b>325</b><span>Topics</span></div>
-    <div class="stat"><b>380</b><span>Analogies</span></div>
-    <div class="stat"><b>325</b><span>Gotchas</span></div>
+    <div class="stat"><b>10</b><span>Playbooks</span></div>
+    <div class="stat"><b>445</b><span>Topics</span></div>
+    <div class="stat"><b>620</b><span>Analogies</span></div>
+    <div class="stat"><b>445</b><span>Gotchas</span></div>
   </div>
 </header>
 
@@ -203,15 +204,60 @@ footer a{color:var(--muted)}
     </div>
   </a>
 
+  <a class="card ds" href="https://baluraut.github.io/distributed-systems-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">The Architecture Layer</span><span class="count">30 topics</span></div>
+      <h2>Distributed Systems &amp; Event-Driven Playbook</h2>
+      <p class="desc">The patterns for when one machine isn't enough — CAP &amp; consistency, Kafka, delivery semantics, event sourcing, CQRS, the saga &amp; outbox patterns, caching, retries, circuit breakers, and testing distributed systems.</p>
+      <div class="chips"><span class="chip">CAP &amp; consistency</span><span class="chip">Kafka</span><span class="chip">Idempotency</span><span class="chip">Sagas</span><span class="chip">Outbox</span><span class="chip">Circuit breakers</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="card node" href="https://baluraut.github.io/nodejs-typescript-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">The JS Runtime</span><span class="count">30 topics</span></div>
+      <h2>Node.js &amp; TypeScript Playbook</h2>
+      <p class="desc">From the event loop to a typed production API — V8 &amp; libuv, async/await, streams, modules, the TypeScript type system, generics, runtime validation, testing, performance, and shipping safely.</p>
+      <div class="chips"><span class="chip">Event loop</span><span class="chip">async/await</span><span class="chip">Streams</span><span class="chip">Generics</span><span class="chip">zod validation</span><span class="chip">strict mode</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="card react" href="https://baluraut.github.io/react-typescript-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">The Frontend</span><span class="count">30 topics</span></div>
+      <h2>React &amp; TypeScript Playbook</h2>
+      <p class="desc">From JSX to a typed, data-driven feature — components &amp; props, the hooks &amp; rendering model, useEffect deps, state management, data fetching, typing React, performance, error boundaries, testing, and a11y.</p>
+      <div class="chips"><span class="chip">Hooks</span><span class="chip">Rendering &amp; keys</span><span class="chip">useEffect deps</span><span class="chip">Typed props</span><span class="chip">React Query</span><span class="chip">a11y</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="card sys" href="https://baluraut.github.io/system-design-leadership-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">The Staff / Lead Layer</span><span class="count">30 topics</span></div>
+      <h2>System Design &amp; Technical Leadership Playbook</h2>
+      <p class="desc">Design systems at scale <b>and</b> lead the people who build them — estimation, scaling, caching, SLOs &amp; error budgets, tradeoffs &amp; ADRs, migrations, plus code review, mentoring, RFCs, and driving alignment.</p>
+      <div class="chips"><span class="chip">Estimation</span><span class="chip">SLOs</span><span class="chip">Tradeoffs &amp; ADRs</span><span class="chip">Code review</span><span class="chip">Mentoring</span><span class="chip">RFCs</span></div>
+      <span class="open">Open playbook <span class="arw">→</span></span>
+    </div>
+  </a>
+
 </div>
 
 <div class="section">
   <h3>How they connect</h3>
   <div class="panel">
-    <p>These aren't six separate subjects — they're <b>one stack, seen from six heights</b>, and the playbooks cross-reference each other on purpose.</p>
+    <p>These aren't ten separate subjects — they're <b>one stack, seen from ten heights</b>, and the playbooks cross-reference each other on purpose.</p>
     <p>A slow endpoint is a <span class="thread">Rails N+1</span> that becomes a <span class="thread">Postgres query plan</span> you read with <code>EXPLAIN</code>. That app runs in a <span class="thread">container</span> — which is just a <span class="thread">Linux process</span> wearing namespaces and a cgroup, so a Kubernetes <code>OOMKilled</code> (exit 137) and a bare-metal OOM killer are the <b>same event</b>. Postgres <code>jsonb</code> reappears as Rails <code>store_accessor</code>; keyset pagination shows up in both the database and <code>find_each</code>; a CIDR block is a CIDR block whether it's a subnet or a VPC. "Connection refused vs timed out" decodes a failed deploy the same way it decodes a broken socket.</p>
     <p>And the newest layer sits right on top, now as <b>two playbooks</b>: an <span class="thread">AI agent</span> is a loop that calls <span class="thread">tools</span> — which it reaches through <span class="thread">MCP servers</span> you deploy on EKS, secure like any endpoint, and query against the same Postgres. Build the servers in one playbook, the agents that use them in the other. A prompt-injection defense is <span class="thread">least privilege</span> and <span class="thread">input validation</span> — the same instincts the security topics teach everywhere else. The agent isn't a different world; it's the whole stack, with a language model in the loop.</p>
-    <p>Learn a pattern in one playbook and you'll <b>recognize it in the next</b> — which is exactly how a stack stops being five things you memorized and becomes one thing you understand.</p>
+    <p>And it keeps going up: those services become a <span class="thread">distributed system</span> where a retried request needs <span class="thread">idempotency</span> and a queue needs an <span class="thread">outbox</span>; the app itself is <span class="thread">Node &amp; TypeScript</span> on the server and <span class="thread">React</span> in the browser, both catching bugs with the same type system; and above all of it sits the judgment to design at <span class="thread">scale</span> and <span class="thread">lead the people</span> who build it — estimation, SLOs, tradeoffs, code review, and RFCs.</p>
+    <p>Learn a pattern in one playbook and you'll <b>recognize it in the next</b> — which is exactly how a stack stops being ten things you memorized and becomes one thing you understand.</p>
   </div>
 </div>
 
@@ -223,11 +269,12 @@ footer a{color:var(--muted)}
     <div class="step rb"><div class="n">3</div><h4>The App</h4><p>Ruby &amp; Rails — turn data and requests into a product, with the AR and performance instincts the DB taught you.</p></div>
     <div class="step aws"><div class="n">4</div><h4>Ship It</h4><p>Containers, EKS, and CircleCI — take it all to production, on rails you can debug when it pages you.</p></div>
     <div class="step ai"><div class="n">5</div><h4>The AI Layer</h4><p>Expose your systems as MCP servers, then build agents on top — the same stack, with a language model in the loop.</p></div>
+    <div class="step sys"><div class="n">6</div><h4>Scale &amp; Lead</h4><p>Distributed systems, Node &amp; React with types, then the system-design and leadership judgment to ship it all with a team.</p></div>
   </div>
 </div>
 
 <footer>
-  <p>Built for Balasaheb · 6 playbooks · 325 topics · every one with a real example, an analogy, and a gotcha.</p>
+  <p>Built for Balasaheb · 10 playbooks · 445 topics · every one with a real example, an analogy, and a gotcha.</p>
   <p>Each playbook is a standalone page — host them as GitHub Pages repos and this library links them together.</p>
 </footer>
 
