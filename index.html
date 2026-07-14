@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Backend Engineer's Field Library — 13 Playbooks, 483 Topics</title>
-<meta name="description" content="Thirteen battle-tested playbooks — PostgreSQL, Ruby &amp; Rails, EKS·ECR·CircleCI, Linux, Networking, MCP Servers, Agentic AI, Distributed Systems, Event-Driven Architecture, Node.js &amp; TypeScript, React &amp; TypeScript, Application Security, and System Design &amp; Leadership — one connected mental model for the whole modern stack.">
+<title>The Backend Engineer's Field Library — 14 Playbooks, 509 Topics</title>
+<meta name="description" content="Fourteen battle-tested playbooks — PostgreSQL, Ruby &amp; Rails, EKS·ECR·CircleCI, Linux, Networking, MCP Servers, Agentic AI, Distributed Systems, Event-Driven Architecture, Node.js &amp; TypeScript, React &amp; TypeScript, Application Security, PostgreSQL Disaster Recovery, and System Design &amp; Leadership — one connected mental model for the whole modern stack.">
 <style>
 :root{
   --bg:#0b0e14; --panel:#11151f; --card:#121826; --card2:#0f1420;
   --border:#242c3d; --border2:#2e3850;
   --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488;
   --pg:#38bdf8; --rb:#f43f5e; --aws:#ff9d2e; --lnx:#4ade80; --ai:#a78bfa; --mcp:#22d3ee;
-  --ds:#818cf8; --node:#84cc16; --react:#2dd4bf; --sys:#f472b6; --evt:#fbbf24; --net:#06b6d4; --sec:#ef4444;
+  --ds:#818cf8; --node:#84cc16; --react:#2dd4bf; --sys:#f472b6; --evt:#fbbf24; --net:#06b6d4; --sec:#ef4444; --dr:#10b981;
 }
 *{box-sizing:border-box; margin:0; padding:0}
 html{scroll-behavior:smooth}
@@ -78,7 +78,7 @@ h2{font-size:1.34rem; margin:14px 0 6px; letter-spacing:-.01em; color:var(--text
 .open .arw{transition:.18s}
 a.card:hover .open .arw{transform:translateX(4px)}
 
-.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)} .ai{--accent:var(--ai)} .mcp{--accent:var(--mcp)} .ds{--accent:var(--ds)} .node{--accent:var(--node)} .react{--accent:var(--react)} .sys{--accent:var(--sys)} .evt{--accent:var(--evt)} .net{--accent:var(--net)} .sec{--accent:var(--sec)}
+.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)} .ai{--accent:var(--ai)} .mcp{--accent:var(--mcp)} .ds{--accent:var(--ds)} .node{--accent:var(--node)} .react{--accent:var(--react)} .sys{--accent:var(--sys)} .evt{--accent:var(--evt)} .net{--accent:var(--net)} .sec{--accent:var(--sec)} .dr{--accent:var(--dr)}
 
 /* connective tissue */
 .section{margin-top:60px}
@@ -126,13 +126,13 @@ footer a{color:var(--muted)}
 
 <header class="hero">
   <span class="kicker">A Backend Engineer's Field Library</span>
-  <h1>Thirteen playbooks.<br>One mental model.</h1>
-  <p class="lede">The whole modern stack — the machine, the wire, the database, the frameworks, the deploy pipeline, distributed systems, event-driven messaging, the AI layer, the security that guards it, and the leadership to ship it all — as battle-tested patterns. Every topic has a real example, a plain-English analogy, and the gotcha that bites at 2am.</p>
+  <h1>Fourteen playbooks.<br>One mental model.</h1>
+  <p class="lede">The whole modern stack — the machine, the wire, the database, the frameworks, the deploy pipeline, distributed systems, event-driven messaging, the AI layer, the security that guards it, the disaster recovery that saves it, and the leadership to ship it all — as battle-tested patterns. Every topic has a real example, a plain-English analogy, and the gotcha that bites at 2am.</p>
   <div class="stats">
-    <div class="stat"><b>13</b><span>Playbooks</span></div>
-    <div class="stat"><b>483</b><span>Topics</span></div>
-    <div class="stat"><b>696</b><span>Analogies</span></div>
-    <div class="stat"><b>483</b><span>Gotchas</span></div>
+    <div class="stat"><b>14</b><span>Playbooks</span></div>
+    <div class="stat"><b>509</b><span>Topics</span></div>
+    <div class="stat"><b>748</b><span>Analogies</span></div>
+    <div class="stat"><b>509</b><span>Gotchas</span></div>
   </div>
 </header>
 
@@ -270,6 +270,17 @@ footer a{color:var(--muted)}
     </div>
   </a>
 
+  <a class="card dr" href="https://baluraut.github.io/postgres-dr-playbook/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Reliability</span><span class="count">26 topics</span></div>
+      <h2>PostgreSQL Disaster Recovery on AWS</h2>
+      <p class="desc">The plan you hope never to run — RPO/RTO, backups, PITR, WAL archiving, replication, RDS &amp; Aurora, cross-region failover, runbooks, and the game days that get you back when the database goes down.</p>
+      <div class="chips"><span class="chip">RPO / RTO</span><span class="chip">PITR &amp; WAL</span><span class="chip">pgBackRest</span><span class="chip">RDS &amp; Aurora</span><span class="chip">Cross-region failover</span><span class="chip">Restore drills</span></div>
+      <span class="open">Open playbook <span class="arw">&#8594;</span></span>
+    </div>
+  </a>
+
   <a class="card sys" href="https://baluraut.github.io/system-design-leadership-playbook/">
     <div class="accent"></div>
     <div class="card-in">
@@ -286,11 +297,11 @@ footer a{color:var(--muted)}
 <div class="section">
   <h3>How they connect</h3>
   <div class="panel">
-    <p>These aren't twelve separate subjects — they're <b>one stack, seen from thirteen heights</b>, and the playbooks cross-reference each other on purpose.</p>
+    <p>These aren't twelve separate subjects — they're <b>one stack, seen from fourteen heights</b>, and the playbooks cross-reference each other on purpose.</p>
     <p>A slow endpoint is a <span class="thread">Rails N+1</span> that becomes a <span class="thread">Postgres query plan</span> you read with <code>EXPLAIN</code>. That app runs in a <span class="thread">container</span> — which is just a <span class="thread">Linux process</span> wearing namespaces and a cgroup, so a Kubernetes <code>OOMKilled</code> (exit 137) and a bare-metal OOM killer are the <b>same event</b>. Postgres <code>jsonb</code> reappears as Rails <code>store_accessor</code>; keyset pagination shows up in both the database and <code>find_each</code>; a CIDR block is a CIDR block whether it's a subnet or a VPC. "Connection refused vs timed out" decodes a failed deploy the same way it decodes a broken socket.</p>
     <p>And the newest layer sits right on top, now as <b>two playbooks</b>: an <span class="thread">AI agent</span> is a loop that calls <span class="thread">tools</span> — which it reaches through <span class="thread">MCP servers</span> you deploy on EKS, secure like any endpoint, and query against the same Postgres. Build the servers in one playbook, the agents that use them in the other. A prompt-injection defense is <span class="thread">least privilege</span> and <span class="thread">input validation</span> — the same instincts the Application Security playbook now teaches as its own layer — the perimeter around everything else. The agent isn't a different world; it's the whole stack, with a language model in the loop.</p>
     <p>And it keeps going up: those services become a <span class="thread">distributed system</span> where a retried request needs <span class="thread">idempotency</span> and a queue needs an <span class="thread">outbox</span>; the app itself is <span class="thread">Node &amp; TypeScript</span> on the server and <span class="thread">React</span> in the browser, both catching bugs with the same type system; and above all of it sits the judgment to design at <span class="thread">scale</span> and <span class="thread">lead the people</span> who build it — estimation, SLOs, tradeoffs, code review, and RFCs.</p>
-    <p>Learn a pattern in one playbook and you'll <b>recognize it in the next</b> — which is exactly how a stack stops being thirteen things you memorized and becomes one thing you understand.</p>
+    <p>Learn a pattern in one playbook and you'll <b>recognize it in the next</b> — which is exactly how a stack stops being fourteen things you memorized and becomes one thing you understand.</p>
   </div>
 </div>
 
@@ -307,7 +318,7 @@ footer a{color:var(--muted)}
 </div>
 
 <footer>
-  <p>Built for Balasaheb · 13 playbooks · 483 topics · every one with a real example, an analogy, and a gotcha.</p>
+  <p>Built for Balasaheb · 14 playbooks · 509 topics · every one with a real example, an analogy, and a gotcha.</p>
   <p>Each playbook is a standalone page — host them as GitHub Pages repos and this library links them together.</p>
 </footer>
 
