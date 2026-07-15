@@ -126,6 +126,32 @@ td b{color:var(--cl)}
 .step p{font-size:.85rem; color:var(--muted)}
 .step code{font-size:.8rem}
 
+/* the three-part test */
+.test{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+@media(max-width:720px){.test{grid-template-columns:1fr}}
+.crit{background:var(--card); border:1px solid var(--border); border-top:3px solid var(--cl); border-radius:12px; padding:18px 20px}
+.crit .n{font-family:ui-monospace,Menlo,monospace; font-weight:800; color:var(--cl); font-size:.9rem; margin-bottom:8px}
+.crit h4{font-size:1rem; margin-bottom:4px; color:var(--text)}
+.crit p{font-size:.87rem; color:var(--muted)}
+
+/* where NOT to use */
+.avoid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media(max-width:640px){.avoid{grid-template-columns:1fr}}
+.na{background:#160f10; border:1px solid #3a2224; border-left:3px solid var(--red,#ef4444); border-radius:10px; padding:14px 16px}
+.na b{color:#fca5a5; font-size:.9rem}
+.na p{color:var(--muted); font-size:.86rem; margin-top:4px}
+:root{--red:#ef4444}
+
+/* POC flow diagram */
+.flow{display:flex; align-items:stretch; gap:0; flex-wrap:wrap; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; overflow-x:auto}
+.node{flex:1; min-width:150px; text-align:center; padding:14px 12px; border:1px solid var(--border); border-radius:10px; background:var(--card2)}
+.node .t{font-weight:700; font-size:.92rem; color:var(--nc,var(--text))}
+.node .d{font-size:.76rem; color:var(--muted); margin-top:5px}
+.arrow{display:flex; align-items:center; color:var(--dim); font-size:1.3rem; padding:0 8px}
+@media(max-width:640px){.arrow{transform:rotate(90deg); padding:6px 0; justify-content:center; width:100%}}
+
+td.use{color:var(--green)!important} td.dont{color:#fca5a5!important}
+
 /* footer */
 .foot{margin-top:70px; padding-top:26px; border-top:1px solid var(--border); text-align:center; color:var(--dim); font-size:.85rem}
 .foot a{color:var(--muted); text-decoration:none}
@@ -247,6 +273,67 @@ td b{color:var(--cl)}
 })) {
   <span class="c-key">if</span> (<span class="c-str">"result"</span> <span class="c-key">in</span> message) <span class="c-fn">console.log</span>(message.result);
 }</code></pre>
+  </section>
+
+  <!-- IS THIS AN AGENT JOB -->
+  <section class="section">
+    <h3>Is this even an agent job?</h3>
+    <div class="panel tldr" style="margin-bottom:16px">
+      <p style="margin:0">Reach for the Agent SDK only when <b>all three</b> are true. Miss one, and a
+      single API call or a plain script will be cheaper, faster, and more predictable.</p>
+    </div>
+    <div class="test">
+      <div class="crit"><div class="n">01</div><h4>Steps aren't known ahead</h4><p>The work depends on what it discovers along the way — no fixed recipe.</p></div>
+      <div class="crit"><div class="n">02</div><h4>It explores real state</h4><p>Files, command output, a database, an API — and reacts to what it finds.</p></div>
+      <div class="crit"><div class="n">03</div><h4>Tool use is the point</h4><p>The value is in <i>doing</i>, not in generating a block of text.</p></div>
+    </div>
+  </section>
+
+  <!-- REAL WORLD -->
+  <section class="section">
+    <h3>Where it fits in the real world</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Scenario</th><th>Why an agent — not a script or one API call</th></tr></thead>
+        <tbody>
+          <tr><td>CI failure triage bot</td><td>On a red build it reads the logs, greps the repo, finds the cause, opens a fix PR. Different path every time.</td></tr>
+          <tr><td>Dependency &amp; framework upgrades</td><td>"Bump this major version." It edits, runs tests, fixes breakage, iterates — reasoning a codemod can't.</td></tr>
+          <tr><td>On-call / ops copilot</td><td>Pager fires → it pulls logs, runs read-only diagnostics, drafts the next runbook step. Keep it read-only at the gateway.</td></tr>
+          <tr><td>DB investigation</td><td>"Why is this endpoint slow?" It inspects the query, checks indexes, drafts a migration against the real schema.</td></tr>
+          <tr><td>Support ticket → code</td><td>It navigates the actual codebase to find the responsible module and proposes a precise patch, not a generic reply.</td></tr>
+          <tr><td>Product feature: "do it for me"</td><td>Give <i>your</i> users an agent that acts over your app's data &amp; tools via MCP; your API layer is the auth/quota boundary.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--muted); font-size:.9rem; margin-top:14px">The common shape: <b style="color:var(--text)">an agent works on <i>your</i> files, infra, and services across many unknown steps.</b> That's exactly what the SDK gives you — and what a raw API call does not.</p>
+  </section>
+
+  <!-- WHERE NOT -->
+  <section class="section">
+    <h3>Where <em>not</em> to use it</h3>
+    <div class="avoid">
+      <div class="na"><b>One input, one transform</b><p>Summarize · classify · extract · rewrite a single thing → a plain Claude API call.</p></div>
+      <div class="na"><b>A fixed pipeline</b><p>No decisions to make → a normal script beats an agent every time.</p></div>
+      <div class="na"><b>High volume, latency-sensitive</b><p>Agents are slower and pricier per run — wrong for thousands of requests a minute.</p></div>
+      <div class="na"><b>Fully deterministic output</b><p>If you need the same result every time, don't hand it to a reasoning loop.</p></div>
+    </div>
+  </section>
+
+  <!-- POC -->
+  <section class="section">
+    <h3>A reference architecture</h3>
+    <div class="flow">
+      <div class="node" style="--nc:var(--cyan)"><div class="t">React app</div><div class="d">Human surface — intent in, live timeline out</div></div>
+      <div class="arrow">→</div>
+      <div class="node" style="--nc:var(--cl)"><div class="t">Hono middleware</div><div class="d">Gateway — auth, quotas, logging &amp; the policy boundary</div></div>
+      <div class="arrow">→</div>
+      <div class="node" style="--nc:var(--violet)"><div class="t">Agent SDK <code>query()</code></div><div class="d">The loop — reasons, calls built-in tools, observes</div></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <p style="margin:0">The integration layer is where an agentic app earns its keep: it's the one place to
+      enforce <b>what an autonomous agent is allowed to do</b> — the tool allow-list, the sandbox,
+      the auth. A permission guard there (not just a working directory) is the real security boundary.</p>
+    </div>
   </section>
 
   <!-- LINKS -->
