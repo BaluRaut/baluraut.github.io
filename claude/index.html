@@ -203,27 +203,40 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
 .whocol li::before{content:""; position:absolute; left:0; top:9px; width:5px; height:5px; border-radius:50%; background:var(--border2)}
 .whocol li b{color:var(--text)}
 
-/* reader controls (font size + color theme) */
-.reader{
-  position:fixed; right:16px; bottom:16px; z-index:60; max-width:calc(100vw - 32px);
-  display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
-  background:var(--panel); border:1px solid var(--border2); border-radius:999px;
-  padding:8px 14px; box-shadow:0 12px 44px -14px rgba(0,0,0,.6);
-  font-size:.8rem; color:var(--muted); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+/* floating reader-settings button + popover panel */
+.a11y-fab{position:fixed; right:20px; bottom:20px; z-index:200}
+.a11y-toggle{
+  height:54px; width:54px; border-radius:50%; border:2px solid var(--bg);
+  background:var(--cl); color:#1a0e08; font-weight:800; font-size:1.15rem; cursor:pointer;
+  box-shadow:0 8px 24px -6px rgba(0,0,0,.5); display:grid; place-items:center;
+  transition:transform .15s ease; line-height:1;
 }
-.reader .grp{display:flex; align-items:center; gap:6px}
-.reader .lbl{font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; color:var(--dim)}
-.reader button{
-  cursor:pointer; border:1px solid var(--border); background:var(--card2); color:var(--text);
-  border-radius:8px; padding:4px 9px; font-size:.8rem; font-weight:700; line-height:1;
+.a11y-toggle:hover{transform:scale(1.07)}
+.a11y-toggle:focus-visible{outline:3px solid var(--cyan); outline-offset:2px}
+.a11y-panel{
+  position:absolute; right:0; bottom:66px; width:266px;
+  background:var(--panel); border:1px solid var(--border2); border-radius:16px;
+  box-shadow:0 18px 50px -14px rgba(0,0,0,.6); padding:16px; display:none;
 }
-.reader button:hover{border-color:var(--cl)}
-.reader button.on{background:var(--cl); color:#1a0e08; border-color:var(--cl)}
-.reader .fsval{min-width:44px; text-align:center; font-variant-numeric:tabular-nums; color:var(--text); font-weight:700}
-.reader .sep{width:1px; height:20px; background:var(--border2)}
-.reader .reset{background:transparent; border:none; color:var(--muted); text-decoration:underline; padding:4px 2px; font-weight:600}
-.reader .reset:hover{color:var(--text)}
-@media(max-width:600px){.reader .lbl{display:none} .reader{gap:8px; bottom:10px; padding:7px 11px}}
+.a11y-panel.open{display:block}
+.a11y-panel h5{margin:0 0 8px; font-size:.64rem; text-transform:uppercase; letter-spacing:.14em; color:var(--dim); font-weight:700}
+.a11y-row{display:flex; gap:8px; align-items:center; margin-bottom:16px}
+.a11y-btn{
+  flex:1; padding:9px 0; border-radius:10px; border:1px solid var(--border);
+  background:var(--card2); color:var(--text); font-weight:700; cursor:pointer; font-size:.9rem;
+}
+.a11y-btn:hover{border-color:var(--cl)}
+.a11y-size{min-width:52px; text-align:center; font-variant-numeric:tabular-nums; font-size:.82rem; color:var(--muted); font-weight:700}
+.a11y-themes{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:14px}
+.a11y-theme{
+  padding:9px 8px; border-radius:10px; border:1px solid var(--border); cursor:pointer;
+  font-size:.82rem; font-weight:600; color:var(--text); background:var(--card2);
+  display:flex; align-items:center; gap:7px;
+}
+.a11y-theme:hover{border-color:var(--cl)}
+.a11y-theme.active{border-color:var(--cl); box-shadow:0 0 0 2px var(--kicker-bg)}
+.a11y-swatch{height:14px; width:14px; border-radius:50%; border:1px solid var(--border2); flex:0 0 auto}
+@media print{.a11y-fab{display:none!important}}
 
 /* footer */
 .foot{margin-top:70px; padding-top:26px; border-top:1px solid var(--border); text-align:center; color:var(--dim); font-size:.85rem}
@@ -464,23 +477,26 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
   </div>
 
 </div>
-<div class="reader" role="group" aria-label="Reader controls">
-  <div class="grp">
-    <span class="lbl">Text size</span>
-    <button id="fsDown" aria-label="Decrease text size">A−</button>
-    <span class="fsval" id="fsVal">100%</span>
-    <button id="fsUp" aria-label="Increase text size">A+</button>
+<div class="a11y-fab">
+  <div class="a11y-panel" id="a11yPanel" role="dialog" aria-label="Reading settings">
+    <h5>Text size</h5>
+    <div class="a11y-row">
+      <button class="a11y-btn" id="fsDown" aria-label="Decrease text size">A&minus;</button>
+      <span class="a11y-size" id="fsVal">100%</span>
+      <button class="a11y-btn" id="fsUp" aria-label="Increase text size">A+</button>
+    </div>
+    <h5>Color theme</h5>
+    <div class="a11y-themes">
+      <button class="a11y-theme" data-theme-btn="dark"><span class="a11y-swatch" style="background:#0b0e14"></span>Dark</button>
+      <button class="a11y-theme" data-theme-btn="light"><span class="a11y-swatch" style="background:#f7f5f2"></span>Light</button>
+      <button class="a11y-theme" data-theme-btn="sepia"><span class="a11y-swatch" style="background:#f2e7cf"></span>Sepia</button>
+      <button class="a11y-theme" data-theme-btn="contrast"><span class="a11y-swatch" style="background:#000;border-color:#fff"></span>Contrast</button>
+    </div>
+    <div class="a11y-row" style="margin-bottom:0">
+      <button class="a11y-btn" id="resetBtn">Reset</button>
+    </div>
   </div>
-  <span class="sep"></span>
-  <div class="grp">
-    <span class="lbl">Color</span>
-    <button data-theme-btn="dark">Dark</button>
-    <button data-theme-btn="light">Light</button>
-    <button data-theme-btn="sepia">Sepia</button>
-    <button data-theme-btn="contrast">Contrast</button>
-  </div>
-  <span class="sep"></span>
-  <button class="reset" id="resetBtn">Reset</button>
+  <button class="a11y-toggle" id="a11yToggle" aria-label="Open reading settings" aria-expanded="false" title="Reading settings">Aa</button>
 </div>
 
 <script>
@@ -489,6 +505,8 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
   var LS_T='claudeTheme', LS_F='claudeFS';
   var MIN=0.85, MAX=1.6, STEP=0.075;
   var themeBtns=document.querySelectorAll('[data-theme-btn]');
+  var panel=document.getElementById('a11yPanel');
+  var toggle=document.getElementById('a11yToggle');
 
   function applyFS(v){
     root.style.setProperty('--fs', v);
@@ -498,13 +516,19 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
     if(t && t!=='dark') root.setAttribute('data-theme', t);
     else root.removeAttribute('data-theme');
     themeBtns.forEach(function(b){
-      b.classList.toggle('on', b.getAttribute('data-theme-btn')===(t||'dark'));
+      b.classList.toggle('active', b.getAttribute('data-theme-btn')===(t||'dark'));
     });
   }
 
   var fs=parseFloat(localStorage.getItem(LS_F))||1;
   var th=localStorage.getItem(LS_T)||'dark';
   applyFS(fs); applyTheme(th);
+
+  // open / close the popover
+  function setOpen(o){ panel.classList.toggle('open', o); toggle.setAttribute('aria-expanded', o?'true':'false'); }
+  toggle.onclick=function(e){ e.stopPropagation(); setOpen(!panel.classList.contains('open')); };
+  document.addEventListener('click', function(e){ if(!panel.contains(e.target) && e.target!==toggle) setOpen(false); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') setOpen(false); });
 
   document.getElementById('fsUp').onclick=function(){ fs=Math.min(MAX,fs+STEP); applyFS(fs); localStorage.setItem(LS_F,fs); };
   document.getElementById('fsDown').onclick=function(){ fs=Math.max(MIN,fs-STEP); applyFS(fs); localStorage.setItem(LS_F,fs); };
