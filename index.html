@@ -12,7 +12,7 @@
   --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488;
   --pg:#38bdf8; --rb:#f43f5e; --aws:#ff9d2e; --lnx:#4ade80; --ai:#a78bfa; --mcp:#22d3ee;
   --ds:#818cf8; --node:#84cc16; --react:#2dd4bf; --sys:#f472b6; --evt:#fbbf24; --net:#06b6d4; --sec:#ef4444; --dr:#10b981;
-  --oop:#8b5cf6; --pat:#d946ef;
+  --oop:#8b5cf6; --pat:#d946ef; --cl:#d97757;
 }
 *{box-sizing:border-box; margin:0; padding:0}
 html{scroll-behavior:smooth}
@@ -79,7 +79,7 @@ h2{font-size:1.34rem; margin:14px 0 6px; letter-spacing:-.01em; color:var(--text
 .open .arw{transition:.18s}
 a.card:hover .open .arw{transform:translateX(4px)}
 
-.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)} .ai{--accent:var(--ai)} .mcp{--accent:var(--mcp)} .ds{--accent:var(--ds)} .node{--accent:var(--node)} .react{--accent:var(--react)} .sys{--accent:var(--sys)} .evt{--accent:var(--evt)} .net{--accent:var(--net)} .sec{--accent:var(--sec)} .dr{--accent:var(--dr)} .oop{--accent:var(--oop)} .pat{--accent:var(--pat)}
+.pg{--accent:var(--pg)} .rb{--accent:var(--rb)} .aws{--accent:var(--aws)} .lnx{--accent:var(--lnx)} .ai{--accent:var(--ai)} .mcp{--accent:var(--mcp)} .ds{--accent:var(--ds)} .node{--accent:var(--node)} .react{--accent:var(--react)} .sys{--accent:var(--sys)} .evt{--accent:var(--evt)} .net{--accent:var(--net)} .sec{--accent:var(--sec)} .dr{--accent:var(--dr)} .oop{--accent:var(--oop)} .pat{--accent:var(--pat)} .cl{--accent:var(--cl)}
 
 /* connective tissue */
 .section{margin-top:60px}
@@ -312,6 +312,17 @@ footer a{color:var(--muted)}
       <p class="desc">The Gang of Four patterns plus the modern ones, taught through real systems — <code>React.createElement</code>, OkHttp builders, Express middleware, HikariCP pools, Kafka pub/sub, circuit breakers — not Shape/Animal demos. Creational, structural, behavioral &amp; architectural, each with when <i>not</i> to reach for it.</p>
       <div class="chips"><span class="chip">Factory &amp; Builder</span><span class="chip">Adapter &amp; Decorator</span><span class="chip">Strategy &amp; Observer</span><span class="chip">State &amp; Command</span><span class="chip">Repository &amp; Pub/Sub</span><span class="chip">Anti-patterns</span></div>
       <span class="open">Open playbook <span class="arw">&#8594;</span></span>
+    </div>
+  </a>
+
+  <a class="card cl" href="https://baluraut.github.io/claude/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Field Note · The AI Layer</span><span class="count">1 guide</span></div>
+      <h2>Claude Agent SDK — What &amp; When</h2>
+      <p class="desc">Claude Code as a library. A plain-English field guide — what the Agent SDK is, the problem it solves, and how to choose between the Client SDK, the CLI, the Agent SDK, and Managed Agents. With code and a four-rule decision guide.</p>
+      <div class="chips"><span class="chip">The agent loop</span><span class="chip">Built-in tools</span><span class="chip">Subagents &amp; hooks</span><span class="chip">MCP &amp; sessions</span><span class="chip">Client SDK vs Agent SDK</span><span class="chip">Managed Agents</span></div>
+      <span class="open">Read the guide <span class="arw">&#8594;</span></span>
     </div>
   </a>
 
