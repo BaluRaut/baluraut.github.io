@@ -205,8 +205,8 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
 
 /* reader controls (font size + color theme) */
 .reader{
-  position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:60;
-  display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:center;
+  position:fixed; right:16px; bottom:16px; z-index:60; max-width:calc(100vw - 32px);
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
   background:var(--panel); border:1px solid var(--border2); border-radius:999px;
   padding:8px 14px; box-shadow:0 12px 44px -14px rgba(0,0,0,.6);
   font-size:.8rem; color:var(--muted); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
