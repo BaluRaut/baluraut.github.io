@@ -615,16 +615,37 @@ sequenceDiagram
     // Keep original Mermaid source so diagrams can be re-themed on demand.
     const diagrams = Array.from(document.querySelectorAll('.mermaid'));
     const sources = diagrams.map(el => el.textContent);
-    function mermaidThemeFor(theme) {
-      const t = theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      return (t === 'dark' || t === 'contrast') ? 'dark' : 'neutral';
+    // Diagram colors mirror the page palette so every theme stays high-contrast & matching.
+    const PALETTES = {
+      light:    { bg:'#ffffff', text:'#1a1f26', line:'#5a6472', actorBg:'#efeaff', actorBorder:'#6b46e5', noteBg:'#6b46e5', noteText:'#ffffff' },
+      dark:     { bg:'#141a24', text:'#e8ecf3', line:'#98a2b3', actorBg:'#1e1b34', actorBorder:'#a78bfa', noteBg:'#a78bfa', noteText:'#0c1017' },
+      sepia:    { bg:'#f8f1e0', text:'#3b2f1c', line:'#6b5b42', actorBg:'#ecdcbf', actorBorder:'#9a6a2f', noteBg:'#9a6a2f', noteText:'#f8f1e0' },
+      contrast: { bg:'#000000', text:'#ffffff', line:'#ffffff', actorBg:'#000000', actorBorder:'#ffff00', noteBg:'#ffff00', noteText:'#000000' }
+    };
+    function resolveTheme(theme) {
+      return theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     }
     function renderDiagrams(theme) {
       if (typeof mermaid === 'undefined') return;
+      const p = PALETTES[resolveTheme(theme)] || PALETTES.light;
       diagrams.forEach((el, i) => { el.removeAttribute('data-processed'); el.innerHTML = sources[i]; });
       mermaid.initialize({
-        startOnLoad: false, theme: mermaidThemeFor(theme), securityLevel: 'loose',
-        sequence: { showSequenceNumbers: false, actorMargin: 40, mirrorActors: false },
+        startOnLoad: false, securityLevel: 'loose', theme: 'base',
+        themeVariables: {
+          fontFamily: 'inherit', fontSize: '15px',
+          background: p.bg, primaryColor: p.actorBg, primaryBorderColor: p.actorBorder,
+          primaryTextColor: p.text, lineColor: p.line, textColor: p.text,
+          // sequence-diagram specifics
+          actorBkg: p.actorBg, actorBorder: p.actorBorder, actorTextColor: p.text, actorLineColor: p.line,
+          signalColor: p.line, signalTextColor: p.text,
+          labelBoxBkgColor: p.actorBg, labelBoxBorderColor: p.actorBorder, labelTextColor: p.text, loopTextColor: p.text,
+          noteBkgColor: p.noteBg, noteBorderColor: p.actorBorder, noteTextColor: p.noteText,
+          activationBkgColor: p.actorBg, activationBorderColor: p.actorBorder, sequenceNumberColor: p.noteText,
+          // flowchart specifics
+          mainBkg: p.actorBg, nodeBorder: p.actorBorder, nodeTextColor: p.text,
+          edgeLabelBackground: p.bg, clusterBkg: p.bg, clusterBorder: p.line, titleColor: p.text
+        },
+        sequence: { showSequenceNumbers: false, actorMargin: 42, mirrorActors: false, messageFontSize: 14, noteFontSize: 14 },
         flowchart: { curve: 'basis' }
       });
       try { mermaid.run({ nodes: diagrams }); } catch (e) {}
