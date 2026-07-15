@@ -7,22 +7,60 @@
 <meta name="description" content="A plain-English field guide to the Claude Agent SDK: what it is, the problem it solves, how it compares to the Client SDK, CLI, and Managed Agents, and a decision guide for picking the right tool.">
 <style>
 :root{
+  --fs:1;                /* font-size scale, driven by the reader control */
+  /* dark theme (default) */
   --bg:#0b0e14; --panel:#11151f; --card:#121826; --card2:#0f1420;
   --border:#242c3d; --border2:#2e3850;
-  --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488;
+  --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488; --prose:#c2ccdb;
+  --g1:#241611; --g2:#1a1428;
+  --kicker-bg:#1a110d; --kicker-bd:#43302a;
+  --code-bg:#0c1018; --code-text:#c9d3e3; --code-in:#f0a98c;
+  --thead-bg:#0e1420;
+  --na-bg:#160f10; --na-bd:#3a2224; --na-title:#fca5a5;
   --cl:#d97757;         /* Claude clay/terracotta */
-  --violet:#a78bfa; --cyan:#22d3ee; --green:#4ade80; --amber:#ff9d2e; --pink:#f472b6;
+  --violet:#a78bfa; --cyan:#22d3ee; --green:#4ade80; --amber:#ff9d2e; --pink:#f472b6; --red:#ef4444;
+}
+[data-theme="light"]{
+  --bg:#f7f5f2; --panel:#ffffff; --card:#ffffff; --card2:#f2efe9;
+  --border:#e4ded4; --border2:#d5cfc2;
+  --text:#241f1a; --muted:#6b6355; --dim:#8f8676; --prose:#3a342c;
+  --g1:#f1e7de; --g2:#ece7f3;
+  --kicker-bg:#f4e8e1; --kicker-bd:#e6cdbf;
+  --code-bg:#1b2130; --code-text:#c9d3e3; --code-in:#b4502f;
+  --thead-bg:#f2efe9;
+  --na-bg:#fbeeee; --na-bd:#f0d4d4; --na-title:#b4342f;
+}
+[data-theme="sepia"]{
+  --bg:#f2e7cf; --panel:#fbf3e1; --card:#fbf3e1; --card2:#efe2c6;
+  --border:#e1d1ae; --border2:#d3c096;
+  --text:#3a2f1c; --muted:#7a6a4c; --dim:#9c8b68; --prose:#4a3d26;
+  --g1:#eaddbe; --g2:#e8dcc0;
+  --kicker-bg:#efe0c4; --kicker-bd:#d8c39c;
+  --code-bg:#2c2415; --code-text:#e8dcc2; --code-in:#a35a2a;
+  --thead-bg:#efe2c6;
+  --na-bg:#f6e2cf; --na-bd:#e3c5a6; --na-title:#a1442a;
+}
+[data-theme="contrast"]{
+  --bg:#000000; --panel:#000000; --card:#0a0a0a; --card2:#000000;
+  --border:#ffffff; --border2:#ffffff;
+  --text:#ffffff; --muted:#ececec; --dim:#cccccc; --prose:#ffffff;
+  --g1:#000000; --g2:#000000;
+  --kicker-bg:#000000; --kicker-bd:#ffffff;
+  --code-bg:#000000; --code-text:#ffffff; --code-in:#ffd8a8;
+  --thead-bg:#000000;
+  --na-bg:#000000; --na-bd:#ffffff; --na-title:#ff8787;
 }
 *{box-sizing:border-box; margin:0; padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth; font-size:calc(16px * var(--fs))}
 body{
   background:
-    radial-gradient(1100px 520px at 15% -8%, #241611 0%, transparent 55%),
-    radial-gradient(1000px 460px at 88% -12%, #1a1428 0%, transparent 55%),
+    radial-gradient(1100px 520px at 15% -8%, var(--g1) 0%, transparent 55%),
+    radial-gradient(1000px 460px at 88% -12%, var(--g2) 0%, transparent 55%),
     var(--bg);
   color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  line-height:1.6; font-size:16px; min-height:100vh;
+  line-height:1.6; font-size:1rem; min-height:100vh;
+  transition:background-color .2s ease, color .2s ease;
 }
 .wrap{max-width:1000px; margin:0 auto; padding:0 20px 100px}
 a{color:var(--cl)}
@@ -37,7 +75,7 @@ a{color:var(--cl)}
 .hero{padding:64px 0 18px; text-align:center}
 .kicker{
   display:inline-block; font-size:.72rem; letter-spacing:.22em; text-transform:uppercase;
-  color:var(--cl); border:1px solid #43302a; background:#1a110d;
+  color:var(--cl); border:1px solid var(--kicker-bd); background:var(--kicker-bg);
   padding:6px 15px; border-radius:999px; font-weight:600;
 }
 h1{
@@ -63,7 +101,7 @@ h1{
 /* prose panel */
 .panel{
   background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px 26px;
-  color:#c2ccdb; font-size:1rem;
+  color:var(--prose); font-size:1rem;
 }
 .panel p{margin:0 0 14px}
 .panel p:last-child{margin:0}
@@ -72,13 +110,13 @@ h1{
 
 /* inline code + code block */
 code{
-  font-family:ui-monospace,Menlo,monospace; font-size:.85em; background:#0c1018;
-  border:1px solid var(--border); padding:1px 6px; border-radius:5px; color:#f0a98c;
+  font-family:ui-monospace,Menlo,monospace; font-size:.85em; background:var(--code-bg);
+  border:1px solid var(--border); padding:1px 6px; border-radius:5px; color:var(--code-in);
 }
 pre{
-  background:#0c1018; border:1px solid var(--border); border-radius:12px;
+  background:var(--code-bg); border:1px solid var(--border); border-radius:12px;
   padding:18px 20px; overflow-x:auto; margin:6px 0 0;
-  font-family:ui-monospace,Menlo,monospace; font-size:.86rem; line-height:1.65; color:#c9d3e3;
+  font-family:ui-monospace,Menlo,monospace; font-size:.86rem; line-height:1.65; color:var(--code-text);
 }
 pre code{background:none; border:none; padding:0; color:inherit; font-size:1em}
 .c-key{color:#f472b6} .c-str{color:#9ae6b4} .c-com{color:#5d6b82; font-style:italic} .c-fn{color:#7cc7ff}
@@ -100,7 +138,7 @@ pre code{background:none; border:none; padding:0; color:inherit; font-size:1em}
 .tablewrap{overflow-x:auto; border:1px solid var(--border); border-radius:14px}
 table{border-collapse:collapse; width:100%; min-width:560px; font-size:.92rem}
 th,td{text-align:left; padding:13px 16px; border-bottom:1px solid var(--border)}
-thead th{background:#0e1420; color:var(--text); font-size:.78rem; letter-spacing:.05em; text-transform:uppercase}
+thead th{background:var(--thead-bg); color:var(--text); font-size:.78rem; letter-spacing:.05em; text-transform:uppercase}
 tbody tr:last-child td{border-bottom:none}
 td:first-child{color:var(--text); font-weight:600}
 td b{color:var(--cl)}
@@ -119,7 +157,7 @@ td b{color:var(--cl)}
 .step{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px}
 .step .n{
   font-family:ui-monospace,Menlo,monospace; font-weight:800; font-size:.78rem; color:var(--cl);
-  border:1px solid #43302a; border-radius:8px; width:26px; height:26px;
+  border:1px solid var(--kicker-bd); border-radius:8px; width:26px; height:26px;
   display:flex; align-items:center; justify-content:center; margin-bottom:10px;
 }
 .step h4{font-size:.98rem; margin-bottom:4px; color:var(--text)}
@@ -137,10 +175,9 @@ td b{color:var(--cl)}
 /* where NOT to use */
 .avoid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
 @media(max-width:640px){.avoid{grid-template-columns:1fr}}
-.na{background:#160f10; border:1px solid #3a2224; border-left:3px solid var(--red,#ef4444); border-radius:10px; padding:14px 16px}
-.na b{color:#fca5a5; font-size:.9rem}
+.na{background:var(--na-bg); border:1px solid var(--na-bd); border-left:3px solid var(--red); border-radius:10px; padding:14px 16px}
+.na b{color:var(--na-title); font-size:.9rem}
 .na p{color:var(--muted); font-size:.86rem; margin-top:4px}
-:root{--red:#ef4444}
 
 /* POC flow diagram */
 .flow{display:flex; align-items:stretch; gap:0; flex-wrap:wrap; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; overflow-x:auto}
@@ -150,7 +187,43 @@ td b{color:var(--cl)}
 .arrow{display:flex; align-items:center; color:var(--dim); font-size:1.3rem; padding:0 8px}
 @media(max-width:640px){.arrow{transform:rotate(90deg); padding:6px 0; justify-content:center; width:100%}}
 
-td.use{color:var(--green)!important} td.dont{color:#fca5a5!important}
+td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
+
+/* who uses it */
+.who{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media(max-width:720px){.who{grid-template-columns:1fr}}
+.whocol{border:1px solid var(--border); border-radius:14px; padding:18px 22px; background:var(--card)}
+.whocol.good{border-top:3px solid var(--green)}
+.whocol.bad{border-top:3px solid var(--red)}
+.whocol .wh{font-weight:800; font-size:.95rem; margin-bottom:14px}
+.whocol.good .wh{color:var(--green)}
+.whocol.bad .wh{color:var(--na-title)}
+.whocol ul{list-style:none; display:flex; flex-direction:column; gap:11px}
+.whocol li{font-size:.9rem; color:var(--muted); padding-left:16px; position:relative}
+.whocol li::before{content:""; position:absolute; left:0; top:9px; width:5px; height:5px; border-radius:50%; background:var(--border2)}
+.whocol li b{color:var(--text)}
+
+/* reader controls (font size + color theme) */
+.reader{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:60;
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:center;
+  background:var(--panel); border:1px solid var(--border2); border-radius:999px;
+  padding:8px 14px; box-shadow:0 12px 44px -14px rgba(0,0,0,.6);
+  font-size:.8rem; color:var(--muted); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+}
+.reader .grp{display:flex; align-items:center; gap:6px}
+.reader .lbl{font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; color:var(--dim)}
+.reader button{
+  cursor:pointer; border:1px solid var(--border); background:var(--card2); color:var(--text);
+  border-radius:8px; padding:4px 9px; font-size:.8rem; font-weight:700; line-height:1;
+}
+.reader button:hover{border-color:var(--cl)}
+.reader button.on{background:var(--cl); color:#1a0e08; border-color:var(--cl)}
+.reader .fsval{min-width:44px; text-align:center; font-variant-numeric:tabular-nums; color:var(--text); font-weight:700}
+.reader .sep{width:1px; height:20px; background:var(--border2)}
+.reader .reset{background:transparent; border:none; color:var(--muted); text-decoration:underline; padding:4px 2px; font-weight:600}
+.reader .reset:hover{color:var(--text)}
+@media(max-width:600px){.reader .lbl{display:none} .reader{gap:8px; bottom:10px; padding:7px 11px}}
 
 /* footer */
 .foot{margin-top:70px; padding-top:26px; border-top:1px solid var(--border); text-align:center; color:var(--dim); font-size:.85rem}
@@ -159,6 +232,16 @@ td.use{color:var(--green)!important} td.dont{color:#fca5a5!important}
 </style>
 </head>
 <body>
+<script>
+/* Apply saved theme + font size before paint to avoid a flash. */
+(function(){try{
+  var r=document.documentElement;
+  var t=localStorage.getItem('claudeTheme');
+  if(t&&t!=='dark') r.setAttribute('data-theme',t);
+  var f=parseFloat(localStorage.getItem('claudeFS'));
+  if(f) r.style.setProperty('--fs',f);
+}catch(e){}})();
+</script>
 
 <div class="nav">
   <a href="../">← The Backend Engineer's Field Library</a>
@@ -319,6 +402,33 @@ td.use{color:var(--green)!important} td.dont{color:#fca5a5!important}
     </div>
   </section>
 
+  <!-- WHO -->
+  <section class="section">
+    <h3>Who reaches for it — and who shouldn't</h3>
+    <div class="who">
+      <div class="whocol good">
+        <div class="wh">✓ A good fit</div>
+        <ul>
+          <li><b>Product &amp; platform engineers</b> automating their own codebase — CI fixers, dependency upgrades, migrations.</li>
+          <li><b>DevTools / internal-tools teams</b> shipping agents that act on company systems and repos.</li>
+          <li><b>SaaS builders</b> embedding a "do-it-for-me" agent over their own data &amp; tools via MCP.</li>
+          <li><b>Ops / SRE</b> building on-call copilots that read logs and run read-only diagnostics.</li>
+          <li><b>Startups &amp; solo devs</b> prototyping agentic features fast, on their own infra.</li>
+        </ul>
+      </div>
+      <div class="whocol bad">
+        <div class="wh">✗ Better served elsewhere</div>
+        <ul>
+          <li><b>Need one text answer?</b> Summarize · classify · extract → the Client SDK (Messages API).</li>
+          <li><b>High volume, latency-critical?</b> Thousands of calls a minute → a plain API call, not an agent loop.</li>
+          <li><b>Don't want to run infra?</b> Prefer a hosted sandbox &amp; session store → Managed Agents.</li>
+          <li><b>No-code / non-technical?</b> The SDK is a developer library — reach for a finished product.</li>
+          <li><b>Fully deterministic output?</b> Same result every time → ordinary code beats a reasoning loop.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
   <!-- POC -->
   <section class="section">
     <h3>A reference architecture</h3>
@@ -354,5 +464,59 @@ td.use{color:var(--green)!important} td.dont{color:#fca5a5!important}
   </div>
 
 </div>
+<div class="reader" role="group" aria-label="Reader controls">
+  <div class="grp">
+    <span class="lbl">Text size</span>
+    <button id="fsDown" aria-label="Decrease text size">A−</button>
+    <span class="fsval" id="fsVal">100%</span>
+    <button id="fsUp" aria-label="Increase text size">A+</button>
+  </div>
+  <span class="sep"></span>
+  <div class="grp">
+    <span class="lbl">Color</span>
+    <button data-theme-btn="dark">Dark</button>
+    <button data-theme-btn="light">Light</button>
+    <button data-theme-btn="sepia">Sepia</button>
+    <button data-theme-btn="contrast">Contrast</button>
+  </div>
+  <span class="sep"></span>
+  <button class="reset" id="resetBtn">Reset</button>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var LS_T='claudeTheme', LS_F='claudeFS';
+  var MIN=0.85, MAX=1.6, STEP=0.075;
+  var themeBtns=document.querySelectorAll('[data-theme-btn]');
+
+  function applyFS(v){
+    root.style.setProperty('--fs', v);
+    document.getElementById('fsVal').textContent=Math.round(v*100)+'%';
+  }
+  function applyTheme(t){
+    if(t && t!=='dark') root.setAttribute('data-theme', t);
+    else root.removeAttribute('data-theme');
+    themeBtns.forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-theme-btn')===(t||'dark'));
+    });
+  }
+
+  var fs=parseFloat(localStorage.getItem(LS_F))||1;
+  var th=localStorage.getItem(LS_T)||'dark';
+  applyFS(fs); applyTheme(th);
+
+  document.getElementById('fsUp').onclick=function(){ fs=Math.min(MAX,fs+STEP); applyFS(fs); localStorage.setItem(LS_F,fs); };
+  document.getElementById('fsDown').onclick=function(){ fs=Math.max(MIN,fs-STEP); applyFS(fs); localStorage.setItem(LS_F,fs); };
+  themeBtns.forEach(function(b){
+    b.onclick=function(){ var t=b.getAttribute('data-theme-btn'); applyTheme(t); localStorage.setItem(LS_T,t); };
+  });
+  document.getElementById('resetBtn').onclick=function(){
+    fs=1; applyFS(fs); applyTheme('dark');
+    localStorage.removeItem(LS_F); localStorage.removeItem(LS_T);
+  };
+})();
+</script>
+
 </body>
 </html>
