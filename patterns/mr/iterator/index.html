@@ -139,12 +139,12 @@
         <pre class="mermaid">
 classDiagram
     class Iterator~T~ {
-        <<interface>>
+        &lt;&lt;interface&gt;&gt;
         +hasNext() boolean
         +next() T
     }
     class Iterable~T~ {
-        <<interface>>
+        &lt;&lt;interface&gt;&gt;
         +iterator() Iterator~T~
     }
     class NameRepository {

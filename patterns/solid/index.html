@@ -142,7 +142,7 @@ classDiagram
         +checkout(order)
     }
     class PaymentGateway {
-        <<interface>>
+        &lt;&lt;interface&gt;&gt;
         +charge(amount) Receipt
     }
     class StripeGateway {

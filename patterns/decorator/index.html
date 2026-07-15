@@ -139,7 +139,7 @@
         <pre class="mermaid">
 classDiagram
     class DataSource {
-        <<interface>>
+        &lt;&lt;interface&gt;&gt;
         +read() String
         +write(data) void
     }
@@ -148,7 +148,7 @@ classDiagram
         +write(data) void
     }
     class DataSourceDecorator {
-        <<abstract>>
+        &lt;&lt;abstract&gt;&gt;
         #wrappee DataSource
         +read() String
         +write(data) void
