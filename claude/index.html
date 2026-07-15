@@ -238,6 +238,41 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
 .a11y-swatch{height:14px; width:14px; border-radius:50%; border:1px solid var(--border2); flex:0 0 auto}
 @media print{.a11y-fab{display:none!important}}
 
+/* code viewer — a fixed dark "editor", independent of the page theme */
+.editor{--ed-bg:#0d1117; --ed-bar:#161b22; --ed-border:#232a34;
+  border:1px solid var(--ed-border); border-radius:14px; overflow:hidden;
+  background:var(--ed-bg); box-shadow:0 18px 54px -24px rgba(0,0,0,.75)}
+.ed-bar{display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--ed-bar); border-bottom:1px solid var(--ed-border)}
+.ed-dots{display:flex; gap:6px; flex:0 0 auto; padding-right:2px}
+.ed-dots i{width:11px; height:11px; border-radius:50%; display:block}
+.ed-dots i:nth-child(1){background:#ff5f56} .ed-dots i:nth-child(2){background:#ffbd2e} .ed-dots i:nth-child(3){background:#27c93f}
+.ed-tabs{display:flex; gap:3px; flex:1; overflow-x:auto; scrollbar-width:none}
+.ed-tabs::-webkit-scrollbar{display:none}
+.ed-tab{white-space:nowrap; font-family:ui-monospace,Menlo,monospace; font-size:.75rem; color:#8b93a7;
+  background:transparent; border:none; border-radius:7px; padding:6px 11px; cursor:pointer}
+.ed-tab:hover{color:#cdd4e2; background:#1c2230}
+.ed-tab.active{color:#fff; background:var(--ed-bg); box-shadow:inset 0 -2px 0 var(--cl)}
+.ed-copy{flex:0 0 auto; font-family:ui-monospace,Menlo,monospace; font-size:.7rem; color:#8b93a7;
+  background:var(--ed-bg); border:1px solid var(--ed-border); border-radius:7px; padding:5px 10px; cursor:pointer}
+.ed-copy:hover{color:#fff; border-color:var(--cl)}
+.ed-body{max-height:540px; overflow:auto; background:var(--ed-bg)}
+.ed-pane{display:none}
+.ed-pane.active{display:block}
+.editor pre[class*="language-"]{margin:0; background:transparent; border:none; border-radius:0;
+  padding-top:16px; padding-bottom:16px; padding-right:6px; font-size:.8rem; line-height:1.62}
+.editor code[class*="language-"]{font-family:ui-monospace,Menlo,monospace; text-shadow:none; color:#c9d1d9; font-size:.8rem}
+/* GitHub-dark token palette */
+.editor .token.comment,.editor .token.prolog,.editor .token.doctype,.editor .token.cdata{color:#8b949e; font-style:italic}
+.editor .token.punctuation{color:#8b949e}
+.editor .token.keyword,.editor .token.operator,.editor .token.boolean{color:#ff7b72}
+.editor .token.string,.editor .token.template-string,.editor .token.char,.editor .token.attr-value,.editor .token.regex{color:#a5d6ff}
+.editor .token.function,.editor .token.method-variable{color:#d2a8ff}
+.editor .token.class-name,.editor .token.maybe-class-name{color:#7ee787}
+.editor .token.number,.editor .token.constant,.editor .token.property,.editor .token.variable{color:#79c0ff}
+.editor .token.builtin{color:#ffa657}
+.editor .line-numbers .line-numbers-rows{border-right:1px solid var(--ed-border)}
+.editor .line-numbers-rows > span:before{color:#4b5568}
+
 /* footer */
 .foot{margin-top:70px; padding-top:26px; border-top:1px solid var(--border); text-align:center; color:var(--dim); font-size:.85rem}
 .foot a{color:var(--muted); text-decoration:none}
@@ -459,6 +494,275 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
     </div>
   </section>
 
+  <!-- UNDER THE HOOD -->
+  <section class="section">
+    <h3>Under the hood — the real code</h3>
+    <p style="color:var(--muted); font-size:.95rem; margin-bottom:16px">Not pseudocode. This is the actual source running in the reference POC: a Hono API that
+    streams the agent loop, the <code>canUseTool</code> guard that jails it to a sandbox, and the
+    browser-side client that reads the stream. Click a tab.</p>
+    <div class="editor">
+      <div class="ed-bar">
+        <span class="ed-dots"><i></i><i></i><i></i></span>
+        <div class="ed-tabs" id="edTabs">
+          <button class="ed-tab active" data-tab="0">server/index.ts</button>
+          <button class="ed-tab" data-tab="1">server/guard.ts</button>
+          <button class="ed-tab" data-tab="2">server/middleware.ts</button>
+          <button class="ed-tab" data-tab="3">web/src/api.ts</button>
+        </div>
+        <button class="ed-copy" id="edCopy">Copy</button>
+      </div>
+      <div class="ed-body">
+        <pre class="line-numbers ed-pane active"><code class="language-typescript"></code></pre>
+        <pre class="line-numbers ed-pane"><code class="language-typescript"></code></pre>
+        <pre class="line-numbers ed-pane"><code class="language-typescript"></code></pre>
+        <pre class="line-numbers ed-pane"><code class="language-typescript"></code></pre>
+      </div>
+    </div>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:.82rem; color:var(--dim)">
+      <span><b style="color:var(--cl)">index.ts</b> — Hono middleware pipeline + the SSE endpoint that runs <code>query()</code></span>
+      <span><b style="color:var(--green)">guard.ts</b> — the sandbox &amp; tool-allow-list boundary</span>
+      <span><b style="color:var(--violet)">api.ts</b> — SSE-over-fetch, because <code>EventSource</code> can't POST</span>
+    </div>
+
+    <script type="text/plain" data-name="server/index.ts">
+import { serve } from "@hono/node-server";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { streamSSE } from "hono/streaming";
+import { query } from "@anthropic-ai/claude-agent-sdk";
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { requestLogger, requireApiToken } from "./middleware.js";
+import { makeGuard } from "./guard.js";
+
+// The agent works inside this contained folder. File tools (Read/Write/Edit)
+// are scoped here so the POC can't touch the rest of your machine.
+const SANDBOX = join(process.cwd(), "sandbox");
+mkdirSync(SANDBOX, { recursive: true });
+
+// A small curated allow-list. The browser can pick a preset, but the server
+// is the final authority on what the agent is permitted to do.
+const PRESETS: Record<string, string[]> = {
+  // Safe default: the agent can look but not touch.
+  "read-only": ["Read", "Glob", "Grep", "WebSearch", "WebFetch"],
+  // "Agentic development": the agent may also create/modify files IN the sandbox.
+  dev: ["Read", "Glob", "Grep", "Write", "Edit"],
+};
+
+const app = new Hono();
+
+// ---- Middleware pipeline (runs top-to-bottom on every matching request) ----
+app.use("*", requestLogger);          // trace every request
+app.use("/api/*", cors());            // let the React dev server call us
+app.use("/api/*", requireApiToken);   // optional auth gate (off unless POC_TOKEN set)
+
+// Health check — handy to confirm the server is up.
+app.get("/api/health", (c) =>
+  c.json({ ok: true, sandbox: SANDBOX, presets: Object.keys(PRESETS) })
+);
+
+/**
+ * THE CORE ENDPOINT.
+ *
+ * Takes a prompt, runs the Claude Agent SDK's agent loop, and streams every
+ * message the agent produces (thinking, tool calls, tool results, final answer)
+ * to the browser as Server-Sent Events. The browser renders them as a live
+ * timeline — so you can literally watch the loop: reason -> act -> observe.
+ */
+app.post("/api/agent", async (c) => {
+  const body = await c.req.json<{ prompt: string; preset?: string }>();
+  const prompt = (body.prompt ?? "").trim();
+  const allowedTools = PRESETS[body.preset ?? "read-only"] ?? PRESETS["read-only"];
+
+  if (!prompt) return c.json({ error: "prompt is required" }, 400);
+
+  return streamSSE(c, async (stream) => {
+    const send = (event: string, data: unknown) =>
+      stream.writeSSE({ event, data: JSON.stringify(data) });
+
+    await send("start", { prompt, allowedTools, cwd: SANDBOX });
+
+    try {
+      // This is the whole SDK surface: hand it a prompt + options, and iterate
+      // the messages it streams back. No manual tool loop — the SDK runs it.
+      for await (const message of query({
+        prompt,
+        options: {
+          cwd: SANDBOX,
+          // `canUseTool` is our single permission gate: it enforces the preset's
+          // tool allow-list AND jails every file path to the sandbox. We do NOT
+          // pass `allowedTools` here, because pre-approved tools skip this guard.
+          canUseTool: makeGuard(allowedTools, SANDBOX),
+          // Don't inherit ~/.claude or project permissions — the guard is the
+          // whole policy, so the POC behaves the same on any machine.
+          settingSources: [],
+        },
+      })) {
+        await send("message", message);
+      }
+      await send("done", { ok: true });
+    } catch (err) {
+      await send("error", { message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+});
+
+const port = Number(process.env.PORT ?? 8787);
+serve({ fetch: app.fetch, port });
+console.log(`\n🤖  Agentic-dev POC server → http://localhost:${port}`);
+console.log(`📁  Agent sandbox → ${SANDBOX}\n`);
+</script>
+
+    <script type="text/plain" data-name="server/guard.ts">
+import { resolve, sep } from "node:path";
+import type { CanUseTool } from "@anthropic-ai/claude-agent-sdk";
+
+// Tool inputs that carry a filesystem path we must keep inside the sandbox.
+const PATH_KEYS = ["file_path", "path", "notebook_path"];
+
+function isInside(sandbox: string, candidate: string): boolean {
+  // Relative paths resolve against the sandbox (the agent's cwd); absolute
+  // paths resolve to themselves — so "/tmp/x" is caught, "notes.md" is fine.
+  const abs = resolve(sandbox, candidate);
+  return abs === sandbox || abs.startsWith(sandbox + sep);
+}
+
+/**
+ * The single decision point for every tool the agent tries to use.
+ *
+ * `canUseTool` is the SDK's programmatic permission handler — it runs INSTEAD
+ * of an interactive human prompt. We use it to enforce two rules:
+ *   1. only the tools in the chosen preset are allowed, and
+ *   2. any file the agent touches must live inside the sandbox.
+ *
+ * This is the real security boundary. `cwd` alone does NOT stop the agent from
+ * writing to an absolute path like /tmp/x — this guard does.
+ */
+export function makeGuard(allowedTools: string[], sandbox: string): CanUseTool {
+  return async (toolName, input) => {
+    if (!allowedTools.includes(toolName)) {
+      return {
+        behavior: "deny",
+        message: `Tool "${toolName}" is not enabled for this preset. Allowed: ${allowedTools.join(", ")}.`,
+      };
+    }
+
+    for (const key of PATH_KEYS) {
+      const value = input[key];
+      if (typeof value === "string" && !isInside(sandbox, value)) {
+        return {
+          behavior: "deny",
+          message: `Path "${value}" is outside the sandbox. Use a path relative to the working directory instead.`,
+        };
+      }
+    }
+
+    return { behavior: "allow" };
+  };
+}
+</script>
+
+    <script type="text/plain" data-name="server/middleware.ts">
+import type { MiddlewareHandler } from "hono";
+
+/**
+ * Custom Hono middleware #1 — request logging + timing.
+ *
+ * Middleware in Hono is a function `(c, next) => {}`. Code before `await next()`
+ * runs on the way IN; code after runs on the way OUT. This is the exact spot
+ * where you'd attach tracing, metrics, or per-request context for an agent app.
+ */
+export const requestLogger: MiddlewareHandler = async (c, next) => {
+  const start = Date.now();
+  await next();
+  const ms = Date.now() - start;
+  console.log(
+    `${c.req.method} ${c.req.path} -> ${c.res.status} (${ms}ms)`
+  );
+};
+
+/**
+ * Custom Hono middleware #2 — optional shared-secret gate.
+ *
+ * Demonstrates a middleware that can SHORT-CIRCUIT the request: if a token is
+ * configured and the header doesn't match, we return 401 and never reach the
+ * agent. In a real deployment this is where auth / rate-limiting / quota lives,
+ * so an autonomous agent never runs for an untrusted caller.
+ *
+ * No-op unless POC_TOKEN is set in the environment.
+ */
+export const requireApiToken: MiddlewareHandler = async (c, next) => {
+  const expected = process.env.POC_TOKEN;
+  if (expected) {
+    const got = c.req.header("x-poc-token");
+    if (got !== expected) {
+      return c.json({ error: "unauthorized" }, 401);
+    }
+  }
+  await next();
+};
+</script>
+
+    <script type="text/plain" data-name="web/src/api.ts">
+// Minimal SSE-over-fetch client.
+//
+// The browser's built-in EventSource only supports GET, but we need to POST a
+// prompt. So we POST with fetch, read the response body as a stream, and parse
+// the `event:` / `data:` SSE frames ourselves.
+
+export type SSEHandler = (event: string, data: any) => void;
+
+export async function streamAgent(
+  prompt: string,
+  preset: string,
+  onEvent: SSEHandler,
+  signal?: AbortSignal
+): Promise<void> {
+  const res = await fetch("/api/agent", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, preset }),
+    signal,
+  });
+
+  if (!res.ok || !res.body) {
+    throw new Error(`Server returned ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // SSE frames are separated by a blank line.
+    let idx: number;
+    while ((idx = buffer.indexOf("\n\n")) !== -1) {
+      const frame = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+
+      let event = "message";
+      const dataLines: string[] = [];
+      for (const line of frame.split("\n")) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+      }
+      if (dataLines.length) {
+        try {
+          onEvent(event, JSON.parse(dataLines.join("\n")));
+        } catch {
+          onEvent(event, dataLines.join("\n"));
+        }
+      }
+    }
+  }
+}
+</script>
+  </section>
+
   <!-- LINKS -->
   <section class="section">
     <h3>Go deeper</h3>
@@ -538,6 +842,48 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
   document.getElementById('resetBtn').onclick=function(){
     fs=1; applyFS(fs); applyTheme('dark');
     localStorage.removeItem(LS_F); localStorage.removeItem(LS_T);
+  };
+})();
+</script>
+
+<!-- syntax highlighting for the code viewer (Prism from CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+<script>
+(function(){
+  var srcs=Array.prototype.slice.call(document.querySelectorAll('script[type="text/plain"][data-name]'));
+  var panes=Array.prototype.slice.call(document.querySelectorAll('.ed-pane'));
+  var tabs=Array.prototype.slice.call(document.querySelectorAll('.ed-tab'));
+  var codes=panes.map(function(p){ return p.querySelector('code'); });
+  var texts=srcs.map(function(s){ return s.textContent.replace(/^\n/,'').replace(/\s+$/,'')+'\n'; });
+  var done=[];
+
+  texts.forEach(function(t,i){ if(codes[i]) codes[i].textContent=t; });
+  function highlight(i){
+    if(done[i]||!codes[i]) return;
+    if(window.Prism) Prism.highlightElement(codes[i]);   // visible pane → line numbers count right
+    done[i]=true;
+  }
+  highlight(0);
+
+  function activate(i){
+    tabs.forEach(function(t,j){ t.classList.toggle('active', j===i); });
+    panes.forEach(function(p,j){ p.classList.toggle('active', j===i); });
+    highlight(i);
+    var b=document.getElementById('edCopy'); if(b){ b.textContent='Copy'; }
+  }
+  tabs.forEach(function(t,i){ t.onclick=function(){ activate(i); }; });
+
+  var copyBtn=document.getElementById('edCopy');
+  if(copyBtn) copyBtn.onclick=function(){
+    var i=0; tabs.forEach(function(t,j){ if(t.classList.contains('active')) i=j; });
+    (navigator.clipboard ? navigator.clipboard.writeText(texts[i]) : Promise.reject()).then(function(){
+      copyBtn.textContent='Copied!'; setTimeout(function(){ copyBtn.textContent='Copy'; }, 1300);
+    }).catch(function(){ copyBtn.textContent='Copy failed'; setTimeout(function(){ copyBtn.textContent='Copy'; }, 1300); });
   };
 })();
 </script>
