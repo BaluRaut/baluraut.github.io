@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code for the Team — A 13-Seat Enablement Guide</title>
+<meta name="description" content="How to turn 13 Claude Max seats into 13 adopters: the shared .claude/ directory, five starter workflows, a two-week rollout, and the awareness plan that makes access become adoption.">
+<style>
+:root{
+  --fs:1;
+  /* dark theme (default) */
+  --bg:#0b0e14; --panel:#11151f; --card:#121826; --card2:#0f1420;
+  --border:#242c3d; --border2:#2e3850;
+  --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488; --prose:#c2ccdb;
+  --g1:#241611; --g2:#101c2e;
+  --kicker-bg:#1a110d; --kicker-bd:#43302a;
+  --code-bg:#0c1018; --code-text:#c9d3e3; --code-in:#f0a98c;
+  --thead-bg:#0e1420;
+  --na-bg:#160f10; --na-bd:#3a2224; --na-title:#fca5a5;
+  --cl:#d97757; --violet:#a78bfa; --cyan:#22d3ee; --green:#4ade80; --amber:#ff9d2e; --pink:#f472b6; --red:#ef4444;
+}
+[data-theme="light"]{
+  --bg:#f7f5f2; --panel:#ffffff; --card:#ffffff; --card2:#f2efe9;
+  --border:#e4ded4; --border2:#d5cfc2;
+  --text:#241f1a; --muted:#6b6355; --dim:#8f8676; --prose:#3a342c;
+  --g1:#f1e7de; --g2:#e6ecf3;
+  --kicker-bg:#f4e8e1; --kicker-bd:#e6cdbf;
+  --code-bg:#1b2130; --code-text:#c9d3e3; --code-in:#b4502f;
+  --thead-bg:#f2efe9;
+  --na-bg:#fbeeee; --na-bd:#f0d4d4; --na-title:#b4342f;
+}
+[data-theme="sepia"]{
+  --bg:#f2e7cf; --panel:#fbf3e1; --card:#fbf3e1; --card2:#efe2c6;
+  --border:#e1d1ae; --border2:#d3c096;
+  --text:#3a2f1c; --muted:#7a6a4c; --dim:#9c8b68; --prose:#4a3d26;
+  --g1:#eaddbe; --g2:#e8dcc0;
+  --kicker-bg:#efe0c4; --kicker-bd:#d8c39c;
+  --code-bg:#2c2415; --code-text:#e8dcc2; --code-in:#a35a2a;
+  --thead-bg:#efe2c6;
+  --na-bg:#f6e2cf; --na-bd:#e3c5a6; --na-title:#a1442a;
+}
+[data-theme="contrast"]{
+  --bg:#000000; --panel:#000000; --card:#0a0a0a; --card2:#000000;
+  --border:#ffffff; --border2:#ffffff;
+  --text:#ffffff; --muted:#ececec; --dim:#cccccc; --prose:#ffffff;
+  --g1:#000000; --g2:#000000;
+  --kicker-bg:#000000; --kicker-bd:#ffffff;
+  --code-bg:#000000; --code-text:#ffffff; --code-in:#ffd8a8;
+  --thead-bg:#000000;
+  --na-bg:#000000; --na-bd:#ffffff; --na-title:#ff8787;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html{scroll-behavior:smooth; font-size:calc(16px * var(--fs))}
+body{
+  background:
+    radial-gradient(1100px 520px at 15% -8%, var(--g1) 0%, transparent 55%),
+    radial-gradient(1000px 460px at 88% -12%, var(--g2) 0%, transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.6; font-size:1rem; min-height:100vh;
+  transition:background-color .2s ease, color .2s ease;
+}
+.wrap{max-width:1000px; margin:0 auto; padding:0 20px 100px}
+a{color:var(--cl)}
+
+.nav{max-width:1000px; margin:0 auto; padding:20px; display:flex; justify-content:space-between; align-items:center; font-size:.85rem; flex-wrap:wrap; gap:8px}
+.nav a{color:var(--muted); text-decoration:none}
+.nav a:hover{color:var(--text)}
+.badge{font-family:ui-monospace,Menlo,monospace; color:var(--dim)}
+
+.hero{padding:60px 0 18px; text-align:center}
+.kicker{
+  display:inline-block; font-size:.72rem; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--cl); border:1px solid var(--kicker-bd); background:var(--kicker-bg);
+  padding:6px 15px; border-radius:999px; font-weight:600;
+}
+h1{
+  font-size:3rem; margin:22px 0 14px; letter-spacing:-.028em; line-height:1.06;
+  background:linear-gradient(100deg,#d97757,#f472b6 42%,#a78bfa 78%,#22d3ee);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+@media(max-width:560px){h1{font-size:2.05rem}}
+.lede{color:var(--muted); max-width:700px; margin:0 auto 26px; font-size:1.08rem}
+.stats{display:flex; gap:30px; justify-content:center; flex-wrap:wrap; margin-top:14px}
+.stat{text-align:center}
+.stat b{display:block; font-size:1.6rem; font-weight:800; color:var(--text); line-height:1.1}
+.stat span{font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--dim)}
+
+.section{margin-top:60px}
+.section > h3{
+  font-size:.82rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+  font-weight:700; display:flex; align-items:center; gap:12px; margin-bottom:20px;
+}
+.section > h3::before{content:""; width:26px; height:3px; background:var(--cl); border-radius:2px}
+
+.panel{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px 26px; color:var(--prose); font-size:1rem}
+.panel p{margin:0 0 14px}
+.panel p:last-child{margin:0}
+.panel b{color:var(--text)}
+.tldr{border-left:3px solid var(--cl)}
+
+code{font-family:ui-monospace,Menlo,monospace; font-size:.85em; background:var(--code-bg); border:1px solid var(--border); padding:1px 6px; border-radius:5px; color:var(--code-in)}
+
+.tablewrap{overflow-x:auto; border:1px solid var(--border); border-radius:14px}
+table{border-collapse:collapse; width:100%; min-width:560px; font-size:.92rem}
+th,td{text-align:left; padding:13px 16px; border-bottom:1px solid var(--border); vertical-align:top}
+thead th{background:var(--thead-bg); color:var(--text); font-size:.78rem; letter-spacing:.05em; text-transform:uppercase}
+tbody tr:last-child td{border-bottom:none}
+td:first-child{color:var(--text); font-weight:600; white-space:nowrap}
+td code{white-space:nowrap}
+
+/* workflow cards */
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.cap{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px 22px; transition:.18s}
+.cap:hover{transform:translateY(-3px); border-color:var(--ac); box-shadow:0 12px 40px -20px var(--ac)}
+.cap .ic{font-size:1.4rem; display:block; margin-bottom:10px}
+.cap h4{font-size:1.05rem; margin-bottom:5px; color:var(--ac)}
+.cap p{font-size:.9rem; color:var(--muted)}
+.cap .cmd{font-family:ui-monospace,Menlo,monospace; font-size:.78rem; color:var(--dim); margin-top:8px}
+.cl-{--ac:var(--cl)} .v-{--ac:var(--violet)} .cy-{--ac:var(--cyan)} .gr-{--ac:var(--green)} .am-{--ac:var(--amber)} .pk-{--ac:var(--pink)}
+
+/* rollout timeline */
+.path{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+@media(max-width:720px){.path{grid-template-columns:1fr}}
+.step{background:var(--card); border:1px solid var(--border); border-top:3px solid var(--cl); border-radius:12px; padding:18px 20px}
+.step .n{font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:var(--cl); font-weight:700; margin-bottom:8px}
+.step h4{font-size:1rem; margin-bottom:8px; color:var(--text)}
+.step ul{list-style:none; display:flex; flex-direction:column; gap:7px}
+.step li{font-size:.86rem; color:var(--muted); padding-left:16px; position:relative}
+.step li::before{content:"→"; position:absolute; left:0; color:var(--cl)}
+
+/* checklist */
+.check{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:8px 22px}
+.check li{list-style:none; display:flex; gap:11px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--border); font-size:.94rem; color:var(--prose)}
+.check li:last-child{border-bottom:none}
+.check .bx{flex:0 0 auto; width:18px; height:18px; border:2px solid var(--cl); border-radius:5px; margin-top:2px}
+.check b{color:var(--text)}
+
+/* insight callout */
+.big{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--amber); border-radius:12px; padding:20px 24px; font-size:1.02rem; color:var(--prose)}
+.big b{color:var(--text)}
+
+.foot{margin-top:70px; padding-top:26px; border-top:1px solid var(--border); text-align:center; color:var(--dim); font-size:.85rem}
+.foot a{color:var(--muted); text-decoration:none}
+.foot a:hover{color:var(--text)}
+
+/* floating reader-settings button + popover */
+.a11y-fab{position:fixed; right:20px; bottom:20px; z-index:200}
+.a11y-toggle{height:54px; width:54px; border-radius:50%; border:2px solid var(--bg); background:var(--cl); color:#1a0e08; font-weight:800; font-size:1.15rem; cursor:pointer; box-shadow:0 8px 24px -6px rgba(0,0,0,.5); display:grid; place-items:center; transition:transform .15s ease; line-height:1}
+.a11y-toggle:hover{transform:scale(1.07)}
+.a11y-toggle:focus-visible{outline:3px solid var(--cyan); outline-offset:2px}
+.a11y-panel{position:absolute; right:0; bottom:66px; width:266px; background:var(--panel); border:1px solid var(--border2); border-radius:16px; box-shadow:0 18px 50px -14px rgba(0,0,0,.6); padding:16px; display:none}
+.a11y-panel.open{display:block}
+.a11y-panel h5{margin:0 0 8px; font-size:.64rem; text-transform:uppercase; letter-spacing:.14em; color:var(--dim); font-weight:700}
+.a11y-row{display:flex; gap:8px; align-items:center; margin-bottom:16px}
+.a11y-btn{flex:1; padding:9px 0; border-radius:10px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-weight:700; cursor:pointer; font-size:.9rem}
+.a11y-btn:hover{border-color:var(--cl)}
+.a11y-size{min-width:52px; text-align:center; font-variant-numeric:tabular-nums; font-size:.82rem; color:var(--muted); font-weight:700}
+.a11y-themes{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:14px}
+.a11y-theme{padding:9px 8px; border-radius:10px; border:1px solid var(--border); cursor:pointer; font-size:.82rem; font-weight:600; color:var(--text); background:var(--card2); display:flex; align-items:center; gap:7px}
+.a11y-theme:hover{border-color:var(--cl)}
+.a11y-theme.active{border-color:var(--cl); box-shadow:0 0 0 2px var(--kicker-bg)}
+.a11y-swatch{height:14px; width:14px; border-radius:50%; border:1px solid var(--border2); flex:0 0 auto}
+@media print{.a11y-fab{display:none!important}}
+</style>
+</head>
+<body>
+<script>
+(function(){try{var r=document.documentElement;var t=localStorage.getItem('claudeTheme');if(t&&t!=='dark')r.setAttribute('data-theme',t);var f=parseFloat(localStorage.getItem('claudeFS'));if(f)r.style.setProperty('--fs',f);}catch(e){}})();
+</script>
+
+<div class="nav">
+  <a href="../">← The Backend Engineer's Field Library</a>
+  <span class="badge"><a href="../claude/">what is the Agent SDK ↗</a> &nbsp;·&nbsp; baluraut.github.io/claude-team</span>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="kicker">Team Enablement</span>
+    <h1>13 seats → 13 adopters.</h1>
+    <p class="lede">
+      You have Claude Max for the whole team. Access isn't the hard part — <b>adoption</b> is.
+      This is the playbook: the shared config that turns one engineer's setup into everyone's
+      baseline, five workflows to start with, and a two-week rollout that makes it stick.
+    </p>
+    <div class="stats">
+      <div class="stat"><b>13</b><span>Max seats</span></div>
+      <div class="stat"><b>1</b><span>shared .claude/</span></div>
+      <div class="stat"><b>2 wks</b><span>to rollout</span></div>
+    </div>
+  </header>
+
+  <!-- THE INSIGHT -->
+  <section class="section">
+    <h3>Start here — the one idea</h3>
+    <div class="big">
+      <b>Max removes the cost brake; a checked-in <code>.claude/</code> makes your best engineer's setup the team default.</b>
+      The subscription means all 13 of you can run Claude Code hard, all day, with no per-token billing anxiety —
+      and that anxiety is the #1 reason people use AI tooling timidly. Remove it, then put the real leverage in
+      version control: shared skills, memory, and commands that <i>every</i> agent on the team inherits.
+    </div>
+  </section>
+
+  <!-- SHARED .claude -->
+  <section class="section">
+    <h3>The shared <code>.claude/</code> directory</h3>
+    <p style="color:var(--muted); font-size:.95rem; margin-bottom:16px">Check this into every repo. One person writes it well; 13 people inherit it. This is the multiplier.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>What</th><th>What the team gets</th></tr></thead>
+        <tbody>
+          <tr><td><code>CLAUDE.md</code></td><td>Every agent knows the stack, conventions, "don't touch X," and how to run tests — nobody re-explains the codebase.</td></tr>
+          <tr><td><code>.claude/skills/</code></td><td>Your playbook knowledge (Rails, Postgres, security, DR) applied <i>automatically</i> at generation time — the skills experiment, shipped for real.</td></tr>
+          <tr><td><code>.claude/commands/</code></td><td>Shared slash commands the whole team can run — <code>/deploy</code>, <code>/review</code>, <code>/db-migrate</code>, <code>/runbook</code>.</td></tr>
+          <tr><td><code>settings.json</code> hooks</td><td>Auto-format, block dangerous commands, run the linter after every edit — enforced for everyone, not left to discipline.</td></tr>
+          <tr><td>MCP servers</td><td>Wire up GitHub, Linear/Jira, the DB, internal APIs <b>once</b> → every dev's agent can act on real systems.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel tldr" style="margin-top:16px">
+      <p style="margin:0">The whole game in one line: <b>generation-time quality (skills) + team consistency (checked-in config), for 13 people, from one source of truth.</b> You already have the head start — the <a href="https://github.com/BaluRaut/claude-code-skills">claude-code-skills</a> repo.</p>
+    </div>
+  </section>
+
+  <!-- 5 WORKFLOWS -->
+  <section class="section">
+    <h3>Five workflows to start with</h3>
+    <div class="grid">
+      <div class="cap cl-"><span class="ic">⌨️</span><h4>Daily driver</h4><p>Claude Code in the terminal and IDE (VS Code / JetBrains) on every repo — read, edit, run, commit.</p><div class="cmd">claude &nbsp;·&nbsp; the IDE extension</div></div>
+      <div class="cap v-"><span class="ic">🔍</span><h4>Pre-PR review</h4><p>A review habit before every PR; save the deep multi-agent pass for the scary branches.</p><div class="cmd">/code-review &nbsp;·&nbsp; /code-review ultra</div></div>
+      <div class="cap gr-"><span class="ic">🛡️</span><h4>Security &amp; ops</h4><p>Security review on sensitive diffs; read logs and run read-only diagnostics on call.</p><div class="cmd">/security-review</div></div>
+      <div class="cap am-"><span class="ic">🌙</span><h4>Scheduled agents</h4><p>Nightly dependency bumps, PR babysitting, a "what broke overnight" report — cron in the cloud.</p><div class="cmd">/schedule</div></div>
+      <div class="cap cy-"><span class="ic">🧵</span><h4>Big migrations</h4><p>Fan out subagents across files and verify in parallel — Rails upgrades, codemods, sweeps.</p><div class="cmd">subagents · workflows</div></div>
+      <div class="cap pk-"><span class="ic">📝</span><h4>Think &amp; write</h4><p>Design docs, RFCs, incident write-ups, and diagrams in Claude on web &amp; desktop.</p><div class="cmd">claude.ai · desktop app</div></div>
+    </div>
+  </section>
+
+  <!-- ROLLOUT -->
+  <section class="section">
+    <h3>The two-week rollout</h3>
+    <div class="path">
+      <div class="step">
+        <div class="n">Week 0 · Seed</div>
+        <h4>Make the setup real</h4>
+        <ul>
+          <li>Add <code>CLAUDE.md</code> + a starter <code>.claude/</code> to your top 2–3 repos</li>
+          <li>Wire one MCP server everyone needs (GitHub / Linear)</li>
+          <li>Pick 3 champions who already "get it"</li>
+        </ul>
+      </div>
+      <div class="step">
+        <div class="n">Week 1 · Show</div>
+        <h4>Convert the skeptics</h4>
+        <ul>
+          <li>45-min live demo: drive a <i>real</i> ticket end to end</li>
+          <li>Open a <code>#claude-wins</code> channel</li>
+          <li>Ship the "5 things to try this week" note</li>
+        </ul>
+      </div>
+      <div class="step">
+        <div class="n">Week 2 · Stick</div>
+        <h4>Make it a habit</h4>
+        <ul>
+          <li>30-min weekly office hours (champions unblock everyone)</li>
+          <li>Everyone contributes one skill / CLAUDE.md improvement</li>
+          <li>Run a with-skills vs without A/B; share the delta</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- AWARENESS -->
+  <section class="section">
+    <h3>Access ≠ adoption — manufacture the awareness</h3>
+    <ul class="check">
+      <li><span class="bx"></span><span><b>Live demo, real code.</b> Nothing converts a skeptic like watching it fix an actual bug and open the PR. Not slides — a terminal.</span></li>
+      <li><span class="bx"></span><span><b>A <code>#claude-wins</code> channel.</b> Social proof compounds. One good win spawns five imitators; keep them visible.</span></li>
+      <li><span class="bx"></span><span><b>The skills repo as a team asset.</b> Everyone contributes improvements — adoption is a culture, not a license count.</span></li>
+      <li><span class="bx"></span><span><b>Weekly office hours.</b> The 3 who get it unblock the 10 who don't. Adoption is a mentoring problem.</span></li>
+      <li><span class="bx"></span><span><b>A friendly internal experiment.</b> Data beats hype — run <a href="https://github.com/BaluRaut/claude-code-skills-experiment">with-skills vs without</a> on a real feature and post the result.</span></li>
+      <li><span class="bx"></span><span><b>Five starter workflows, documented.</b> Kill the blank-page problem — tell people exactly what to try first.</span></li>
+    </ul>
+  </section>
+
+  <!-- CLOSE -->
+  <section class="section">
+    <h3>The one-sentence version</h3>
+    <div class="big" style="border-left-color:var(--cl)">
+      <b>Max removes the cost brake; a checked-in <code>.claude/</code> turns your best engineer's setup into the team's baseline; and a demo + a wins channel + office hours turns 13 licenses into 13 adopters.</b>
+      The tooling is the easy part — the awareness and shared config are the work.
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <p style="margin:0">
+        📖 <a href="../claude/">What the Agent SDK is &amp; when to use it</a> &nbsp;·&nbsp;
+        🧰 <a href="https://github.com/BaluRaut/claude-code-skills">claude-code-skills (templates &amp; rollout)</a> &nbsp;·&nbsp;
+        🧪 <a href="https://github.com/BaluRaut/claude-code-skills-experiment">the skills A/B/C experiment</a> &nbsp;·&nbsp;
+        📚 <a href="https://code.claude.com/docs/">Claude Code docs</a>
+      </p>
+    </div>
+  </section>
+
+  <div class="foot">
+    A team field note · <a href="../">Back to the Field Library</a> · <a href="../claude/">The Claude Agent SDK</a>
+  </div>
+
+</div>
+
+<div class="a11y-fab">
+  <div class="a11y-panel" id="a11yPanel" role="dialog" aria-label="Reading settings">
+    <h5>Text size</h5>
+    <div class="a11y-row">
+      <button class="a11y-btn" id="fsDown" aria-label="Decrease text size">A&minus;</button>
+      <span class="a11y-size" id="fsVal">100%</span>
+      <button class="a11y-btn" id="fsUp" aria-label="Increase text size">A+</button>
+    </div>
+    <h5>Color theme</h5>
+    <div class="a11y-themes">
+      <button class="a11y-theme" data-theme-btn="dark"><span class="a11y-swatch" style="background:#0b0e14"></span>Dark</button>
+      <button class="a11y-theme" data-theme-btn="light"><span class="a11y-swatch" style="background:#f7f5f2"></span>Light</button>
+      <button class="a11y-theme" data-theme-btn="sepia"><span class="a11y-swatch" style="background:#f2e7cf"></span>Sepia</button>
+      <button class="a11y-theme" data-theme-btn="contrast"><span class="a11y-swatch" style="background:#000;border-color:#fff"></span>Contrast</button>
+    </div>
+    <div class="a11y-row" style="margin-bottom:0">
+      <button class="a11y-btn" id="resetBtn">Reset</button>
+    </div>
+  </div>
+  <button class="a11y-toggle" id="a11yToggle" aria-label="Open reading settings" aria-expanded="false" title="Reading settings">Aa</button>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var LS_T='claudeTheme', LS_F='claudeFS';
+  var MIN=0.85, MAX=1.6, STEP=0.075;
+  var themeBtns=document.querySelectorAll('[data-theme-btn]');
+  var panel=document.getElementById('a11yPanel');
+  var toggle=document.getElementById('a11yToggle');
+  function applyFS(v){ root.style.setProperty('--fs', v); document.getElementById('fsVal').textContent=Math.round(v*100)+'%'; }
+  function applyTheme(t){
+    if(t && t!=='dark') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
+    themeBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-theme-btn')===(t||'dark')); });
+  }
+  var fs=parseFloat(localStorage.getItem(LS_F))||1;
+  var th=localStorage.getItem(LS_T)||'dark';
+  applyFS(fs); applyTheme(th);
+  function setOpen(o){ panel.classList.toggle('open', o); toggle.setAttribute('aria-expanded', o?'true':'false'); }
+  toggle.onclick=function(e){ e.stopPropagation(); setOpen(!panel.classList.contains('open')); };
+  document.addEventListener('click', function(e){ if(!panel.contains(e.target) && e.target!==toggle) setOpen(false); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') setOpen(false); });
+  document.getElementById('fsUp').onclick=function(){ fs=Math.min(MAX,fs+STEP); applyFS(fs); localStorage.setItem(LS_F,fs); };
+  document.getElementById('fsDown').onclick=function(){ fs=Math.max(MIN,fs-STEP); applyFS(fs); localStorage.setItem(LS_F,fs); };
+  themeBtns.forEach(function(b){ b.onclick=function(){ var t=b.getAttribute('data-theme-btn'); applyTheme(t); localStorage.setItem(LS_T,t); }; });
+  document.getElementById('resetBtn').onclick=function(){ fs=1; applyFS(fs); applyTheme('dark'); localStorage.removeItem(LS_F); localStorage.removeItem(LS_T); };
+})();
+</script>
+
+</body>
+</html>
