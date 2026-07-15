@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strategy पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Strategy डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शक: एका समान interface मागे अदलाबदल करता येणारे algorithms परिभाषित करणे, runtime ला एक निवडणे, conditionals ऐवजी composition, functional strategies, प्रत्यक्ष Java आणि TypeScript कोड, sequence diagrams, आणि हे State व Template Method पेक्षा कसे वेगळे आहे." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>Strategy पॅटर्न - caller ला हात न लावता algorithms अदलाबदल करा</h1>
+      <p class="lede">काही कोडला तेच काम अनेक प्रकारे करावे लागते: card ने किंवा PayPal ने पैसे भरणे, किंमतीनुसार किंवा rating नुसार sort करणे, zip किंवा gzip ने compress करणे. Strategy प्रत्येक प्रकाराला एका <strong>समान interface</strong> मागे वेगळा object म्हणून पकडते, आणि मग तुम्हाला <strong>runtime ला एक निवडू</strong> देते. Client तसेच काम करत राहतो, तर तो वापरत असलेले वर्तन एक plug-in बनते जे तुम्ही जोडू, बदलू किंवा स्वतंत्रपणे test करू शकता.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">पूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">समान interface</span>
+        <span class="pill">Conditionals ऐवजी composition</span>
+        <span class="pill">Runtime निवड</span>
+        <span class="pill">Strategies म्हणून lambdas</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Strategy पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Strategy</strong> algorithms च्या एका कुटुंबाला परिभाषित करते, प्रत्येकाला त्याच्या स्वतःच्या class मध्ये encapsulate करते, आणि एका सामायिक interface मागे त्यांना अदलाबदल करण्यायोग्य बनवते. ज्या object ला काम हवे असते (तो <em>context</em>) एका strategy चा reference धरून ठेवतो आणि त्याला delegate करतो, त्यामुळे algorithm हे त्याचा वापर करणाऱ्या कोडपासून स्वतंत्रपणे बदलू शकते. एखादी गोष्ट <em>कशी</em> करायची हे ठरवणाऱ्या वाढत्या <code>if/else</code> च्या साखळीऐवजी, तुम्ही context ला एक असा object देता जो ते कसे करायचे हे आधीच जाणतो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Strategy interface</h4>
+          <p>एकच method (किंवा लहान संच) जी प्रत्येक algorithm अंमलात आणते. हा तो contract आहे ज्यावर context अवलंबून असतो, कधीही concrete classes वर नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Concrete strategies</h4>
+          <p>अदलाबदल करता येणाऱ्या implementations - card payment, gzip compression, price sort. प्रत्येक स्वयंपूर्ण आणि स्वतःच testable आहे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Context</h4>
+          <p>एक strategy धरून ठेवतो आणि तिला delegate करतो. तो एक setter उघड करतो किंवा strategy आपल्या constructor मध्ये घेतो, आणि मग त्याच्याकडे कोणती आहे याची कधीच पर्वा करत नाही.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>भूमिका</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Strategy interface</strong></td><td>सर्व algorithms पाळतात असा समान contract</td><td><code>PaymentStrategy.pay(amount)</code></td></tr>
+            <tr><td><strong>Concrete strategy</strong></td><td>एका विशिष्ट algorithm ची implementation</td><td><code>CreditCardPayment</code>, <code>PayPalPayment</code></td></tr>
+            <tr><td><strong>Context</strong></td><td>Interface मार्फत एक strategy वापरतो</td><td><code>PaymentStrategy</code> धरणारा <code>Checkout</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Concrete strategy निवडतो आणि inject करतो</td><td>सुरुवातीला <code>gzip</code> विरुद्ध <code>zip</code> जोडतो</td></tr>
+            <tr><td><strong>Selector</strong></td><td>Runtime ला input ला strategy शी जोडतो</td><td>User च्या निवडीने keyed केलेला registry किंवा factory</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Strategy एका क्रियापदाला नामात बदलते. "मी कसे sort/pay/compress करावे?" हे एका method आतील branch राहण्याऐवजी असा object बनते जो तुम्ही इकडून तिकडे पाठवू, अदलाबदल करू आणि unit test करू शकता. Context <em>काय</em> विचारतो, strategy <em>कसे</em> ते सांभाळते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Strategy पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">पर्याय म्हणजे एक अशी method जी प्रत्येक वेळी नवीन variant आल्यावर नवीन <code>if</code> branch वाढवते. ती method open/closed तत्त्वाचे उल्लंघन करते, असंबंधित logic एकत्र मिसळते, आणि तुकड्यांमध्ये test करणे अशक्य बनते. Strategy प्रत्येक variant ला त्याच्या स्वतःच्या object मध्ये बाहेर काढते जेणेकरून caller ला edit न करता वर्तन बदलू शकते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🚫 Conditional पसरणे थांबवते</h4><p>"Type" वरील जाड <code>switch</code> ला polymorphism ने बदलते. एक variant जोडणे म्हणजे एक class जोडणे, इतर प्रत्येक variant सामायिक करत असलेली branch edit करणे नव्हे.</p></div>
+        <div class="card"><h4>🔓 विस्तारासाठी खुले</h4><p>नवीन algorithms context किंवा अस्तित्वातील strategies न बदलता जोडले जातात. बदलासाठी बंद, विस्तारासाठी खुले - व्यवहारात open/closed तत्त्व.</p></div>
+        <div class="card"><h4>🔁 Runtime ला अदलाबदल करता येते</h4><p>Program चालू असताना वर्तन बदला: config मधून compression level निवडा, load च्या आधारावर routing algorithm निवडा, प्रत्येक ग्राहकासाठी pricing नियम बदला.</p></div>
+        <div class="card"><h4>🧪 स्वतंत्र आणि testable</h4><p>प्रत्येक strategy एका कामाचा लहान एकक आहे, त्यामुळे तुम्ही algorithms स्वतंत्रपणे test करता आणि context test करताना त्यांना mock करता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Strategy समजावून</h2>
+      <p class="muted">तीच कल्पना, कल्पना करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ते लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे <strong>घरी जाण्याचा मार्ग निवडण्यासारखे</strong> आहे. चालणे, bus, किंवा bike सर्व तुम्हाला तिथे पोहोचवतात; हवामान आणि वेळेनुसार तुम्ही एक निवडता. गंतव्यस्थान (interface) निश्चित असते; पद्धत (strategy) अदलाबदल करण्यायोग्य असते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>हे <strong>argument म्हणून पाठवलेले function</strong> आहे. Sort कसे करायचे हे hardcode करण्याऐवजी, तुम्ही sorter ला एक comparator देता. तीच call site, वेगळे वर्तन, जो object पुरवतो त्याने ठरवलेले.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>card, contactless, किंवा wallet स्वीकारणाऱ्या <strong>payment terminal</strong> चा विचार करा. Cashier तेच "payment घ्या" पाऊल चालवतो; ग्राहक पद्धत निवडतो. Till ला प्रत्येक payment प्रकारासाठी branch लागत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🧳</span> रोजच्या जीवनातील आवृत्ती</h4><p>प्रवासासाठी <strong>power adapter</strong>. तुमचा laptop तसाच plug होतो; तुम्ही ज्या देशात आहात त्यासाठी wall prong बदलता. उपकरण तसेच राहते; फक्त plug ची strategy बदलते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे काम करते</h2>
+      <p class="muted">Strategy <strong>composition आणि delegation</strong> वर बांधलेली आहे. Context एका strategy चा <em>subclass असण्याऐवजी</em> तिला <em>धरून ठेवतो</em>, त्यामुळे algorithm एका वेगळ्या object मध्ये राहते जो client आपल्या इच्छेनुसार inject आणि बदलू शकतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔗</span> Composition, inheritance नव्हे</h4>
+          <p>Context एक strategy field धरतो आणि बदलणारे पाऊल तिला delegate करतो. वर्तन runtime ला objects जोडून एकत्र केले जाते, class hierarchy ने compile time ला निश्चित केले जात नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> Interface साठी program करा</h4>
+          <p>Context फक्त strategy interface वर अवलंबून असतो. Concrete algorithms त्याला दिसत नाहीत, आणि यामुळेच ते अदलाबदल करण्यायोग्य आणि स्वतंत्रपणे testable बनतात.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टिक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">रचना - context एका strategy interface ला delegate करतो, जी अनेक algorithms अंमलात आणतात</div>
+        <pre class="mermaid">
+classDiagram
+    class Checkout {
+      -PaymentStrategy strategy
+      +setStrategy(PaymentStrategy)
+      +pay(int amount)
+    }
+    class PaymentStrategy {
+      &lt;&lt;interface&gt;&gt;
+      +pay(int amount)
+    }
+    class CreditCardPayment {
+      +pay(int amount)
+    }
+    class PayPalPayment {
+      +pay(int amount)
+    }
+    class CryptoPayment {
+      +pay(int amount)
+    }
+    Checkout o--&gt; PaymentStrategy : delegates
+    PaymentStrategy &lt;|.. CreditCardPayment
+    PaymentStrategy &lt;|.. PayPalPayment
+    PaymentStrategy &lt;|.. CryptoPayment
+        </pre>
+      </div>
+
+      <h3>Java मधील एक वास्तववादी उदाहरण</h3>
+      <pre><code>// 1. The strategy interface - the common contract
+interface PaymentStrategy {
+    void pay(int amountCents);
+}
+
+// 2. Interchangeable concrete strategies
+class CreditCardPayment implements PaymentStrategy {
+    private final String number;
+    CreditCardPayment(String number) { this.number = number; }
+    public void pay(int amountCents) {
+        System.out.printf("Charged %d to card %s%n", amountCents, mask(number));
+    }
+    private String mask(String n) { return "****" + n.substring(n.length() - 4); }
+}
+
+class PayPalPayment implements PaymentStrategy {
+    private final String email;
+    PayPalPayment(String email) { this.email = email; }
+    public void pay(int amountCents) {
+        System.out.printf("Charged %d via PayPal (%s)%n", amountCents, email);
+    }
+}
+
+// 3. The context - delegates, never branches on payment type
+class Checkout {
+    private PaymentStrategy strategy;
+    void setStrategy(PaymentStrategy s) { this.strategy = s; }
+    void checkout(int amountCents) {
+        if (strategy == null) throw new IllegalStateException("No payment method");
+        strategy.pay(amountCents);   // the varying step, delegated
+    }
+}
+
+// 4. The client selects a strategy at runtime
+Checkout checkout = new Checkout();
+checkout.setStrategy(new CreditCardPayment("4242424242424242"));
+checkout.checkout(1999);
+
+checkout.setStrategy(new PayPalPayment("buyer@example.com")); // swap, same call
+checkout.checkout(1999);</code></pre>
+      <p class="muted">लक्षात घ्या की context मध्ये payment प्रकारावर <em>कोणतीही</em> conditional नाही. <code>CryptoPayment</code> जोडणे म्हणजे एक नवीन class लिहिणे - <code>Checkout</code> कधीच बदलत नाही. हेच composition ते काम करत आहे जे पूर्वी एक <code>switch</code> statement करत असे.</p>
+
+      <h3>Lambdas सह functional strategies (TypeScript)</h3>
+      <pre><code>// When a strategy is a single method, it is just a function type.
+type SortStrategy&lt;T&gt; = (a: T, b: T) =&gt; number;
+
+class ProductList {
+  constructor(private items: Product[]) {}
+  sortBy(strategy: SortStrategy&lt;Product&gt;): Product[] {
+    return [...this.items].sort(strategy);
+  }
+}
+
+// Strategies as plain lambdas - no class boilerplate needed
+const byPriceAsc:  SortStrategy&lt;Product&gt; = (a, b) =&gt; a.price - b.price;
+const byRatingDesc: SortStrategy&lt;Product&gt; = (a, b) =&gt; b.rating - a.rating;
+
+const list = new ProductList(catalog);
+list.sortBy(byPriceAsc);    // choose an algorithm at the call site
+list.sortBy(byRatingDesc);  // swap it freely
+
+// A registry makes runtime selection data-driven
+const sorters: Record&lt;string, SortStrategy&lt;Product&gt;&gt; = {
+  price:  byPriceAsc,
+  rating: byRatingDesc,
+};
+list.sortBy(sorters[userChoice] ?? byPriceAsc);</code></pre>
+      <p class="muted">आधुनिक भाषांमध्ये एका method ची strategy एका lambda मध्ये आटते. पॅटर्न तसाच आहे - interface, अदलाबदल करण्यायोग्य implementations, runtime निवड - पण एक functional interface (<code>Comparator</code>, <code>Runnable</code>, एक function type) class चा सोहळा काढून टाकते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एक strategy निवडणे, runtime ला एक अदलाबदल करणे, आणि inline पाठवलेली functional strategy.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Client एक concrete strategy निवडतो, context तिला delegate करतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Ctx as 📦 Checkout
+    participant Strat as ⚙️ CreditCardPayment
+
+    Client->>Strat: new CreditCardPayment(number)
+    Client->>Ctx: setStrategy(strategy)
+    Client->>Ctx: checkout(1999)
+    Ctx->>Strat: pay(1999)
+    Strat-->>Ctx: charge complete
+    Ctx-->>Client: order confirmed
+    Note over Ctx,Strat: Context never branches on payment type
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Runtime ला strategy अदलाबदल करणे, तोच context, तोच call</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Ctx as 📦 Checkout
+    participant CC as 💳 CreditCardPayment
+    participant PP as 🅿️ PayPalPayment
+
+    Client->>Ctx: setStrategy(creditCard)
+    Client->>Ctx: checkout(1999)
+    Ctx->>CC: pay(1999)
+    CC-->>Ctx: ok
+    Client->>Ctx: setStrategy(payPal)
+    Client->>Ctx: checkout(1999)
+    Ctx->>PP: pay(1999)
+    PP-->>Ctx: ok
+    Note over Client,Ctx: Behavior changed without editing Checkout
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Registry मधून निवडलेली आणि inline पाठवलेली functional strategy</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User as 👤 User
+    participant App as 🖥️ ProductList
+    participant Reg as 🗂️ Sorter registry
+    participant Fn as 🔧 Strategy fn
+
+    User->>App: request sort by choice
+    App->>Reg: lookup(choice)
+    alt choice known
+        Reg-->>App: strategy function
+    else unknown
+        Reg-->>App: default strategy
+    end
+    App->>Fn: sort(items, strategy)
+    Fn-->>App: ordered items
+    App-->>User: sorted list
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरीपायरीने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एक जाड conditional शोधण्यापासून अदलाबदल करण्यायोग्य, testable algorithms पाठवण्यापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">शोधा</span><h4>बदलणारे वर्तन लक्षात घ्या</h4><p>तुम्हाला एक अशी method सापडते जी तेच काम अनेक प्रकारे करते, "type" किंवा "mode" flag वर branch करते. ती branch म्हणजे तेच algorithm कुटुंब जे Strategy बाहेर काढेल.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">परिभाषित करा</span><h4>Strategy interface जाहीर करा</h4><p>Algorithms सामायिक करत असलेल्या एका operation ला नाव द्या, जसे <code>pay(amount)</code> किंवा <code>compress(data)</code>. ती किमान आणि कोणत्याही concrete तपशिलापासून मुक्त ठेवा.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">काढा</span><h4>प्रत्येक branch एका class मध्ये काढा</h4><p>Conditional ची प्रत्येक शाखा interface अंमलात आणणाऱ्या तिच्या स्वतःच्या concrete strategy मध्ये हलवा. एक algorithm, एक class, एक जबाबदारी.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">जोडा</span><h4>Context ला एक strategy field द्या</h4><p>Interface प्रकाराचे एक field आणि एक constructor किंवा setter जोडा. Context आता algorithm hardcode करण्याऐवजी एक strategy <em>धरून ठेवतो</em>.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Delegate करा</span><h4>Branch ला call ने बदला</h4><p>जुन्या <code>switch</code> ला <code>strategy.execute(...)</code> ने बदला. Context कोणते algorithm चालते हे जाणणे थांबवतो; तो फक्त delegate करतो.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Inject करा</span><h4>Client कडून strategy जोडा</h4><p>Client, factory, किंवा DI container एक concrete strategy निवडतो आणि ती आत पाठवतो. निवडीचे logic काठावर राहते, context आत नाही.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">निवडा</span><h4>Runtime input ला strategy शी जोडा</h4><p>User च्या निवडीने किंवा config ने keyed केलेला registry किंवा factory runtime ला algorithm निवडतो, mapping एका लहान, स्पष्ट जागी ठेवतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">सोपे करा</span><h4>लहान strategies lambdas मध्ये आटवा</h4><p>Interface ला एक method असल्यास, साध्या strategies lambdas किंवा function references म्हणून व्यक्त करा आणि class चा boilerplate टाकून द्या.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Test करा</span><h4>प्रत्येक algorithm एकट्याने unit test करा</h4><p>प्रत्येक strategy स्वतंत्र आहे, त्यामुळे तिला थेट test करा. Context ला एका stub strategy सह test करा जेणेकरून तो योग्यरित्या delegate करतो हे सिद्ध होईल.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">विस्तार करा</span><h4>Edits शिवाय variants जोडा</h4><p>नवीन algorithm म्हणजे selector मध्ये नोंदणी केलेला नवीन class किंवा lambda. Context आणि अस्तित्वातील strategies अस्पर्श राहतात - कृतीत open/closed.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पाठवा</span><h4>Production मध्ये वर्तन अदलाबदल करा</h4><p>Context चे शून्य redeploy करून config किंवा feature flags मार्फत algorithms बदला, आणि निवडीच्या logic मागे सुरक्षितपणे नवीन variants रोल आउट करा.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Strategy सोपी आहे, ज्यामुळे तिचा अतिवापर करणे किंवा चुकीच्या पद्धतीने जोडणे सोपे होते. या गोष्टींकडे लक्ष द्या.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪆 Strategy चा स्फोट</h4><p>कधीच न बदलणाऱ्या वर्तनासाठी, किंवा एकवेळच्या वापरासाठी class तयार करणे, फायद्याविना indirection जोडते. जेव्हा खरोखर, अनेक अदलाबदल करण्यायोग्य algorithms असतील - फक्त एक नव्हे - तेव्हाच Strategy कडे वळा.</p></div>
+        <div class="card"><h4>🔀 निवड पुन्हा आत आणणे</h4><p>कोणती strategy बांधायची हे ठरवण्यासाठी context अजूनही <code>switch</code> करत असेल, तर तुम्ही conditional हलवली, काढली नाही. निवड एका factory किंवा registry मध्ये ठेवा, context आत नाही.</p></div>
+        <div class="card"><h4>🧷 जाड interface</h4><p>Strategy interface मध्ये अनेक असंबंधित methods कोंबल्याने प्रत्येक algorithm ला ज्याची गरज नाही ते अंमलात आणावे लागते. Contract प्रत्यक्षात बदलणाऱ्या एका operation पुरता ठेवा.</p></div>
+        <div class="card"><h4>📤 खूप जास्त context पाठवणे</h4><p>Strategy ला संपूर्ण context object देणे त्यांना घट्ट जोडते. Algorithm ला लागणारा फक्त तेवढाच data parameters म्हणून पाठवा जेणेकरून strategies स्वतंत्र आणि पुनर्वापर करण्यायोग्य राहतील.</p></div>
+        <div class="card"><h4>🌀 State शी गोंधळ</h4><p>जिथे object ने स्वतःच वर्तनांमध्ये संक्रमण करावे तिथे Strategy वापरल्याने बाहेरून विचित्र switching होते. जर वर्तन बदल अंतर्गत आणि स्वयंचलित असेल, तर तुम्हाला State हवे.</p></div>
+        <div class="card"><h4>🧊 State असलेल्या सामायिक strategies</h4><p>एका सामायिक strategy instance ला बदलणारे per-call state दिल्याने ती अनेक threads किंवा requests मध्ये पुनर्वापरली गेल्यास race conditions होतात. Strategies stateless ठेवा किंवा प्रत्येक वापरासाठी एक तयार करा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS / TRADE-OFFS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Strategy थोड्याशा indirection च्या बदल्यात भरपूर लवचिकता देते. जेव्हा variants खरे असतात आणि वाढण्याची शक्यता असते तेव्हा ते वापरा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>Conditional पसरणे काढते, open/closed पाळते, runtime अदलाबदल सक्षम करते, प्रत्येक algorithm चे testing स्वतंत्र आणि सोपे करते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अधिक classes आणि indirection, एक निवडण्यासाठी clients ला strategies अस्तित्वात आहेत हे माहीत असावे लागते, वर्तन कधीच बदलत नसेल तेव्हा अनावश्यक.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>एक काम करण्याचे अनेक अदलाबदल करण्यायोग्य मार्ग असतील, संच वाढण्याची शक्यता असेल, किंवा तुम्हाला config किंवा input ने runtime ला वर्तन निवडावे लागेल.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>फक्त एकच algorithm असेल, variants कधीच बदलत नसतील, किंवा वर्तन संक्रमणे अंतर्गत आणि स्वयंचलित असतील (ते State आहे).</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>कमी. एक interface, N implementations, एक delegate करणारे field. एका method च्या strategies साठी lambdas ती आणखी कमी करतात.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>State (स्वयंचलित संक्रमणे), Template Method (निश्चित सांगाडा, inheritance), Decorator (वर्तन जोडण्यासाठी wrap), Factory Method (strategy तयार करा).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर तुम्ही एखादी गोष्ट <em>कशी</em> करायची हे ठरवण्यासाठी "type" वर <code>switch</code> लिहीत असाल, आणि तो switch सतत नवीन cases मिळवत असेल, तर Strategy कडे वळा. जर object ने स्वतःचे पुढील वर्तन ठरवावे, तर त्याऐवजी State कडे वळा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>वास्तविक जगातील case studies</h2>
+      <p class="muted">Production-शैलीच्या कोडमध्ये Strategy दाखवणारे तीन प्रातिनिधिक वापर.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Checkout ला payment प्रक्रिया</h3><div class="role">पॅटर्न: अदलाबदल करण्यायोग्य payment algorithms</div></div></div>
+        <p class="muted">एका e-commerce checkout ला card, PayPal, wallet, आणि नंतर buy-now-pay-later स्वीकारावे लागते, order flow ने प्रत्येकावर branch न करता.</p>
+        <ul>
+          <li>प्रत्येक provider एका <code>pay(amount)</code> method सह एक <code>PaymentStrategy</code> अंमलात आणतो.</li>
+          <li>एक registry user ने निवडलेल्या पद्धतीला runtime ला योग्य strategy शी जोडतो.</li>
+          <li>नवीन provider जोडणे म्हणजे एक नवीन class आणि एक registry नोंद, checkout अस्पर्श राहतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Checkout flow न बदलता किंवा पुन्हा test न करता नवीन payment पद्धती पाठवल्या जातात, आणि प्रत्येक provider स्वतंत्रपणे test केला जातो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗜️</span><div><h3>2 · Storage layer मध्ये pluggable compression</h3><div class="role">पॅटर्न: config किंवा content ने निवडलेले algorithm</div></div></div>
+        <p class="muted">एक file service uploads compress करते, पण सर्वोत्तम codec हा file प्रकार आणि tune करण्यायोग्य speed-विरुद्ध-ratio सेटिंगवर अवलंबून असतो.</p>
+        <ul>
+          <li>एक <code>Compressor</code> interface gzip, zstd, आणि एका no-op strategy ने अंमलात आणले जाते.</li>
+          <li>निवडलेली strategy configuration मधून येते, त्यामुळे operators redeploy न करता तिला tune करतात.</li>
+          <li>Benchmarks प्रत्येक strategy स्वतंत्रपणे चालवतात कारण कोणतीही storage context वर अवलंबून नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Team config मार्फत प्रत्येक bucket साठी codecs बदलते आणि upload pipeline मध्ये शून्य बदल करून zstd जोडते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔢</span><div><h3>3 · Product catalog मध्ये sorting आणि ranking</h3><div class="role">पॅटर्न: comparators म्हणून functional strategies</div></div></div>
+        <p class="muted">एक catalog page खरेदीदारांना किंमत, rating, relevance, किंवा नवीनतेनुसार sort करू देते, नवीन क्रमवारी वारंवार जोडल्या जातात.</p>
+        <ul>
+          <li>प्रत्येक क्रमवारी एक comparator lambda आहे, class चा boilerplate लागत नाही.</li>
+          <li>UI निवडीपासून comparator पर्यंतचे एक map प्रत्येक request साठी strategy निवडते.</li>
+          <li>Composite strategies chaining करून comparators एकत्र करतात (rating मग किंमत).</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Product managers sort पर्याय लहान, शुद्ध functions म्हणून जोडतात, प्रत्येक सहज unit test केलेले, page logic ला कोणताही धोका न देता.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Strategy हा सर्वात टिकाऊ पॅटर्नपैकी एक आहे कारण आधुनिक भाषा त्याला जवळपास मोफत बनवतात आणि dependency injection त्याला वर्तन बदलण्याचा default मार्ग बनवते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧬 Lambdas ने ते क्षुल्लक बनवले</h4><p>Functional interfaces आणि function types एका method च्या strategy ला एका ओळीच्या lambda मध्ये बदलतात, त्यामुळे जुन्या class overhead शिवाय पॅटर्न सर्वत्र दिसतो.</p></div>
+        <div class="card"><h4>💉 ते dependency injection ला शक्ती देते</h4><p>एका interface implementation ला inject करणे म्हणजे दुसऱ्या नावाने Strategy. DI containers नेहमीच concrete strategies contexts मध्ये जोडतात.</p></div>
+        <div class="card"><h4>🎚️ Feature flags मागे वर्तन</h4><p>Flag किंवा config ने strategy निवडल्याने teams caller redeploy न करता production मध्ये algorithm variants रोल आउट आणि A/B test करू शकतात.</p></div>
+        <div class="card"><h4>🔌 Plugin architectures</h4><p>विस्तारित करता येणाऱ्या systems एक strategy interface उघड करतात जेणेकरून तिसरे पक्ष सुरक्षितपणे नवीन algorithms - payment providers, exporters, validators - आत टाकू शकतात.</p></div>
+        <div class="card"><h4>⚡ रचनेने testable</h4><p>स्वतंत्र strategies unit testing आणि mocking मध्ये अगदी चपखल बसतात, म्हणूनच जलद, केंद्रित tests ला महत्त्व देणाऱ्या codebases मध्ये त्यांना पसंती दिली जाते.</p></div>
+        <div class="card"><h4>🧠 ML आणि pricing मधील policy objects</h4><p>Ranking, routing, आणि pricing "policies" या Strategy objects आहेत ज्या models आणि नियम विकसित होताना अदलाबदल केल्या जातात, आजूबाजूची system स्थिर ठेवतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Strategy हा तो मार्ग आहे ज्याने तुम्ही वर्तनाला first-class, अदलाबदल करण्यायोग्य गोष्ट बनवता. जेव्हा कधी logic च्या एका तुकड्याला अनेक अदलाबदल करण्यायोग्य implementations असतात, तेव्हा त्यांना एका interface मागे पकडल्याने तुमचा कोड नवीन variants साठी खुला राहतो आणि आधीच काम करणारे तोडण्यासाठी बंद राहतो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Strategy अनेक behavioral आणि structural patterns शेजारी बसते. लोक तिची सर्वात जास्त तुलना ज्यांच्याशी करतात ते हे आहेत.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../state/"><span class="ico">🔄</span><h4>State</h4><p>तीच रचना, पण object स्वतःची संक्रमणे चालवतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../template-method/"><span class="ico">🧱</span><h4>Template Method</h4><p>Composition नव्हे, तर निश्चित सांगाड्यात inheritance मार्फत पावले बदला.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎀</span><h4>Decorator</h4><p>Object बदलण्याऐवजी वर्तन जोडण्यासाठी त्याला wrap करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>तिचा class hardcode न करता योग्य strategy तयार करा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Strategy चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · तडजोडी · Case Studies · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coupling आणि Cohesion समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Coupling आणि cohesion यांचे सखोल, दृश्य मार्गदर्शन: ते काय आहेत, coupling चे प्रकार, cohesion चे स्तर, Law of Demeter, ते कसे मोजायचे (afferent/efferent coupling, LCOM), आणि coupling कमी करणारा आधी/नंतरचा कोड." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">प्रकरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP पाया</span>
+      <h1>Coupling आणि cohesion - बदलण्याची क्षमता ठरवणाऱ्या दोन शक्ती</h1>
+      <p class="lede">प्रत्येक डिझाइन दोन प्रश्नांवर जगते किंवा मरते: modules एकमेकांवर किती घट्टपणे अवलंबून असतात, आणि प्रत्येक module एका कामावर किती केंद्रित असते? <strong>कमी coupling</strong> म्हणजे इथला बदल तिथे लाट पसरवत नाही. <strong>उच्च cohesion</strong> म्हणजे एका module मधील सर्व गोष्टी एकत्र असतात. या दोन्ही गोष्टी बरोबर जमल्या की कोड लवचिक, चाचणीयोग्य आणि बदलण्यास स्वस्त राहतो.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">कमी coupling</span>
+        <span class="pill">उच्च cohesion</span>
+        <span class="pill">Law of Demeter</span>
+        <span class="pill">LCOM आणि fan-in/out</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Coupling आणि cohesion म्हणजे काय?</h2>
+      <p class="muted"><strong>Coupling</strong> हे मोजते की एक module दुसऱ्याच्या अंतर्गत भागांवर किती अवलंबून आहे, म्हणजेच त्यांच्यातील जोडणीची ताकद. <strong>Cohesion</strong> हे मोजते की एका module मधील घटक एका उद्देशाकडे किती घट्टपणे एकत्र आहेत. Larry Constable यांनी मांडलेले आणि Meilir Page-Jones यांनी परिष्कृत केलेले उत्कृष्ट ध्येय म्हणजे <em>कमी coupling आणि उच्च cohesion</em>: असे modules जे एकमेकांबद्दल शक्य तितके कमी जाणतात, आणि प्रत्येक नेमके एकच स्पष्ट काम करते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔗</span> Coupling (दरम्यान)</h4>
+          <p>module च्या सीमांच्या पलीकडील जोडण्यांचा हा गुणधर्म आहे. एका module ला दुसऱ्याच्या data, रचना किंवा control flow बद्दल जितके जास्त जाणावे लागते, तितके coupling जास्त आणि बदलाची लाट तितकी विस्तृत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧲</span> Cohesion (आतमध्ये)</h4>
+          <p>एका module चा हा गुणधर्म आहे. उच्च cohesion म्हणजे त्याच्या जबाबदाऱ्या संबंधित आहेत आणि अस्तित्वाचे एक स्पष्ट कारण पूर्ण करतात. कमी cohesion म्हणजे असंबंधित functions चे गोंधळलेले पोतडे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> ध्येय</h4>
+          <p>दरम्यान सैल, आत घट्ट. हे संयोजन बदल स्थानिक ठेवते: तुम्ही एका केंद्रित module ला स्पर्श करता, आणि त्यासोबत बाकी काहीही हलवावे लागत नाही.</p>
+        </div>
+      </div>
+
+      <h3>Coupling आणि cohesion एका दृष्टीक्षेपात</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तो कोणत्या प्रश्नाचे उत्तर देतो</th><th>तुम्हाला हवे असते</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Coupling</strong></td><td>module A हा module B च्या अंतर्गत भागांवर किती अवलंबून आहे?</td><td>शक्य तितके कमी (सैल)</td></tr>
+            <tr><td><strong>Cohesion</strong></td><td>या module चे भाग एकत्र असावेत का?</td><td>शक्य तितके जास्त (उच्च)</td></tr>
+            <tr><td><strong>दिशात्मकता</strong></td><td>अवलंबित्व स्थिर abstraction कडे निर्देश करते की अस्थिर तपशिलाकडे?</td><td>concretes कडे नाही, abstractions कडे निर्देश करा</td></tr>
+            <tr><td><strong>दृश्यमानता</strong></td><td>B वापरण्यासाठी A ला काय जाणावे लागते?</td><td>फक्त B चा सार्वजनिक करार</td></tr>
+            <tr><td><strong>बदलाची स्फोट-त्रिज्या</strong></td><td>B बदलल्यास किती modules ना पण बदलावे लागते?</td><td>आदर्शतः फक्त B</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> coupling आणि cohesion हे एका नाण्याच्या दोन बाजू आहेत. जबाबदाऱ्या केंद्रित modules मध्ये विभागल्याने cohesion वाढते, आणि ते नीट केल्यास सहसा त्याच वेळी coupling कमी होते. या दोन विरुद्ध गोष्टी समतोल साधायच्या नाहीत, तर दोन्ही एकत्रच अनुकूल कराव्यात.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Coupling आणि cohesion का महत्त्वाचे आहेत</h2>
+      <p class="muted">तुमचे software त्याच्या आयुष्यभर बदलण्यास किती खर्चिक असेल याचे सर्वात प्रबळ भाकीत या दोन शक्ती करतात. देखभालीचा बहुतांश त्रास अशा बदलामुळे उद्भवतो जो अपेक्षेपेक्षा जास्त दूरवर पसरला, म्हणजेच coupling खूप जास्त होते असे म्हणण्याचा दुसरा मार्ग.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ स्फोट-त्रिज्या मर्यादित ठेवते</h4><p>कमी coupling म्हणजे बदल स्थानिक राहतो. bug दुरुस्त करा किंवा एखादे अंमलबजावणी बदला, संपूर्ण codebase मध्ये पसरण्याऐवजी संपादन एका module च्या सीमेवर थांबते.</p></div>
+        <div class="card"><h4>🧪 चाचणी शक्य करते</h4><p>सैलपणे जोडलेला, cohesive unit साध्या fakes सह वेगळेपणाने चाचणीयोग्य असतो. घट्टपणे जोडलेला कोड एकच class तयार करण्यासाठी अर्धी system ओढून आणतो.</p></div>
+        <div class="card"><h4>🔁 पुनर्वापर आणि पर्याय सक्षम करते</h4><p>अरुंद करार असलेले cohesive module दुसऱ्या संदर्भात उचलता येते किंवा पूर्णपणे बदलता येते. कमी-cohesion असलेले modules त्यांच्या मूळ स्थानाला वेल्ड केलेले असतात.</p></div>
+        <div class="card"><h4>🧠 विचारांचा भार कमी करते</h4><p>उच्च cohesion म्हणजे एक file एकच गोष्ट करते, त्यामुळे संपूर्ण system डोक्यात न ठेवता तुम्ही तिच्याबद्दल विचार करू शकता. कमी धक्के, जलद onboarding.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह coupling आणि cohesion चे स्पष्टीकरण</h2>
+      <p class="muted">एकच कल्पना, तिची कल्पना करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटकन समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p><strong>गट प्रकल्पांचा</strong> विचार करा. उच्च cohesion म्हणजे प्रत्येक सहकाऱ्याने एक स्पष्ट भाग स्वतःकडे घेणे. कमी coupling म्हणजे आधीच एका सामायिक interface वर सहमत होणे जेणेकरून तुम्ही प्रत्येकजण एकटे काम करू शकता. घट्ट coupling म्हणजे जोपर्यंत दुसऱ्याने त्यांची slide नेमकी कशी format केली हे तुम्हाला दिसत नाही तोपर्यंत तुम्ही तुमची slide पूर्ण करू शकत नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>Cohesion म्हणजे <strong>single responsibility principle</strong> प्रत्यक्षात - एक class, बदलण्याचे एकच कारण. Coupling म्हणजे तुमची import यादी: तुमची class एका interface वर अवलंबून आहे, की ती <code>order.getCustomer().getAddress().getZip()</code> द्वारे तीन इतर objects मध्ये पोहोचते?</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>चांगल्या प्रकारे चालवलेल्या कंपनीत <strong>स्पष्ट अधिकार असलेले विभाग</strong> (cohesion) असतात जे एकमेकांच्या spreadsheets मध्ये घुसण्याऐवजी निश्चित प्रक्रियांद्वारे बोलतात (coupling). एका टीमची पुनर्रचना करताना दुसऱ्या टीमचे नियम पुन्हा लिहावे लागू नयेत.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> रोजच्या जीवनातील आवृत्ती</h4><p>भिंतीवरील sockets हे उदाहरण उत्तम. कोणतेही उपकरण त्याच <strong>प्रमाणित outlet</strong> मध्ये लावता येते (कराराद्वारे सैल coupling), आणि प्रत्येक उपकरण एक काम चांगले करते (cohesion). त्याऐवजी कल्पना करा की तुमचा दिवा fridge च्या circuit board मध्ये कायमचा जोडलेला असेल.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>Coupling आणि cohesion आतून कसे काम करतात</h2>
+      <p class="muted">Coupling श्रेणीबद्ध प्रकारांत येते, सर्वात वाईट (content) पासून सर्वोत्तम (data) पर्यंत. Cohesion श्रेणीबद्ध स्तरांत येते, सर्वात वाईट (coincidental) पासून सर्वोत्तम (functional) पर्यंत. डिझाइन म्हणजे या दोन्हींना प्रत्येक मापनश्रेणीच्या चांगल्या टोकाकडे नेण्याची कृती.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📉</span> Coupling चे प्रकार (वाईट ते चांगले)</h4>
+          <p><strong>Content</strong>: A हे B च्या खाजगी अंतर्गत भागांत पोहोचते. <strong>Common</strong>: सामायिक global/बदलणारी state. <strong>Control</strong>: A हे B ला काय करायचे हे सांगणारा flag पाठवते. <strong>Stamp</strong>: B ला एका field ची गरज असताना A संपूर्ण record पाठवते. <strong>Data</strong>: A फक्त B ला हव्या असलेल्या साध्या values पाठवते. data coupling चे ध्येय ठेवा.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📈</span> Cohesion चे स्तर (वाईट ते चांगले)</h4>
+          <p><strong>Coincidental</strong>: भाग असंबंधित. <strong>Logical</strong>: वर्गानुसार गटबद्ध. <strong>Temporal</strong>: एकाच वेळी चालतात. <strong>Procedural</strong>/<strong>Communicational</strong>: एक flow किंवा data सामायिक करतात. <strong>Sequential</strong>: output पुढच्याला पुरवते. <strong>Functional</strong>: सर्व भाग एका कामाची सेवा करतात. functional cohesion चे ध्येय ठेवा.</p>
+        </div>
+      </div>
+
+      <h3>रचना: dependency ची दिशा हेच सर्वस्व आहे</h3>
+      <div class="diagram">
+        <div class="cap">रचना - abstraction वर अवलंबून राहिल्याने coupling उलटते आणि सैल होते</div>
+        <pre class="mermaid">
+classDiagram
+    class OrderService {
+        +place(order)
+    }
+    class Notifier {
+        <<interface>>
+        +send(msg)
+    }
+    class EmailNotifier {
+        +send(msg)
+    }
+    class SmsNotifier {
+        +send(msg)
+    }
+    OrderService --> Notifier : depends on abstraction
+    Notifier <|.. EmailNotifier : implements
+    Notifier <|.. SmsNotifier : implements
+        </pre>
+      </div>
+
+      <h3>आधी आणि नंतर: Java मध्ये coupling कमी करणे</h3>
+      <pre><code>// BEFORE - tight coupling + low cohesion
+// OrderService reaches into concrete details (content/stamp coupling)
+// and mixes ordering logic with delivery mechanics (low cohesion).
+class OrderService {
+    private final SmtpClient smtp = new SmtpClient("smtp.acme.com", 587);
+
+    void placeOrder(Order order) {
+        // ...persist the order...
+        // Digs THROUGH the object graph - a Law of Demeter violation:
+        String email = order.getCustomer().getContact().getEmailAddress();
+        String host  = smtp.getConfig().getConnection().getHost(); // train wreck
+        // control coupling: a boolean flag decides behavior inside send()
+        smtp.send(email, "Order placed", true);
+    }
+}
+
+// AFTER - data coupling + high cohesion
+// OrderService depends on a narrow abstraction and passes only what is needed.
+interface Notifier {
+    void notifyOrderPlaced(String recipient, String orderRef);
+}
+
+class EmailNotifier implements Notifier {           // one job: send email
+    private final MailGateway mail;
+    EmailNotifier(MailGateway mail) { this.mail = mail; }
+
+    public void notifyOrderPlaced(String recipient, String orderRef) {
+        mail.send(recipient, "Order " + orderRef + " placed");
+    }
+}
+
+class OrderService {                                 // one job: place orders
+    private final OrderRepository repo;
+    private final Notifier notifier;                 // injected abstraction
+
+    OrderService(OrderRepository repo, Notifier notifier) {
+        this.repo = repo;
+        this.notifier = notifier;
+    }
+
+    void placeOrder(Order order) {
+        repo.save(order);
+        // Tell, don't ask: the order exposes exactly what callers need.
+        notifier.notifyOrderPlaced(order.recipientEmail(), order.reference());
+    }
+}</code></pre>
+      <p class="muted">नंतरची आवृत्ती फक्त <code>Notifier</code> करारावर अवलंबून असते आणि object graphs नाही तर साध्या values पाठवते. email ऐवजी SMS बदलणे, किंवा चाचणीत notifier बनावट करणे, यामुळे आता <code>OrderService</code> च्या आतील काहीही बदलत नाही. हे म्हणजे data coupling आणि functional cohesion एकत्र काम करत आहेत.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: objects मधून पोहोचणारा घट्टपणे जोडलेला call, Law of Demeter पाळल्यानंतरचा तोच call, आणि dependency injection हे construction च्या वेळी जोड कसा सैल करते.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - घट्ट coupling: object graph मधून पोहोचणे (एक train wreck)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant OS as 🧩 OrderService
+    participant O as 📦 Order
+    participant C as 👤 Customer
+    participant Ct as 📇 Contact
+
+    OS->>O: getCustomer()
+    O-->>OS: customer
+    OS->>C: getContact()
+    C-->>OS: contact
+    OS->>Ct: getEmailAddress()
+    Ct-->>OS: email
+    Note over OS,Ct: OrderService now depends on 3 hidden classes
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - सैल coupling: विचारू नका, सांगा (एक टप्पा, Law of Demeter पाळला)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant OS as 🧩 OrderService
+    participant O as 📦 Order
+    participant N as 📨 Notifier
+
+    OS->>O: recipientEmail()
+    O-->>OS: email
+    OS->>N: notifyOrderPlaced(email, ref)
+    N-->>OS: done
+    Note over OS,N: OrderService talks only to direct collaborators
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - dependency injection: तुम्हाला वर्तन बदलू किंवा बनावट करू देणारा जोड</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Main as 🏗️ Composition root
+    participant OS as 🧩 OrderService
+    participant N as 📨 Notifier impl
+
+    Main->>N: new EmailNotifier(mailGateway)
+    Main->>OS: new OrderService(repo, notifier)
+    Note over Main,OS: dependencies wired from outside
+    OS->>N: notifyOrderPlaced(email, ref)
+    alt swap in a test
+        Main->>OS: new OrderService(repo, fakeNotifier)
+        OS->>N: no real email sent
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">गुंतागुंतीच्या class पासून सैलपणे जोडलेल्या, अत्यंत cohesive डिझाइनपर्यंत - refactor चा प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>त्रास लक्षात घ्या</h4><p>एक लहान बदल पाच files मध्ये संपादन करायला भाग पाडतो, किंवा एका unit test ला चालण्यासाठी database आणि mail server लागतो. तो अडथळा हाच तुमचा coupling आणि cohesion चा संकेत आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">आरेखित करा</span><h4>dependencies काढा</h4><p>प्रत्येक class काय import आणि call करते याची यादी करा. जे classes इतरांमधून पोहोचतात (<code>a.getB().getC()</code>) आणि जे अनेक असंबंधित कामे करतात ते शोधा.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">वर्गीकरण</span><h4>coupling प्रकाराला नाव द्या</h4><p>ते content, common, control, stamp की data coupling आहे? प्रकाराला नाव दिल्याने सध्याचे डिझाइन मापनश्रेणीच्या चांगल्या टोकापासून किती दूर आहे हे कळते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">वर्गीकरण</span><h4>cohesion स्तराचे मूल्यमापन करा</h4><p>module ला अस्तित्वाचे एकच कारण आहे (functional), की तो helpers चा coincidental ढीग आहे? कमी cohesion तिथेच तुम्ही पुढे विभागणी करता.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">विभागा</span><h4>जबाबदाऱ्या वेगळ्या करा</h4><p>असंबंधित कामे त्यांच्या स्वतःच्या cohesive modules मध्ये काढा. एक class orders जतन करते, दुसरी notifications पाठवते - प्रत्येकाला बदलण्याचे एकच कारण.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">abstraction</span><h4>interface आणा</h4><p>caller ला हवे तेवढेच पकडणारा एक अरुंद करार (<code>Notifier</code>) परिभाषित करा. concrete class नाही तर interface वर अवलंबून राहा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">उलटवा</span><h4>dependency inject करा</h4><p>class च्या आत collaborators तयार करणे थांबवा. ते constructor द्वारे आत पाठवा जेणेकरून कोणते अंमलबजावणी जोडायचे हे caller ठरवते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Demeter</span><h4>विचारू नका, सांगा हे लागू करा</h4><p>object-graph मधून खोदणे बदलून एका method call ने बदला जो नेमके हवे तेवढेच परत करतो, जेणेकरून प्रत्येक object फक्त त्याच्या थेट शेजाऱ्यांशी बोलते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">छाटा</span><h4>records नाही, data पाठवा</h4><p>जिथे एका method ने एक field वापरण्यासाठी संपूर्ण object घेतले, तिथे फक्त ती field पाठवा. यामुळे stamp coupling चे data coupling होते आणि करार आकुंचित होतो.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">मोजा</span><h4>आकडे तपासा</h4><p>afferent (fan-in) आणि efferent (fan-out) coupling आणि LCOM पुन्हा मोजा. घटणारे LCOM आणि कमी fan-out हे refactor खरोखर उपयोगी पडले याची पुष्टी करतात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पडताळा</span><h4>वेगळेपणाने चाचणी करा</h4><p>प्रत्येक module आता साध्या fake सह एकटे चाचणी करते, आणि बदल स्थानिक राहतात. हेच बक्षीस: लवचिक, बदलण्यायोग्य कोड ज्यावर तुम्ही विश्वास ठेवू शकता.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Coupling आणि cohesion च्या समस्या उघड्या डोळ्यांसमोर लपलेल्या असतात. हे पुनःपुन्हा येणारे दुर्गंध आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🚂 Train wrecks</h4><p><code>order.getCustomer().getAddress().getCity()</code> सारख्या साखळ्या object graph मधून पोहोचतात आणि मार्गातील प्रत्येक class शी तुम्हाला जोडतात. कोणत्याही दुव्यातील बदल caller मोडतो. पहिल्या object ला तुम्हाला खरोखर काय हवे ते विचारा.</p></div>
+        <div class="card"><h4>🌐 Global बदलणारी state</h4><p>Singletons आणि सामायिक static variables common coupling तयार करतात: काहीही ते वाचू आणि लिहू शकते, त्यामुळे वर्तन अंमलबजावणीच्या लपलेल्या क्रमावर अवलंबून असते आणि काहीही वेगळेपणाने चाचणी करता येत नाही.</p></div>
+        <div class="card"><h4>🚩 Boolean flag parameters</h4><p><code>send(msg, true)</code> हे control coupling आहे: caller हा callee च्या अंतर्गत branching ला दिशा देतो. त्याचे दोन स्पष्ट methods मध्ये विभाजन करा जेणेकरून हेतू स्पष्ट होतो आणि callee त्याचे logic स्वतःकडे घेते.</p></div>
+        <div class="card"><h4>🗑️ God objects</h4><p>प्रत्येक गोष्टीला स्पर्श करणाऱ्या class ला जवळजवळ शून्य cohesion आणि कमाल coupling असते. प्रत्येक feature ते संपादित करते, त्यामुळे प्रत्येक बदल प्रत्येक feature ला धोका देतो. तिच्या वेगळ्या जबाबदाऱ्यांनुसार तिला तोडा.</p></div>
+        <div class="card"><h4>🎈 अति-abstraction</h4><p>सैल coupling खूप पुढे नेल्यास - प्रत्येक class ला एक interface, सर्वत्र indirection - एका प्रकारचा त्रास दुसऱ्याशी बदलतो. खरोखर दुसरे अंमलबजावणी असेल किंवा चाचणीची गरज असेल तेव्हाच जोड घाला, केवळ सवयीने नाही.</p></div>
+        <div class="card"><h4>🧰 Utility पोतडे</h4><p>असंबंधित static methods गोळा करणारी <code>Utils</code> किंवा <code>Helpers</code> class हे पाठ्यपुस्तकातले coincidental cohesion आहे. तिथे काय राहते हे कोणीच सांगू शकत नाही, आणि प्रत्येकजण ती import करतो. प्रत्येक method ती जिथे बसते तिथे हलवा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Coupling कमी करणे आणि cohesion वाढवणे जवळजवळ नेहमीच योग्य असते, पण त्याच्या यंत्रणांना नाव देण्याजोगे खर्च असतात. तुम्ही दोन्ही थेट मोजू पण शकता.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>स्थानिक बदल, वेगळी चाचणी, सुरक्षित पुनर्वापर आणि पर्याय, कमी विचारांचा भार, समांतर टीम काम.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>Interfaces आणि injection indirection जोडतात; अतिरेक झाल्यास ते logic विखुरतात आणि flow अनुसरणे कठीण करतात.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>module ला बदलण्याचे एकापेक्षा जास्त कारण असते, dependency अस्थिर असते, किंवा तुम्हाला एखादे अंमलबजावणी चाचणी करायचे किंवा बदलायचे असते.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>abstraction ला कायमच नेमके एकच अंमलबजावणी असते आणि चाचणीचा जोड नसतो - अकाली indirection हे स्वतःच एका वाईट अंदाजाशी coupling आहे.</td></tr>
+            <tr><td><strong>कसे मोजावे</strong></td><td><strong>Efferent (Ce, fan-out)</strong>: हे module ज्यांवर अवलंबून आहे ते classes. <strong>Afferent (Ca, fan-in)</strong>: जे classes त्यावर अवलंबून आहेत. <strong>Instability I = Ce / (Ce + Ca)</strong>. <strong>LCOM</strong>: methods च्या cohesion चा अभाव - कमी म्हणजे cohesive.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Single Responsibility आणि Dependency Inversion (SOLID), Law of Demeter, Facade, Mediator, dependency injection.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अनुभवाचा नियम:</strong> उच्च fan-in आणि कमी fan-out (स्थिर, ज्यावर अवलंबून राहतात) हे core abstractions साठी ठीक आहे; उच्च fan-out (अनेक गोष्टींवर अवलंबून) आणि उच्च LCOM (अनेक असंबंधित कामे करते) हा धोक्याचा प्रदेश आहे. आधी त्यांचे refactor करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - प्रकरण अभ्यास</div>
+      <h2>प्रत्यक्ष जगातील प्रकरण अभ्यास</h2>
+      <p class="muted">तीन परिस्थिती जिथे coupling आणि cohesion बरोबर जमवल्याने निकाल बदलला.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · पुनर्लेखनाशिवाय payment provider बदलणे</h3><div class="role">Pattern: abstraction वर अवलंबून राहा, concrete inject करा</div></div></div>
+        <p class="muted">एक checkout एका payment SDK शी कायमचा जोडलेला होता, त्याचे calls order, refund आणि reporting कोडमध्ये विखुरलेले होते.</p>
+        <ul>
+          <li>फक्त charge, refund आणि status पकडणारे <code>PaymentGateway</code> interface आणले.</li>
+          <li>vendor SDK ते interface अंमलात आणणाऱ्या एका adapter मागे हलवले.</li>
+          <li>जिथे जिथे SDK थेट call होत होते तिथे सर्वत्र gateway inject केले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> दुसरा provider जोडणे म्हणजे एकच नवीन adapter class झाली, आणि बदलाने कोणत्याही business logic ला स्पर्श केला नाही - coupling अनेक-ते-एक वरून एका अरुंद जोडावर आले.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>2 · 4,000 ओळींची God service तोडणे</h3><div class="role">Pattern: जबाबदाऱ्या विभागून cohesion वाढवा</div></div></div>
+        <p class="muted">एकच <code>AccountManager</code> auth, billing, email आणि reporting हाताळत होती. प्रत्येक feature ती संपादित करत होते आणि LCOM गगनाला भिडले होते.</p>
+        <ul>
+          <li>चार cohesive समूह उघड करण्यासाठी methods त्यांनी स्पर्श केलेल्या data नुसार गटबद्ध केले.</li>
+          <li>प्रत्येक समूह एकाच जबाबदारी असलेल्या स्वतःच्या service मध्ये काढला.</li>
+          <li>सामायिक fields स्पष्ट parameters ने बदलले, common coupling संपवले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> file वरील merge conflicts नाहीसे झाले, प्रत्येक service ला केंद्रित चाचण्या मिळाल्या, आणि billing बदलाने आता login मोडण्याचा धोका राहिला नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🕹️</span><div><h3>3 · mediator ने widget गुंतागुंत आवरणे</h3><div class="role">Pattern: Law of Demeter आणि एक coordinator</div></div></div>
+        <p class="muted">एका form च्या प्रत्येक field ला enable, disable आणि validate करण्यासाठी प्रत्येक इतर field मध्ये पोहोचत होते - एक पूर्णपणे जोडलेली जाळी.</p>
+        <ul>
+          <li>थेट field-ते-field संदर्भ काढले जेणेकरून कोणत्याही widget ला दुसऱ्याचे अंतर्गत भाग माहीत नव्हते.</li>
+          <li>सर्व cross-widget नियम एका mediator object मधून वळवले.</li>
+          <li>प्रत्येक widget आता फक्त events कळवते आणि mediator ला प्रतिसाद देते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> field जोडणे म्हणजे प्रत्येक भावंड widget मध्ये संपादन करण्याऐवजी mediator मधील एका ठिकाणी बदल झाला - coupling आलेख N-गुणिले-N वरून एका hub वर कोसळला.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगतता</div>
+      <h2>आधुनिक सुसंगतता</h2>
+      <p class="muted">Coupling आणि cohesion हे objects च्या आधीचे आहेत आणि प्रत्येक framework पेक्षा जास्त टिकतात. आजच्या प्रमाणावर ते जास्त महत्त्वाचे आहेत, कमी नाही.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Microservice सीमा</h4><p>Service सीमा म्हणजे architecture प्रमाणावरील coupling आणि cohesion च होय. गप्पिष्ट, सामायिक-database विभाजन म्हणजे वितरित monolith - त्याच शक्ती, जास्त जोखीम.</p></div>
+        <div class="card"><h4>📦 Modular monoliths</h4><p>टीम्स वाढत्या प्रमाणात एकच deployable ठेवतात पण त्याच्या आत module सीमा लागू करतात. modules मधील कमी coupling नंतर service काढण्याचा पर्याय विकत घेते.</p></div>
+        <div class="card"><h4>🤖 AI-सहाय्यित refactoring</h4><p>साधने आता आपोआप fan-in/fan-out आणि LCOM समोर आणतात आणि extractions सुचवतात. metrics शेवटी फक्त audits नाही तर रोजच्या कामाला मार्गदर्शन करतात.</p></div>
+        <div class="card"><h4>🧪 चाचणीचा वेग एक संकेत म्हणून</h4><p>जलद, वेगळ्या चाचण्या हा कमी coupling चा runtime पुरावा आहे. संपूर्ण system लागणाऱ्या मंद चाचण्या हा coupling चा दुर्गंध आहे जो तुम्हाला CI मध्ये जाणवतो.</p></div>
+        <div class="card"><h4>🔀 Event-driven डिझाइन</h4><p>शेजाऱ्यांना थेट call करण्याऐवजी events प्रकाशित करणे हे मूलतः सैल coupling आहे - producers आणि consumers एकमेकांना न जाणता विकसित होतात.</p></div>
+        <div class="card"><h4>🧭 Domain-driven design</h4><p>Bounded contexts एका सीमेच्या आतील उच्च cohesion आणि सीमांपलीकडील सैल coupling औपचारिक करतात, या दोन शक्तींना एक सामायिक शब्दसंग्रह देतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> कमी coupling आणि उच्च cohesion हे बदलण्यायोग्य software साठी कालातीत साधने आहेत. दोन्ही एकत्र अनुकूल करा, त्यांना fan-in/fan-out आणि LCOM ने मोजा, आणि साधने कितीही बदलली तरी कोड लवचिक राहतो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Coupling आणि cohesion हे बहुतांश इतर डिझाइन कल्पनांचा आधार आहेत. या त्यासोबत नैसर्गिकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../solid/"><span class="ico">🧯</span><h4>SOLID तत्त्वे</h4><p>SRP आणि DIP म्हणजे coupling आणि cohesion प्रत्यक्षात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../oop-core/"><span class="ico">🧬</span><h4>OOP मूळ संकल्पना</h4><p>Encapsulation म्हणजे objects coupling कमी कशी ठेवतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../mediator/"><span class="ico">🕹️</span><h4>Mediator pattern</h4><p>dependencies च्या जाळ्याला एका hub ने बदलते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../facade/"><span class="ico">🚪</span><h4>Facade pattern</h4><p>subsystem चे coupling लपवणारा एक अरुंद दर्शनी भाग.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Coupling आणि Cohesion चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · प्रकरण अभ्यास · सुसंगतता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Command पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Command डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शन: execute() आणि undo() असलेल्या ऑब्जेक्टच्या रूपात विनंती एन्कॅप्सुलेट करणे, Invoker/Command/Receiver भूमिका, undo/redo, रांग लावणे, लॉगिंग, मॅक्रो, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि आधुनिक प्रासंगिकता." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>Command पॅटर्न - क्रियांना ऑब्जेक्टमध्ये बदलणे</h1>
+      <p class="lede">Command पॅटर्न एका विनंतीला <strong>execute()</strong> मेथड असलेल्या स्वतंत्र ऑब्जेक्टमध्ये गुंडाळतो, ज्यामुळे जी गोष्ट क्रिया सुरू करते तिला जी गोष्ट ती क्रिया पार पाडते तिच्यापासून वेगळे केले जाते. आता प्रत्येक क्रिया हा first-class ऑब्जेक्ट असल्यामुळे, तुम्ही तिला रांगेत लावू शकता, लॉग करू शकता, पुन्हा चालवू शकता, मॅक्रोमध्ये एकत्र करू शकता आणि सर्वात महत्त्वाचे म्हणजे <strong>undo</strong> करू शकता. तुम्ही कधीही वापरलेला प्रत्येक editor, task queue आणि transactional UI याचा हा कणा आहे.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">execute() / undo()</span>
+        <span class="pill">Invoker</span>
+        <span class="pill">Receiver</span>
+        <span class="pill">Undo आणि redo</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Command पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Command</strong> हा एक behavioral डिझाइन पॅटर्न आहे जो एका विनंतीला स्वयंपूर्ण ऑब्जेक्टमध्ये बदलतो. तो ऑब्जेक्ट ती क्रिया नंतर पार पाडण्यासाठी लागणारे सर्व काही सोबत घेऊन जातो: ज्यावर क्रिया करायची तो receiver, कोणती मेथड कॉल करायची, आणि कोणते arguments पास करायचे. कॉल करणारा आता "हे आत्ता कर" असे म्हणत नाही; तो एक ऑब्जेक्ट धरून ठेवतो आणि म्हणतो "तू तयार असशील तेव्हा हे चालव." तोच लहानसा बदल undo, रांग लावणे, लॉगिंग आणि मॅक्रो शक्य करून देतो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📦</span> ऑब्जेक्ट रूपात विनंती</h4>
+          <p>एक क्रिया अशी किंमत बनते जी तुम्ही variable मध्ये साठवू शकता, इकडून तिकडे पास करू शकता आणि यादीत ठेवू शकता, त्याऐवजी अशी मेथड कॉल जी चालते आणि नाहीशी होते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">▶️</span> एकसमान execute()</h4>
+          <p>प्रत्येक command तोच लहानसा interface उघड करतो, त्यामुळे invoker "delete text" आणि "send email" या दोन्हींना तपशील न जाणता एकसारखेच वागवतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">↩️</span> रचनेनेच उलटा करता येणारा</h4>
+          <p>execute() सोबत undo() जोडा आणि प्रत्येक command स्वतःला कसे उलटवायचे हे जाणतो, ज्यामुळे तुम्हाला history, redo आणि transactional rollback फुकट मिळते.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य भूमिका</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>ती काय करते</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Command</strong></td><td>execute() आणि बहुधा undo() घोषित करणारा interface</td><td><code>interface Command</code></td></tr>
+            <tr><td><strong>Concrete Command</strong></td><td>एका receiver ला क्रिया आणि तिच्या arguments सोबत बांधतो</td><td><code>InsertTextCommand</code></td></tr>
+            <tr><td><strong>Receiver</strong></td><td>प्रत्यक्षात काम कसे करायचे हे जाणतो</td><td><code>Document</code>, <code>Light</code></td></tr>
+            <tr><td><strong>Invoker</strong></td><td>commands सुरू करतो आणि history stack ठेवू शकतो</td><td><code>Button</code>, <code>CommandStack</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>commands तयार करतो आणि त्यांना receivers शी जोडतो</td><td>editor ची सेटअप कोड</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Command पॅटर्न <em>काय करायचे</em> (command ऑब्जेक्ट) हे <em>केव्हा आणि किती वेळा करायचे</em> (invoker) यापासून वेगळे करतो. एकदा एखादी क्रिया ऑब्जेक्ट बनली की, वेळ आणि पुनरावृत्ती या तुमच्या नियंत्रणातल्या गोष्टी बनतात.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Command पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">एखादी मेथड थेट कॉल करणे ठीक आहे, जोपर्यंत तुम्हाला ती पुढे ढकलायची, पुन्हा करायची, नोंदवायची, किंवा मागे घ्यायची गरज पडत नाही. साधी मेथड कॉल ला स्मृती नसते आणि उलट जाण्याचा गियर नसतो. त्या कॉलला ऑब्जेक्टमध्ये गुंडाळल्याने त्या क्रियेला एक ओळख मिळते जी तुम्ही व्यवस्थापित करू शकता.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>↩️ Undo आणि redo</h4><p>जर प्रत्येक command स्वतःला उलटवू शकत असेल, तर चालवलेल्या commands ची stack ही undo history बनते आणि undo केलेल्यांची stack ही redo बनते. हा पॅटर्न अस्तित्वात असण्याचे हे सर्वात मोठे एकमेव कारण आहे.</p></div>
+        <div class="card"><h4>⏳ रांग आणि शेड्यूल</h4><p>command हा फक्त data असल्यामुळे, तुम्ही त्याला queue वर ढकलू शकता, worker thread वर चालवू शकता, पुन्हा प्रयत्न करू शकता, किंवा उशीर करू शकता, आणि हे सर्व कॉल करणाऱ्याला तो केव्हा चालतो हे कळू न देता.</p></div>
+        <div class="card"><h4>🧾 लॉग आणि replay</h4><p>commands ना log मध्ये serialize करा आणि तुम्ही प्रत्येक बदलाचे ऑडिट करू शकता, state पुन्हा तयार करण्यासाठी त्यांना replay करू शकता, किंवा event stream म्हणून त्यांना नेटवर्कवर पाठवू शकता.</p></div>
+        <div class="card"><h4>🔗 कॉल करणाऱ्याला कामगारापासून वेगळे करा</h4><p>एक button, एक menu item, आणि एक keyboard shortcut हे सर्व तोच command ऑब्जेक्ट सुरू करू शकतात. receiver काय आहे किंवा तो कसा काम करतो हे invoker ला कधीच कळत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Command समजावून</h2>
+      <p class="muted">एकच कल्पना, तिला चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ती डोक्यात बसते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>command म्हणजे <strong>index card वर लिहिलेली गृहपाठाची सूचना</strong>. शिक्षक (invoker) तुम्हाला cards ची चळत देतात; प्रत्येक card नेमके कोणते काम करायचे हे जाणते. शिक्षकाला कोणत्याही कामाचे तपशील न कळता तुम्ही चळत पुन्हा लावू शकता, एखादे card पुन्हा करू शकता, किंवा एखादे फाडून त्याला undo करू शकता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे <strong>नाव आणि उलट असलेले closure</strong> आहे. <code>doc.insert("hi")</code> आत्ता चालण्याऐवजी, तुम्ही receiver, args आणि एक <code>undo()</code> धरून ठेवणारा ऑब्जेक्ट बनवता. invoker <code>cmd.execute()</code> कॉल करतो आणि त्याला history stack वर ढकलू शकतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>रेस्टॉरंटच्या ऑर्डर तिकिटाचा</strong> विचार करा. वेटर (invoker) ऑर्डर लिहितो आणि रेलवर लावतो; स्वयंपाकघर (receiver) ती शिजवते. तिकीट रांगेत लागते, लॉग होते आणि रद्द करता येते. वेटर कधीच शेगडीला हात लावत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> रोजच्या जीवनातली आवृत्ती</h4><p>एक <strong>रिमोट कंट्रोल</strong> बटण. प्रत्येक बटण एका उपकरणाशी बांधलेला एक command धरून ठेवते. ती क्रिया चालवण्यासाठी दाबा, आणि चांगल्या रचलेल्या रिमोटमध्ये undo किंवा "last channel" असतो जो तुम्ही नुकतेच केलेले उलटवतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे काम करते</h2>
+      <p class="muted">एक command एका <strong>receiver</strong> ला आणि arguments ना एका एकसमान <strong>execute()</strong> मागे बांधतो. एक <strong>invoker</strong> commands चालवतो आणि दोन stacks ठेवतो, एक undo साठी आणि एक redo साठी, त्यामुळे history ही साधी push आणि pop बनते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧱</span> command तयार करणे</h4>
+          <p>client एक concrete command बांधतो, receiver आणि त्याला लागणारी arguments पकडून ठेवतो. undo साठी, command तो ज्या state वर लिहून टाकणार आहे तीही नोंदवतो, म्हणजे तो ती नंतर पुनर्संचयित करू शकतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗂️</span> history चालवणे</h4>
+          <p>invoker execute() कॉल करतो, command ला undo stack वर ढकलतो, आणि redo साफ करतो. Undo सर्वात वरचा command काढतो आणि undo() कॉल करतो; redo redo stack मधून काढतो आणि पुन्हा चालवतो.</p>
+        </div>
+      </div>
+
+      <h3>रचना एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">रचना - invoker commands धरून ठेवतो, प्रत्येक command एका receiver ला चालवतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Command {
+        &lt;&lt;interface&gt;&gt;
+        +execute()
+        +undo()
+    }
+    class InsertTextCommand {
+        -Document doc
+        -String text
+        -int position
+        +execute()
+        +undo()
+    }
+    class DeleteTextCommand {
+        -Document doc
+        -int from
+        -String removed
+        +execute()
+        +undo()
+    }
+    class Document {
+        +insert(pos, text)
+        +delete(from, len)
+    }
+    class CommandStack {
+        -Deque~Command~ undoStack
+        -Deque~Command~ redoStack
+        +run(cmd)
+        +undo()
+        +redo()
+    }
+    Command &lt;|.. InsertTextCommand
+    Command &lt;|.. DeleteTextCommand
+    InsertTextCommand --&gt; Document : receiver
+    DeleteTextCommand --&gt; Document : receiver
+    CommandStack --&gt; Command : invokes
+        </pre>
+      </div>
+
+      <h3>एक वास्तववादी text-editor उदाहरण (Java)</h3>
+      <pre><code>// Command interface: every action is execute + undo
+interface Command {
+    void execute();
+    void undo();
+}
+
+// Receiver: knows how to actually mutate text
+class Document {
+    private final StringBuilder buf = new StringBuilder();
+    void insert(int pos, String text) { buf.insert(pos, text); }
+    void delete(int from, int len)    { buf.delete(from, from + len); }
+    String read(int from, int len)    { return buf.substring(from, from + len); }
+    @Override public String toString() { return buf.toString(); }
+}
+
+// Concrete command: insert, and remember how to reverse it
+class InsertTextCommand implements Command {
+    private final Document doc;
+    private final int pos;
+    private final String text;
+    InsertTextCommand(Document doc, int pos, String text) {
+        this.doc = doc; this.pos = pos; this.text = text;
+    }
+    public void execute() { doc.insert(pos, text); }
+    public void undo()    { doc.delete(pos, text.length()); }
+}
+
+// Concrete command: delete captures what it removed so undo can restore it
+class DeleteTextCommand implements Command {
+    private final Document doc;
+    private final int from, len;
+    private String removed;               // state saved during execute()
+    DeleteTextCommand(Document doc, int from, int len) {
+        this.doc = doc; this.from = from; this.len = len;
+    }
+    public void execute() {
+        removed = doc.read(from, len);    // snapshot before destroying it
+        doc.delete(from, len);
+    }
+    public void undo() { doc.insert(from, removed); }
+}
+
+// Invoker: runs commands and maintains undo/redo history
+class CommandStack {
+    private final Deque&lt;Command&gt; undo = new ArrayDeque&lt;&gt;();
+    private final Deque&lt;Command&gt; redo = new ArrayDeque&lt;&gt;();
+    void run(Command c) { c.execute(); undo.push(c); redo.clear(); }
+    void undo() { if (!undo.isEmpty()) { Command c = undo.pop(); c.undo(); redo.push(c); } }
+    void redo() { if (!redo.isEmpty()) { Command c = redo.pop(); c.execute(); undo.push(c); } }
+}
+
+// Client wiring it together
+Document doc = new Document();
+CommandStack editor = new CommandStack();
+editor.run(new InsertTextCommand(doc, 0, "Hello world"));
+editor.run(new DeleteTextCommand(doc, 5, 6));   // "Hello"
+editor.undo();                                  // back to "Hello world"
+editor.redo();                                  // "Hello" again</code></pre>
+      <p class="muted">लक्षात घ्या की <code>DeleteTextCommand</code> काढून टाकलेल्या मजकुराचा snapshot <em>execute()</em> दरम्यान घेतो, त्याच्या constructor मध्ये नाही, कारण योग्य किंमत फक्त run time लाच अस्तित्वात असते. तीच पकडलेली state नेमकी <em>undo()</em> शक्य करते, आणि हाच तपशील बहुतेक भोळ्या अंमलबजावण्या चुकीचा करतात.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एक साधे execute, एक undo आणि redo चक्र, आणि worker वर चालणारा commands चा रांगेत लावलेला मॅक्रो.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Execute: invoker आपल्या receiver विरुद्ध एक command चालवतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant I as 🎛️ Invoker
+    participant Cmd as 📦 Command
+    participant R as 🧠 Receiver
+
+    C->>Cmd: new InsertText(doc, pos, text)
+    C->>I: run(command)
+    I->>Cmd: execute()
+    Cmd->>R: insert(pos, text)
+    R-->>Cmd: done
+    Cmd-->>I: ok
+    I->>I: push onto undo stack
+    I-->>C: action applied
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Undo मग redo: history stacks कृतीत</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant I as 🎛️ Invoker
+    participant Cmd as 📦 Command
+    participant R as 🧠 Receiver
+
+    U->>I: undo()
+    I->>I: pop from undo stack
+    I->>Cmd: undo()
+    Cmd->>R: reverse the change
+    R-->>Cmd: restored
+    I->>I: push onto redo stack
+    Note over I: redo stack now holds the reversed command
+    U->>I: redo()
+    I->>I: pop from redo stack
+    I->>Cmd: execute()
+    Cmd->>R: re-apply the change
+    R-->>Cmd: done
+    I->>I: push back onto undo stack
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - रांग आणि मॅक्रो: पुढे ढकललेली, गठ्ठ्यात केलेली अंमलबजावणी</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant P as 👤 Producer
+    participant Q as 📥 Command queue
+    participant W as ⚙️ Worker
+    participant M as 🧩 Macro command
+    participant R as 🧠 Receiver
+
+    P->>Q: enqueue(macro of 3 commands)
+    W->>Q: poll()
+    Q-->>W: macro command
+    W->>M: execute()
+    loop each sub-command
+        M->>R: run sub-action
+        R-->>M: ok
+    end
+    alt any sub-command fails
+        M->>R: undo applied sub-commands
+        M-->>W: rolled back
+    else all succeed
+        M-->>W: committed
+    end
+    W->>Q: ack / log result
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी पायरीने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">interface परिभाषित करण्यापासून ते संपूर्ण undo, redo आणि मॅक्रो पाठवण्यापर्यंत, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">परिभाषित करा</span><h4>Command interface घोषित करा</h4><p>सर्वात लहान करारापासून सुरुवात करा: <code>execute()</code>, आणि उलटता येण्याला महत्त्व असेल तर <code>undo()</code>. सिस्टीममधली प्रत्येक क्रिया तो अंमलात आणेल.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Receiver</span><h4>काम कोण करते ते ओळखा</h4><p>ज्या ऑब्जेक्ट्सना क्रिया कशा पार पाडायच्या हे आधीच माहीत आहे ते शोधा, document, light, account. Commands त्यांना काम सोपवतात; खरा तर्क त्यांच्याकडे असतो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">गुंडाळा</span><h4>Concrete commands तयार करा</h4><p>प्रत्येक क्रियेसाठी, एक class बांधा जी एका receiver ला आणि त्याच्या arguments ना पकडते आणि execute() च्या आत receiver ला कॉल करते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">उलटवा</span><h4>प्रत्येक command undo करता येण्याजोगा करा</h4><p>undo() अंमलात आणा जेणेकरून command स्वतःचा परिणाम उलटवतो. तुम्ही जी state वर लिहून टाकणार आहात तिचा snapshot execute() <em>दरम्यान</em> घ्या, आधी नाही.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Invoker</span><h4>invoker बांधा</h4><p>एक घटक जोडा जो command ऑब्जेक्ट्स स्वीकारतो आणि त्यांच्यावर execute() कॉल करतो, प्रत्येक command प्रत्यक्षात काय करतो याबद्दल अनभिज्ञ राहून.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">History</span><h4>undo stack जोडा</h4><p>प्रत्येक चालवलेला command एका stack वर ढकलला जातो. Undo सर्वात वरचा काढतो आणि त्याचा undo() कॉल करतो. आता तुमच्याकडे एक-पातळी आणि बहु-पातळी undo आहे.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Redo</span><h4>redo stack जोडा</h4><p>तुम्ही undo करता तेव्हा, command ला redo stack वर हलवा. Redo त्याला काढतो आणि पुन्हा चालवतो. कोणताही नवा command redo साफ करतो जेणेकरून history रेषीय राहते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">बांधा</span><h4>triggers ना commands शी जोडा</h4><p>buttons, menu items आणि shortcuts ना त्याच command ऑब्जेक्ट्सकडे रोखा. UI commands सुरू करते; ती कधीच receivers ना थेट कॉल करत नाही.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Macro</span><h4>commands ना मॅक्रोमध्ये एकत्र करा</h4><p>मॅक्रो command commands ची यादी धरून ठेवतो आणि त्यांना क्रमाने चालवतो, उलट क्रमाने undo करतो. एक वापरकर्त्याचा हावभाव अनेक अणुरूप पायऱ्या बनतो.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">रांग</span><h4>रांग लावा, लॉग करा, किंवा टिकवा</h4><p>commands ऑब्जेक्ट्स असल्यामुळे, त्यांना worker साठी रांगेत लावा, audit log मध्ये लिहा, किंवा नंतर replay करून state पुन्हा तयार करण्यासाठी serialize करा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पाठवा</span><h4>भक्कम, उलटता येणाऱ्या क्रिया</h4><p>आता तुमच्याकडे अशी सिस्टीम आहे जिथे प्रत्येक क्रिया testable, queueable, loggable आणि उलटता येण्याजोगी आहे, आणि हे सर्व एका लहानशा interface मागे.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि अँटी-पॅटर्न</h2>
+      <p class="muted">पॅटर्न साधा आहे, पण undo आणि state capture हेच जिथे बहुतेक अंमलबजावण्या गुपचूप तुटतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📸 state फार लवकर पकडणे</h4><p>पुनर्संचयित करायची किंमत execute() दरम्यानऐवजी constructor मध्ये नोंदवणे म्हणजे undo शिळी किंवा चुकीची किंमत पुनर्संचयित करते. अंमलबजावणीच्या वेळी snapshot घ्या.</p></div>
+        <div class="card"><h4>🫥 अर्धवट undo होणारे मॅक्रो</h4><p>मध्येच अपयशी होणारा पण आधीच अंमलात आणलेल्या पायऱ्या मागे न घेणारा मॅक्रो state विसंगत ठेवतो. अपयशावर अंमलात आणलेल्या sub-commands ना उलट क्रमाने undo करा.</p></div>
+        <div class="card"><h4>🧨 देव-commands</h4><p>receiver ला काम सोपवण्याऐवजी खरा व्यवसाय-तर्क command मध्ये कोंबणे commands ना कचराकुंडी बनवते आणि वेगळेपणाचा उद्देश हरवते.</p></div>
+        <div class="card"><h4>♾️ अमर्याद history</h4><p>प्रत्येक command कायमचा ठेवणे memory ला मर्यादेशिवाय वाढवते, विशेषतः जेव्हा commands मोठे snapshots धरून ठेवतात. stack ला मर्यादा घाला किंवा हलके deltas वापरा.</p></div>
+        <div class="card"><h4>🔗 undo मधले गळणारे संदर्भ</h4><p>साठवलेली state पुनर्संचयित करण्याऐवजी पुढचा तर्क पुन्हा चालवून उलटवणारा undo, मध्ये इतर commands चालले असल्यास भरकटतो. पकडलेल्या data पासून उलटवा.</p></div>
+        <div class="card"><h4>🏗️ क्षुल्लक क्रियांचे अतिअभियांत्रिकीकरण</h4><p>ज्याला कधीच undo, रांग किंवा लॉगिंगची गरज नाही अशा एकाच fire-and-forget कॉलला command class मध्ये गुंडाळल्याने कोणत्याही फायद्याशिवाय औपचारिकता वाढते. जिथे तो त्याची किंमत वसूल करतो तिथेच वापरा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Command तुम्हाला वेळ, पुनरावृत्ती आणि उलटवण्याभोवती लवचिकता विकत देतो, अधिक classes आणि अप्रत्यक्षतेच्या किंमतीवर.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>invoker ला receiver पासून वेगळे करतो; undo/redo, रांग लावणे, लॉगिंग आणि मॅक्रो शक्य करतो; प्रत्येक command स्वतंत्रपणे test करणे सोपे; open/closed पूर्ण करतो - invoker ला हात न लावता क्रिया जोडा.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अनेक लहान classes आणतो; अप्रत्यक्षतेचा एक थर जोडतो; भक्कम undo आणि state capture ला काळजी लागते; साध्या क्रियांसाठी जड वाटू शकते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>तुम्हाला undo/redo लागते, काम रांगेत लावायचे किंवा शेड्यूल करायचे आहे, क्रिया लॉग किंवा replay करायच्या आहेत, मॅक्रो लागतात, किंवा एक क्रिया अनेक triggers पासून पोहोचण्याजोगी हवी आहे.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>क्रिया ही एकदाच होणारी कॉल आहे जिला कधीच पुढे ढकलायचे, पुन्हा करायचे, लॉग किंवा उलटवायचे नाही. साधी मेथड किंवा lambda पुरेशी आहे.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>साध्या execute साठी कमी ते मध्यम; एकदा विश्वासार्ह undo, redo आणि transactional मॅक्रो जोडले की मध्यम.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Memento (command जी state पुनर्संचयित करतो ती साठवतो), Observer (events वर commands सुरू करतो), Strategy (एक algorithm बदलतो), Chain of Responsibility (handlers मधून विनंती मार्गित करतो).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> एखाद्या क्रियेला "आत्ता चालव" पलीकडे जीवन लागताच Command कडे वळा - जर तुम्हाला ती undo करायची, रांगेत लावायची, लॉग करायची किंवा गठ्ठ्यात करायची असेल, तर तिला command मध्ये गुंडाळा; अन्यथा मेथड थेट कॉल करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन प्रातिनिधिक सिस्टीम जिथे Command पॅटर्न ही भार पेलणारी रचना आहे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📝</span><div><h3>1 · मजकूर आणि ग्राफिक्स editor ची undo history</h3><div class="role">पॅटर्न: document वर उलटता येणारे बदल</div></div></div>
+        <p class="muted">word processor किंवा design tool ला टायपिंगपासून आकार हलवण्यापर्यंत प्रत्येक प्रकारच्या बदलावर अमर्याद undo आणि redo लागते.</p>
+        <ul>
+          <li>प्रत्येक बदल - insert, delete, format, move - execute() आणि undo() असलेला एक command आहे.</li>
+          <li>एक undo stack आणि redo stack Ctrl+Z आणि Ctrl+Y ला साध्या push आणि pop मध्ये बदलतात.</li>
+          <li>गटबद्ध केलेले बदल मॅक्रो command बनतात जेणेकरून एक हावभाव एकल एकक म्हणून undo होतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> वापरकर्ते निर्भयपणे संपादन करतात कारण कोणतीही क्रिया उलटवता येते, आणि editor ची कोड एकसमान राहते कारण invoker सर्व बदलांना सारखेच वागवतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📥</span><div><h3>2 · Background task queue आणि job workers</h3><div class="role">पॅटर्न: पुढे ढकललेली, पुन्हा प्रयत्न करता येणारी, लॉग केलेली अंमलबजावणी</div></div></div>
+        <p class="muted">सिस्टीमला काम अ‍ॅसिंक्रोनसपणे चालवायचे असते - emails पाठवणे, images प्रक्रिया करणे, data sync करणे - विश्वासार्हपणे आणि audit trail सह.</p>
+        <ul>
+          <li>प्रत्येक job हा एक serialize केलेला command आहे जो worker ने चालवण्यासाठी टिकाऊ queue वर ठेवला जातो.</li>
+          <li>अपयशी commands ना कॉल करणाऱ्यांना हात न लावता पुन्हा प्रयत्न केला जातो किंवा dead-letter queue कडे हलवले जाते.</li>
+          <li>command log एकाच वेळी audit trail म्हणून आणि खंडानंतर काम replay करण्याचा मार्ग म्हणून काम करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> producers वेगवान आणि वेगळे राहतात तर workers स्वतंत्रपणे commands अंमलात आणतात, पुन्हा प्रयत्न करतात आणि लॉग करतात, ज्यामुळे टिकाऊपणा आणि निरीक्षणक्षमता फुकट मिळते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏠</span><div><h3>3 · Smart-home आणि remote-control ऑटोमेशन</h3><div class="role">पॅटर्न: अनेक उपकरणांवर एक interface</div></div></div>
+        <p class="muted">एक universal remote किंवा home hub ला अनेक विक्रेत्यांच्या lights, blinds आणि media एकाच UI मधून नियंत्रित करावे लागते.</p>
+        <ul>
+          <li>प्रत्येक बटण किंवा scene एका विशिष्ट device receiver शी बांधलेला command धरून ठेवतो.</li>
+          <li>"movie night" scene हा एक मॅक्रो command आहे जो एकाच वेळी अनेक device commands चालवतो.</li>
+          <li>एक undo किंवा "all off" command साठवलेल्या पूर्वीच्या states वापरून शेवटची scene उलटवतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> hub आपले UI न बदलता नवी उपकरणे जोडतो, कारण प्रत्येक नियंत्रण म्हणजे त्याच execute() कॉलमागचा आणखी एक command आहे.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Command हा संग्रहालयातील वस्तूपासून फार दूर आहे; त्याची रचना आधुनिक software architecture मधल्या काही सर्वात सक्रिय कल्पनांचा आधार आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 CQRS command handlers</h4><p>Command Query Responsibility Segregation प्रत्येक write ला एका handler कडे पाठवलेला command ऑब्जेक्ट म्हणून मांडते, या पॅटर्नचा थेट वंशज.</p></div>
+        <div class="card"><h4>📜 Event sourcing</h4><p>commands किंवा events चा append-only log साठवल्याने तुम्ही history replay करून state पुन्हा तयार करू शकता, नेमके log-and-replay वापर प्रकरण.</p></div>
+        <div class="card"><h4>⚛️ Redux आणि reducers</h4><p>Front-end state stores action ऑब्जेक्ट्स reducers कडे पाठवतात; time-travel debugging म्हणजे वेशांतर केलेला command history वरचा undo/redo.</p></div>
+        <div class="card"><h4>🌐 Distributed task queues</h4><p>Celery आणि Sidekiq सारख्या सिस्टीम commands ना brokers वर serialize करतात जेणेकरून workers त्यांना मशीनभर अंमलात आणतात, पुन्हा प्रयत्न करतात आणि शेड्यूल करतात.</p></div>
+        <div class="card"><h4>🔄 Sagas आणि rollbacks</h4><p>दीर्घकाळ चालणारे distributed transactions पूर्वीच्या पायऱ्या undo करण्यासाठी compensating commands वापरतात, क्लाउड प्रमाणावरची मॅक्रो rollback कल्पना.</p></div>
+        <div class="card"><h4>🤖 Agent tool calls</h4><p>एक LLM agent संरचित tool invocations उत्सर्जित करतो जे एक runtime अंमलात आणते आणि लॉग करते, हा AI क्रियांना लागू केलेला Command पॅटर्न आहे.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Command पॅटर्न म्हणजे तुम्ही एका क्रियेला ओळख कशी देता जेणेकरून तुम्ही तिची वेळ, पुनरावृत्ती आणि उलटवणे नियंत्रित करू शकता. editors पासून event sourcing पर्यंत आणि agent tool वापरापर्यंत, ती कल्पना अधिकाधिक केंद्रस्थानी येत आहे.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोधत राहा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Command हा behavioral पॅटर्न्सच्या जाळ्यात बसतो. हे त्याच्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../chain-of-responsibility/"><span class="ico">⛓️</span><h4>Chain of Responsibility</h4><p>handlers च्या रांगेतून एक विनंती मार्गित करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../memento/"><span class="ico">💾</span><h4>Memento</h4><p>undo जी state पुनर्संचयित करतो ती पकडा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>events ला प्रतिसाद म्हणून commands सुरू करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎯</span><h4>Strategy</h4><p>runtime ला एक अदलाबदल करता येणारा algorithm बदला.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>Command पॅटर्नचे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

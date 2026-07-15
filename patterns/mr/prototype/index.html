@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Prototype या creational डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शन: ऑब्जेक्ट्सचे cloning, shallow विरुद्ध deep copy, prototype registries, महागड्या initialization टाळणे, clone() मधील अडचणी, आकृत्या, 0-100 प्रवाह आणि केस स्टडीज." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Creational Pattern</span>
+      <h1>Prototype पॅटर्न - cloning करून नवीन ऑब्जेक्ट्स तयार करा</h1>
+      <p class="lede">काही ऑब्जेक्ट्स सुरुवातीपासून तयार करणे महागडे असते: ते config लोड करतात, database ला भेट देतात, किंवा वापरण्यायोग्य स्थितीत पोहोचण्यासाठी एक मोठी फाइल parse करतात. Prototype पॅटर्न हे टाळतो कारण तो नवीन instance बांधण्याऐवजी पूर्णपणे तयार असलेल्या instance चे <strong>cloning</strong> करतो. तुम्ही एक तयार उदाहरण जवळ ठेवता, आणि जेव्हा दुसरे तसेच हवे असेल तेव्हा त्याची कॉपी करता.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">clone()</span>
+        <span class="pill">Shallow विरुद्ध deep copy</span>
+        <span class="pill">Prototype registry</span>
+        <span class="pill">Copy constructors</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Prototype पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Prototype</strong> हा एक creational पॅटर्न आहे जो class थेट instantiate करण्याऐवजी विद्यमान instance - म्हणजेच prototype - चे <em>copying</em> करून नवीन ऑब्जेक्ट्स तयार करतो. ऑब्जेक्ट स्वतःच स्वतःची कॉपी कशी तयार करायची हे जाणतो, त्यामुळे ज्या कोडला नवीन ऑब्जेक्ट हवा असतो त्याला त्याचा concrete type किंवा तो कसा configure करायचा हे माहीत असण्याची गरज नसते. तुम्ही एका template चे clone करता आणि फक्त फरक असलेल्या गोष्टी बदलता.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Clone करा, construct नको</h4>
+          <p>एक <code>clone()</code> मेथड असा नवीन ऑब्जेक्ट परत करते जो विद्यमान ऑब्जेक्टची कॉपी म्हणून सुरू होतो, आधीच भरलेला आणि configured.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🙈</span> Concrete types लपवतो</h4>
+          <p>Callers एक prototype interface धरतात आणि त्याचे clone करतात. ते कधीही <code>new ConcreteThing()</code> कॉल करत नाहीत, त्यामुळे ते class पासून decoupled राहतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗂️</span> Templates ची registry</h4>
+          <p>एक registry keys ना पूर्व-निर्मित prototypes शी जोडते. नावाने विचारा आणि ती वापरण्यास तयार असलेले ताजे clone परत देते.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>नेहमीचे स्वरूप</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Prototype interface</strong></td><td>Clients जी copy operation कॉल करतात ती घोषित करते</td><td><code>Cloneable</code>, एक <code>clone()</code> मेथड, किंवा <code>copy()</code></td></tr>
+            <tr><td><strong>Concrete prototype</strong></td><td>स्वतःची कॉपी field-by-field कशी करायची हे implement करते</td><td>Copy constructor किंवा overridden <code>clone()</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Concrete class न जाणता कॉपीची विनंती करतो</td><td><code>prototype.clone()</code> कॉल करतो</td></tr>
+            <tr><td><strong>Registry</strong></td><td>मागणीनुसार clone करण्यासाठी नावांकित prototypes साठवते</td><td><code>Map&lt;String, Prototype&gt;</code></td></tr>
+            <tr><td><strong>Copy strategy</strong></td><td>प्रत्येक reference field साठी shallow की deep हे ठरवते</td><td>प्रत्येक field साठी shallow, deep, किंवा मिश्र</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> ऑब्जेक्ट स्वतःच स्वतःचा factory असतो. एखादी गोष्ट कशी जुळवायची हे सांगणारा वेगळा builder असण्याऐवजी, तयार झालेली गोष्ट स्वतःची पुनर्निर्मिती कशी करायची हे system ला सांगते. खरा कठीण प्रश्न कधीच "मी हे copy करू शकतो का" हा नसतो तर "copy किती खोलवर जाते" हा असतो.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Prototype पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">थेट construction तुम्हाला concrete classes शी जोडते आणि प्रत्येक वेळी महागडे setup पुन्हा करायला भाग पाडते. जेव्हा दोन ऑब्जेक्ट्स फक्त काही fields नी वेगळे असतात, तेव्हा शून्यापासून पुन्हा बांधणे वेळखाऊ आणि चुका होण्यास प्रवण असते. ज्ञात-चांगल्या template चे cloning जलद आणि सुरक्षित असते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚡ महागडे setup वगळते</h4><p>जर एखाद्या ऑब्जेक्टला मंद init (parsing, network, जड computation) लागत असेल, तर तुम्ही ती किंमत prototype साठी एकदाच देता आणि नंतर प्रत्येक पुढील instance साठी स्वस्तात clone करता.</p></div>
+        <div class="card"><h4>🔌 Classes पासून decouple करते</h4><p>Clients एका interface मधून clone करतात, त्यामुळे ते एका मोठ्या <code>switch</code> ला किंवा hardcoded <code>new</code> ला हात न लावता runtime मध्ये concrete types जोडतात किंवा बदलतात.</p></div>
+        <div class="card"><h4>🎛️ Configured state पकडते</h4><p>एक prototype डझनभर set fields असलेला पूर्णपणे ट्यून केलेला ऑब्जेक्ट असू शकतो. त्याचे cloning केल्याने ते configuration प्रत्येक वेळी पुन्हा नमूद न करता जपले जाते.</p></div>
+        <div class="card"><h4>➕ Subclassing कमी करते</h4><p>प्रत्येक variant साठी एक factory subclass ठेवण्याऐवजी, तुम्ही configured instances register करता. नवीन variants नवीन classes नव्हे तर data बनतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांसह Prototype समजावून</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>ही तुमच्या नोट्ससाठी <strong>फोटोकॉपी मशीन</strong> आहे. सूत्रांचे संपूर्ण पान सुरुवातीपासून पुन्हा लिहिण्याऐवजी, तुम्ही तयार पानाची कॉपी करता आणि नंतर समासात तुमचे स्वतःचे बदल खरडता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>ही ऑब्जेक्ट्ससाठी <strong>Ctrl+C, Ctrl+V</strong> आहे. तुमच्याकडे memory मध्ये चांगल्या प्रकारे configured instance आहे; त्याचे cloning केल्याने constructor आणि त्याचे सर्व setup पुन्हा न चालवता दुसरा स्वतंत्र ऑब्जेक्ट मिळतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>document template</strong> चा विचार करा. कायदेशीर विभाग एक मास्टर करार ठेवतो; प्रत्येक नवीन करार त्या मास्टरची कॉपी म्हणून सुरू होतो, आणि नंतर तुम्ही कोऱ्या पानावरून मसुदा तयार करण्याऐवजी नावे आणि तारखा भरता.</p></div>
+        <div class="card"><h4><span class="ico">🍪</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>कुकी कटर</strong> एका मास्टर आकारातून एकसारखे आकार ठोकून काढतो. प्रत्येक कुकी वेगळी असते, पण त्या सर्वांना कटरचा आकार तत्काळ मिळतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतल्या बाजूने ते कसे काम करते</h2>
+      <p class="muted">एक prototype एक <strong>copy operation</strong> उघड करतो. Client ते कॉल करतो आणि एक नवीन, स्वतंत्र ऑब्जेक्ट परत मिळवतो. खरे काम त्या copy ने reference fields कसे हाताळले यात असते: एक <strong>shallow copy</strong> ती share करते, तर एक <strong>deep copy</strong> ती recursively duplicate करते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🪞</span> Shallow copy</h4>
+          <p>Primitives कॉपी करते आणि प्रत्येक reference जशीच्या तशी कॉपी करते. Clone आणि original <em>एकाच</em> nested ऑब्जेक्ट्सकडे बोट दाखवतात. जलद, पण mutations एका कॉपीतून दुसरीत झिरपतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌊</span> Deep copy</h4>
+          <p>Nested ऑब्जेक्ट्सचेही recursively cloning करते, त्यामुळे copy पूर्णपणे स्वतंत्र असते. Mutable state साठी सुरक्षित, पण मंद आणि cycles सोबत अधिक अवघड.</p>
+        </div>
+      </div>
+
+      <h3>पॅटर्नची रचना</h3>
+      <div class="diagram">
+        <div class="cap">Prototype interface, concrete prototypes, एक registry, आणि फक्त clone करणारा client</div>
+        <pre class="mermaid">
+classDiagram
+    class Prototype {
+        <<interface>>
+        +clone() Prototype
+    }
+    class Shape {
+        +int x
+        +int y
+        +Color color
+        +clone() Shape
+    }
+    class Rectangle {
+        +int width
+        +int height
+        +clone() Rectangle
+    }
+    class Circle {
+        +int radius
+        +clone() Circle
+    }
+    class PrototypeRegistry {
+        -Map~String,Prototype~ items
+        +register(key, Prototype)
+        +get(key) Prototype
+    }
+    class Client
+    Prototype <|.. Shape
+    Shape <|-- Rectangle
+    Shape <|-- Circle
+    PrototypeRegistry o-- Prototype
+    Client ..> PrototypeRegistry
+    Client ..> Prototype
+        </pre>
+      </div>
+
+      <h3>Java मधील एक वास्तविक उदाहरण</h3>
+      <pre><code>public abstract class Shape implements Cloneable {
+    public int x, y;
+    public String color;
+    public List&lt;String&gt; tags = new ArrayList&lt;&gt;();
+
+    protected Shape() { }
+
+    // Copy constructor: the explicit, safe way to copy
+    protected Shape(Shape source) {
+        this.x = source.x;
+        this.y = source.y;
+        this.color = source.color;
+        // DEEP copy the mutable list, do not share the reference
+        this.tags = new ArrayList&lt;&gt;(source.tags);
+    }
+
+    public abstract Shape clone();
+}
+
+public final class Rectangle extends Shape {
+    public int width, height;
+
+    public Rectangle() { }
+
+    public Rectangle(Rectangle source) {
+        super(source);            // copies base fields + deep-copies tags
+        this.width = source.width;
+        this.height = source.height;
+    }
+
+    @Override
+    public Rectangle clone() {
+        return new Rectangle(this);   // returns an independent copy
+    }
+}
+
+// Prototype registry: clone by key, never call new in the client
+public final class ShapeRegistry {
+    private final Map&lt;String, Shape&gt; prototypes = new HashMap&lt;&gt;();
+
+    public void register(String key, Shape prototype) {
+        prototypes.put(key, prototype);
+    }
+
+    public Shape create(String key) {
+        Shape proto = prototypes.get(key);
+        if (proto == null) throw new NoSuchElementException(key);
+        return proto.clone();     // caller gets a fresh, independent object
+    }
+}</code></pre>
+      <p class="muted">लक्षात घ्या की copy constructor <code>tags</code> ला reference कॉपी करण्याऐवजी <code>new ArrayList&lt;&gt;(source.tags)</code> ने पुन्हा बांधतो. ती एकच ओळ सुरक्षित deep copy आणि shared-mutable-state बग यातील फरक आहे. Registry मुळे clients concrete class किंवा त्याचे setup न जाणता <code>create("wide-blue")</code> म्हणू शकतात.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृष्टिकोन: एक मूलभूत clone, registry मार्फत cloning, आणि clone mutate केल्यावर shallow विरुद्ध deep copy चे वर्तन.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - मूलभूत clone: ऑब्जेक्ट स्वतःची कॉपी करतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Proto as Original Shape
+    participant Copy as Cloned Shape
+
+    Client->>Proto: clone()
+    Proto->>Copy: new Rectangle(this)
+    Note over Proto,Copy: Copy constructor duplicates fields
+    Copy-->>Proto: fresh instance
+    Proto-->>Client: independent copy
+    Client->>Copy: setColor("red")
+    Note over Proto,Copy: Original stays unchanged
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Registry: मागणीनुसार नावांकित prototype चे clone करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Reg as ShapeRegistry
+    participant Proto as Stored Prototype
+    participant Copy as New Shape
+
+    Client->>Reg: create("wide-blue")
+    Reg->>Reg: look up prototype by key
+    Reg->>Proto: clone()
+    Proto->>Copy: copy fields (deep for mutables)
+    Copy-->>Proto: fresh instance
+    Proto-->>Reg: independent copy
+    Reg-->>Client: ready-to-use object
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Shallow विरुद्ध deep: shared field mutate केल्यावर काय होते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Orig as Original
+    participant Clone as Clone
+    participant List as tags List
+
+    Client->>Orig: clone()
+    alt shallow copy
+        Orig->>Clone: copy reference to same List
+        Client->>Clone: tags.add("x")
+        Clone->>List: mutate shared list
+        Note over Orig,Clone: Original also sees "x" (bug)
+    else deep copy
+        Orig->>Clone: new ArrayList(source.tags)
+        Client->>Clone: tags.add("x")
+        Note over Orig,Clone: Original unaffected (safe)
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">Clone करण्याचा निर्णय घेण्यापासून ते स्वतंत्र, योग्यरित्या-कॉपी झालेले ऑब्जेक्ट्स पाठवण्यापर्यंत, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">गरज ओळखा</span><h4>महागडे किंवा पुनरावृत्त construction लक्षात घ्या</h4><p>तुम्हाला असे ऑब्जेक्ट्स दिसतात जे बांधणे खर्चिक असते किंवा जे फक्त काही fields नी वेगळे असतात. प्रत्येक शून्यापासून पुन्हा बांधणे वेळखाऊ असते, त्यामुळे copy-आधारित दृष्टिकोन योग्य ठरतो.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">परिभाषित करा</span><h4>Prototype interface घोषित करा</h4><p>Type hierarchy मध्ये एक <code>clone()</code> किंवा <code>copy()</code> मेथड जोडा जेणेकरून प्रत्येक concrete class स्वतःची पुनर्निर्मिती करण्याचे वचन देते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Fields कॉपी करा</span><h4>Copy operation implement करा</h4><p>प्रत्येक field स्पष्टपणे नेमून देणारा copy constructor वापरा. हे <code>Object.clone()</code> च्या जादूवर विसंबून राहण्यापेक्षा अधिक स्पष्ट आणि सुरक्षित आहे.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">खोली ठरवा</span><h4>प्रत्येक field साठी shallow की deep निवडा</h4><p>Primitives आणि immutables थेट कॉपी करता येतात. Mutable references (lists, maps, nested ऑब्जेक्ट्स) ना सहसा नवीन, deep copy लागते.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Deep copy</span><h4>Mutable references duplicate करा</h4><p>प्रत्येक mutable field साठी, जुनी reference share करण्याऐवजी नवीन instance बांधा. स्वतःची mutable state धरणाऱ्या nested ऑब्जेक्ट्समध्ये recurse करा.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">रक्षण करा</span><h4>Final fields आणि cycles हाताळा</h4><p><code>clone()</code> मध्ये final fields पुन्हा नेमून देता येत नाहीत; त्यांना constructor मार्फत रवाना करा. Cyclic graphs मध्ये टिकून राहण्यासाठी भेट दिलेले ऑब्जेक्ट्स ट्रॅक करा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Register करा</span><h4>Prototype registry बांधा</h4><p>प्रत्येक नावांकित variant साठी एक template तयार करा आणि configure करा, नंतर त्यांना स्थिर नावाने keyed असलेल्या <code>Map</code> मध्ये साठवा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">विनंती करा</span><h4>Client registry ला key ने विचारतो</h4><p>Client कोड <code>registry.create("wide-blue")</code> कॉल करतो आणि ताजे clone मिळवतो, कधीही concrete constructor ला हात न लावता.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">सानुकूल करा</span><h4>फरक बदला</h4><p>Clone पूर्णपणे configured सुरू होतो. Caller फक्त तेवढेच काही fields बदलतो जे या instance ला अद्वितीय बनवतात.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">पडताळा</span><h4>कॉपींमधील अलगीकरण तपासा</h4><p>Clone mutate करा आणि original अस्पर्श राहिल्याची खात्री करा. यामुळे mutable state च्या चुकून झालेल्या shallow कॉपी लवकर पकडल्या जातात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पाठवा</span><h4>Production मध्ये स्वस्तात clone करा</h4><p>नवीन ऑब्जेक्ट्स आता तयार templates च्या कॉपींमधून येतात. एक variant जोडणे म्हणजे नवीन class लिहिणे नव्हे तर आणखी एक prototype register करणे.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतेक Prototype बग हे copy बग असतात. जोपर्यंत दोन ऑब्जेक्ट्स शांतपणे एकच nested state share करत नाहीत तोपर्यंत clone ठीक दिसतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪢 Shared references</h4><p>Shallow copy मुळे clone हा original च्या mutable fields कडे बोट दाखवत राहतो. एक mutate केल्यास दुसरा गुपचूप बदलतो. हा क्रमांक-एकचा Prototype बग आहे.</p></div>
+        <div class="card"><h4>🔒 Final fields</h4><p><code>clone()</code> मेथडमध्ये तुम्ही <code>final</code> fields पुन्हा नेमून देऊ शकत नाही, त्यामुळे एक भोळसट override त्यांचे deep-copy करू शकत नाही. construction वेळी ती सेट करणारा copy constructor वापरा.</p></div>
+        <div class="card"><h4>🧩 Java चे तुटलेले Cloneable</h4><p><code>Object.clone()</code> protected आहे, एक checked exception फेकते, shallow copy करते, आणि constructors ला बगल देते. स्पष्ट copy constructors किंवा factory <code>copy()</code> मेथड वापरा.</p></div>
+        <div class="card"><h4>🔁 Cyclic ऑब्जेक्ट graphs</h4><p>Cycles असलेल्या graph चे deep-copy (A बोट दाखवतो B कडे, B परत A कडे) कायम recurse होऊ शकते. Loop तोडण्यासाठी तुम्हाला आधीच-कॉपी झालेल्या ऑब्जेक्ट्सचा एक identity map हवा असतो.</p></div>
+        <div class="card"><h4>🌀 Serialization चा गैरवापर</h4><p>Serialize-मग-deserialize द्वारे deep-copy करणे सोपे पण मंद असते, सर्व काही serializable असणे आवश्यक असते, आणि कोणती fields खरंच कॉपी झाली हे लपवते. ते शेवटचा उपाय म्हणून राखून ठेवा.</p></div>
+        <div class="card"><h4>🎭 new पुरेसे असताना cloning</h4><p>जर ऑब्जेक्ट्स बांधणे स्वस्त आणि immutable असतील, तर साधा constructor अधिक स्पष्ट असतो. Prototype indirection जोडतो जो फक्त खर्चिक setup किंवा अनेक variants साठीच फायदेशीर ठरतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Prototype हा construction खर्च आणि coupling यांची copy गुंतागुंतीशी तडजोड करतो. जेव्हा बांधणे महागडे असते आणि ऑब्जेक्ट्स configuration नुसार वेगळे असतात तेव्हा तो चमकतो.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>महागडे re-initialization टाळते, concrete classes लपवते, configured state पकडते, subclass ची भरमसाठ वाढ कमी करते, आणि तुम्हाला runtime मध्ये variants data म्हणून जोडू देते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>गुंतागुंतीच्या किंवा cyclic graphs चे deep-copy कठीण असते, shared-reference बग सूक्ष्म असतात, आणि Java चे <code>Cloneable</code> भोळसट मार्ग असुरक्षित बनवते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>Construction खर्चिक असते, ऑब्जेक्ट्स मुख्यतः configuration नुसार वेगळे असतात, तुम्हाला clients ना concrete types पासून decouple करायचे असते, किंवा तुम्हाला templates ची runtime registry हवी असते.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>ऑब्जेक्ट्स बांधणे स्वस्त आणि immutable असतात, graph खोलवर nested किंवा cyclic असतो, किंवा साधा constructor किंवा Builder अधिक स्पष्ट वाचतो.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>रचनात्मकदृष्ट्या कमी, पण योग्यता प्रत्येक mutable field साठी shallow विरुद्ध deep बरोबर मिळवण्यावर अवलंबून असते. चुका मूक असतात, गोंगाट करणाऱ्या नसतात.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Factory Method आणि Abstract Factory (तयार करण्याचे पर्यायी मार्ग), Builder (टप्प्याटप्प्याने जुळवणे), Memento (state चा snapshot घेणे आणि पुनर्संचयित करणे).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> जेव्हा "याच्यासारखा आणखी एक बनव" हे नेहमीचे असते आणि शून्यापासून बांधणे महागडे असते, तेव्हा Prototype कडे वळा. मग एक copy constructor लिहा, प्रत्येक mutable field चे मुद्दाम deep-copy करा, आणि clone mutate केल्याने original ला कधीही स्पर्श होत नाही याची चाचणी करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन प्रातिनिधिक ठिकाणे जिथे prototype चे cloning शून्यापासून बांधण्यापेक्षा सरस ठरते.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>1 · Graphics editor मधील shapes आणि tools</h3><div class="role">पॅटर्न: canvas वरील configured ऑब्जेक्ट्स clone करा</div></div></div>
+        <p class="muted">एक vector editor वापरकर्त्यांना style, transforms, आणि grouping धारण करणारे shapes copy-paste आणि duplicate करू देतो.</p>
+        <ul>
+          <li>प्रत्येक shape <code>clone()</code> implement करते, त्याची style आणि child shapes चे deep-copy करते जेणेकरून duplicates स्वतंत्र असतात.</li>
+          <li>Prototype shapes चा एक palette (styled rectangle, arrow, sticky note) registry मध्ये साठवला जातो आणि drag वर clone होतो.</li>
+          <li>Undo snapshots canvas state पकडण्यासाठी आणि पुनर्संचयित करण्यासाठी तेच copy logic पुन्हा वापरतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> पूर्णपणे styled shape चे duplication तत्काळ आणि सुरक्षित असते, आणि नवीन tools class लिहिण्याऐवजी prototype register करून जोडले जातात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎮</span><div><h3>2 · Game entity spawning</h3><div class="role">पॅटर्न: runtime मध्ये जड templates clone करा</div></div></div>
+        <p class="muted">एक game शेकडो शत्रू spawn करतो ज्यांचे setup (mesh handles, stats, AI config) बांधणे खर्चिक असते.</p>
+        <ul>
+          <li>एक पूर्णपणे-लोड झालेला "orc" prototype एकदाच बांधला जातो; प्रत्येक spawn जड init पुन्हा चालवण्याऐवजी त्याचे clone करतो.</li>
+          <li>प्रत्येक-instance ची mutable state (position, health, cooldowns) deep-copy केली जाते जेणेकरून instances ती कधीही share करत नाहीत.</li>
+          <li>Designers नवीन शत्रू variants configured prototypes म्हणून register करतात, engine कोडमध्ये कोणतेही बदल नाहीत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Spawn खर्च memory copy इतका कमी होतो, frame spikes नाहीशा होतात, आणि content teams नवीन units data म्हणून पाठवतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📄</span><div><h3>3 · Document आणि config templates</h3><div class="role">पॅटर्न: मास्टर कॉपीपासून सुरू करा, मग edit करा</div></div></div>
+        <p class="muted">एक SaaS अ‍ॅप templated documents आणि pipeline configs देतो जे वापरकर्ते clone आणि सानुकूल करतात.</p>
+        <ul>
+          <li>प्रत्येक template हा registry मध्ये key ने साठवलेला पूर्णपणे-भरलेला prototype ऑब्जेक्ट असतो.</li>
+          <li>नवीन document तयार करणे template चे खोलवर clone करते जेणेकरून edits कधीही मास्टरकडे परत झिरपत नाहीत.</li>
+          <li>Template जोडणे ही एक data क्रिया आहे: एक configured instance register करा, नवीन class नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> वापरकर्ते कोऱ्या पानाऐवजी एका कार्यरत उदाहरणापासून सुरुवात करतात, आणि templates ची यादी कोड बदलांशिवाय वाढते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Cloning आधुनिक कोडमध्ये सर्वत्र शांतपणे आहे, अगदी जेव्हा शास्त्रीय Gang of Four रचना स्पष्टपणे मांडलेली नसते तेव्हाही.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Immutable + withers</h4><p>Records आणि value objects <code>with</code>-शैलीच्या copy मेथड्सना प्राधान्य देतात जे एक field बदललेला नवीन instance परत करतात. ते mutation च्या जोखमीशिवाय Prototype विचारसरणी आहे.</p></div>
+        <div class="card"><h4>🌐 JS मधील structuredClone</h4><p>Browsers आणि Node आता <code>structuredClone()</code> पाठवतात, एक built-in deep copy जो cycles आणि अनेक types हाताळतो, ज्यामुळे सुरक्षित deep clones एक-ओळीचे बनतात.</p></div>
+        <div class="card"><h4>🧬 Prototypal inheritance</h4><p>JavaScript ऑब्जेक्ट्स अक्षरशः एका prototype ला delegate करतात आणि <code>Object.create()</code> विद्यमान ऑब्जेक्टमधून नवीन ऑब्जेक्ट्स फिरवते, हा पॅटर्न भाषेतच रुजवलेला आहे.</p></div>
+        <div class="card"><h4>📸 State snapshots</h4><p>Redux-शैलीचे stores आणि undo systems state चे clone करतात जेणेकरून जुन्या आवृत्त्या अखंड राहतात, time-travel debugging साठी Prototype ला Memento सोबत जोडतात.</p></div>
+        <div class="card"><h4>🧪 Test fixtures</h4><p>Test builders एका वैध base ऑब्जेक्टचे clone करतात आणि प्रत्येक case साठी एक field बदलतात, चाचण्या महत्त्वाच्या फरकावर केंद्रित ठेवतात.</p></div>
+        <div class="card"><h4>⚙️ Config profiles</h4><p>Infrastructure आणि ML tooling एका base config चे clone करतात आणि प्रत्येक environment किंवा experiment साठी काही keys override करतात, अगदी registry-of-prototypes ची कल्पना.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Prototype टिकून राहतो कारण "याच्यासारखा आणखी एक दे, पण स्वतंत्र" ही सतत गरज असते. हा पॅटर्न <code>Cloneable</code> interface बद्दल कमी आणि एका शिस्तीबद्दल अधिक आहे: मुद्दाम copy करा, जिथे महत्त्वाचे तिथे deep, आणि दोन ऑब्जेक्ट्सना चुकून mutable state कधीही share करू देऊ नका.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Prototype creational patterns मध्ये बसतो आणि यांच्यासोबत नैसर्गिकरित्या जुळतो.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>Cloning ऐवजी एका मेथडमार्फत ऑब्जेक्ट्स तयार करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../abstract-factory/"><span class="ico">🧱</span><h4>Abstract Factory</h4><p>एका interface मागे संबंधित ऑब्जेक्ट्सचे कुटुंब तयार करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../builder/"><span class="ico">🔧</span><h4>Builder</h4><p>गुंतागुंतीचे ऑब्जेक्ट्स टप्प्याटप्प्याने जुळवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../memento/"><span class="ico">📸</span><h4>Memento</h4><p>ऑब्जेक्टच्या state चा snapshot घ्या आणि पुनर्संचयित करा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Prototype चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP चे चार आधारस्तंभ समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंगच्या चार आधारस्तंभांचे सखोल, चित्रमय मार्गदर्शन: encapsulation, inheritance, polymorphism आणि abstraction. ते काय आहेत, कसे काम करतात, आकृत्या, 0-100 प्रवाह, अडचणी, तडजोडी आणि खरा Java कोड." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP चा पाया</span>
+      <h1>OOP चे चार आधारस्तंभ - संपूर्ण चित्र</h1>
+      <p class="lede">ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंग एकत्र काम करणाऱ्या चार कल्पनांवर उभे आहे: <strong>encapsulation</strong> स्थिती एका स्वच्छ interface मागे सुरक्षित ठेवते, <strong>inheritance</strong> सामायिक वर्तनाचे मॉडेल बनवते, <strong>polymorphism</strong> एका कॉलला अनेक रूपे घेऊ देते, आणि <strong>abstraction</strong> गुंतागुंत सोप्या करारांमागे लपवते. या चारही गोष्टी कशा एकत्र येतात हे शिकलात, तर तुम्ही अशा प्रणाली रचता ज्या वाढतानाही लवचिक राहतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Encapsulation</span>
+        <span class="pill">Inheritance</span>
+        <span class="pill">Polymorphism</span>
+        <span class="pill">Abstraction</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>चार आधारस्तंभ म्हणजे काय?</h2>
+      <p class="muted"><strong>OOP चे चार आधारस्तंभ</strong> ही ती मूलभूत तत्त्वे आहेत जी "डेटा आणि फंक्शन्स एकत्र करणारा कोड" याचे गुंतागुंत हाताळण्याच्या शिस्तीत रूपांतर करतात. प्रत्येक आधारस्तंभ वेगळ्या प्रश्नाचे उत्तर देतो: मी स्थिती कशी सुरक्षित ठेवू, वर्तन कसे पुनर्वापर करू, वर्तन कसे बदलू, आणि तपशील कसा लपवू? एकत्र वापरल्यास ते तुम्हाला एका डोमेनचे मॉडेल अशा ऑब्जेक्ट्समध्ये बनवू देतात जे बदलण्यास सुरक्षित असतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Encapsulation</h4>
+          <p>डेटा आणि त्यावर काम करणाऱ्या पद्धती एकत्र बांधा आणि आतील गोष्टी लपवा. कॉलर्स एका सार्वजनिक interface ला स्पर्श करतात, कधीही कच्च्या फील्ड्सना नाही, त्यामुळे ऑब्जेक्ट स्वतःचे invariants स्वतःच सुरक्षित ठेवतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧬</span> Inheritance</h4>
+          <p>एक प्रकार दुसऱ्याच्या आधारे व्याख्यायित करा, is-a नाते मॉडेल करत. एक subclass एका base class चा पुनर्वापर करून त्याचा विस्तार करतो, रचना आणि वर्तन सामायिक करत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎭</span> Polymorphism</h4>
+          <p>एक interface, अनेक अंमलबजावणी. तोच कॉल रनटाइममध्ये प्रत्यक्ष ऑब्जेक्टच्या प्रकारानुसार वेगवेगळ्या वर्तनात सोडवला जातो.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टिक्षेपात चार आधारस्तंभ</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>आधारस्तंभ</th><th>मूळ कल्पना</th><th>Java यंत्रणा</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Encapsulation</strong></td><td>स्थिती लपवा, वर्तन उघड करा, invariants सुरक्षित ठेवा</td><td><code>private</code> फील्ड्स, getters/setters, access modifiers</td></tr>
+            <tr><td><strong>Inheritance</strong></td><td>अस्तित्वात असलेल्या प्रकाराचा पुनर्वापर आणि विशेषीकरण (is-a)</td><td><code>extends</code>, <code>super</code>, protected सदस्य</td></tr>
+            <tr><td><strong>Polymorphism</strong></td><td>तोच कॉल, रनटाइममध्ये वेगळे वर्तन</td><td>Method overriding, dynamic dispatch, interfaces</td></tr>
+            <tr><td><strong>Abstraction</strong></td><td>संकल्पना उघड करा, कसे ते लपवा</td><td><code>interface</code>, <code>abstract class</code>, abstract methods</td></tr>
+            <tr><td><strong>एकत्रित</strong></td><td>लवचिक, बदलण्याजोग्या प्रणाली रचा</td><td>Interfaces साठी प्रोग्राम करा, भिन्नता encapsulate करा</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक मॉडेल:</strong> हे आधारस्तंभ चार असंबंधित युक्त्या नाहीत. Abstraction ठरवते की एक प्रकार <em>काय</em> वचन देतो, encapsulation संरक्षण करते की तो ते वचन <em>कसे</em> पाळतो, आणि inheritance व polymorphism अनेक प्रकारांना <em>तेच</em> वचन वेगवेगळ्या पद्धतींनी पाळू देतात. ते फक्त एकत्रच फायदेशीर ठरतात.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>आधारस्तंभ का अस्तित्वात आहेत</h2>
+      <p class="muted">सॉफ्टवेअर सतत बदलत असते, आणि अनियंत्रित गुंतागुंत हीच एका codebase ला मारते. आधारस्तंभ बदल <em>स्थानिक</em> करण्यासाठी अस्तित्वात आहेत: डेटा सुरक्षित ठेवा, जे बदलते ते वेगळे करा, आणि कॉलर्सना अस्थिर तपशीलाऐवजी स्थिर करारांवर अवलंबून राहू द्या.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Invariants सुरक्षित ठेवा</h4><p>Encapsulation बाहेरील कोडला एखाद्या ऑब्जेक्टला अवैध स्थितीत टाकण्यापासून थांबवते. एक <code>BankAccount</code> हमी देऊ शकते की त्याचा balance कधीही ऋण होत नाही कारण फक्त त्याच्या स्वतःच्या पद्धतीच त्या फील्डला स्पर्श करतात.</p></div>
+        <div class="card"><h4>♻️ कॉपी-पेस्ट न करता पुनर्वापर</h4><p>Inheritance आणि composition सामायिक वर्तनाला एकाच ठिकाणी राहू देतात. base प्रकारातील एक bug दुरुस्त करा आणि प्रत्येक विशेषीकरणाला फायदा होतो, डुप्लिकेट लॉजिक शोधत बसण्याऐवजी.</p></div>
+        <div class="card"><h4>🔌 अंमलबजावणी मुक्तपणे बदला</h4><p>Polymorphism आणि abstraction तुम्हाला नवीन payment पद्धत किंवा storage backend, त्याचा वापर करणाऱ्या कोडला स्पर्श न करता जोडू देतात. नवीन वर्तन त्याच interface मागे प्लग-इन होते.</p></div>
+        <div class="card"><h4>🧠 गुंतागुंत आटोक्यात आणा</h4><p>Abstraction असंबंधित तपशील लपवते जेणेकरून तुम्ही एका वेळी एका थराबद्दल विचार करता. तुम्ही <code>list.sort()</code> कॉल करता, खाली कोणता अल्गोरिदम चालतो हे न जाणता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले चार आधारस्तंभ</h2>
+      <p class="muted">त्याच चार कल्पना, त्यांना चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी त्या स्पष्ट होतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एका <strong>vending machine</strong> चा विचार करा. Encapsulation म्हणजे नाणी आणि खाऊभोवतीचे कुलूपबंद कपाट; inheritance म्हणजे snack machine आणि drink machine दोन्ही vending machines आहेत; polymorphism म्हणजे "buy" दाबणे आणि त्या खणात जे असेल ते मिळणे; abstraction म्हणजे आतील सर्व मोटर्स लपवणारे बटणांचे पॅनेल.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p><code>List</code> सारखे एक interface म्हणजे <strong>करार</strong>; <code>ArrayList</code> आणि <code>LinkedList</code> या अंमलबजावणी आहेत. तुम्ही <code>List</code> साठी कोड लिहिता (abstraction), classes त्यांचे arrays आणि nodes लपवतात (encapsulation), एक पालक करार सामायिक करतात (inheritance), आणि <code>add()</code> रनटाइममध्ये खऱ्या प्रकाराकडे dispatch करते (polymorphism).</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका कंपनीचा संघटन तक्ता. प्रत्येक <strong>Employee</strong> हा एक प्रकार आहे; एक Manager हा is-a Employee आहे (inheritance). तुम्ही कोणत्याही कर्मचाऱ्याला "स्थिती कळवा" असे सांगता आणि प्रत्येकजण ते स्वतःच्या पद्धतीने करतो (polymorphism). त्यांच्या खाजगी नोंदी खाजगीच राहतात (encapsulation), आणि तुम्ही त्यांच्या आतील कामकाजाऐवजी त्यांच्या पदावरून त्यांच्याशी व्यवहार करता (abstraction).</p></div>
+        <div class="card"><h4><span class="ico">🚗</span> रोजच्या जीवनातील आवृत्ती</h4><p>गाडी चालवणे. <strong>स्टीअरिंग व्हील आणि पेडल्स</strong> ही abstraction आहे; इंजिन बॉनेटखाली बंद असते (encapsulation); एक गाडी ही truck सारखीच is-a vehicle आहे (inheritance); accelerator दाबणे कोणत्याही गाडीवर चालते तरी प्रत्येक वेगळ्या प्रकारे प्रतिसाद देते (polymorphism).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आधारस्तंभ आतून कसे काम करतात</h2>
+      <p class="muted">रचनात्मकदृष्ट्या, आधारस्तंभ एका श्रेणीबद्ध रचनेच्या रूपात दिसतात: वर एक <strong>abstraction</strong> (एक interface किंवा abstract class), स्वतःची स्थिती encapsulate करणारे ठोस <strong>subclasses</strong>, आणि सामायिक प्रकाराद्वारे त्यांना <strong>polymorphically</strong> बोलावणारे कॉलर्स.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📐</span> करार आणि श्रेणीबद्धता</h4>
+          <p>एक interface कोणत्याही <em>कसे</em> शिवाय <em>काय</em> घोषित करते. एक abstract class सामायिक कोड तसेच abstract जागा पुरवू शकते ज्या subclasses ना भराव्या लागतात. ठोस classes करार पूर्ण करतात आणि त्यांची फील्ड्स private ठेवतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Dynamic dispatch</h4>
+          <p>जेव्हा तुम्ही एका base reference द्वारे override केलेली method कॉल करता, तेव्हा JVM त्याच्या vtable द्वारे रनटाइममध्ये प्रत्यक्ष ऑब्जेक्टची method शोधते. Overriding उशिरा सोडवले जाते; overloading compile time ला argument प्रकारांनुसार सोडवले जाते.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टिक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">रचना - एक interface आणि एक abstract base, ठोस subclasses द्वारे विशेषीकृत</div>
+        <pre class="mermaid">
+classDiagram
+    class Shape {
+        <<interface>>
+        +area() double
+        +name() String
+    }
+    class AbstractShape {
+        <<abstract>>
+        #String label
+        +name() String
+        +area()* double
+    }
+    class Circle {
+        -double radius
+        +area() double
+    }
+    class Rectangle {
+        -double width
+        -double height
+        +area() double
+    }
+    Shape <|.. AbstractShape
+    AbstractShape <|-- Circle
+    AbstractShape <|-- Rectangle
+        </pre>
+      </div>
+
+      <h3>Java मधील एक वास्तववादी उदाहरण</h3>
+      <pre><code>// Abstraction: the contract, no implementation
+interface Shape {
+    double area();
+    String name();
+}
+
+// Inheritance + partial abstraction: shared code, one abstract hole
+abstract class AbstractShape implements Shape {
+    private final String label;          // encapsulated state
+
+    protected AbstractShape(String label) {
+        this.label = label;
+    }
+
+    @Override public String name() {     // reused by every subclass
+        return label;
+    }
+
+    @Override public abstract double area();  // subclasses must fill this
+}
+
+final class Circle extends AbstractShape {
+    private final double radius;         // hidden, validated in constructor
+
+    Circle(double radius) {
+        super("Circle");
+        if (radius <= 0) throw new IllegalArgumentException("radius > 0");
+        this.radius = radius;            // invariant: always positive
+    }
+
+    @Override public double area() {     // overriding = polymorphism
+        return Math.PI * radius * radius;
+    }
+}
+
+final class Rectangle extends AbstractShape {
+    private final double width, height;
+
+    Rectangle(double width, double height) {
+        super("Rectangle");
+        this.width = width;
+        this.height = height;
+    }
+
+    @Override public double area() {
+        return width * height;
+    }
+}
+
+// Polymorphism in action: one loop, many concrete types
+List&lt;Shape&gt; shapes = List.of(new Circle(2), new Rectangle(3, 4));
+for (Shape s : shapes) {
+    // dynamic dispatch picks the right area() at runtime
+    System.out.printf("%s -> %.2f%n", s.name(), s.area());
+}</code></pre>
+      <p class="muted">एकाच स्निपेटमध्ये चारही आधारस्तंभ लक्षात घ्या: <code>Shape</code> ही abstraction आहे, <code>radius</code> फील्ड एका validating constructor मागे encapsulated आहे, <code>Circle extends AbstractShape</code> हे inheritance आहे, आणि loop ठोस प्रकार न जाणता <code>area()</code> ला polymorphically कॉल करते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - क्रम आकृत्या</div>
+      <h2>सविस्तर क्रम आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: रनटाइममध्ये सोडवला जाणारा एक polymorphic कॉल, एक invariant सुरक्षित ठेवणारे encapsulation, आणि एका subclass कडे सोपवणारी abstract template method.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Dynamic dispatch: एक कॉल, रनटाइममध्ये खऱ्या प्रकारात सोडवला जातो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑 Client code
+    participant Ref as 🔗 Shape reference
+    participant VT as 🧭 Method table
+    participant Obj as 🟠 Circle instance
+
+    Client->>Ref: s.area()
+    Ref->>VT: look up area for actual type
+    VT-->>Ref: bind to Circle.area
+    Ref->>Obj: invoke Circle.area()
+    Obj-->>Client: returns pi r squared
+    Note over Ref,Obj: Overriding is resolved late, not by the declared type
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Encapsulation: ऑब्जेक्ट एक अवैध स्थिती बदल नाकारतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Acc as 🏦 BankAccount
+    participant Bal as 🔒 private balance
+
+    Caller->>Acc: withdraw(amount)
+    Acc->>Acc: check amount vs balance
+    alt insufficient funds
+        Acc-->>Caller: throw IllegalState
+        Note over Acc,Bal: Invariant held, balance never goes negative
+    else funds available
+        Acc->>Bal: balance = balance - amount
+        Bal-->>Acc: updated
+        Acc-->>Caller: return new balance
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Abstraction: एक template method बदलणारी पायरी एका subclass कडे सोपवते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑 Client
+    participant Base as 🧱 AbstractReport
+    participant Sub as 📄 PdfReport
+
+    Client->>Base: render()
+    Base->>Base: writeHeader() shared
+    Base->>Sub: writeBody() abstract hook
+    Sub-->>Base: body content
+    Base->>Base: writeFooter() shared
+    Base-->>Client: finished document
+    Note over Base,Sub: Base fixes the skeleton, subclass fills the hole
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी दर पायरी</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका कच्च्या गरजेपासून ते एका polymorphic, चांगल्या प्रकारे encapsulated रचनेपर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>ऑब्जेक्ट्स शोधा</h4><p>डोमेन वाचा आणि वर्तन बाळगणाऱ्या नामांना नाव द्या: Account, Order, Shape. प्रत्येक जबाबदाऱ्यांसह एक संभाव्य class बनतो, केवळ डेटाची पिशवी नाही.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Abstract</span><h4>करार व्याख्यायित करा</h4><p>आधी interface लिहा: कॉलर्सना लागणाऱ्या पद्धती, कोणत्याही अंमलबजावणीशिवाय. हीच ती abstraction आहे जी प्रत्येक भविष्यातील कसे एका स्थिर काय मागे लपवते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Encapsulate</span><h4>स्थिती लपवा</h4><p>फील्ड्स <code>private</code> करा आणि कच्च्या डेटाऐवजी वर्तन उघड करा. ऑब्जेक्टने नेहमी कोणते invariants खरे ठेवावेत ते ठरवा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Guard</span><h4>Constructor मध्ये तपासणी करा</h4><p>अवैध arguments आधीच नाकारा जेणेकरून एक ऑब्जेक्ट कधीही तुटलेल्या स्थितीत जन्माला येत नाही. रचलेला ऑब्जेक्ट म्हणजे वैध ऑब्जेक्ट.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Reuse</span><h4>सामायिक कोड base कडे उचला</h4><p>अनेक प्रकार लॉजिक सामायिक करत असतील, तर ते जे बदलते त्यासाठी abstract जागांसह एका abstract class मध्ये ठेवा. हे फक्त खऱ्या is-a नात्यासाठीच प्राधान्याने वापरा.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Specialize</span><h4>ठोस subclasses अंमलात आणा</h4><p>प्रत्येक subclass abstract methods भरतो आणि स्वतःची private फील्ड्स ठेवतो. तो करार स्वतःच्या पद्धतीने पाळतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Override</span><h4>बदलणारे वर्तन पुरवा</h4><p>base methods ना <code>@Override</code> सह override करा जेणेकरून compiler signature तपासतो. इथेच polymorphism ला त्याची अनेक रूपे मिळतात.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Dispatch</span><h4>Abstraction द्वारे कॉल करा</h4><p>Client कोड ठोस class ऐवजी interface चे reference बाळगतो. रनटाइममध्ये dynamic dispatch प्रत्येक कॉलला खऱ्या प्रकाराकडे मार्गस्थ करते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Substitute</span><h4>Liskov सुरक्षितता तपासा</h4><p>कोणताही subclass base ची अपेक्षा असेल तिथे कोणत्याही आश्चर्याशिवाय वापरता आला पाहिजे. जर एखादा subclass base ची वचने मोडत असेल, तर श्रेणीबद्धता चुकीची आहे.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>नवीन प्रकार जोडा, काहीही न बदलता</h4><p>एक नवीन गरज म्हणजे interface अंमलात आणणारा एक नवीन class. अस्तित्वात असलेले कॉलर्स काम करत राहतात, जे सिद्ध करते की रचना विस्तारासाठी खुली आहे.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Combine</span><h4>चार आधारस्तंभ, एक लवचिक प्रणाली</h4><p>Abstraction करार ठरवते, encapsulation त्याचे संरक्षण करते, inheritance तो सामायिक करते, polymorphism तो बदलते. एकत्रितपणे ते बदल एकाच ठिकाणी स्थानिक करतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">आधारस्तंभांचा गैरवापर करणे सोपे आहे. ही ती सापळे आहेत जी OOP ला एका साधनाऐवजी एका गुंत्यात बदलतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ गळके encapsulation</h4><p>प्रत्येक फील्डसाठी getters आणि setters, किंवा एक mutable अंतर्गत list परत करणे, तुम्ही लपवू इच्छित असलेली स्थिती उघड करते. मग कॉलर्स आतील गोष्टींवर अवलंबून राहतात आणि invariants शांतपणे मोडतात.</p></div>
+        <div class="card"><h4>🏗️ खोल inheritance मनोरे</h4><p>पाच-स्तरीय class श्रेणीबद्धता नाजूक बनतात: मधल्या class मधील एक बदल अनपेक्षितपणे पसरतो. जर तुम्ही "X is-a Y" असे मोठ्याने म्हणू शकत नसाल, तर inherit करू नका.</p></div>
+        <div class="card"><h4>🧨 केवळ पुनर्वापरासाठी inheriting</h4><p>फक्त एखाद्या class च्या पद्धती मिळवण्यासाठी तिचा विस्तार करणे एक is-a खोटेपणा निर्माण करते. एक <code>Stack extends Vector</code> अशा Vector operations गळू देते ज्या stack वर्तनाचे उल्लंघन करतात. Composition ला प्राधान्य द्या.</p></div>
+        <div class="card"><h4>🔀 Overriding विरुद्ध overloading गोंधळ</h4><p>तेच नाव, वेगळे parameters म्हणजे overloading (compile-time, polymorphism नाही). <code>@Override</code> विसरल्याने शांतपणे एक overload तयार होऊ शकतो जो कधीही dispatch होत नाही.</p></div>
+        <div class="card"><h4>🎪 Anemic domain model</h4><p>ज्या classes फक्त डेटा धारक असतात आणि सर्व लॉजिक इतरत्र असते त्या encapsulation फेकून देतात. वर्तन ते संरक्षित करणाऱ्या डेटासोबत असावे, दूरच्या एखाद्या service मध्ये नाही.</p></div>
+        <div class="card"><h4>🧩 अति-abstraction</h4><p>एकच अंमलबजावणी असलेले interface, कधीही न बदलणाऱ्या factories मध्ये गुंडाळलेले, कोणत्याही फायद्याशिवाय अप्रत्यक्षता जोडते. तुमच्याकडे प्रत्यक्षात असलेली भिन्नताच abstract करा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS / TRADE-OFFS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">आधारस्तंभ शक्तिशाली आहेत पण फुकट नाहीत. जिथे भिन्नता आणि बदल खरे आहेत तिथे त्यांचा उपयोग करा, आणि जिथे नाहीत तिथे सपाट ठेवा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>बदल स्थानिक करते, invariants सुरक्षित ठेवते, पुनर्वापर सक्षम करते, आणि कॉलर्स संपादित करण्याऐवजी प्रकार जोडून वर्तन जोडू देते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अप्रत्यक्षता नियंत्रण प्रवाह अस्पष्ट करू शकते, खोल श्रेणीबद्धता नाजूक होतात, आणि dynamic dispatch थोडा रनटाइम खर्च व शोधण्यास कठीण stacks जोडते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>तुमच्याकडे एका सामायिक करारामागे खरी भिन्नता असेल, सुरक्षित ठेवण्यायोग्य invariants असतील, किंवा खरोखर is-a नाते सामायिक करणारे प्रकार असतील.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>समस्या एक साधी script किंवा डेटा रूपांतर असेल, फक्त एकच अंमलबजावणी असेल, किंवा तुम्ही केवळ कोड पुनर्वापर करण्यासाठी inherit करत असाल.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>एक interface आणि एक class जोडणे कमी; श्रेणीबद्धतेच्या खोलीसह वेगाने वाढते. आटोक्यात ठेवण्यासाठी उथळ झाडे आणि composition ला प्राधान्य द्या.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>SOLID तत्त्वे, inheritance पेक्षा composition, UML नाती, आणि Strategy pattern हे सर्व थेट या आधारस्तंभांवर उभे आहेत.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अनुभवाचा नियम:</strong> inheritance पेक्षा composition ला प्राधान्य द्या, अंमलबजावणीऐवजी interfaces साठी प्रोग्राम करा, आणि फक्त खऱ्या is-a साठीच inherit करा. जर एखादा आधारस्तंभ ठोस बदल किंवा भिन्नता समस्या सोडवत नसेल, तर तुम्ही रचना नव्हे तर औपचारिकता जोडत आहात.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>वास्तविक जगातील उदाहरणे</h2>
+      <p class="muted">तीन ठिकाणे जिथे चार आधारस्तंभ तुम्ही रोज वापरत असलेल्या सॉफ्टवेअरला शांतपणे आधार देतात.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗂️</span><div><h3>1 · Java Collections Framework</h3><div class="role">Pattern: मोठ्या प्रमाणावर abstraction अधिक polymorphism</div></div></div>
+        <p class="muted">मानक लायब्ररी <code>List</code>, <code>Set</code>, आणि <code>Map</code> ला त्यांच्या मागे अनेक अंमलबजावणी असलेल्या interfaces म्हणून उघड करते.</p>
+        <ul>
+          <li>तुम्ही <code>List</code> साठी कोड लिहिता, त्यामुळे <code>ArrayList</code> ऐवजी <code>LinkedList</code> बदलल्याने कॉलर्ससाठी काहीही बदलत नाही.</li>
+          <li>प्रत्येक class स्वतःचे storage encapsulate करते - एक array, एक node साखळी, एक hash table - पूर्णपणे लपवलेले.</li>
+          <li><code>Collections.sort(list)</code> तुम्ही जी list पास कराल तिकडे polymorphically dispatch करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> लाखो प्रोग्राम्स एका स्थिर interface ला सामायिक करतात तर अंमलबजावणी विकसित होत राहतात, कारण abstraction आणि polymorphism वापराला तपशीलापासून विलग करतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>2 · एक payment gateway integration</h3><div class="role">Pattern: encapsulation अधिक Strategy pattern</div></div></div>
+        <p class="muted">एका checkout service ला cards, wallets, आणि bank transfers यांना branching लॉजिक सर्वत्र पसरू न देता समर्थन द्यावे लागते.</p>
+        <ul>
+          <li>एक <code>PaymentMethod</code> interface <code>authorize()</code> आणि <code>capture()</code> व्याख्यायित करते; प्रत्येक provider ते अंमलात आणतो.</li>
+          <li>Provider classes त्यांच्या स्वतःच्या API keys आणि retry नियम interface मागे encapsulate करतात.</li>
+          <li>नवीन provider जोडणे म्हणजे एक नवीन class, त्यामुळे order प्रवाह कधीही बदलत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> नवीन payment प्रकार checkout ला स्पर्श न करता येतात, कारण भिन्नता एका polymorphic करारामागे encapsulated आहे.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎮</span><div><h3>3 · एक game entity श्रेणीबद्धता</h3><div class="role">Pattern: template method सह inheritance</div></div></div>
+        <p class="muted">एका game engine मध्ये अनेक entities असतात - players, enemies, projectiles - जे एक update-and-render loop सामायिक करतात.</p>
+        <ul>
+          <li>एक abstract <code>Entity</code> tick सांगाडा निश्चित करते आणि <code>update()</code> व <code>render()</code> ला abstract ठेवते.</li>
+          <li>प्रत्येक subclass फक्त वेगळे असणारे वर्तन override करतो, सामायिक loop चा पुनर्वापर करत.</li>
+          <li>Engine एका <code>List&lt;Entity&gt;</code> वर फिरते आणि प्रत्येक ऑब्जेक्टवर <code>tick()</code> polymorphically कॉल करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एकच loop शेकडो entity प्रकार चालवते, कारण inheritance सांगाडा सामायिक करते आणि polymorphism तपशील भरते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">आधारस्तंभ दशके जुने आहेत, पण आधुनिक भाषा आणि शैली त्यांना बदलण्याऐवजी परिष्कृत करतात - आणि बहुधा त्यामागील कल्पनांवर अधिक भर देतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Inheritance पेक्षा composition</h4><p>आधुनिक मार्गदर्शन खोल class झाडांऐवजी लहान भागांतून वर्तन जोडण्याला प्राधान्य देते. जो आधारस्तंभ टिकतो तो म्हणजे encapsulation, composition द्वारे एकत्र जोडलेले.</p></div>
+        <div class="card"><h4>🔗 प्राथमिक साधन म्हणून interfaces</h4><p>Go, Rust traits, आणि TypeScript शास्त्रीय inheritance शिवाय interface-आधारित polymorphism ला पुढे नेतात, हे दाखवत की abstraction हीच टिकाऊ कल्पना आहे.</p></div>
+        <div class="card"><h4>🧾 Records आणि immutability</h4><p>Java records आणि data classes encapsulated, immutable मूल्ये स्वस्त करतात, त्यामुळे invariants रचनेतूनच टिकतात आणि कधीही वाईट स्थितीत बदलत नाहीत.</p></div>
+        <div class="card"><h4>🎯 Sealed प्रकार आणि pattern matching</h4><p>Sealed श्रेणीबद्धता अधिक switch patterns संपूर्ण, type-safe polymorphism देतात, virtual dispatch ला एक आधुनिक पूरक.</p></div>
+        <div class="card"><h4>🧩 Functional आणि OO यांचे मिश्रण</h4><p>Higher-order functions म्हणजे दुसऱ्या नावाने polymorphism. lambdas आणि objects यांचे मिश्रण आता रूढ आहे, विरोधाभास नाही.</p></div>
+        <div class="card"><h4>🏛️ Domain-driven design</h4><p>DDD invariants सुरक्षित ठेवणाऱ्या समृद्ध, encapsulated aggregates वर अवलंबून असते - पहिला आधारस्तंभ, एका वास्तुशिल्पीय तत्त्वापर्यंत उंचावलेला.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> चार आधारस्तंभ ही अशी शैली नाही जी तुम्ही मागे टाकू शकता, ती बदल हाताळण्याची शब्दावली आहे. नवीन साधने भर encapsulation, abstraction, आणि composition कडे सरकवतात, पण मूळ अंतर्दृष्टी - तपशील लपवा, भिन्नता विलग करा, करारांसाठी प्रोग्राम करा - पूर्वीपेक्षा अधिक प्रासंगिक आहे.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध चालू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">आधारस्तंभ ऑब्जेक्ट-ओरिएंटेड रचनेच्या मुळाशी आहेत. हे थेट त्यांवर उभे आहेत.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../solid/"><span class="ico">🧯</span><h4>SOLID तत्त्वे</h4><p>पाच नियम जे आधारस्तंभांना ताठर होण्यापासून रोखतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧱</span><h4>Inheritance पेक्षा composition</h4><p>विस्तार करण्याऐवजी वर्तन केव्हा जोडावे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../uml-relationships/"><span class="ico">📐</span><h4>UML नाती</h4><p>is-a, has-a, आणि depends-on योग्यरित्या काढणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎯</span><h4>Strategy pattern</h4><p>बदलणाऱ्या अल्गोरिदमवर लागू केलेले polymorphism आणि encapsulation.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>OOP च्या चार आधारस्तंभांचे एक चित्रमय मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · तडजोडी · उदाहरणे · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

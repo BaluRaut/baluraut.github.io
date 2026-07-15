@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bridge पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Bridge या स्ट्रक्चरल डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शन: तो अ‍ॅब्स्ट्रॅक्शनला त्याच्या इम्प्लिमेंटेशनपासून कसा वेगळा करतो जेणेकरून दोन्ही स्वतंत्रपणे बदलू शकतात आणि क्लासची संयोजनात्मक स्फोटक वाढ टाळता येते, त्याच्या भूमिका, आकृत्या, खरा कोड आणि केस स्टडीजसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural पॅटर्न</span>
+      <h1>Bridge पॅटर्न प्रत्यक्षात कसा काम करतो - काय ते कसे यापासून वेगळे करणे</h1>
+      <p class="lede">जेव्हा एकच कल्पना एकाच वेळी दोन अक्षांवर बदलू शकते, तेव्हा single inheritance तुम्हाला प्रत्येक संयोजनासाठी वेगळा class तयार करण्यास भाग पाडते. Bridge पॅटर्न ती कल्पना दोन श्रेणीबद्ध रचनांमध्ये विभागतो: एक <strong>abstraction</strong> आणि एक <strong>implementation</strong>, जे एका संदर्भाने (reference) जोडलेले असतात. प्रत्येक बाजू स्वतःहून विकसित होते, त्यामुळे तुम्ही class ची संख्या वाढवण्याऐवजी composition ने वैशिष्ट्ये जोडता.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Abstraction</span>
+        <span class="pill">Implementor</span>
+        <span class="pill">Inheritance ऐवजी composition</span>
+        <span class="pill">बदलाचे दोन अक्ष</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Bridge पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Bridge</strong> हा एक structural पॅटर्न आहे जो abstraction ला त्याच्या implementation पासून वेगळा करतो जेणेकरून दोन्ही स्वतंत्रपणे बदलू शकतात. एखाद्या उच्च-स्तरीय संकल्पनेला inheritance द्वारे थेट एका खालच्या-स्तरीय कार्यपद्धतीशी बांधण्याऐवजी, abstraction एका implementation interface चा <em>reference</em> धरून ठेवते. तो reference म्हणजेच bridge: abstraction प्रत्यक्ष काम त्यावरून delegate करते आणि कोणतीही बाजू दुसरीला स्पर्श न करता विस्तारता येते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎨</span> Abstraction बाजू</h4>
+          <p>क्लायंट वापरतात तो उच्च-स्तरीय नियंत्रण थर. तो कोणती operations अस्तित्वात आहेत हे <em>काय</em> ठरवतो आणि खरे काम तो धरून ठेवलेल्या implementor कडे delegate करतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Implementor बाजू</h4>
+          <p>खालच्या-स्तरीय मूलभूत interface. raw operations <em>कशी</em> केली जातात हे तो ठरवतो, प्रत्येक platform किंवा backend साठी concrete implementors असतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌉</span> Bridge</h4>
+          <p>दोन श्रेणीबद्ध रचनांमधील composition दुवा. construction वेळी implementor बदला आणि तीच abstraction वेगळ्या backend वर चालते.</p>
+        </div>
+      </div>
+
+      <h3>चार सहभागी भूमिका</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>ती काय करते</th><th>Shapes उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abstraction</strong></td><td>उच्च-स्तरीय interface ठरवते आणि Implementor चा reference धरून ठेवते</td><td><code>Shape</code></td></tr>
+            <tr><td><strong>RefinedAbstraction</strong></td><td>abstraction ला विविध प्रकारांसह विस्तारते, तरीही रेखांकन implementor कडे delegate करते</td><td><code>Circle</code>, <code>Square</code></td></tr>
+            <tr><td><strong>Implementor</strong></td><td>abstraction ज्यावर अवलंबून असते ती मूलभूत operations घोषित करते</td><td><code>Renderer</code></td></tr>
+            <tr><td><strong>ConcreteImplementor</strong></td><td>त्या मूलभूत operations चे विशिष्ट अंमलबजावणी पुरवते</td><td><code>SvgRenderer</code>, <code>CanvasRenderer</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Bridge म्हणजे एकच संकल्पना <em>दोन</em> class श्रेणीबद्ध रचनांमध्ये व्यक्त केलेली, जी inheritance ने गुंतागुंतीच्या एका रचनेऐवजी composition ने एकत्र जोडलेली असते. Shapes एका अक्षावर बदलतात; rendering backends दुसऱ्या अक्षावर बदलतात. Bridge त्यांना गुणाकार न करता एकमेकांना छेदू देतो.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Bridge पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">ज्या क्षणी एखाद्या प्रकाराला दोन स्वतंत्र आयामांवर बदलावे लागते, त्या क्षणी inheritance तुमचा विश्वासघात करते. <em>M</em> shapes ना <em>N</em> renderers वर subclassing ने मांडा आणि तुम्हाला M गुणिले N classes मिळतात: <code>SvgCircle</code>, <code>CanvasCircle</code>, <code>SvgSquare</code>, वगैरे. Bridge तो गुणाकार बेरजेत बदलतो, M अधिक N.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💥 Class स्फोट थांबवतो</h4><p>inheritance ने जोडलेले दोन अक्ष गुणाकाराने वाढतात. त्यांना reference ने जोडलेल्या वेगळ्या रचनांमध्ये विभागा आणि वाढ बेरजेच्या रूपात होते: एक shape किंवा एक renderer जोडा, प्रत्येक संयोजनासाठी एक नाही.</p></div>
+        <div class="card"><h4>🔌 Runtime ला implementations बदला</h4><p>abstraction फक्त एक interface धरून ठेवत असल्याने, object बनवताना तुम्ही वेगळा concrete implementor injects करू शकता, किंवा नंतरही तो बदलू शकता, abstraction पुन्हा compile न करता.</p></div>
+        <div class="card"><h4>🧩 स्वतंत्र विकास</h4><p>Platform teams implementor श्रेणीबद्ध रचना विस्तारतात तर feature teams abstraction श्रेणीबद्ध रचना विस्तारतात. कोणतीही बाजू दुसरीला मोडत नाही कारण त्या फक्त एका स्थिर interface वर भेटतात.</p></div>
+        <div class="card"><h4>🙈 Platform तपशील लपवतो</h4><p>क्लायंट abstraction समोर प्रोग्रॅम करतात आणि concrete backend कधीच पाहत नाहीत. गोंधळलेला, platform-विशिष्ट कोड implementor interface मागे बंद राहतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Bridge समजावून</h2>
+      <p class="muted">तीच कल्पना, कल्पना करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटकन समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एका <strong>TV आणि त्याच्या remote</strong> चा विचार करा. remote म्हणजे abstraction, TV म्हणजे implementation. कोणतीही remote कोणत्याही ब्रँडच्या TV सोबत चालते कारण ते एका सिग्नलवर सहमत असतात, त्यामुळे तुम्ही प्रत्येक ब्रँडसाठी एकच जोडलेले remote-अधिक-TV युनिट विकत घेण्याऐवजी मिसळून-जुळवून वापरू शकता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हा <strong>एक class आहे जो एक interface धरून ठेवतो, त्याचा subclass नाही</strong>. तुमचा <code>Shape</code> एक <code>Renderer</code> field ठेवतो आणि <code>renderer.drawCircle(...)</code> ला कॉल करतो. field बदला आणि तोच shape SVG, Canvas किंवा terminal वर रेखाटतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>जसे <strong>एक कंपनी आणि तिचे payment providers</strong>. billing workflow ही एक श्रेणीबद्ध रचना आहे; Stripe, PayPal आणि bank transfer ही दुसरी. finance workflow बदलते, integrations provider बदलतात आणि दोन्ही teams कधीच एकमेकांच्या पायात येत नाहीत.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>भिंतीचा socket आणि उपकरणे</strong>. socket हा एक निश्चित interface आहे; एक दिवा, एक charger आणि एक kettle प्रत्येक त्यात plug होतात. तुम्ही प्रत्येक उपकरणासाठी नवीन socket बनवत नाही, तुम्ही सामायिक plug आकारासाठी बनवता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे काम करते</h2>
+      <p class="muted">Bridge मध्ये दोन सहकार्य करणाऱ्या श्रेणीबद्ध रचना असतात. <strong>abstraction</strong> श्रेणीबद्ध रचना क्लायंट वापरतात ती संकल्पना ठरवते; <strong>implementor</strong> श्रेणीबद्ध रचना मूलभूत operations ठरवते. abstraction एक implementor reference साठवते आणि प्रत्येक खालच्या-स्तरीय कॉल त्याकडे पुढे पाठवते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🎨</span> Abstraction श्रेणीबद्ध रचना</h4>
+          <p><code>Shape</code> ही मूळ abstraction आहे जी एक <code>Renderer</code> धरून ठेवते. <code>Circle</code> आणि <code>Square</code> या RefinedAbstractions आहेत ज्या shape-विशिष्ट वर्तन जोडतात तरीही प्रत्यक्ष रेखांकन bridge वरून delegate करतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Implementor श्रेणीबद्ध रचना</h4>
+          <p><code>Renderer</code> <code>drawCircle</code> आणि <code>drawLine</code> सारख्या मूलभूत operations घोषित करते. <code>SvgRenderer</code> आणि <code>CanvasRenderer</code> त्यांना त्यांच्या संबंधित backends साठी अंमलात आणतात, कोणत्याही shape बद्दल अनभिज्ञ राहून.</p>
+        </div>
+      </div>
+
+      <h3>दोन श्रेणीबद्ध रचना आणि त्यांच्यामधील bridge</h3>
+      <div class="diagram">
+        <div class="cap">रचना - abstraction implementor चा reference धरून ठेवते; दोन्ही श्रेणीबद्ध रचना स्वतंत्रपणे विस्तारतात</div>
+        <pre class="mermaid">
+classDiagram
+    class Shape {
+        #Renderer renderer
+        +draw()
+        +resize(factor)
+    }
+    class Circle {
+        +draw()
+    }
+    class Square {
+        +draw()
+    }
+    class Renderer {
+        <<interface>>
+        +drawCircle(x, y, r)
+        +drawSquare(x, y, s)
+    }
+    class SvgRenderer {
+        +drawCircle(x, y, r)
+        +drawSquare(x, y, s)
+    }
+    class CanvasRenderer {
+        +drawCircle(x, y, r)
+        +drawSquare(x, y, s)
+    }
+    Shape <|-- Circle
+    Shape <|-- Square
+    Renderer <|.. SvgRenderer
+    Renderer <|.. CanvasRenderer
+    Shape o--> Renderer : bridge
+        </pre>
+      </div>
+
+      <h3>Java मधील एक वास्तववादी अंमलबजावणी</h3>
+      <pre><code>// Implementor: the "how" primitives, one per rendering backend
+interface Renderer {
+    void drawCircle(double x, double y, double radius);
+    void drawSquare(double x, double y, double side);
+}
+
+// ConcreteImplementor A
+class SvgRenderer implements Renderer {
+    public void drawCircle(double x, double y, double r) {
+        System.out.printf("&lt;circle cx='%.0f' cy='%.0f' r='%.0f'/&gt;%n", x, y, r);
+    }
+    public void drawSquare(double x, double y, double s) {
+        System.out.printf("&lt;rect x='%.0f' y='%.0f' width='%.0f' height='%.0f'/&gt;%n", x, y, s, s);
+    }
+}
+
+// ConcreteImplementor B
+class CanvasRenderer implements Renderer {
+    public void drawCircle(double x, double y, double r) {
+        System.out.printf("ctx.arc(%.0f, %.0f, %.0f, 0, 2*PI)%n", x, y, r);
+    }
+    public void drawSquare(double x, double y, double s) {
+        System.out.printf("ctx.rect(%.0f, %.0f, %.0f, %.0f)%n", x, y, s, s);
+    }
+}
+
+// Abstraction: holds the bridge reference to an implementor
+abstract class Shape {
+    protected final Renderer renderer;   // the bridge
+    protected Shape(Renderer renderer) { this.renderer = renderer; }
+    public abstract void draw();
+}
+
+// RefinedAbstraction: adds shape-specific state, delegates drawing
+class Circle extends Shape {
+    private final double x, y, radius;
+    Circle(Renderer r, double x, double y, double radius) {
+        super(r); this.x = x; this.y = y; this.radius = radius;
+    }
+    public void draw() { renderer.drawCircle(x, y, radius); }
+}
+
+class Square extends Shape {
+    private final double x, y, side;
+    Square(Renderer r, double x, double y, double side) {
+        super(r); this.x = x; this.y = y; this.side = side;
+    }
+    public void draw() { renderer.drawSquare(x, y, side); }
+}
+
+// Client: mix any shape with any renderer, no combinatorial subclasses
+public class Demo {
+    public static void main(String[] args) {
+        Shape svgCircle    = new Circle(new SvgRenderer(), 10, 10, 5);
+        Shape canvasSquare = new Square(new CanvasRenderer(), 0, 0, 8);
+        svgCircle.draw();      // &lt;circle .../&gt;
+        canvasSquare.draw();   // ctx.rect(...)
+    }
+}</code></pre>
+      <p class="muted">लक्षात घ्या की येथे कोणताही <code>SvgCircle</code> किंवा <code>CanvasSquare</code> class नाही. दोन shapes अधिक दोन renderers फक्त चार classes मधून चार कार्यरत संयोजने देतात आणि एक <code>TerminalRenderer</code> जोडल्याने एक class जोडला जातो जो प्रत्येक विद्यमान shape लगेच वापरू शकतो.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: construction वेळी bridge जोडणे, bridge ओलांडणारी draw कॉल आणि runtime ला implementor बदलणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Construction: abstraction मध्ये एक concrete implementor injects करणे</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Circle as 🎨 Circle
+    participant Svg as ⚙️ SvgRenderer
+
+    Client->>Svg: new SvgRenderer()
+    Svg-->>Client: renderer
+    Client->>Circle: new Circle(renderer, x, y, r)
+    Circle->>Circle: store renderer as bridge
+    Circle-->>Client: shape ready
+    Note over Circle,Svg: Abstraction now holds implementor by reference
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Draw: abstraction मूलभूत operation bridge वरून delegate करते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Circle as 🎨 Circle
+    participant Renderer as ⚙️ Renderer
+
+    Client->>Circle: draw()
+    Circle->>Circle: prepare shape state
+    Circle->>Renderer: drawCircle(x, y, radius)
+    Renderer->>Renderer: emit backend-specific output
+    Renderer-->>Circle: done
+    Circle-->>Client: drawn
+    Note over Circle,Renderer: Abstraction knows what, implementor knows how
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Runtime बदल: तीच abstraction, वेगळा concrete implementor</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Shape as 🎨 Shape
+    participant Svg as 🖼️ SvgRenderer
+    participant Canvas as 🕹️ CanvasRenderer
+
+    Client->>Shape: draw() with SvgRenderer
+    Shape->>Svg: drawCircle(...)
+    Svg-->>Shape: SVG markup
+    alt switch backend
+        Client->>Shape: setRenderer(CanvasRenderer)
+        Client->>Shape: draw()
+        Shape->>Canvas: drawCircle(...)
+        Canvas-->>Shape: canvas calls
+    end
+    Shape-->>Client: output on chosen backend
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">बदलाचे दोन अक्ष ओळखण्यापासून ते पूर्णपणे decoupled, विस्तारक्षम रचनेपर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>बदलाचे दोन अक्ष शोधा</h4><p>एखादा प्रकार एकाच वेळी दोन स्वतंत्र आयामांवर बदलत असल्याचे लक्षात घ्या, जसे shape विरुद्ध rendering backend, किंवा message विरुद्ध transport channel.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">निदान करा</span><h4>येणारा class स्फोट पहा</h4><p>शुद्ध inheritance ला किती खर्च येईल याचे रेखाटन करा: M गुणिले N subclasses. जर तो गुणाकार वाढत असेल, तर Bridge हे उत्तर आहे.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">विभागा</span><h4>abstraction ला implementation पासून वेगळे करा</h4><p>कोणता आयाम उच्च-स्तरीय संकल्पना (abstraction) आहे आणि कोणता खालच्या-स्तरीय यंत्रणा (implementor) आहे हे ठरवा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">व्याख्या करा</span><h4>Implementor interface घोषित करा</h4><p>abstraction ला लागणाऱ्या मूलभूत operations लिहा, लहान आणि platform-निरपेक्ष ठेवा, जसे <code>drawCircle</code> आणि <code>drawSquare</code>.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">अंमलात आणा</span><h4>ConcreteImplementors बनवा</h4><p>प्रत्येक backend साठी एक class पुरवा, जसे <code>SvgRenderer</code> आणि <code>CanvasRenderer</code>, प्रत्येक मूलभूत operations त्याच्या स्वतःच्या पद्धतीने साकारते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">जोडा</span><h4>Abstraction ला एक reference द्या</h4><p>मूळ abstraction मध्ये एक implementor field जोडा. हा reference म्हणजे bridge ज्यावरून सर्व खालच्या-स्तरीय काम delegate केले जाते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">परिष्कृत करा</span><h4>RefinedAbstractions जोडा</h4><p>abstraction ला <code>Circle</code> आणि <code>Square</code> सारख्या प्रकारांनी विस्तारा जे state जोडतात आणि तरीही bridge वरून रेखांकन delegate करतात.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Inject करा</span><h4>construction वेळी त्यांना जोडा</h4><p>क्लायंट एक concrete implementor निवडतो आणि abstraction मध्ये पास करतो. Dependency injection निवड बाहेरून ठेवते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Delegate करा</span><h4>bridge वरून operations चालवा</h4><p><code>draw()</code> कॉल केल्याने ते <code>renderer.drawCircle(...)</code> कडे पुढे जाते. कोणता backend उत्तर देतो हे abstraction ला कधीच कळत नाही.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">विस्तारा</span><h4>कोणतीही एक बाजू स्वतंत्रपणे वाढवा</h4><p>एक नवीन shape किंवा एक नवीन renderer एकट्याने जोडा. प्रत्येक विद्यमान संयोजन काम करत राहते आणि नवीन जोड्या फुकट मिळतात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">प्रकाशित करा</span><h4>बेरजेच्या वाढीचा आनंद घ्या</h4><p>तुमची रचना आता M गुणिले N ऐवजी M अधिक N प्रमाणे scale होते, platform तपशील लपवलेला आणि implementations बदलण्यायोग्य.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">जेव्हा तुमच्याकडे खरोखर दोन अक्ष असतात तेव्हा Bridge चमकतो. त्यांच्याशिवाय वापरल्यास तो फक्त अप्रत्यक्षता जोडतो. हे नेहमीचे सापळे आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 बदलाचा फक्त एकच अक्ष</h4><p>जर implementation कधीच बदलत नसेल, तर Bridge एक निरर्थक थर जोडतो. भावंडे नसलेला एकच implementor म्हणजे तुम्ही विनाकारण औपचारिकता आणली. दुसरा अक्ष खरा होईपर्यंत थांबा.</p></div>
+        <div class="card"><h4>🔀 त्याला Adapter सोबत गोंधळवणे</h4><p>Adapter दोन विद्यमान, विसंगत interfaces नंतरून जुळवतो. Bridge आधीच रचला जातो जेणेकरून दोन्ही श्रेणीबद्ध रचना विकसित होऊ शकतात. एखादा legacy class चिकटवण्यासाठी Bridge कडे जाणे हे चुकीचे साधन आहे.</p></div>
+        <div class="card"><h4>🧱 गळका Implementor interface</h4><p>backend-विशिष्ट संकल्पना implementor मूलभूत operations मध्ये झिरपू देणे abstraction ला एका platform शी जोडते. interface किमान आणि खरोखर सामान्य ठेवा, नाहीतर bridge बदलण्यायोग्य राहणार नाही.</p></div>
+        <div class="card"><h4>🪆 लवकर over-engineering</h4><p>तुमच्याकडे दोन shapes आणि दोन renderers असण्यापूर्वी Bridge आणणे ही अनुमानात्मक सामान्यता आहे. class matrix प्रत्यक्षात वाढू लागल्यावर त्याकडे refactor करा, त्यापूर्वी नाही.</p></div>
+        <div class="card"><h4>🕳️ God Implementor interface</h4><p>प्रत्येक शक्य मूलभूत operation एका जाड implementor मध्ये कोंबल्याने प्रत्येक concrete backend ला त्याला न लागणाऱ्या operations अंमलात आणण्यास भाग पडते. एका interface ला फुगवण्याऐवजी जबाबदाऱ्या विभागा.</p></div>
+        <div class="card"><h4>🔗 Abstraction bridge भोवती हात घालणे</h4><p>जर abstraction implementor ला downcast करत असेल किंवा backend-विशिष्ट methods कॉल करत असेल, तर decoupling मोडते. सर्व संवाद घोषित मूलभूत interface मधूनच झाला पाहिजे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Bridge अप्रत्यक्षतेच्या एका अतिरिक्त थराच्या बदल्यात लवचिकता विकत घेतो. स्वीकारण्यापूर्वी दोन अक्षांना जोडलेल्या रचनेच्या तुलनेत तोला.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>M गुणिले N संयोजने M अधिक N classes मध्ये बदलतो, abstraction आणि implementation ला स्वतंत्रपणे विकसित होऊ देतो, platform तपशील लपवतो आणि runtime ला implementations बदलू देतो.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अप्रत्यक्षता आणि आधीचे रचनात्मक प्रयत्न जोडतो. फक्त एकच आयाम बदलतो तेव्हा अतिरेकी, आणि दोन-श्रेणीबद्ध रचना सुरुवातीला समजायला अवघड असू शकते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>एखादा प्रकार दोन स्वतंत्र आयामांवर बदलतो, तुम्हाला क्लायंट पुन्हा compile न करता implementations बदलायच्या किंवा विस्तारायच्या आहेत, किंवा तुम्हाला एका स्थिर interface मागे platform-विशिष्ट backend लपवायचा आहे.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>फक्त एकच implementation आहे आणि कोणताही वास्तववादी दुसरा अक्ष नाही, किंवा तुम्ही दोन आधीपासून अस्तित्वात असलेले विसंगत interfaces चिकटवत आहात (ते Adapter चे काम आहे).</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>मध्यम. दोन समांतर श्रेणीबद्ध रचना अधिक एक delegation दुवा. साध्या inheritance पेक्षा जास्त हलणारे भाग, स्फोटलेल्या subclass matrix पेक्षा खूप कमी.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Adapter (interfaces जुळवतो), Strategy (algorithm बदलतो), State (state नुसार वर्तन बदलतो), Abstract Factory (जुळणारे implementor संच बनवू शकतो).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> ज्या क्षणी तुम्ही स्वतःला एका class ला एकाच वेळी दोन गोष्टींवरून नाव देताना पकडता, जसे <code>SvgCircle</code> किंवा <code>TcpJsonMessage</code>, त्या क्षणी Bridge कडे वळा. ते संयुक्त नाव म्हणजे class स्फोट तुम्हाला इशारा देत आहे आणि bridge हा तो पुन्हा वेगळा करण्याचा मार्ग आहे.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन प्रातिनिधिक ठिकाणे जिथे Bridge production मध्ये दोन-अक्षांची रचना काबूत ठेवतो.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖥️</span><div><h3>1 · Cross-platform UI toolkit</h3><div class="role">पॅटर्न: native rendering backends वरील widgets</div></div></div>
+        <p class="muted">एका GUI framework ला Windows, macOS आणि Linux वर buttons आणि sliders एकसारखे रेखाटावे लागतात, प्रत्येक widget प्रति OS साठी subclass न बनवता.</p>
+        <ul>
+          <li>Widgets (<code>Button</code>, <code>Slider</code>) abstraction श्रेणीबद्ध रचना बनवतात.</li>
+          <li>एका <code>WindowSystem</code> implementor ला Win32, Cocoa आणि X11 concrete backends असतात.</li>
+          <li>नवीन widget किंवा नवीन OS जोडण्याला एक class लागतो, प्रत्येक संयोजनासाठी एक नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एकच widget codebase प्रत्येक platform वर native पद्धतीने रेखाटते आणि नवीन OS वर port करणे म्हणजे प्रत्येक control पुन्हा लिहिण्याऐवजी एक interface अंमलात आणणे.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>2 · Database driver थर</h3><div class="role">पॅटर्न: अनेक engines वरील query API</div></div></div>
+        <p class="muted">एखाद्या application ला एकच query आणि transaction API हवे आहे जे PostgreSQL, MySQL आणि SQLite वर परस्पर बदलून चालते.</p>
+        <ul>
+          <li>उच्च-स्तरीय <code>Connection</code> आणि <code>Query</code> classes ही abstraction आहेत.</li>
+          <li>एका <code>Driver</code> implementor ला प्रत्येक database engine साठी एक concrete class असतो.</li>
+          <li>databases बदलणे हा config बदल आहे, code पुनर्लेखन नाही, कारण abstraction engine-निरपेक्ष आहे.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Business logic एका स्थिर API समोर एकदाच लिहिली जाते आणि नवीन engine ला आधार देणे म्हणजे एक driver जोडणे जो संपूर्ण application लगेच वापरू शकते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔔</span><div><h3>3 · Channels वरील notification service</h3><div class="role">पॅटर्न: delivery transports वरील message प्रकार</div></div></div>
+        <p class="muted">एक platform alerts, receipts आणि reminders email, SMS आणि push वरून पाठवते आणि प्रत्येक message-गुणिले-channel जोडीसाठी एक class बनवू नये.</p>
+        <ul>
+          <li><code>Notification</code> उपप्रकार (Alert, Receipt, Reminder) abstraction बनवतात.</li>
+          <li>एक <code>Channel</code> implementor email, SMS आणि push पाठवणे abstract करतो.</li>
+          <li>कोणतेही message कोणत्याही channel वरून जाऊ शकते, send वेळी प्रत्येक user च्या पसंतीनुसार निवडलेले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Product मोकळेपणाने नवीन notification प्रकार जोडते तर infrastructure मोकळेपणाने नवीन channels जोडते आणि दोन roadmaps कधीच एकाच class मध्ये टकरात नाहीत.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Bridge आजच्या बहुतांश stacks च्या आधीचा आहे, तरीही त्याची मूळ कल्पना, संकल्पनेला यंत्रणेपासून वेगळे करा, systems जेव्हा एकाच वेळी अनेक backends ला लक्ष्य करतात तेव्हा पूर्वीपेक्षा अधिक प्रासंगिक आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>☁️ Cloud provider abstraction</h4><p>AWS, GCP आणि Azure वर चालणारा infrastructure code म्हणजे मोठ्या प्रमाणावर Bridge: deploy वेळी निवडलेल्या अनेक provider implementors वरील एक resource abstraction.</p></div>
+        <div class="card"><h4>💉 सर्वत्र dependency injection</h4><p>आधुनिक DI containers implementor ला abstraction मध्ये तुमच्यासाठी जोडतात. Bridge हा तो आकार आहे जो injection ला भरण्यासाठी बनवला गेला.</p></div>
+        <div class="card"><h4>🧪 रचनेनुसार testability</h4><p>implementor एक interface असल्याने, तुम्ही tests मध्ये एक fake किंवा in-memory backend injects करता आणि शून्य खऱ्या I/O सह abstraction चालवता.</p></div>
+        <div class="card"><h4>🔌 Ports आणि adapters</h4><p>Hexagonal architecture चे ports म्हणजे implementor interfaces आणि adapters म्हणजे concrete implementors. Bridge हे त्या शैलीचे object-स्तरीय हृदय आहे.</p></div>
+        <div class="card"><h4>🎨 Rendering आणि graphics APIs</h4><p>Vulkan, Metal आणि DirectX ला लक्ष्य करणारे engines scene logic ला abstraction म्हणून आणि graphics API ला बदलण्यायोग्य implementor म्हणून ठेवतात.</p></div>
+        <div class="card"><h4>🧩 Plugin ecosystems</h4><p>third-party backends load करणारे editors आणि tools एका स्थिर implementor करारावर अवलंबून असतात जेणेकरून नवीन plugins core ला स्पर्श न करता आत बसतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> जेव्हा एखाद्या संकल्पनेला अनेक यंत्रणांवर चालावे लागते आणि संकल्पना व यंत्रणा दोन्ही वाढतच राहतात, तेव्हा Bridge हा रचनेला संयोजनात्मक ऐवजी बेरजेची ठेवण्याचा मार्ग आहे. हे inheritance ऐवजी composition, औपचारिक स्वरूपात.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Bridge अशा patterns मध्ये आहे जे inheritance ऐवजी composition ची निवड करतात. हे त्याच्यासोबत स्वाभाविकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../adapter/"><span class="ico">🔌</span><h4>Adapter</h4><p>दोन विद्यमान विसंगत interfaces नंतरून जुळवतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../abstract-factory/"><span class="ico">🏭</span><h4>Abstract Factory</h4><p>bridge करण्यासाठी implementors चे जुळणारे कुटुंब बनवतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">♟️</span><h4>Strategy</h4><p>एका interface मागे बदलण्यायोग्य algorithm बदलतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../state/"><span class="ico">🔄</span><h4>State</h4><p>object चे अंतर्गत state बदलताना त्याचे वर्तन बदलतो.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Bridge चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

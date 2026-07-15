@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abstract Factory समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Abstract Factory पॅटर्नचे सखोल, दृश्य मार्गदर्शन: concrete classes ला नाव न देता संबंधित ऑब्जेक्ट्सचे कुटुंब कसे तयार करते, Factory Method पेक्षा कसे वेगळे आहे, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि आधुनिक प्रासंगिकता." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Creational Pattern</span>
+      <h1>Abstract Factory - एकत्र येणाऱ्या ऑब्जेक्ट्सची कुटुंबे</h1>
+      <p class="lede">काही ऑब्जेक्ट्स फक्त एकत्रच अर्थपूर्ण ठरतात: Windows बटणासोबत Windows चेकबॉक्स, dark-theme कार्डासोबत dark-theme स्क्रोलबार. Abstract Factory तुम्हाला प्रत्येक कुटुंबासाठी एक factory देते, जेणेकरून तुम्ही एकही concrete class ला नाव न देता <strong>संबंधित products चे संपूर्ण संच तयार करू शकता</strong>, आणि तुम्ही जे काही बनवता ते सगळे एकाच कुटुंबातून येते याची ते हमी देते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Product कुटुंबे</span>
+        <span class="pill">classes पेक्षा interfaces</span>
+        <span class="pill">सुसंगततेची हमी</span>
+        <span class="pill">बदलता येणारे platforms</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Abstract Factory म्हणजे काय?</h2>
+      <p class="muted"><strong>Abstract Factory</strong> संबंधित किंवा परस्परावलंबी ऑब्जेक्ट्सची कुटुंबे, त्यांच्या concrete classes न सांगता, तयार करण्यासाठी एक interface पुरवते. Client code फक्त abstract product interfaces (Button, Checkbox) आणि एका abstract factory interface (GUIFactory) शी बोलतो. Runtime ला तुम्ही एकच concrete factory (WindowsFactory किंवा MacFactory) जोडता, आणि ते जे product तयार करते ते प्रत्येक product एकाच कुटुंबातील असल्याची हमी असते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🏭</span> Abstract factory</h4>
+          <p>प्रत्येक product प्रकारासाठी एक create method असलेले interface: <code>createButton()</code>, <code>createCheckbox()</code>. ते <em>काय</em> बनवता येईल हे सांगते, कधीच concrete प्रकार नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">👪</span> Product कुटुंबे</h4>
+          <p>प्रत्येक concrete factory एकच सुसंगत संच तयार करते. एक <code>MacFactory</code> नेहमी फक्त Mac widgets परत करते, त्यामुळे Mac बटण कधीच Windows चेकबॉक्सशेजारी बसत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Client अनभिज्ञ राहतो</h4>
+          <p>Client ला एक factory आणि abstract products दिले जातात. तो कधीच <code>new WindowsButton()</code> पाहत नाही, त्यामुळे तुम्ही जे कुटुंब inject कराल त्यासोबत तो काम करतो.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य भूमिका</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>ती काय करते</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abstract Factory</strong></td><td>प्रत्येक abstract product साठी creation methods घोषित करते</td><td><code>GUIFactory</code></td></tr>
+            <tr><td><strong>Concrete Factory</strong></td><td>एका कुटुंबासाठी त्या methods implement करते</td><td><code>WindowsFactory</code>, <code>MacFactory</code></td></tr>
+            <tr><td><strong>Abstract Product</strong></td><td>Client ज्यावर अवलंबून असतो ते interface</td><td><code>Button</code>, <code>Checkbox</code></td></tr>
+            <tr><td><strong>Concrete Product</strong></td><td>कुटुंबविशिष्ट implementation</td><td><code>WindowsButton</code>, <code>MacCheckbox</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>factory आणि products फक्त interfaces द्वारे वापरतो</td><td><code>Application</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक मॉडेल:</strong> Factory Method inheritance द्वारे <em>एक</em> product बनवते. Abstract Factory composition द्वारे संबंधित products चा <em>संच</em> बनवते. तुम्ही एक factory inject करता आणि जुळणारा संच मिळवता, कधीच विसंगत जोडी नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Abstract Factory का अस्तित्वात आहे</h2>
+      <p class="muted">ज्या क्षणी तुमचा code अनेक फाइल्समध्ये <code>new ConcreteThing()</code> कॉल्स विखुरवतो, तेव्हा संपूर्ण कुटुंब बदलणे search-and-replace चे दुःस्वप्न बनते, आणि विसंगत भाग एकत्र मिसळण्यापासून तुम्हाला कोणीही रोखत नाही. Abstract Factory कुटुंबाची निवड एका ऑब्जेक्टमध्ये केंद्रित करते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 सुसंगततेची हमी</h4><p>कारण एकच factory संपूर्ण संच बनवते, products नेहमी जुळतात. तुम्ही चुकून dark-theme स्क्रोलबार light-theme पॅनेलसोबत जोडू शकत नाही - type system एका factory ला मिश्रित भाग परत करू देणार नाही.</p></div>
+        <div class="card"><h4>🔀 एका ओळीत कुटुंबे बदला</h4><p>Windows विरुद्ध Mac, किंवा MySQL विरुद्ध Postgres निवडणे हे सुरुवातीला एकच निर्णय बनते: concrete factory निवडा. उर्वरित अ‍ॅप कधीच बदलत नाही.</p></div>
+        <div class="card"><h4>🚪 Client ला concretes पासून decouple करते</h4><p>Client code फक्त interfaces वर अवलंबून असतो, Dependency Inversion Principle चा मान राखतो. नवीन कुटुंब जोडल्याने विद्यमान client code ला स्पर्श होत नाही.</p></div>
+        <div class="card"><h4>🎯 Single Responsibility</h4><p>Object creation factories मध्ये राहते, business logic मध्ये पसरलेले नसते. एका कुटुंबाचे बांधणीचे नियम एकाच ठिकाणी असतात, शोधायला आणि test करायला सोपे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Abstract Factory ची समज</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ते समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे एका <strong>थीम असलेल्या स्टेशनरी संचासारखे</strong> आहे. "अंतराळ" संच निवडा आणि तुम्हाला अंतराळ वही, अंतराळ पेन आणि अंतराळ फोल्डर मिळते जे सगळे जुळतात. "समुद्र" निवडा आणि सगळे एकत्र बदलते. तुम्हाला कधीच अंतराळ फोल्डरमध्ये समुद्री पेन मिळत नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे <strong>बदलता येणाऱ्या ब्रँड्ससह असलेले toolbox interface</strong> आहे. तुमचा code <code>toolbox.getWrench()</code> आणि <code>toolbox.getDrill()</code> कॉल करतो. सुरुवातीला त्याला DeWalt toolbox द्या किंवा Makita toolbox; कॉल करणारा code दोन्ही बाबतीत सारखाच असतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>संग्रहानुसार <strong>फर्निचर कॅटलॉग</strong> कल्पना करा. एक हॉटेल "Modern" संग्रह मागवते आणि जुळणारी खुर्ची, सोफा आणि टेबल मिळवते. "Victorian" कडे वळणे म्हणजे एकाच पुरवठादाराकडून संपूर्ण समन्वित संच पुन्हा मागवणे, ते एकत्र योग्य दिसतील याची हमी देत.</p></div>
+        <div class="card"><h4><span class="ico">🍔</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>फास्ट-फूड कॉम्बो जेवण</strong>. "combo 2" मागवा आणि किचन एकत्र जाणारे विशिष्ट बर्गर, साइड आणि पेय जमवते. तुम्ही कॉम्बो निवडता, प्रत्येक वस्तू नाही, आणि कर्मचारी संच सुसंगत असल्याची हमी देतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>पडद्यामागे ते कसे कार्य करते</h2>
+      <p class="muted">तुम्ही factory साठी आणि प्रत्येक product साठी abstract interfaces परिभाषित करता. Concrete factories त्या factory interface ला implement करतात, एकाच कुटुंबाचे concrete products परत करत. Client ला एक factory मिळतो आणि तो त्याद्वारे सगळे बनवतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧱</span> करार परिभाषित करा</h4>
+          <p>एक <code>Button</code> आणि <code>Checkbox</code> interface लिहा, मग प्रत्येकासाठी create method असलेले <code>GUIFactory</code> interface. Client कधीही import करणार असलेले हेच एकमेव प्रकार आहेत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎚️</span> काठावर कुटुंब जोडा</h4>
+          <p>सुरुवातीला OS किंवा config ओळखा आणि जुळणारे concrete factory एकदाच instantiate करा. ते client मध्ये inject करा, जेणेकरून कुटुंबाची निवड नेमक्या एकाच ठिकाणी होते.</p>
+        </div>
+      </div>
+
+      <h3>रचना एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">रचना - client interfaces वर अवलंबून असतो, factories संपूर्ण कुटुंबे तयार करतात</div>
+        <pre class="mermaid">
+classDiagram
+    class GUIFactory {
+        <<interface>>
+        +createButton() Button
+        +createCheckbox() Checkbox
+    }
+    class Button {
+        <<interface>>
+        +render()
+    }
+    class Checkbox {
+        <<interface>>
+        +toggle()
+    }
+    class WindowsFactory {
+        +createButton() Button
+        +createCheckbox() Checkbox
+    }
+    class MacFactory {
+        +createButton() Button
+        +createCheckbox() Checkbox
+    }
+    GUIFactory <|.. WindowsFactory
+    GUIFactory <|.. MacFactory
+    Button <|.. WindowsButton
+    Button <|.. MacButton
+    Checkbox <|.. WindowsCheckbox
+    Checkbox <|.. MacCheckbox
+    WindowsFactory ..> WindowsButton
+    WindowsFactory ..> WindowsCheckbox
+    MacFactory ..> MacButton
+    MacFactory ..> MacCheckbox
+    Client --> GUIFactory
+    Client --> Button
+    Client --> Checkbox
+        </pre>
+      </div>
+
+      <h3>Java मधील वास्तववादी implementation</h3>
+      <pre><code>// Abstract products - the client depends only on these
+interface Button   { void render(); }
+interface Checkbox { void toggle(); }
+
+// Abstract factory - one create method per product kind
+interface GUIFactory {
+    Button   createButton();
+    Checkbox createCheckbox();
+}
+
+// Family 1: Windows
+class WindowsButton   implements Button   { public void render() { System.out.println("[ Win Button ]"); } }
+class WindowsCheckbox implements Checkbox { public void toggle() { System.out.println("Win check toggled"); } }
+class WindowsFactory  implements GUIFactory {
+    public Button   createButton()   { return new WindowsButton(); }
+    public Checkbox createCheckbox() { return new WindowsCheckbox(); }
+}
+
+// Family 2: macOS
+class MacButton   implements Button   { public void render() { System.out.println("( Mac Button )"); } }
+class MacCheckbox implements Checkbox { public void toggle() { System.out.println("Mac check toggled"); } }
+class MacFactory  implements GUIFactory {
+    public Button   createButton()   { return new MacButton(); }
+    public Checkbox createCheckbox() { return new MacCheckbox(); }
+}
+
+// Client - never mentions a concrete product
+class Application {
+    private final Button   button;
+    private final Checkbox checkbox;
+    Application(GUIFactory factory) {          // family injected once
+        this.button   = factory.createButton();
+        this.checkbox = factory.createCheckbox();
+    }
+    void paint() { button.render(); checkbox.toggle(); }
+}
+
+class Main {
+    public static void main(String[] args) {
+        GUIFactory factory = System.getProperty("os.name").startsWith("Mac")
+                ? new MacFactory()
+                : new WindowsFactory();
+        new Application(factory).paint();      // matched family, guaranteed
+    }
+}</code></pre>
+      <p class="muted">लक्षात घ्या की <code>Application</code> कधीच <code>new WindowsButton()</code> लिहित नाही. त्याला एक <code>GUIFactory</code> मिळतो आणि एक सुसंगत संच मिळतो. कुटुंबाची निवड एकदाच, <code>main</code> मध्ये होते, त्यामुळे widgets कधीच विसंगत असू शकत नाहीत.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: सुरुवातीला कुटुंब निवडणे, जुळणारा संच बांधणे, आणि client ला स्पर्श न करता संपूर्ण कुटुंब बदलणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - सुरुवात: कुटुंबासाठी एक concrete factory निवडा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Main as 🚀 Main
+    participant Env as 🖥️ Runtime env
+    participant App as 📦 Application
+
+    Main->>Env: Which platform am I on
+    Env-->>Main: macOS
+    Main->>Main: Choose MacFactory
+    Main->>App: new Application(macFactory)
+    Note over Main,App: Family chosen once, at the edge
+    App-->>Main: ready
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - बांधणी: client factory कडून जुळणारा संच मागतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 📦 Application
+    participant F as 🏭 MacFactory
+    participant B as 🔘 MacButton
+    participant C as ☑️ MacCheckbox
+
+    App->>F: createButton()
+    F->>B: new MacButton()
+    B-->>F: button
+    F-->>App: Button (Mac)
+    App->>F: createCheckbox()
+    F->>C: new MacCheckbox()
+    C-->>F: checkbox
+    F-->>App: Checkbox (Mac)
+    Note over App,C: Both products from the same family
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - बदल: कुटुंब बदला, client code अस्पर्शित</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Main as 🚀 Main
+    participant App as 📦 Application
+    participant WF as 🪟 WindowsFactory
+
+    Main->>Main: Config says platform = Windows
+    Main->>WF: new WindowsFactory()
+    Main->>App: new Application(windowsFactory)
+    alt same client, new family
+        App->>WF: createButton()
+        WF-->>App: Button (Windows)
+        App->>WF: createCheckbox()
+        WF-->>App: Checkbox (Windows)
+    end
+    Note over Main,WF: No client edits, only the injected factory changed
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">Hardcoded constructors च्या गोंधळापासून products च्या स्वच्छ, बदलता येणाऱ्या कुटुंबापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>संबंधित ऑब्जेक्ट्स ओळखा</h4><p>तुम्हाला एकत्र बदलले पाहिजेत असे ऑब्जेक्ट्सचे गट दिसतात: बटण, चेकबॉक्स आणि मेनू ज्यांना एका platform किंवा theme शी जुळायचे आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">गट करा</span><h4>Product कुटुंबे नकाशा करा</h4><p>एका अक्षावर product प्रकार (Button, Checkbox) आणि दुसऱ्यावर कुटुंबे (Windows, Mac) यादी करा. हे grid तुम्हाला काय बनवायचे आहे ते ठरवते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Abstract</span><h4>Product interfaces घोषित करा</h4><p>प्रत्येक product प्रकारासाठी एक interface लिहा - <code>Button</code>, <code>Checkbox</code> - फक्त clients ज्यावर अवलंबून असतात ते वर्तन टिपत.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">करार</span><h4>Factory interface घोषित करा</h4><p>प्रत्येक abstract product परत करणारी create method असलेले <code>GUIFactory</code> तयार करा. हा client ज्यावर अवलंबून असतो तो एकमेव जोड आहे.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Concrete products बांधा</h4><p>प्रत्येक कुटुंबासाठी प्रत्येक product implement करा: <code>WindowsButton</code>, <code>MacButton</code>, वगैरे. प्रत्येक कुटुंबविशिष्ट असतो पण सामायिक interface चा मान राखतो.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">जमवा</span><h4>प्रत्येक कुटुंबासाठी एक factory बांधा</h4><p><code>WindowsFactory</code> आणि <code>MacFactory</code> लिहा. प्रत्येक फक्त स्वतःच्या कुटुंबाचे concrete products परत करते, अंतर्गत सुसंगततेची हमी देत.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Inject</span><h4>Client ला factory द्या</h4><p>Client ला थेट <code>new</code> कॉल करण्याऐवजी त्याच्या constructor मध्ये <code>GUIFactory</code> स्वीकारण्यासाठी refactor करा. आता तो कुटुंब-निरपेक्ष आहे.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">निवडा</span><h4>काठावर कुटुंब निवडा</h4><p>सुरुवातीला OS, config, किंवा feature flag वाचा आणि एकच जुळणारे concrete factory instantiate करा. concrete प्रकार दिसणारी हीच एकमेव जागा आहे.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">तयार करा</span><h4>Client जुळणारा संच बांधतो</h4><p>Client <code>createButton()</code> आणि <code>createCheckbox()</code> कॉल करतो. परत आलेला प्रत्येक ऑब्जेक्ट एकाच कुटुंबातून येतो, त्यामुळे काहीही विसंगत होत नाही.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">विस्तार</span><h4>संपूर्ण नवीन कुटुंब जोडा</h4><p>Linux लुक हवा आहे? <code>LinuxFactory</code> आणि त्याचे products जोडा. कोणतेही विद्यमान client किंवा factory बदलत नाही - open/closed principle प्रत्यक्ष कृतीत.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पाठवा</span><h4>कुटुंबे मोकळेपणाने बदला</h4><p>Platform किंवा theme बदलणे आता तुम्ही कोणते factory बांधता याच्यातील एका-ओळीचा बदल आहे. अ‍ॅप एकसारखेच चालते, नेहमी सुसंगत संचासह.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Abstract Factory स्थिर कुटुंबे आणि अनेक platforms सोबत फायदेशीर ठरते. खूप लवकर त्याकडे वळा आणि तुम्ही औपचारिकतेत बुडता.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🥱 अकाली abstraction</h4><p>तुमच्याकडे नेहमी फक्त एकच कुटुंब असेल, तर अतिरिक्त interfaces हे निव्वळ ओझे आहे. दुसरे कुटुंब प्रत्यक्षात दिसेपर्यंत साधा constructor अधिक स्पष्ट असतो.</p></div>
+        <div class="card"><h4>➕ नवीन product = सगळ्याला स्पर्श</h4><p>Product प्रकार जोडणे म्हणजे factory interface आणि प्रत्येक concrete factory बदलणे. कुटुंबे जोडणे सोपे; products महाग. Product अक्ष आधीच काळजीपूर्वक आखा.</p></div>
+        <div class="card"><h4>🔎 Concrete प्रकार गळणे</h4><p>Client code <code>WindowsButton</code> कडे downcast करत असेल किंवा <code>instanceof</code> तपासत असेल, तर abstraction तुटते आणि सुसंगततेची हमी नाहीशी होते.</p></div>
+        <div class="card"><h4>🧨 Class स्फोट</h4><p>M product प्रकार आणि N कुटुंबे असल्यास तुम्हाला M x N concrete classes आणि N factories मिळतात. मोठ्या grids वर हे झपाट्याने फुगते आणि navigate करणे कठीण होते.</p></div>
+        <div class="card"><h4>🔀 Factory Method शी गोंधळ</h4><p>तुम्हाला प्रत्यक्षात products च्या कुटुंबाची गरज असताना inheritance आणि प्रत्येक product साठी subclass वापरणे, किंवा उलट, यामुळे अस्ताव्यस्त, जबरदस्ती केलेल्या hierarchies निर्माण होतात.</p></div>
+        <div class="card"><h4>🌍 Global factory singleton</h4><p>Factory inject करण्याऐवजी लपवलेल्या global factory कडे वळणे dependency लपवते, testability ला हानी पोहोचवते, आणि runtime ला कुटुंबे बदलणे अवघड करते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Abstract Factory आगाऊ रचनेच्या किंमतीवर सुसंगतता आणि बदलण्याजोगेपणा विकत घेते. तुम्हाला खरोखर किती कुटुंबे लागतात याच्या तुलनेत त्याचे मूल्यमापन करा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>एका कुटुंबातील products एकत्र वापरले जातील याची हमी देते; client ला concrete classes पासून decouple करते; बांधणी वेगळी करते; नवीन कुटुंब जोडणे क्षुल्लक आणि विद्यमान code साठी बंद असते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>लहान grids साठीसुद्धा अनेक interfaces आणि classes; नवीन <em>product प्रकार</em> जोडल्याने factory interface आणि प्रत्येक concrete factory मध्ये लाट पसरते; जड औपचारिकतेसारखे वाटू शकते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>तुमच्या system ला संबंधित products च्या अनेक कुटुंबांसोबत काम करावे लागेल (cross-platform UI, अनेक DB backends, themes) आणि कुटुंब कधीच मिसळले जाणार नाही हे तुम्हाला अंमलात आणायचे आहे.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>फक्त एकच कुटुंब असेल, किंवा products असंबंधित असून स्वतंत्रपणे बदलत असतील. साधे factory किंवा साधा constructor हलका आणि स्पष्ट असतो.</td></tr>
+            <tr><td><strong>क्लिष्टता</strong></td><td>मध्यम. Factory Method पेक्षा जास्त हलणारे भाग, पण प्रत्येक भाग लहान असतो. किंमत कुटुंबांपेक्षा (जोडायला सोपे) product प्रकारांसोबत (जोडायला कठीण) जास्त वाढते.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Factory Method (inheritance द्वारे एक product), Builder (टप्प्याटप्प्याने जमवणी), Prototype (बांधणीऐवजी clone), Bridge (implementation पासून abstraction वेगळे करणे).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जेव्हा product <em>प्रकारांचा</em> संच स्थिर असतो पण <em>कुटुंबांची</em> संख्या वाढणार असते तेव्हा Abstract Factory निवडा. त्याऐवजी तुम्ही नवीन product प्रकार जोडत राहिलात, तर पॅटर्न तुमच्याशी झगडतो - रचनेचा पुनर्विचार करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>प्रत्यक्ष जगातील केस स्टडीज</h2>
+      <p class="muted">तीन प्रातिनिधिक ठिकाणे जिथे संबंधित ऑब्जेक्ट्सची कुटुंबे सुसंगत राहिली पाहिजेत.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖥️</span><div><h3>1 · Cross-platform UI toolkit</h3><div class="role">पॅटर्न: प्रत्येक operating system साठी एक widget कुटुंब</div></div></div>
+        <p class="muted">एका desktop अ‍ॅपला सगळीकडे UI code शाखेत विभागल्याशिवाय Windows, macOS आणि Linux वर native दिसले पाहिजे.</p>
+        <ul>
+          <li>एक <code>GUIFactory</code> <code>createButton</code>, <code>createCheckbox</code> आणि <code>createMenu</code> उघड करते.</li>
+          <li>प्रत्येक OS साठी एक concrete factory त्या platform चे natively styled widgets परत करते.</li>
+          <li>अ‍ॅप सुरुवातीला OS ओळखतो आणि जुळणारे factory एकदाच inject करतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> प्रत्येक स्क्रीन सुसंगत native लुक render करते, आणि नवीन platform जोडणे म्हणजे एक factory आणि त्याचे widgets लिहिणे, विद्यमान स्क्रीनमध्ये शून्य बदलांसह.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>2 · Pluggable database backends</h3><div class="role">पॅटर्न: प्रत्येक vendor साठी DB ऑब्जेक्ट्सचे कुटुंब</div></div></div>
+        <p class="muted">एका ORM ला MySQL आणि PostgreSQL ला आधार द्यावा लागतो, प्रत्येकाला स्वतःचे connection, command आणि dialect ऑब्जेक्ट्स लागतात जे जुळले पाहिजेत.</p>
+        <ul>
+          <li>एक <code>DbFactory</code> <code>Connection</code>, <code>Command</code> आणि <code>QueryBuilder</code> ऑब्जेक्ट्स तयार करते.</li>
+          <li><code>MySqlFactory</code> आणि <code>PostgresFactory</code> फक्त त्यांच्या vendor च्या implementations परत करतात.</li>
+          <li>Config factory निवडते, त्यामुळे Postgres command कधीच MySQL connection वर चालू शकत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Database vendors बदलणे हा config बदल आहे, आणि type system vendor-विसंगत ऑब्जेक्ट्स कधीही एकत्र होण्यापासून रोखते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>3 · Design system ला theme देणे</h3><div class="role">पॅटर्न: सुसंगत light आणि dark component संच</div></div></div>
+        <p class="muted">एका web component library ला light आणि dark themes लागतात जिथे प्रत्येक घटक - card, input, tooltip - सक्रिय theme शी जुळतो.</p>
+        <ul>
+          <li>एक <code>ThemeFactory</code> styled cards, inputs आणि tooltips तयार करते.</li>
+          <li><code>LightThemeFactory</code> आणि <code>DarkThemeFactory</code> प्रत्येक एक पूर्णपणे समन्वित संच देतात.</li>
+          <li>एकच toggle factory बदलते, संपूर्ण UI एका theme मध्ये पुन्हा render करत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Themes अर्धवट styled स्क्रीनशिवाय अंतर्गतरित्या सुसंगत राहतात, आणि नवीन themes component logic ला स्पर्श न करता अतिरिक्त factories म्हणून जोडल्या जातात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Abstract Factory दशकांपूर्वीचे आहे, पण ते जी समस्या सोडवते - स्थिर interface मागे सुसंगत कुटुंबे बदलणे - ती कधीही नव्हती इतकी सामान्य आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💉 Dependency injection</h4><p>आधुनिक DI containers ही मोठ्या प्रमाणावरील Abstract Factory आहेत: तुम्ही एका interface ला implementation संचाशी एकदाच bind करता, आणि container संपूर्ण अ‍ॅपमध्ये एक सुसंगत कुटुंब जोडतो.</p></div>
+        <div class="card"><h4>☁️ Cloud provider abstraction</h4><p>AWS, Azure आणि GCP ला लक्ष्य करणाऱ्या libraries प्रत्येक cloud साठी एक factory उघड करतात जेणेकरून storage, queue आणि secrets clients नेहमी एकाच provider कडून येतात.</p></div>
+        <div class="card"><h4>🧪 Test doubles</h4><p>एक नकली factory inject केल्याने tests ला एकाच वेळी stub products चे संपूर्ण कुटुंब पुरवता येते, unit tests ला प्रत्यक्ष platform code पासून वेगळे ठेवत.</p></div>
+        <div class="card"><h4>🔧 Feature-flagged rollouts</h4><p>एका flag मागे factory बदलल्याने काही वापरकर्त्यांना नवीन सुसंगत implementation संच पाठवला जातो, तर बाकीचे सगळे जुने कुटुंब ठेवतात.</p></div>
+        <div class="card"><h4>🌐 Multi-tenant systems</h4><p>प्रति-tenant factories tenant-विशिष्ट पण अंतर्गतरित्या सुसंगत ऑब्जेक्ट्स देतात - billing, storage आणि policy - request च्या वेळी tenant नुसार निवडलेले.</p></div>
+        <div class="card"><h4>🧱 Functional variants</h4><p>First-class functions असलेल्या भाषांमध्ये, factory constructor functions च्या एका record पर्यंत आकुंचित होऊ शकते, पण कुटुंब-सुसंगततेची कल्पना एकसारखीच असते.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> जेव्हा तुम्हाला एका स्थिर जोडामागे implementations चा जुळणारा संच बदलावा लागतो आणि ते कधीच मिसळले जाणार नाहीत याची हमी द्यावी लागते, तेव्हा तुम्ही Abstract Factory कडे वळत असता - मग तुम्ही त्याला तसे म्हणा किंवा DI binding.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Abstract Factory creational आणि structural patterns मध्ये बसते. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>कुटुंब नव्हे, inheritance द्वारे एक product तयार करते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../builder/"><span class="ico">🧱</span><h4>Builder</h4><p>एक क्लिष्ट ऑब्जेक्ट टप्प्याटप्प्याने जमवते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>विद्यमान ऑब्जेक्ट्स clone करून ऑब्जेक्ट्स तयार करते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../bridge/"><span class="ico">🌉</span><h4>Bridge</h4><p>दोन्ही बदलण्यासाठी abstraction ला implementation पासून वेगळे करते.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Abstract Factory चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

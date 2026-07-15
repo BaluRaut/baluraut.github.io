@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Singleton समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Singleton डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शन: एकाच जागतिक प्रवेश बिंदूसह एकच instance ची हमी, lazy विरुद्ध eager initialization, thread-safe अंमलबजावणी, तो बहुधा anti-pattern का असतो, आणि पर्याय म्हणून dependency injection." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Creational पॅटर्न</span>
+      <h1>Singleton पॅटर्न - एकच instance, एकच जागतिक दरवाजा</h1>
+      <p class="lede">Singleton हमी देतो की एका class ला नेमके <strong>एकच instance</strong> असते आणि त्याच्यापर्यंत पोहोचण्यासाठी एकच, <strong>जागतिक प्रवेश बिंदू</strong> पुरवतो. वर्णन करायला हा सर्वात सोपा creational पॅटर्न आहे आणि चुकीचा वापर करायलाही सर्वात सोपा: initialization आणि threading बरोबर केले, तर खरोखर अनन्य साधन मांडण्याचा हा स्वच्छ मार्ग आहे; सवयीने त्याकडे वळलात, तर तो लपलेली global state बनतो जी हळूच तुमच्या चाचण्यांचा नाश करते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">एकच instance</span>
+        <span class="pill">जागतिक प्रवेश</span>
+        <span class="pill">Lazy विरुद्ध eager</span>
+        <span class="pill">Thread safety</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Singleton म्हणजे काय?</h2>
+      <p class="muted"><strong>Singleton</strong> हा एक creational डिझाइन पॅटर्न आहे जो class ला एकाच instance पुरता मर्यादित करतो आणि ते instance एका जागतिक प्रवेश बिंदूद्वारे, सहसा static <code>getInstance()</code> method द्वारे, उघड करतो. Constructor private केला जातो जेणेकरून इतर कोणताही code <code>new</code> कॉल करू शकत नाही, आणि class स्वतः तो एकमेव object धारण करते जो ती कधीही देते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Private constructor</h4>
+          <p>Constructor लपवलेला असतो जेणेकरून कॉलर स्वतःच्या प्रती तयार करू शकत नाहीत. Instance केव्हा आणि तयार करायचे का हे फक्त class ठरवते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Static धारक</h4>
+          <p>एक private static field हे एकमेव instance साठवते. हा class-पातळीचा कप्पा आहे जो सर्व कॉलर अखेरीस सामायिक करतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚪</span> जागतिक प्रवेश बिंदू</h4>
+          <p>एक public static <code>getInstance()</code> सामायिक instance परत करते, गरज पडल्यास पहिल्या वापरावेळी ते तयार करते.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>ठराविक स्वरूप</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Private constructor</strong></td><td><code>new</code> द्वारे बाहेरून instantiation रोखतो</td><td><code>private Singleton() {}</code></td></tr>
+            <tr><td><strong>Static instance field</strong></td><td>तो एकमेव सामायिक object धारण करते</td><td><code>private static Singleton instance</code></td></tr>
+            <tr><td><strong>प्रवेश method</strong></td><td>Instance परत करते, नसल्यास ते तयार करते</td><td><code>public static getInstance()</code></td></tr>
+            <tr><td><strong>Init धोरण</strong></td><td>Instance केव्हा तयार व्हायचे ते ठरवते</td><td>Eager, lazy, किंवा holder idiom</td></tr>
+            <tr><td><strong>Synchronization</strong></td><td>Threads खाली निर्मिती सुरक्षित ठेवते</td><td>Locking, enum, class-loader</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Singleton म्हणजे एकत्र चिकटवलेल्या दोन जबाबदाऱ्या - object चे खरे काम, आणि त्याचे फक्त एकच असल्याची हमी. ती दुसरी जबाबदारी म्हणजे वेशांतर केलेला global variable, आणि हेच पॅटर्नला सोयीचा आणि धोकादायक दोन्ही बनवते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Singleton का अस्तित्वात आहे</h2>
+      <p class="muted">काही साधने खरोखरच अनन्य असतात: एकच connection pool, एकच in-memory cache, एकच hardware device handle. अनेक तयार करणे चुकीचे किंवा वाया घालवणारे ठरेल, आणि एकच वस्तू सर्वत्र हाताने फिरवणे कंटाळवाणे आहे. Singleton तो "नेमके एकच आहे" हा नियम class मध्येच केंद्रित करतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 अनन्यता लागू करते</h4><p>जेव्हा एकापेक्षा जास्त instance state भ्रष्ट करेल किंवा दुर्मिळ साधनाची नक्कल करेल, तेव्हा private constructor दुसरी प्रत केवळ नापसंत न करता अशक्य बनवते.</p></div>
+        <div class="card"><h4>🌍 एकच सुप्रसिद्ध प्रवेश बिंदू</h4><p>कोणताही code सामायिक object पर्यंत constructors आणि method parameters मधून न फिरवता पोहोचू शकतो, जे logging सारख्या cross-cutting बाबींसाठी सोयीचे आहे.</p></div>
+        <div class="card"><h4>💤 नियंत्रित, lazy निर्मिती</h4><p>Instance startup वेळी न करता पहिल्या वापरावेळी तयार होऊ शकते, त्यामुळे महागडे setup फक्त object खरोखर गरजेचे असल्यासच होते.</p></div>
+        <div class="card"><h4>📉 सामायिक, समन्वयित state</h4><p>ज्यावर सर्वांचे एकमत असावे असे caches, configuration, आणि counters एकाच ठिकाणी राहतात, त्यामुळे भरकटणाऱ्या प्रतींऐवजी एकच सत्याचा स्रोत असतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Singleton समजावून</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असलात तरी ती पटेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Singleton म्हणजे registrar तुम्हाला देणारे <strong>एकच विद्यार्थी ओळखपत्र</strong>. नेमके एकच असते, सर्वजण त्याच क्रमांकाचा उल्लेख करतात, आणि तुम्ही स्वतःला दुसरी अधिकृत प्रत छापू शकत नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>तो एका factory method मागचा <strong>module-पातळीचा constant object</strong> आहे. पहिला कॉल तो तयार करतो, नंतरचा प्रत्येक कॉल तोच reference मिळवतो, आणि <code>new</code> पर्याय राहत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>कंपनीच्या <strong>एकाच अधिकृत शिक्क्याचा</strong> विचार करा. कोणताही विभाग कागदावर शिक्का मारू शकतो, पण एकाच ठिकाणी ठेवलेला एकच अधिकृत शिक्का असतो जो सर्वजण सामायिक करतात.</p></div>
+        <div class="card"><h4><span class="ico">🏛️</span> रोजच्या जीवनातील आवृत्ती</h4><p>एका देशाला <strong>एका वेळी एकच राष्ट्रपती</strong> असतो. लोक कोणाचेही नाव न घेता "राष्ट्रपती" असा उल्लेख करतात, आणि ते पद हमी देते की एकाच वेळी दोन कधीच नसतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे काम करते</h2>
+      <p class="muted">Singleton आपला constructor लपवतो आणि एक static accessor उघड करतो. रंजक निर्णय म्हणजे instance <strong>केव्हा</strong> तयार होते (eager विरुद्ध lazy) आणि अनेक threads एकाच वेळी accessor कॉल करतात तेव्हा निर्मिती <strong>कशी</strong> बरोबर राहते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🌅</span> Eager initialization</h4>
+          <p>Instance class लोड होताना, एका static field मध्ये तयार होते. Class loader एकवेळ init ची हमी देत असल्याने ते स्वाभाविकपणे thread-safe आहे, पण object कधीही न वापरले तरी तयार होते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌙</span> Lazy initialization</h4>
+          <p>Instance पहिल्या <code>getInstance()</code> कॉलवर तयार होते. न वापरल्यास काम वाचते, पण check-then-create पायरी concurrency खाली race असते आणि सुरक्षित राहण्यासाठी काळजी लागते.</p>
+        </div>
+      </div>
+
+      <h3>रचना एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">रचना - एक private constructor आणि एक static accessor जो एका सामायिक field चे रक्षण करतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Singleton {
+        -static Singleton instance
+        -Singleton()
+        +static getInstance() Singleton
+        +doWork() void
+    }
+    class Client {
+        +run() void
+    }
+    Client ..&gt; Singleton : getInstance()
+    Singleton --&gt; Singleton : holds one instance
+        </pre>
+      </div>
+
+      <h3>Java मध्ये thread-safe lazy Singleton</h3>
+      <pre><code>public final class Config {
+
+    // volatile so the half-built instance is never seen by another thread
+    private static volatile Config instance;
+
+    private final Map&lt;String, String&gt; settings;
+
+    private Config() {
+        settings = loadFromDisk();      // expensive, do it once
+    }
+
+    public static Config getInstance() {
+        Config result = instance;        // read the volatile field once
+        if (result == null) {            // first check (no lock, fast path)
+            synchronized (Config.class) {
+                result = instance;
+                if (result == null) {    // second check (inside the lock)
+                    instance = result = new Config();
+                }
+            }
+        }
+        return result;
+    }
+
+    public String get(String key) {
+        return settings.get(key);
+    }
+}</code></pre>
+      <p class="muted">हे <strong>double-checked locking</strong> आहे. Instance अस्तित्वात आल्यावर पहिली null तपासणी lock वगळते, त्यामुळे सामान्य मार्ग वेगवान राहतो; <code>volatile</code> keyword हेच ते बरोबर बनवते, कारण त्याशिवाय दुसरा thread अंशतः तयार झालेले object पाहू शकेल.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: lazy पहिला-आणि-नंतरचा प्रवेश, double-checked locking द्वारे सोडवलेली concurrent race, आणि चाचणी करता येण्याजोगा पर्याय म्हणून dependency injection.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - पहिल्या कॉलवर lazy निर्मिती, नंतर cache केलेला पुनर्वापर</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant A as First caller
+    participant S as Singleton class
+    participant O as Instance
+    participant B as Later caller
+
+    A->>S: getInstance()
+    S->>S: instance is null
+    S->>O: new Singleton()
+    O-->>S: built object
+    S->>S: store in static field
+    S-->>A: return instance
+    B->>S: getInstance()
+    S->>S: instance already set
+    S-->>B: return same instance
+    Note over A,B: both callers share one object
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - दोन threads race करतात, double-checked locking ते एकच ठेवते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T1 as Thread 1
+    participant T2 as Thread 2
+    participant S as Singleton class
+    participant L as Lock
+
+    T1->>S: getInstance()
+    T2->>S: getInstance()
+    S-->>T1: instance null, enter lock path
+    S-->>T2: instance null, enter lock path
+    T1->>L: acquire
+    T2->>L: wait
+    T1->>S: recheck null, create instance
+    T1->>L: release
+    T2->>L: acquire
+    S-->>T2: recheck finds instance, skip create
+    T2->>L: release
+    Note over T1,T2: exactly one object created
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Dependency injection: container एकमेव instance ची मालकी घेते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as Startup
+    participant C as DI container
+    participant Svc as Service (one)
+    participant U as Consumer
+
+    App->>C: register Service as singleton scope
+    App->>C: resolve Consumer
+    alt Service not yet built
+        C->>Svc: create once
+        Svc-->>C: instance
+    else already built
+        C-->>C: reuse cached instance
+    end
+    C->>U: inject Service via constructor
+    C-->>App: ready Consumer
+    Note over C,U: one instance, but no global static
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी दर पायरी</div>
+      <h2>0 ते 100 प्रवाह</h2>
+      <p class="muted">तुम्हाला एकच instance हवे असे ठरवण्यापासून ते सुरक्षितपणे वापरणे आणि त्याभोवती चाचणी करणे - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ठरवा</span><h4>एकच instance खरोखर आवश्यक आहे याची खात्री करा</h4><p>एकापेक्षा जास्त object खरोखर चुकीचे ठरेल का हे विचारा. दोन प्रती फक्त गैरसोयीच्या असतील, तर सामान्य object आणि injection हे Singleton पेक्षा अधिक योग्य आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">बंद करा</span><h4>Constructor private करा</h4><p>Constructor लपवा जेणेकरून बाहेरचा कोणताही code <code>new</code> कॉल करू शकत नाही. "कृपया फक्त एकच बनवा" याचे लागू केलेल्या हमीमध्ये रूपांतर करणारी हीच यंत्रणा आहे.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">साठवा</span><h4>Static instance field जोडा</h4><p>तो एकमेव object धारण करण्यासाठी एक private static field घोषित करा. Lazy निर्मितीसाठी ते <code>volatile</code> चिन्हांकित करा जेणेकरून concurrent वाचन बरोबर राहते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">उघड करा</span><h4>Static accessor लिहा</h4><p>सामायिक field परत करणारे एक public static <code>getInstance()</code> जोडा. प्रत्येक कॉलर वापरत असलेला हा एकमेव जागतिक दरवाजा आहे.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">निवडा</span><h4>Eager किंवा lazy init निवडा</h4><p>Object स्वस्त आणि नेहमी गरजेचे असल्यास class लोडवेळी eagerly बनवा; निर्मिती महागडी असल्यास किंवा कधीच होणार नसेल तर lazy जा.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">रक्षण करा</span><h4>निर्मिती thread-safe करा</h4><p>Lazy निर्मितीचे double-checked locking ने रक्षण करा, किंवा holder idiom किंवा enum ने locks पूर्णपणे टाळा. Concurrent code मध्ये उघडी check-then-create कधीही सोडू नका.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">बळकट करा</span><h4>मागचे दरवाजे बंद करा</h4><p>Reflection, serialization, आणि अनेक class loaders विरुद्ध रक्षण करा जे प्रत्येकी दुसरे instance बनवू शकतात. एक enum Singleton तिन्ही फुकट हाताळतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">वापरा</span><h4>गरजेच्या ठिकाणी getInstance कॉल करा</h4><p>Consumers class कडे instance मागतात आणि त्याचे वर्तन वापरतात. पहिला कॉल ते तयार करतो; नंतरचा प्रत्येक कॉल cache केलेले object पुन्हा वापरतो.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">वास तपासा</span><h4>लपलेल्या coupling वर लक्ष ठेवा</h4><p>प्रत्येक थेट <code>getInstance()</code> कॉल एक अदृश्य dependency आहे. त्यांची मोजणी करा; Singleton lookups ने भरलेली class समजायला आणि पुन्हा वापरायला कठीण असते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Refactor</span><h4>Instance inject करण्यास प्राधान्य द्या</h4><p>"फक्त एकच" हे container scope म्हणून किंवा <code>main</code> मधील एकाच wiring म्हणून ठेवा, पण ते constructors मधून पास करा जेणेकरून सहकारी static कॉलवर नव्हे तर एका interface वर अवलंबून राहतील.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">चाचणी करा</span><h4>चाचण्यांमध्ये त्याची अदलाबदल करा</h4><p>Dependency inject केलेली असल्याने, चाचण्या खऱ्या Singleton ऐवजी fake किंवा mock देतात. चाचण्यांमध्ये resetकरायला global state नाही, क्रमावर अवलंबून अस्थिरता नाही.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Singleton हा anti-pattern असे लेबल लागण्याची सर्वात जास्त शक्यता असलेला पॅटर्न आहे, आणि सहसा योग्य कारणासाठी. हे ते सापळे आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ लपलेली global state</h4><p>Singleton म्हणजे class चा पोशाख घातलेला global variable. कोणतीही method कुठूनही त्याची state बदलू शकते, त्यामुळे bugs गैर-स्थानिक बनतात आणि वर्तन अदृश्य कॉल इतिहासावर अवलंबून राहते.</p></div>
+        <div class="card"><h4>🧪 चाचणी न करता येणारा code</h4><p>अंतर्गतपणे <code>getInstance()</code> कॉल करणाऱ्या classes स्वतंत्रपणे चाचणी करता येत नाहीत. तुम्ही fake बदलू शकत नाही, आणि सामायिक state चाचणी प्रकरणांमध्ये गळते ज्यामुळे क्रमावर अवलंबून अस्थिरता येते.</p></div>
+        <div class="card"><h4>🧵 तुटलेली lazy init</h4><p>साधी null तपासणी असलेला भोळा lazy Singleton threads खाली race करतो आणि दोन instances तयार करू शकतो, किंवा <code>volatile</code> नसल्यास अंशतः तयार झालेले object देऊ शकतो.</p></div>
+        <div class="card"><h4>🔗 घट्ट coupling</h4><p>थेट static कॉल कॉलरना ठोस class शी घट्ट जोडतात. Dependencies यापुढे constructor signature मध्ये दिसत नाहीत, त्यामुळे class ला खरोखर काय हवे ते तुम्ही पाहू शकत नाही.</p></div>
+        <div class="card"><h4>🪞 Reflection आणि serialization गळती</h4><p>Reflection private constructor कॉल करू शकते आणि deserialization object पुन्हा बांधू शकते, दोन्ही दुसरे instance बनवतात जोपर्यंत तुम्ही स्पष्टपणे त्यांच्याविरुद्ध रक्षण करत नाही.</p></div>
+        <div class="card"><h4>🧲 Singleton चा अतिवापर</h4><p>प्रत्येक manager, helper, आणि service ला "सोयीसाठी" Singleton बनवल्याने अस्पष्ट आयुष्यमान आणि startup क्रमाच्या दु:स्वप्नांसह global objects चे जाळे तयार होते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Singleton testability आणि लपलेल्या coupling च्या किमतीत हमी दिलेली अनन्यता आणि सोपा प्रवेश विकत घेतो. त्याकडे वळण्यापूर्वी दोन्ही बाजूंचे वजन करा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>एकच instance ची हमी देतो, एकच प्रवेश बिंदू देतो, lazy महागड्या setup ला आधार देतो, आणि सामायिक state एकाच अधिकृत ठिकाणी केंद्रित करतो.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>लपलेली global state आणतो, testability आणि isolation ला हानी पोहोचवतो, ठोस class शी coupling घट्ट करतो, आणि constructors पासून खऱ्या dependencies लपवतो.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>एखादे साधन खरोखर अनन्य असेल (device handle, एकच connection pool) आणि पर्याय खरोखरच सामान्य inject केलेले object असू शकत नाही.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>तुम्हाला फक्त सोयीचा प्रवेश हवा असेल, किंवा object बदलणारी व्यावसायिक state धारण करत असेल. त्याऐवजी single-instance scope असलेले dependency injection वापरा.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>State च्या दृष्टीने कमी, पण thread-safe आणि reflection-safe करायला सूक्ष्म. Enum आणि holder idiom बहुतांश ती गुंतागुंत लपवतात.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Factory Method आणि Abstract Factory (सहसा singleton-scoped), Prototype (सामायिक करण्याऐवजी cloning), Facade (लागू केलेल्या अनन्यतेशिवाय एकच प्रवेश बिंदू).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> तुम्हाला "फक्त एकच" हवे असेल, तर DI container चे singleton scope वापरा आणि ते inject करा. भाषेनेच अनन्यता लागू करावी लागणाऱ्या दुर्मिळ प्रकरणांसाठी पारंपरिक static Singleton राखून ठेवा, आणि तेव्हा enum Singleton कडे वळा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>वास्तविक जगातील उदाहरणे</h2>
+      <p class="muted">वास्तविक प्रणालींमध्ये Singleton आणि त्याचे सुरक्षित प्रकार दाखवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>1 · Database connection pool</h3><div class="role">नमुना: एकच सामायिक, महागडे साधन</div></div></div>
+        <p class="muted">Application ने database connections चा एकच pool सामायिक केला पाहिजे जेणेकरून database ची connection मर्यादा कधीही संपत नाही.</p>
+        <ul>
+          <li>Pool बांधायला महाग असल्याने, तो thread-safe accessor मागे पहिल्या वापरावेळी lazily तयार होतो.</li>
+          <li>प्रत्येक request त्या एकाच pool मधून connections घेते आणि परत करते, एकूण connections मर्यादित ठेवते.</li>
+          <li>आधुनिक stacks मध्ये pool container singleton म्हणून नोंदवला जातो आणि inject केला जातो, statically मिळवला जात नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> connections मर्यादेत राहतात आणि setup एकदाच होते, तर injection pool ला in-memory test double साठी अदलाबदल करण्याजोगा ठेवते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🪵</span><div><h3>2 · Application logger</h3><div class="role">नमुना: cross-cutting प्रवेश बिंदू</div></div></div>
+        <p class="muted">प्रत्येक स्तरातील code ला एकाच logging backend वर सुसंगत configuration आणि buffering सह लिहायचे असते.</p>
+        <ul>
+          <li>एकच logger instance output sinks, formatters, आणि async buffer ची मालकी घेते.</li>
+          <li>पारंपरिक अंमलबजावणी ते statically उघड करतात, जे सोयीचे आहे पण प्रत्येक class ला logger शी जोडते.</li>
+          <li>Frameworks आता प्रत्येक class मागे logger inject करतात, एकच backend जपत चाचणी करता येण्याजोग्या, स्पष्ट dependencies पुनर्संचयित करतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> सर्वत्र सुसंगत, buffered logging, injection प्रत्येक class ला नाव असलेला logger देते जो तुम्ही चाचण्यांमध्ये पकडू आणि तपासू शकता.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">⚙️</span><div><h3>3 · Runtime configuration आणि enum registry</h3><div class="role">नमुना: सुरक्षित अनन्यतेसाठी enum Singleton</div></div></div>
+        <p class="muted">एखाद्या service ला एकच अधिकृत, अपरिवर्तनीय configuration object हवे असते जे reflection आणि serialization हल्ल्यांना दाद देत नाही.</p>
+        <ul>
+          <li>Configuration एकल-मूल्य enum म्हणून मांडली जाते, जी JVM नेमके एकदाच instantiate करण्याची हमी देते.</li>
+          <li>Enum स्वरूप reflection आणि deserialization ने दुसरे instance बनवण्यापासून प्रतिकारक्षम आहे, साध्या class च्या उलट.</li>
+          <li>मूल्ये class-load वेळी एकदाच लोड होतात आणि read-only accessors म्हणून उघड होतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> भाषा एकच instance ची हमी देत असल्यामुळे, शून्य locking code सह खरोखर अनन्य, छेडछाड-प्रतिरोधक config object.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">"नेमके एकच" ची गरज कधीही नाहीशी झाली नाही, पण आपण ते कसे साध्य करतो हे static accessors कडून container-व्यवस्थापित आयुष्यमानाकडे सरकले आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💉 DI containers जिंकले</h4><p>Spring, Guice, आणि .NET services singleton scope मध्ये नोंदवतात आणि inject करतात. Static कॉलशिवाय तुम्हाला एकच instance मिळते, आणि चाचण्यांमध्ये ते सहज बदलता येते.</p></div>
+        <div class="card"><h4>🏅 Enum Singleton हा सुवर्ण मानक आहे</h4><p>Java मध्ये तुम्हाला खरोखर static Singleton हवे असेल, तेव्हा एकल-मूल्य enum हे शिफारस केलेले स्वरूप आहे कारण ते संक्षिप्त आणि reflection व serialization विरुद्ध सुरक्षित आहे.</p></div>
+        <div class="card"><h4>🪟 Locks शिवाय lazy साठी holder idiom</h4><p>Initialization-on-demand holder idiom एक nested static class वापरतो जेणेकरून JVM च्या class-loading हमी तुम्हाला synchronization शिवाय lazy, thread-safe init देतात.</p></div>
+        <div class="card"><h4>📦 JS/TS मधील module singletons</h4><p>ES module एकदाच evaluate होते, त्यामुळे एक instance export केल्याने class किंवा static method शिवाय नैसर्गिक singleton मिळते - runtime caching करते.</p></div>
+        <div class="card"><h4>🧊 Immutability धोका निष्प्रभ करते</h4><p>बहुतांश हानी बदलणाऱ्या global state मुळे होते. Stateless किंवा immutable Singleton (शुद्ध config, constants) खूप कमी तोट्यांसह सोय जपते.</p></div>
+        <div class="card"><h4>🧭 सावधगिरीची कथा म्हणून शिकवले जाते</h4><p>Singleton हे सहज हाती घेता येणाऱ्या पण सोबत जगायला कठीण अशा पॅटर्नचे उत्कृष्ट उदाहरण राहिले आहे, त्यामुळे आता ते त्याच्या स्वतःच्या anti-pattern टीकेसह शिकवले जाते.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> ध्येय ठेवा, सवय सोडा. तुम्हाला एकच instance हवे असेल, तेव्हा ते तुमच्या composition root मधील एकच wiring किंवा container scope म्हणून व्यक्त करा आणि ते inject करा. भाषेनेच अनन्यता लागू करावी लागणाऱ्या दुर्मिळ प्रकरणासाठी पारंपरिक static Singleton, आदर्शतः enum स्वरूप, राखून ठेवा.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Singleton इतर creational patterns आणि त्यांच्या structural चुलतभावंडांमध्ये बसतो. हे त्याच्यासोबत नैसर्गिकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>Instantiation subclasses कडे सोपवतो; सहसा singleton-scoped ठेवला जातो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../abstract-factory/"><span class="ico">🧰</span><h4>Abstract Factory</h4><p>एका, सहसा एकाच, factory मागे objects चे कुटुंब बांधतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>एक global instance सामायिक करण्याऐवजी objects clone करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../facade/"><span class="ico">🚪</span><h4>Facade</h4><p>लागू केलेल्या अनन्यतेशिवाय, subsystem कडे एकच प्रवेश बिंदू.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Singleton चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · उदाहरणे · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

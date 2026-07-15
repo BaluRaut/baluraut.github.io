@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Composite समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Composite pattern चे सखोल, दृश्यात्मक मार्गदर्शक: वस्तूंना झाडाच्या रचनेत जोडणे, सामायिक Component interface द्वारे पाने आणि कंटेनर यांना एकसमान वागवणे, recursion, safety विरुद्ध transparency तडजोड, आणि file-system व UI-tree ची उदाहरणे." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>Composite pattern प्रत्यक्षात कसे काम करते - झाडे जी तुम्ही एकच म्हणून वागवता</h1>
+      <p class="lede">काही माहिती स्वाभाविकपणे झाडासारखी असते: फोल्डरांच्या आतले फोल्डर, पॅनेलांच्या आतली पॅनेल, गटांच्या आतले गट. Composite तुम्हाला ती झाडे <strong>पाने</strong> आणि <strong>कंटेनर</strong> यांच्यापासून बांधू देते, जे एकच <strong>Component</strong> interface सामायिक करतात, त्यामुळे client code मुळावर एकच method कॉल करू शकतो आणि बाकीचे काम recursion करू देतो. एक फाइल आणि हजार फायलींचे फोल्डर, दोघेही <code>size()</code> ला एकाच पद्धतीने उत्तर देतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Component interface</span>
+        <span class="pill">Leaf आणि Composite</span>
+        <span class="pill">Recursion</span>
+        <span class="pill">एकसमान वागणूक</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Composite pattern म्हणजे काय?</h2>
+      <p class="muted"><strong>Composite</strong> हा एक structural pattern आहे जो वस्तूंना झाडाच्या रचनेत जोडून भाग-आणि-संपूर्ण (part-whole) उतरंडींचे प्रतिनिधित्व करतो. तो clients ना एकट्या वस्तू आणि वस्तूंच्या समूहांना <em>एकसमानपणे</em> वागवू देतो: एक <strong>Leaf</strong> (एकटी वस्तू) आणि एक <strong>Composite</strong> (मुलांचा कंटेनर) दोघेही तोच <strong>Component</strong> interface अंमलात आणतात, त्यामुळे कॉल करणाऱ्याला कधीही विचारावे लागत नाही की "ही एक गोष्ट आहे की अनेक?"</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Component</h4>
+          <p>सामायिक interface किंवा abstract class. तो अशा operations जाहीर करतो ज्यांना पाने आणि कंटेनर दोघांनीही आधार दिला पाहिजे, जसे की <code>render()</code> किंवा <code>size()</code>.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🍃</span> Leaf</h4>
+          <p>मुले नसलेली एकटी वस्तू. ती झाडाचे शेवटचे टोक असते आणि operation थेट, स्वतःच्या वर्तनासाठी अंमलात आणते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Composite</h4>
+          <p>मुले असलेल्या Components ला धरून ठेवणारा कंटेनर. तो operation आपल्या मुलांकडे सोपवून आणि त्यांचे निकाल एकत्र करून अंमलात आणतो.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Component</strong></td><td>सर्व nodes साठी सामायिक operations जाहीर करतो</td><td><code>FileNode</code> interface, <code>Graphic</code> abstract class</td></tr>
+            <tr><td><strong>Leaf</strong></td><td>विनंती स्वतःच हाताळतो, कोणालाही सोपवत नाही</td><td>एक फाइल, एकटा आकार, एक menu item</td></tr>
+            <tr><td><strong>Composite</strong></td><td>मुले साठवतो आणि विनंत्या त्यांच्याकडे पाठवतो</td><td>एक फोल्डर, आकारांचा गट, एक submenu</td></tr>
+            <tr><td><strong>Child management</strong></td><td>कंटेनरांवर <code>add</code>, <code>remove</code>, <code>getChild</code></td><td><code>folder.add(file)</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Component प्रकाराद्वारे झाडावर काम करतो</td><td><code>root.size()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> संपूर्ण मुद्दा हा आहे की client कडे <em>Component</em> चा संदर्भ असतो, Leaf किंवा Composite चा नाही. तो एक method कॉल करतो आणि झाड recursively ते सोडवते. Interface वरची एकसमानता हीच काय ती कॉल करणाऱ्यांमधून "if leaf else container" असा फांद्यांचा code काढून टाकते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Composite का अस्तित्वात आहे</h2>
+      <p class="muted">त्याशिवाय, भाग-आणि-संपूर्ण उतरंडीवरून चालणारा कोणताही code type checks नी भरलेला असतो: "जर हे फोल्डर असेल तर त्याच्या आतल्या गोष्टींवरून लूप कर, नाहीतर फाइल हाताळ." ती अट प्रत्येक operation आणि प्रत्येक कॉल करणाऱ्यापर्यंत पसरते. Composite ते फांद्यांचे काम वस्तूंच्या आतच ढकलतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 Type-checking चा पसारा संपवतो</h4><p>Clients <code>instanceof</code> च्या शिड्या लिहिणे थांबवतात. एक polymorphic कॉल "हे leaf आहे की container?" ही codebase मध्ये पसरलेली तर्कशक्ती बदलून टाकतो.</p></div>
+        <div class="card"><h4>🌱 नवीन node प्रकारांसाठी खुला</h4><p>नवीन प्रकारचे leaf किंवा container जोडा आणि सध्याचा client code चालूच राहतो, कारण तो फक्त Component interface शीच बोलतो. हे प्रत्यक्षातले Open-Closed Principle आहे.</p></div>
+        <div class="card"><h4>🔁 Recursion फुकट</h4><p>एकूण आकार, render, किंवा serialize यासारखी एकत्रित operations "प्रत्येक मुलाला विचारा, एकत्र करा" अशी स्वाभाविकपणे व्यक्त होतात. झाडाची खोली कॉल करणाऱ्यासाठी अप्रस्तुत बनते.</p></div>
+        <div class="card"><h4>🌳 वास्तवाचे थेट प्रतिरूप</h4><p>File systems, DOM trees, org charts आणि scene graphs हे झाडेच <em>आहेत</em>. Composite त्या आकाराचे code मध्ये प्रतिबिंब करतो, त्याला विचित्र लूपांमध्ये सपाट करण्याऐवजी.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Composite ची उकल</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याच्या चार पद्धती, म्हणजे तुम्ही कोणीही असलात तरी ती पटते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Composite म्हणजे <strong>फोल्डरांचे फोल्डर</strong>. एका फोल्डरवर right-click करा आणि "Properties" निवडा आणि ते आतल्या सर्व गोष्टींचा एकूण आकार सांगते, कितीही खोल घरटी असोत. तुम्ही फाइल-दर-फाइल तो मोजत नाही; तुम्ही सर्वात वरच्या फोल्डरला विचारता आणि तो खाली विचारतो.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे <strong>DOM tree</strong> आहे. एक text node आणि मुलांनी भरलेला <code>&lt;div&gt;</code> दोघेही <code>appendChild</code> आणि <code>textContent</code> ला उत्तर देतात. तुम्ही root element वर एक method कॉल करता आणि browser subtree मधून recurse होतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>org chart</strong> चा विचार करा. कोणत्याही manager ला "तुझ्याखालील एकूण मनुष्यबळ" विचारा आणि ते आपल्या अधीनस्थांची बेरीज करतात, ज्यातील प्रत्येक जण आपल्या अधीनस्थांची बेरीज करतो. एक individual contributor फक्त "एक" असे उत्तर देतो. तोच प्रश्न, संपूर्ण साखळी, कोणतीही विशेष प्रकरणे नाहीत.</p></div>
+        <div class="card"><h4><span class="ico">📦</span> रोजच्या जीवनातली आवृत्ती</h4><p>एक <strong>पेटी जी वस्तू किंवा लहान पेट्या धरू शकते</strong>. शिपिंगसाठी एकूण वजन शोधण्यासाठी, तुम्ही बाहेरची पेटी वजन करता, म्हणजेच आतली प्रत्येक गोष्ट वजन करता, पेट्यांसह, अगदी शेवटपर्यंत खाली.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतल्या बाजूने ते कसे काम करते</h2>
+      <p class="muted">तुम्ही एक सामायिक <strong>Component</strong> प्रकार परिभाषित करता, त्याला एक <strong>Leaf</strong> अंमलबजावणी देता जी खरे काम करते, आणि एक <strong>Composite</strong> अंमलबजावणी देता जी मुलांची यादी ठेवते आणि त्यांच्याकडे काम सोपवते. एकत्रित operations recursive बनतात: एक Composite आपल्या मुलांची उत्तरे एकत्र करून आपले उत्तर मोजतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧱</span> करार परिभाषित करा</h4>
+          <p>Component प्रत्येक node ला आधार देणारी operations जाहीर करतो. पाने ती थेट अंमलात आणतात; Composites ती मुलांवरून लूप करून आणि निकाल एकत्र गुंडाळून अंमलात आणतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🪆</span> मुक्तपणे घरटी करा</h4>
+          <p>कारण Composite Components ला धरून ठेवतो, आणि Composite स्वतः एक Component <em>आहे</em>, त्यामुळे कंटेनर कोणत्याही खोलीपर्यंत कंटेनर धरू शकतात. Client मुळावर तीच method कॉल करत राहतो.</p>
+        </div>
+      </div>
+
+      <h3>रचना एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">Class रचना - Leaf आणि Composite Component interface सामायिक करतात, Composite मुले धरतो</div>
+        <pre class="mermaid">
+classDiagram
+    class FileSystemNode {
+        &lt;&lt;interface&gt;&gt;
+        +getName() String
+        +size() long
+        +print(indent) void
+    }
+    class FileLeaf {
+        -name String
+        -bytes long
+        +size() long
+    }
+    class Directory {
+        -name String
+        -children List~FileSystemNode~
+        +add(node) void
+        +remove(node) void
+        +size() long
+    }
+    FileSystemNode &lt;|.. FileLeaf
+    FileSystemNode &lt;|.. Directory
+    Directory o-- FileSystemNode : children
+        </pre>
+      </div>
+
+      <h3>Java मधली एक वास्तववादी अंमलबजावणी</h3>
+      <pre><code>// Component: the shared interface for files and folders
+interface FileSystemNode {
+    String getName();
+    long size();                 // recursive aggregate
+    void print(String indent);
+}
+
+// Leaf: a single file, does the work itself
+final class FileLeaf implements FileSystemNode {
+    private final String name;
+    private final long bytes;
+
+    FileLeaf(String name, long bytes) {
+        this.name = name;
+        this.bytes = bytes;
+    }
+
+    public String getName() { return name; }
+
+    public long size() { return bytes; }   // base case of the recursion
+
+    public void print(String indent) {
+        System.out.println(indent + name + "  (" + bytes + " B)");
+    }
+}
+
+// Composite: a folder that holds children and delegates
+final class Directory implements FileSystemNode {
+    private final String name;
+    private final List&lt;FileSystemNode&gt; children = new ArrayList&lt;&gt;();
+
+    Directory(String name) { this.name = name; }
+
+    Directory add(FileSystemNode node) { children.add(node); return this; }
+    void remove(FileSystemNode node)   { children.remove(node); }
+
+    public String getName() { return name; }
+
+    public long size() {                    // recursive step
+        long total = 0;
+        for (FileSystemNode child : children) {
+            total += child.size();          // ask each child, leaf or folder
+        }
+        return total;
+    }
+
+    public void print(String indent) {
+        System.out.println(indent + name + "/");
+        for (FileSystemNode child : children) {
+            child.print(indent + "  ");     // recurse into the subtree
+        }
+    }
+}
+
+// Client: treats a single file and a whole tree identically
+FileSystemNode root = new Directory("project")
+    .add(new FileLeaf("README.md", 1_200))
+    .add(new Directory("src")
+        .add(new FileLeaf("Main.java", 4_800))
+        .add(new FileLeaf("Util.java", 2_100)));
+
+System.out.println(root.size());   // 8100  -> one call, whole tree
+root.print("");                    // pretty-prints the hierarchy</code></pre>
+      <p class="muted">लक्षात घ्या की client कधीही तपासत नाही की एखादा node फाइल आहे की फोल्डर. तो एका <code>FileSystemNode</code> वर <code>size()</code> कॉल करतो आणि <code>Directory</code> recurse होतो तर <code>FileLeaf</code> आपले स्वतःचे bytes परत करतो. तो एकच polymorphic कॉल, अधिक कंटेनरच्या आतली recursion, हाच संपूर्ण pattern आहे.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: झाडाच्या खाली सोडवली जाणारी recursive size query, child management सह झाड बांधणे, आणि पाने व कंटेनर मिसळणारा UI render pass.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Recursive size(): कॉल subtree मधून खाली गुंडाळला जातो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Root as 📦 Directory project
+    participant Src as 📦 Directory src
+    participant F1 as 🍃 Main.java
+    participant F2 as 🍃 Util.java
+
+    Client->>Root: size()
+    Root->>Src: size()
+    Src->>F1: size()
+    F1-->>Src: 4800
+    Src->>F2: size()
+    F2-->>Src: 2100
+    Src-->>Root: 6900
+    Note over Root,Src: Composite sums child results
+    Root-->>Client: 8100
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - कंटेनरांवर add() वापरून झाड बांधणे</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Root as 📦 Directory project
+    participant Src as 📦 Directory src
+    participant Leaf as 🍃 FileLeaf
+
+    Client->>Root: new Directory("project")
+    Client->>Leaf: new FileLeaf("README.md", 1200)
+    Client->>Root: add(README leaf)
+    Root-->>Client: this
+    Client->>Src: new Directory("src")
+    Client->>Src: add(Main.java leaf)
+    Client->>Src: add(Util.java leaf)
+    Client->>Root: add(src directory)
+    Note over Root,Src: A Composite can hold another Composite
+    Root-->>Client: fully built tree
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - UI render pass: एक पॅनेल मुलांना render करतो, ज्यातील काही पॅनेलच असतात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant Panel as 📦 Panel root
+    participant Row as 📦 Panel row
+    participant Btn as 🍃 Button
+    participant Lbl as 🍃 Label
+
+    App->>Panel: render(ctx)
+    Panel->>Row: render(ctx)
+    Row->>Btn: render(ctx)
+    Btn-->>Row: drawn
+    Row->>Lbl: render(ctx)
+    Lbl-->>Row: drawn
+    Row-->>Panel: subtree drawn
+    alt panel has more children
+        Panel->>Panel: render remaining children
+    else no more children
+        Panel-->>App: frame complete
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">भाग-आणि-संपूर्ण उतरंड ओळखण्यापासून ते मुळावर एक method कॉल करून recursion ला संपूर्ण झाड सोडवू देण्यापर्यंत.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>भाग-आणि-संपूर्ण झाड ओळखा</h4><p>तुमच्याकडे अशा वस्तू आहेत ज्या त्याच प्रकारच्या इतर वस्तू धरतात, आणि तुम्हाला एक आणि अनेक यांना एकसारखे वागवायचे आहे. हेच Composite कडे वळण्याचे संकेत आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">करार</span><h4>Component interface परिभाषित करा</h4><p>प्रत्येक node ला ज्यांचा आधार असला पाहिजे अशा operations ची यादी करा, जसे की <code>size()</code>, <code>render()</code>, किंवा <code>print()</code>. हाच तो प्रकार जो client धरून ठेवेल.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Leaf</span><h4>Leaf अंमलात आणा</h4><p>एकट्या वस्तूचा class लिहा. त्याची operations थेट खरे काम करतात आणि recursion चे base case म्हणून वागतात, आपले स्वतःचे मूल्य परत करून.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Composite</span><h4>Composite अंमलात आणा</h4><p>कंटेनरला child Components ची यादी द्या. त्याची operations मुलांवरून लूप करतात, काम सोपवतात आणि निकाल एकत्र गुंडाळतात.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">व्यवस्थापन</span><h4>Child management जोडा</h4><p>Composite वर <code>add</code>, <code>remove</code>, आणि <code>getChild</code> ठेवा. हे Component वरही असावेत का ते ठरवा - ही safety विरुद्ध transparency ची निवड.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Recurse</span><h4>Recursive पायरी जोडा</h4><p>Composite वरील प्रत्येक एकत्रित operation ने आपल्या मुलांवर तीच operation कॉल करायला लावा, त्यामुळे client ला न कळवता खोली आपोआप हाताळली जाते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">बांधा</span><h4>झाड जुळवा</h4><p>पाने आणि कंटेनर तयार करा, आणि त्यांना घरटी करण्यासाठी <code>add</code> वापरा. कंटेनर कंटेनर धरू शकतात, त्यामुळे झाडे कोणत्याही खोलीपर्यंत वाढतात.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">संदर्भ</span><h4>Component प्रकार धरा</h4><p>Client Component म्हणून प्रकार दिलेला संदर्भ ठेवतो, ठोस Leaf किंवा Composite नाही, त्यामुळे तो फरकाबद्दल आंधळाच राहतो.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">कॉल</span><h4>मुळावर एक method कॉल करा</h4><p>सर्वात वरच्या node वर operation चालवा. Polymorphism कोणत्याही type checks शिवाय प्रत्येक node वर Leaf किंवा Composite वर्तनाकडे पाठवते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">सोडवा</span><h4>झाडाला वर गुंडाळू द्या</h4><p>पाने आपले स्वतःचे निकाल परत करतात; कंटेनर आपल्या मुलांचे निकाल एकत्र करतात आणि मुळाला अंतिम उत्तर मिळेपर्यंत ते वर पाठवतात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">विस्तार</span><h4>Node प्रकार सुरक्षितपणे जोडा</h4><p>नंतर नवीन पाने किंवा कंटेनर आणा. कारण clients फक्त Component interface शीच स्पर्श करतात, सध्याचा code अबाधितपणे चालूच राहतो.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Composite सांगायला सोपा आणि चुकीच्या पद्धतीने वापरायलाही सोपा आहे. वास्तविक झाडांमध्ये दिसणारे हे सापळे आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ पानांवर गळणाऱ्या child methods</h4><p>Transparency साठी <code>add</code> आणि <code>remove</code> Component वर ढकला, आणि आता Leaf ला त्या अंमलात आणाव्या लागतात. runtime मध्ये <code>UnsupportedOperationException</code> फेकणे हे compile-time सुरक्षिततेच्या बदल्यात सोय देते. जाणीवपूर्वक निवडा.</p></div>
+        <div class="card"><h4>🔁 झाडातील चक्रे (cycles)</h4><p>जर एखादा Composite स्वतःचाच वंशज बनू शकत असेल, तर recursion कधीही थांबत नाही. पूर्वजाला मूल म्हणून जोडण्यापासून सावध राहा, नाहीतर पहिलाच <code>size()</code> कॉल stack उडवून टाकतो.</p></div>
+        <div class="card"><h4>📉 खोल झाडे stack ओसंडून टाकतात</h4><p>अतिशय खोल उतरंडींवर भोळी recursion call stack संपवू शकते. अपायकारक खोलीसाठी, शुद्ध recursion ऐवजी स्पष्ट stack किंवा iterative traversal वापरा.</p></div>
+        <div class="card"><h4>🧨 सपाट माहितीवर Composite लादणे</h4><p>जर खरी भाग-आणि-संपूर्ण घरटी नसेल, तर interface प्रत्येक वस्तूला तिला न लागणाऱ्या container methods नी फुगवते. एक साधी list ही एक-पातळीच्या "झाडा" पेक्षा सोपी आहे.</p></div>
+        <div class="card"><h4>🐌 प्रत्येक कॉलला aggregates पुन्हा मोजणे</h4><p>झाड क्वचितच बदलत असेल तर प्रत्येक <code>size()</code> ला प्रचंड subtree ची बेरीज करणे व्यर्थ आहे. aggregate कॅश करा आणि बदल झाल्यावर parent साखळीत वर invalidate करा, पण profiling ने ते महत्त्वाचे आहे असे दाखवले तरच.</p></div>
+        <div class="card"><h4>🎭 God Component interface</h4><p>कोणत्याही node ला कधीही लागू शकणारी प्रत्येक operation Component मध्ये कोंबल्याने पाने अप्रस्तुत methods अंमलात आणतात. सामायिक interface सर्व nodes खरोखर सामायिक करतात तेवढ्यापुरतेच ठेवा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Composite child management कुठे राहते याविषयीच्या एका design निवडीच्या किमतीत एकसमानता आणि स्वच्छ recursion विकत घेतो.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>Clients पाने आणि कंटेनर यांना एकसमानपणे वागवतात, type checks नाहीत; recursive operations स्वाभाविक असतात; नवीन node प्रकार कॉल करणाऱ्यांना स्पर्श न करता जोडले जातात (Open-Closed).</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>सामायिक interface एकतर खूप रुंद (पानांना container methods मिळतात) किंवा खूप अरुंद असू शकतो; खोल झाडांना stack overflow चा धोका; सपाट माहितीसाठी अतिरेकी.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>तुमच्याकडे खरी भाग-आणि-संपूर्ण उतरंड आहे - फाइली आणि फोल्डर, UI panels, आकार आणि गट, org charts - आणि कोणत्याही subtree वर तीच operation चालवायची आहे.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>माहिती सपाट किंवा एक-पातळी खोल आहे, पाने आणि कंटेनर खूप वेगळे वागतात, किंवा घरटी संरचनात्मक नसून आनुषंगिक आहे.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>रचनात्मकदृष्ट्या कमी: तीन भूमिका आणि एक recursion. सूक्ष्मता संपूर्णपणे child-management methods वरील safety विरुद्ध transparency निर्णयातच आहे.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Decorator (तोच recursive आकार, एक मूल), Iterator (झाडावरून चालतो), Visitor (nodes न बदलता operations जोडतो), Builder (गुंतागुंतीची झाडे जुळवतो).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Safety विरुद्ध transparency, ढोबळ नियम:</strong> <code>add</code>/<code>remove</code> फक्त Composite वर ठेवा <em>safety</em> साठी - compiler तुम्हाला ते leaf वर कॉल करण्यापासून रोखतो, पण client ला कधीकधी downcast करावे लागते. ते Component वर ठेवा <em>transparency</em> साठी - प्रत्येक node सारखाच दिसतो, पण पानांना ते कॉल runtime मध्ये नाकारावे लागतात. Safety ला प्राधान्य द्या, जोपर्यंत clients ना खरोखर प्रत्येक node ला संभाव्य container म्हणून वागवण्याची गरज नसेल.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>वास्तविक जगातील उदाहरणे</h2>
+      <p class="muted">production-दर्जाच्या systems मध्ये Composite दिसणाऱ्या तीन जागा, प्रत्येक एक खरे भाग-आणि-संपूर्ण झाड.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗂️</span><div><h3>1 · build tool मधले file-system झाड</h3><div class="role">Pattern: पाने म्हणजे फाइली, composites म्हणजे directories</div></div></div>
+        <p class="muted">एका build tool ला directory आकार मोजायचे, जुळणाऱ्या फायलींसाठी glob करायचे, आणि compilation साठी project झाडावरून चालायचे असते.</p>
+        <ul>
+          <li>एक <code>FileNode</code> interface <code>File</code> पाने आणि <code>Directory</code> composites द्वारे अंमलात आणला जातो.</li>
+          <li><code>size()</code>, <code>walk()</code>, आणि <code>match(glob)</code> directories मधून recurse होतात आणि फायलींपाशी थांबतात.</li>
+          <li>Child management (<code>add</code>, <code>remove</code>) फक्त <code>Directory</code> वरच राहते, त्यामुळे compiler फाइलला मूल जोडण्यासारखा मूर्खपणा रोखतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> project मुळावर एक recursive कॉल कोणत्याही subtree साठी बेरजा आणि traversals मोजतो, कॉल करणाऱ्यामध्ये फाइली विरुद्ध फोल्डर असे कोणतेही विशेष प्रकरण न ठेवता.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖼️</span><div><h3>2 · widget toolkit मधले UI component झाड</h3><div class="role">Pattern: पाने म्हणजे widgets, composites म्हणजे containers</div></div></div>
+        <p class="muted">एक GUI toolkit buttons, labels, आणि घरटी panels यांनी बनलेल्या screens render व layout करते.</p>
+        <ul>
+          <li>एक <code>Component</code> base <code>render()</code>, <code>measure()</code>, आणि <code>hitTest(point)</code> जाहीर करतो.</li>
+          <li><code>Button</code> आणि <code>Label</code> ही पाने आहेत; <code>Panel</code> हा एक composite आहे जो आपली मुले क्रमाने render करतो.</li>
+          <li>एक render pass मुळावर <code>render()</code> कॉल करतो आणि संपूर्ण subtree स्वतःला recursively काढतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> layout engine एकट्या button आणि खोलवर घरटी असलेल्या panel ला एकसारखे वागवते, त्यामुळे नवीन widget प्रकार render loop न बदलता जोडले जातात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>3 · गटबद्धतेसह vector graphics editor</h3><div class="role">Pattern: पाने म्हणजे आकार, composites म्हणजे गट</div></div></div>
+        <p class="muted">एक drawing app वापरकर्त्यांना आकार गटबद्ध करू देते, गटाला एकच म्हणून transform करू देते, आणि गट यथेच्छ घरटी करू देते.</p>
+        <ul>
+          <li>एक <code>Graphic</code> interface <code>draw()</code>, <code>bounds()</code>, आणि <code>move(dx, dy)</code> उघड करतो.</li>
+          <li><code>Circle</code> आणि <code>Rect</code> ही पाने आहेत; <code>Group</code> हा एक composite आहे जो transforms प्रत्येक मुलाकडे पाठवतो.</li>
+          <li>एक गट निवडून तो ओढल्याने संपूर्ण subtree हलतो कारण <code>move()</code> recurse होतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> गटबद्ध करणे आणि गट सोडवणे operation code मध्ये काहीही अतिरिक्त खर्च करत नाही, कारण गट म्हणजे आणखी एक <code>Graphic</code> जे साधनांना आधीच कसे हाताळायचे ते माहीत आहे.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगतता</div>
+      <h2>आधुनिक सुसंगतता</h2>
+      <p class="muted">Composite आजच्या बहुतांश stacks च्या आधीचा आहे, तरीही एकसमान-nodes-चे-झाड ही कल्पना आधुनिक software मध्ये सर्वत्र आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🌐 Virtual DOM trees</h4><p>React आणि तत्सम libraries elements ची झाडे बांधतात जिथे एक component आणि एक host node एकसमानपणे हाताळले जातात, मग recursively reconcile केले जातात. Composite विचारसरणी संपूर्ण render model च्या मुळाशी आहे.</p></div>
+        <div class="card"><h4>🧾 Abstract syntax trees</h4><p>Compilers आणि formatters code ला nodes म्हणून दर्शवतात जिथे एक expression मध्ये expressions असू शकतात. Traversal आणि transformation एका सामायिक node interface वरून recurse होतात.</p></div>
+        <div class="card"><h4>🎬 Scene graphs</h4><p>Game engines आणि 3D साधने transforms आणि meshes ला एका scene graph मध्ये घरटी करतात, world transforms झाडाच्या खाली अगदी Composite सांगतो तसेच पसरवतात.</p></div>
+        <div class="card"><h4>📄 Document object models</h4><p>HTML, XML, आणि rich-text documents ही Composite झाडे आहेत जिथे text nodes आणि element nodes traversal व editing साठी एक interface सामायिक करतात.</p></div>
+        <div class="card"><h4>🧰 Functional variants</h4><p>Functional languages मध्ये तोच आकार fold operations सह recursive algebraic data types म्हणून दिसतो, pattern चा संरचनात्मक गाभा वजा class hierarchy.</p></div>
+        <div class="card"><h4>🗺️ Config आणि infra trees</h4><p>घरटी configuration, JSON documents, आणि infrastructure resource graphs भाग व संपूर्ण यांच्या त्याच एकसमान, recursive वागणुकीने चालवले जातात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> जेव्हा जेव्हा माहिती ही भाग-आणि-संपूर्ण उतरंड असते आणि तुम्हाला कोणत्याही subtree वर तीच operation चालवायची असते, तेव्हा Composite हेच उत्तर आहे. तो केंद्रस्थानी राहतो कारण झाडे केंद्रस्थानी आहेत - हा pattern एक युक्ती कमी आणि घरटी माहितीचा स्पष्ट केलेला नैसर्गिक आकार अधिक आहे.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोधत राहा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Composite अशा patterns मध्ये बसतो जे object रचना बांधतात आणि त्यांवरून चालतात. हे त्याच्यासोबत स्वाभाविकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>तोच recursive गुंडाळण्याचा आकार, पण अनेकांऐवजी एक मूल.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔗</span><h4>Iterator</h4><p>Composite ची रचना उघड न करता त्याच्या nodes वरून चालतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../visitor/"><span class="ico">🧭</span><h4>Visitor</h4><p>Node classes न बदलता झाडावर नवीन operations जोडतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../builder/"><span class="ico">🏗️</span><h4>Builder</h4><p>गुंतागुंतीची Composite झाडे टप्प्याटप्प्याने जुळवतो.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>Composite चे दृश्यात्मक मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · तडजोडी · उदाहरणे · सुसंगतता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

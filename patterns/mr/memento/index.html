@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memento पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Memento डिझाइन पॅटर्नसाठी एक सखोल, दृश्यात्मक मार्गदर्शक: encapsulation न मोडता एखाद्या ऑब्जेक्टची अंतर्गत स्थिती जतन करणे आणि पुन्हा प्रस्थापित करणे, Originator, Memento आणि Caretaker भूमिका, undo आणि snapshots, मेमरी खर्च, sequence diagrams, 0-100 प्रवाह, आणि केस स्टडीज." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>Memento पॅटर्न स्थिती कशी जतन करून पुन्हा प्रस्थापित करतो</h1>
+      <p class="lede">कधीकधी तुम्हाला एखादा ऑब्जेक्ट आधीच्या क्षणापर्यंत मागे न्यावा लागतो: एखादे संपादन undo करणे, अयशस्वी झालेला transaction परत फिरवणे, जतन केलेला गेम पुन्हा प्रस्थापित करणे. Memento तुम्हाला ऑब्जेक्टच्या अंतर्गत स्थितीचा <strong>snapshot</strong> घेऊ देतो आणि नंतर तो <strong>पुन्हा प्रस्थापित</strong> करू देतो, तेही ऑब्जेक्टच्या खाजगी fields बाहेरील जगाला न दाखवता. ज्या ऑब्जेक्टकडे ती स्थिती असते तोच काय जतन करायचे आणि कसे यावर नियंत्रण ठेवतो.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Originator</span>
+        <span class="pill">Memento</span>
+        <span class="pill">Caretaker</span>
+        <span class="pill">Undo आणि snapshots</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Memento पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Memento</strong> हा एक behavioral पॅटर्न आहे जो एखाद्या ऑब्जेक्टची अंतर्गत स्थिती वेगळ्या ऑब्जेक्टमध्ये जतन करतो, जेणेकरून मूळ ऑब्जेक्टचे encapsulation न मोडता ती स्थिती नंतर पुन्हा प्रस्थापित करता येते. जतन केलेला snapshot हा त्याला तयार करणाऱ्या ऑब्जेक्टशिवाय बाकी सर्वांसाठी अपारदर्शक असतो, म्हणजेच केवळ जतन आणि पुनर्प्रस्थापन करण्यासाठी खाजगी fields कधीही client कोडमध्ये गळत नाहीत.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧑‍🎨</span> Originator</h4>
+          <p>ज्या ऑब्जेक्टची स्थिती महत्त्वाची असते तो. तो आपली सध्याची स्थिती जतन करणारा memento तयार करतो आणि नंतर स्वतःला पुन्हा प्रस्थापित करण्यासाठी memento वापरतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Memento</h4>
+          <p>Originator च्या स्थितीचा snapshot धारण करणारा एक value object. बाहेरील लोकांसाठी अपारदर्शक; फक्त originator च त्याचा संपूर्ण मजकूर वाचू शकतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗂️</span> Caretaker</h4>
+          <p>mementos ना इतिहासात (बहुधा एका stack मध्ये) ठेवतो आणि जतन किंवा पुनर्प्रस्थापनासाठी विनंती करतो, पण memento च्या आत काय आहे ते कधीही तपासत किंवा संपादित करत नाही.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>कोण त्याला हाताळतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Originator</strong></td><td>स्वतःच्या स्थितीचे snapshots तयार करतो आणि वापरतो</td><td>खाजगी डेटाचा मालक</td></tr>
+            <tr><td><strong>Memento (wide interface)</strong></td><td>त्याला तयार करणाऱ्या originator ला संपूर्ण स्थिती दाखवतो</td><td>फक्त Originator</td></tr>
+            <tr><td><strong>Memento (narrow interface)</strong></td><td>स्थितीत प्रवेश नसलेला अपारदर्शक token, इकडेतिकडे देण्यास सुरक्षित</td><td>Caretaker आणि clients</td></tr>
+            <tr><td><strong>Caretaker</strong></td><td>इतिहास साठवतो आणि जतन किंवा पुनर्प्रस्थापन सुरू करतो</td><td>Client-समोरील समन्वयक</td></tr>
+            <tr><td><strong>History store</strong></td><td>mementos चा क्रमबद्ध संग्रह, सहसा एक stack</td><td>Caretaker कडे असतो</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>महत्त्वाचा मानसिक नमुना:</strong> memento म्हणजे एक बंद केलेला लिफाफा. Originator पत्र लिहितो आणि नंतर ते वाचून घेतो; caretaker फक्त तो लिफाफा तारखेनुसार दाखल करतो आणि विनंती केल्यावर परत देतो. बाकी कोणीही तो उघडत नाही, त्यामुळे encapsulation अबाधित राहते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Memento पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">undo जोडण्याचा भोळा मार्ग म्हणजे प्रत्येक field सार्वजनिक करणे जेणेकरून एखादा manager class त्यांची नक्कल करून पुन्हा सेट करू शकेल. यामुळे encapsulation चूरचूर होते आणि manager अंतर्गत रचनेशी घट्ट जोडला जातो. Memento तुम्हाला ती गळती न करता मागे फिरण्याची सोय देतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔒 encapsulation जपते</h4><p>स्थिती originator स्वतःच जतन करतो आणि पुन्हा प्रस्थापित करतो. केवळ जतनासाठी खाजगी fields कधीही सार्वजनिक होत नाहीत, त्यामुळे अंतर्गत रचना लपलेली राहते आणि बदलण्यास मोकळी राहते.</p></div>
+        <div class="card"><h4>↩️ स्वच्छ undo आणि redo शक्य करते</h4><p>mementos चा एक stack तुम्हाला जवळजवळ फुकटात multi-level undo देतो. प्रत्येक बदलापूर्वी push करा, परत फिरण्यासाठी pop करा, आणि दुसऱ्या दिशेसाठी एक redo stack ठेवा.</p></div>
+        <div class="card"><h4>🧩 जबाबदाऱ्या वेगळ्या करते</h4><p>Originator त्याच्या वर्तनावर लक्ष केंद्रित करतो; caretaker इतिहास व्यवस्थापनावर लक्ष केंद्रित करतो. कोणालाही दुसऱ्याचे अंतर्गत तपशील माहीत असण्याची गरज नसते.</p></div>
+        <div class="card"><h4>🕰️ checkpoints आणि rollback ला आधार देते</h4><p>एखाद्या धोकादायक क्रियेपूर्वी snapshot घ्या, आणि ती क्रिया अयशस्वी झाल्यास तो पुन्हा प्रस्थापित करा. यामुळे साध्या ऑब्जेक्ट्सना transactional, सर्व-किंवा-काहीच-नाही असे वर्तन मिळते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Memento समजावून</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही जे कोणी असाल त्याला ती पटेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हा <strong>व्हिडिओ गेममधील save point</strong> आहे. एखाद्या कठीण boss समोर तुम्ही save करता; तुम्ही हरलात तर तेच नेमके save पुन्हा load करून पुन्हा प्रयत्न करता. गेमचे जग save फाइल लिहिते आणि वाचते; तुम्ही फक्त कधी save आणि load करायचे ते निवडता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>तुमच्या editor मधील <strong>Ctrl+Z</strong> चा विचार करा. प्रत्येक कीस्ट्रोक buffer चा एक snapshot undo stack वर push करतो. Undo शेवटचा snapshot pop करतो आणि documents स्वतःला पुन्हा प्रस्थापित करतो; तुमचा history manager कधीही document चे स्वरूप parse करत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>हा एक <strong>document version history</strong> आहे. प्रत्येक save एक संपूर्ण आवृत्ती नोंदवतो. मागे फिरण्यासाठी तुम्ही एक आवृत्ती निवडता आणि document ती पुन्हा load करतो. संग्रहालय आवृत्त्या साठवते पण त्यांचा मजकूर संपादित करत नाही.</p></div>
+        <div class="card"><h4><span class="ico">📸</span> दैनंदिन आवृत्ती</h4><p>एका खोलीचा <strong>Polaroid फोटो</strong>. नंतर तुम्ही फर्निचर पुन्हा त्या फोटोशी जुळवून लावता. फोटोने एक क्षण गोठवला; फोटोला फर्निचर कसे हलते हे न कळता खोली त्या क्षणापर्यंत पुन्हा प्रस्थापित करता येते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>पडद्यामागे ते कसे काम करते</h2>
+      <p class="muted">Originator दोन क्रिया उघड करतो: <strong>save</strong>, जी त्याची सध्याची स्थिती धारण करणारा memento परत करते, आणि <strong>restore</strong>, जी एका memento मधून स्थिती पुन्हा स्वतःमध्ये वाचते. Caretaker ते mementos क्रमाने ठेवतो आणि केव्हा save किंवा rollback करायचे ते ठरवतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">💾</span> Save</h4>
+          <p>Originator त्याची संबंधित fields एका नवीन, immutable memento मध्ये नक्कल करतो आणि तो एका narrow interface द्वारे बाहेर देतो. Caretaker तो history stack वर push करतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">♻️</span> Restore</h4>
+          <p>undo च्या वेळी caretaker एक memento pop करतो आणि तो originator ला परत देतो, जो साठवलेल्या fields पुन्हा स्वतःमध्ये नक्कल करतो, त्या नेमक्या भूतकाळातील स्थितीत परततो.</p>
+        </div>
+      </div>
+
+      <h3>भूमिका आणि संबंध</h3>
+      <div class="diagram">
+        <div class="cap">रचना - originator mementos तयार करतो आणि वापरतो; caretaker फक्त ते साठवतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Originator {
+        -state
+        +save() Memento
+        +restore(m Memento)
+    }
+    class Memento {
+        -state
+        +getState()
+    }
+    class Caretaker {
+        -history
+        +backup()
+        +undo()
+    }
+    Originator ..> Memento : creates
+    Memento --o Caretaker : stored by
+    Caretaker o-- Originator : coordinates
+        </pre>
+      </div>
+
+      <h3>TypeScript मधील एक कार्यरत उदाहरण</h3>
+      <pre><code>// Memento: opaque snapshot. Only the Originator reads its full state.
+class EditorMemento {
+  constructor(
+    private readonly content: string,
+    private readonly cursor: number,
+  ) {}
+
+  // Wide interface, used by the Originator only.
+  getContent(): string { return this.content; }
+  getCursor(): number { return this.cursor; }
+}
+
+// Originator: owns the state, creates and restores snapshots.
+class Editor {
+  private content = "";
+  private cursor = 0;
+
+  type(text: string): void {
+    this.content =
+      this.content.slice(0, this.cursor) + text + this.content.slice(this.cursor);
+    this.cursor += text.length;
+  }
+
+  save(): EditorMemento {
+    return new EditorMemento(this.content, this.cursor);
+  }
+
+  restore(m: EditorMemento): void {
+    this.content = m.getContent();
+    this.cursor = m.getCursor();
+  }
+
+  toString(): string { return this.content; }
+}
+
+// Caretaker: keeps history, never inspects a memento.
+class History {
+  private readonly stack: EditorMemento[] = [];
+
+  backup(editor: Editor): void {
+    this.stack.push(editor.save());
+  }
+
+  undo(editor: Editor): void {
+    const m = this.stack.pop();
+    if (m) editor.restore(m);
+  }
+}
+
+const editor = new Editor();
+const history = new History();
+
+history.backup(editor);
+editor.type("Hello");
+history.backup(editor);
+editor.type(", world");
+console.log(editor.toString()); // Hello, world
+
+history.undo(editor);
+console.log(editor.toString()); // Hello
+history.undo(editor);
+console.log(editor.toString()); // (empty)
+</code></pre>
+      <p class="muted">लक्षात घ्या की caretaker कधीही <code>getContent()</code> किंवा <code>getCursor()</code> वाचत नाही. तो mementos आंधळेपणाने साठवतो आणि परत करतो, त्यामुळे editor इतिहास न मोडता आपला मजकूर कसा दर्शवतो हे बदलण्यास मोकळा असतो.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एक snapshot जतन करणे, त्यापर्यंत undo करून परतणे, आणि एक checkpoint जो फक्त एखादी क्रिया अयशस्वी झाली तरच rollback करतो.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Save: caretaker originator कडे snapshot मागतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Care as 🗂️ Caretaker
+    participant Orig as 🧑‍🎨 Originator
+    participant Mem as 📦 Memento
+
+    Client->>Care: backup()
+    Care->>Orig: save()
+    Orig->>Mem: new Memento(copy of state)
+    Mem-->>Orig: memento
+    Orig-->>Care: memento
+    Care->>Care: push onto history stack
+    Note over Care,Mem: Caretaker never reads inside the memento
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Undo: शेवटचा memento pop करा आणि originator पुन्हा प्रस्थापित करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Care as 🗂️ Caretaker
+    participant Orig as 🧑‍🎨 Originator
+    participant Mem as 📦 Memento
+
+    Client->>Care: undo()
+    Care->>Care: pop last memento
+    Care->>Orig: restore(memento)
+    Orig->>Mem: read stored state
+    Mem-->>Orig: content and cursor
+    Orig->>Orig: copy state back into itself
+    Orig-->>Care: restored
+    Care-->>Client: previous state active
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Checkpoint: snapshot घ्या, धोकादायक op करून पहा, अयशस्वी झाल्यास rollback करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Care as 🗂️ Caretaker
+    participant Orig as 🧑‍🎨 Originator
+
+    Client->>Care: backup()
+    Care->>Orig: save()
+    Orig-->>Care: checkpoint memento
+    Client->>Orig: apply risky operation
+    alt operation succeeds
+        Orig-->>Client: committed
+        Care->>Care: keep or discard checkpoint
+    else operation fails
+        Client->>Care: undo()
+        Care->>Orig: restore(checkpoint)
+        Orig-->>Client: rolled back to checkpoint
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">स्थिती ओळखण्यापासून ते कार्यरत multi-level undo पर्यंत, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>जपायची स्थिती शोधा</h4><p>ज्या ऑब्जेक्टची अंतर्गत स्थिती जतन आणि पुन्हा प्रस्थापित केली पाहिजे तो निवडा. नेमके कोणते fields एक अर्थपूर्ण snapshot ठरवतात ते ठरवा.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">रचना</span><h4>Memento प्रकार परिभाषित करा</h4><p>त्या fields ची नक्कल धारण करणारा एक immutable value object तयार करा. Originator साठी एक wide interface आणि इतर सर्वांसाठी एक narrow interface द्या.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Originator</span><h4>save method जोडा</h4><p>originator वर <code>save()</code> अंमलात आणा जेणेकरून तो त्याची सध्याची स्थिती एका नवीन memento मध्ये नक्कल करून तो परत करेल.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Originator</span><h4>restore method जोडा</h4><p><code>restore(memento)</code> अंमलात आणा जेणेकरून originator साठवलेल्या fields पुन्हा स्वतःमध्ये नक्कल करून त्या नेमक्या स्थितीत परतेल.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">नक्कल</span><h4>reference नव्हे तर value ने snapshot घ्या</h4><p>mutable fields ची memento मध्ये deep-copy करा जेणेकरून originator मधील नंतरची संपादने जतन केलेला snapshot बदलू शकणार नाहीत.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Caretaker</span><h4>history store तयार करा</h4><p>mementos चा stack धारण करणारा एक caretaker जोडा. तो प्रत्येक बदलापूर्वी save कॉल करतो आणि परत आलेला memento ठेवतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Backup</span><h4>बदलण्यापूर्वी save करा</h4><p>caretaker अशा प्रकारे जोडा की प्रत्येक user क्रिया आधी एक memento push करेल, मग बदल लागू करेल. आता आधीची स्थिती नेहमीच पुन्हा मिळवता येते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Undo</span><h4>Pop करा आणि restore करा</h4><p>undo अंमलात आणा: शेवटचा memento pop करा आणि तो originator च्या restore ला द्या. ऑब्जेक्ट एक पाऊल मागे उडी घेतो.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Redo</span><h4>redo stack जोडा</h4><p>तुम्ही undo करता तेव्हा pop केलेली स्थिती एका redo stack वर push करा जेणेकरून user पुन्हा पुढे जाऊ शकेल. कोणत्याही नवीन संपादनावर तो साफ करा.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">मर्यादा</span><h4>history चा आकार मर्यादित करा</h4><p>तुम्ही किती mementos ठेवता ते मर्यादित करा जेणेकरून मेमरी मर्यादित राहील. सर्वात जुने टाका, किंवा कमी वेळा snapshot घ्या, खर्च नियंत्रित करण्यासाठी.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Undo, redo आणि rollback जागच्या जागी</h4><p>Originator encapsulation अबाधित ठेवून संपूर्ण undo आणि redo ला आधार देतो, तसेच धोकादायक क्रियांसाठी checkpoint आणि rollback देखील.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Memento सांगायला सोपा आहे आणि सूक्ष्मपणे चुकीचा करणे सोपे आहे. या नेहमीच्या सापळ्या आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💥 मेमरी फुगणे</h4><p>प्रत्येक snapshot म्हणजे स्थितीची संपूर्ण नक्कल. मोठ्या document वर प्रत्येक कीस्ट्रोकला save केल्यास मेमरी अमर्याद वाढते. history मर्यादित करा आणि ढोबळ सीमांवर snapshot घ्या.</p></div>
+        <div class="card"><h4>🔗 उथळ नकला</h4><p>deep copy ऐवजी references साठवल्यास नंतरची mutations जुन्या mementos ना गुपचूप बिघडवतात. मग restore चुकीची स्थिती परत करतो. mutable डेटा value ने नक्कल करा.</p></div>
+        <div class="card"><h4>🔓 गळणारे interface</h4><p>memento ची संपूर्ण स्थिती caretaker ला दाखवल्यास तुम्ही टाळू पाहत असलेली encapsulation ची फूट पुन्हा निर्माण होते. wide interface originator पुरतेच खाजगी ठेवा.</p></div>
+        <div class="card"><h4>🧨 Caretaker mementos संपादित करणे</h4><p>caretaker memento च्या आतील गोष्टी बदलत किंवा अर्थ लावत असेल तर तो originator च्या अंतर्गत तपशिलांशी जोडला जातो. Caretaker ने mementos ना अपारदर्शक tokens म्हणून वागवले पाहिजे.</p></div>
+        <div class="card"><h4>🐌 प्रचंड स्थितीचा snapshot</h4><p>मोठ्या ऑब्जेक्ट्सचे संपूर्ण snapshots मंद आणि जड असतात. मोठ्या स्थितीसाठी संपूर्ण नकलांऐवजी diffs साठवणारे incremental किंवा command-आधारित undo पसंत करा.</p></div>
+        <div class="card"><h4>🌐 स्थितीत बाह्य संसाधने</h4><p>Sockets, file handles किंवा threads यांचा अर्थपूर्ण snapshot घेऊन पुन्हा प्रस्थापित करता येत नाही. फक्त serializable, value-सारखी स्थिती जतन करा, live संसाधने नव्हे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि कधी वापरावे</h2>
+      <p class="muted">Memento मेमरी आणि नकलेच्या खर्चाच्या किमतीत स्वच्छ, encapsulated rollback देतो. त्याकडे वळण्यापूर्वी दोन्हींचा विचार करा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>encapsulation जपते, स्वच्छ undo आणि rollback देते, आणि इतिहासाचे तर्क originator च्या बाहेर ठेवते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>संपूर्ण snapshots मेमरी आणि नकलेचा वेळ खर्च करतात; मोठ्या स्थितीचे वारंवार जतन संसाधन वापरावर वर्चस्व गाजवू शकते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>तुम्हाला undo, redo, checkpoints किंवा transactional rollback हवे असते आणि ऑब्जेक्टचे अंतर्गत तपशील दाखवायचे नसतात.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>स्थिती खूप मोठी असते किंवा सतत बदलते; संपूर्ण नकला साठवण्याऐवजी command-आधारित diffs किंवा event sourcing पसंत करा.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>रचनात्मकदृष्ट्या कमी, पण अचूकता deep copying वर आणि memento caretaker साठी अपारदर्शक ठेवण्यावर अवलंबून असते.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Command उलट करण्याच्या क्रिया साठवतो; Prototype स्थितीचे clone करतो; State तुम्ही snapshot घेता त्या modes चे model करतो; Iterator इतिहासातून फिरू शकतो.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> स्थितीचा snapshot स्वस्त आणि स्वयंपूर्ण असेल तेव्हा Memento कडे वळा. स्थिती मोठी असेल किंवा संपादने वारंवार असतील तेव्हा संपूर्ण ऑब्जेक्टऐवजी काय बदलले (Command) ते साठवा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">production-शैलीतील वापरात Memento दाखवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📝</span><div><h3>1 · टेक्स्ट editor मधील undo history</h3><div class="role">नमुना: multi-level undo आणि redo</div></div></div>
+        <p class="muted">एका code editor ला buffer चे अंतर्गत तपशील न दाखवता संपादने, निवडी आणि cursor हालचालींवर अमर्याद undo हवे असते.</p>
+        <ul>
+          <li>प्रत्येक संपादन document originator कडे त्याच्या buffer आणि cursor चा memento मागते.</li>
+          <li>एक caretaker undo आणि redo stacks ठेवतो, user मागे फिरत असताना त्यांच्यामध्ये pop करतो.</li>
+          <li>History मर्यादित असते आणि snapshots एकत्र केले जातात जेणेकरून जलद टाइपिंग मेमरी संपवत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> buffer चे स्वरूप पूर्णपणे लपवलेले असताना विश्वासार्ह undo आणि redo, त्यामुळे editor त्याचे अंतर्गत model इतिहास कोडला स्पर्श न करता बदलू शकतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎮</span><div><h3>2 · गेममधील save आणि load</h3><div class="role">नमुना: checkpoints आणि restore</div></div></div>
+        <p class="muted">एका गेमला खेळाडूंना checkpoints वर प्रगती save करू द्यावी लागते आणि पराभवानंतर नेमकी जगाची स्थिती पुन्हा load करावी लागते.</p>
+        <ul>
+          <li>गेम स्थिती ऑब्जेक्ट खेळाडूचे स्थान, inventory आणि world flags यांचा memento तयार करतो.</li>
+          <li>एक save manager mementos ना नाव दिलेल्या slots म्हणून साठवतो आणि त्यांना disk वर serialize करतो.</li>
+          <li>load करताना निवडलेला memento स्थिती ऑब्जेक्टला परत दिला जातो जेणेकरून तो क्षण नेमका पुन्हा प्रस्थापित होईल.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> खेळाडू संपूर्ण जग शाबूत असताना कोणत्याही checkpoint वरून पुन्हा सुरू करतात, तर save प्रणाली गेम स्थिती कशी रचली आहे यापासून वेगळी राहते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔁</span><div><h3>3 · form wizard मधील transactional rollback</h3><div class="role">नमुना: सर्व-किंवा-काहीच-नाही स्थिती बदल</div></div></div>
+        <p class="muted">एक multi-step wizard user पुढे जाताना बदल लागू करतो पण अंतिम submission अयशस्वी झाल्यास सर्वकाही परत फिरवावे लागते.</p>
+        <ul>
+          <li>धोकादायक commit च्या आधी, model त्याची संपूर्ण स्थिती एका checkpoint memento मध्ये snapshot करतो.</li>
+          <li>server ने submission नाकारल्यास, model checkpoint atomically पुन्हा प्रस्थापित करतो.</li>
+          <li>यशस्वी झाल्यास checkpoint टाकून दिला जातो, नवीन स्थिती commit करून सोडली जाते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> Users कधीही अर्धवट लागू केलेली स्थिती पाहत नाहीत; अयशस्वी submit कोणत्याही manual undo तर्काशिवाय शेवटच्या चांगल्या snapshot वर स्वच्छपणे परत फिरतो.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगतता</div>
+      <h2>आधुनिक सुसंगतता</h2>
+      <p class="muted">Memento जुना आहे, पण स्थिती जतन करून पुन्हा प्रस्थापित करण्याची त्याची कल्पना आजच्या बऱ्याच सॉफ्टवेअरमधून वाहते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 state management libraries</h4><p>Redux time-travel debugging म्हणजे मोठ्या प्रमाणावरील Memento: प्रत्येक dispatch केलेली action store चा snapshot घेते जेणेकरून तुम्ही स्थितीतून मागे पाऊल टाकू शकता.</p></div>
+        <div class="card"><h4>📼 event sourcing शी विरोधाभास</h4><p>Event sourcing संपूर्ण snapshots ऐवजी बदलांच्या log मधून स्थिती पुन्हा बांधते, पण replay जलद करण्यासाठी सहसा नियतकालिक snapshots ना Memento-शैलीतील checkpoints म्हणून वापरते.</p></div>
+        <div class="card"><h4>🗄️ database savepoints</h4><p>Transactional savepoints आणि rollbacks Memento च्या checkpoint वापराचे प्रतिबिंब आहेत, ज्यामुळे एक कामाचे एकक ज्ञात चांगल्या बिंदूकडे परत फिरू शकते.</p></div>
+        <div class="card"><h4>📸 immutable snapshots</h4><p>Persistent, immutable डेटा रचना Memento स्वस्त करतात: न बदललेले भाग सामायिक केल्याने प्रत्येक snapshot फक्त फरक साठवतो.</p></div>
+        <div class="card"><h4>🧩 Command अधिक Memento</h4><p>undo प्रणाली अनेकदा दोन्ही एकत्र करतात: Command action नोंदवतो तर Memento action पुन्हा गणू शकत नाही अशी कोणतीही स्थिती जतन करतो.</p></div>
+        <div class="card"><h4>☁️ serverless आणि workflows</h4><p>Durable workflow engines अंमलबजावणीची स्थिती checkpoint करतात जेणेकरून थांबलेली किंवा क्रॅश झालेली run नेमकी जिथे थांबली होती तिथून पुन्हा सुरू होऊ शकते.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Memento म्हणजे एखाद्या ऑब्जेक्टला त्याला उघडून न पाहता rewind बटण देण्याचा मार्ग. जेव्हाही तुम्हाला encapsulation अबाधित ठेवून undo, checkpoints किंवा rollback हवे असते, तेव्हा snapshot-आणि-restore ही कल्पना योग्य साधन आहे, तिच्या मेमरी खर्चाशी तोलून.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Memento वर्तन आणि स्थिती व्यवस्थापित करणाऱ्या पॅटर्न्समध्ये बसतो. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../command/"><span class="ico">🎬</span><h4>Command</h4><p>undo साठी mementos शी जुळणाऱ्या उलट करता येणाऱ्या क्रिया.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>ऑब्जेक्ट्सचे cloning, snapshot मागील नकलेचा टप्पा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../state/"><span class="ico">🔀</span><h4>State</h4><p>memento जे modes जतन करतो त्यांचे model करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">➡️</span><h4>Iterator</h4><p>जतन केलेल्या mementos च्या इतिहासातून क्रमाने फिरणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Memento साठी एक दृश्यात्मक मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · सुसंगतता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

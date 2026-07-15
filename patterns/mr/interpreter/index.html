@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interpreter पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Interpreter डिझाइन पॅटर्नचे सखोल, दृश्यात्मक मार्गदर्शक: एका लहान grammar ला class hierarchy म्हणून मांडणे, abstract syntax tree बांधणे, terminal विरुद्ध non-terminal expressions, boolean नियम आणि arithmetic यांचे मूल्यमापन, आणि त्याऐवजी खरा parser कधी वापरावा." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>Interpreter पॅटर्न - एका छोट्या भाषेचे objects मध्ये रूपांतर</h1>
+      <p class="lede">काही समस्या ठराविक, रचनाबद्ध स्वरूपात पुन्हा पुन्हा येत राहतात: filter नियम, सूत्रे, search queries, feature flags. Interpreter पॅटर्न म्हणतो: त्या पुनरावृत्त स्वरूपाला एक <strong>grammar</strong> द्या, प्रत्येक grammar नियमाला एका <strong>class</strong> म्हणून मांडा, आणि त्या objects च्या tree मधून फिरून एका वाक्याचे <strong>मूल्यमापन</strong> करा. प्रत्येक node ला स्वतःचा अर्थ कसा लावायचा हे माहित असते, त्यामुळे भाषा एका लहान, जोडता येण्याजोग्या object graph मध्ये बदलते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Grammar</span>
+        <span class="pill">Abstract syntax tree</span>
+        <span class="pill">Terminal विरुद्ध non-terminal</span>
+        <span class="pill">Recursive मूल्यमापन</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Interpreter पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Interpreter</strong> हा एक behavioral पॅटर्न आहे जो, एक साधी grammar असलेली भाषा दिली असता, त्या grammar साठी एक प्रतिनिधित्व (representation) आणि त्या प्रतिनिधित्वाचा वापर करून भाषेतील वाक्यांचे मूल्यमापन करणारा interpreter परिभाषित करतो. grammar चा प्रत्येक नियम एक class बनतो, वाक्ये त्या class च्या instances च्या tree बनतात (एक <em>abstract syntax tree</em>), आणि एक सामायिक <code>interpret(context)</code> method tree चे recursive पद्धतीने मूल्यमापन करतो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📐</span> एक grammar</h4>
+          <p>production नियमांचा एक लहान, स्थिर संच, उदाहरणार्थ "expression म्हणजे एक संख्या, किंवा + अथवा * ने जोडलेली दोन expressions". जेव्हा ही grammar क्वचितच बदलते तेव्हा Interpreter योग्य ठरतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌳</span> एक syntax tree</h4>
+          <p><code>3 + 4 * 2</code> सारखे एक ठोस वाक्य expression objects च्या tree मध्ये बदलते. tree चा आकार कच्चा मजकूर नव्हे तर precedence आणि रचना दर्शवतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">▶️</span> एक interpreter</h4>
+          <p>root वर एक polymorphic <code>interpret(context)</code> कॉल संपूर्ण tree मधून फिरतो, प्रत्येक node आपल्या children चे निकाल एका मूल्यात एकत्र करतो.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>ती काय करते</th><th>उदाहरण (arithmetic)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>AbstractExpression</strong></td><td>सामायिक <code>interpret(context)</code> करार घोषित करते</td><td><code>Expression</code> interface</td></tr>
+            <tr><td><strong>TerminalExpression</strong></td><td>एक पान (leaf), उप-expressions शिवाय स्वतःचा अर्थ लावते</td><td><code>Number</code>, <code>Variable</code></td></tr>
+            <tr><td><strong>NonterminalExpression</strong></td><td>इतर expressions पासून बनलेला एक नियम, त्यांच्यात recursion करते</td><td><code>Add</code>, <code>Multiply</code></td></tr>
+            <tr><td><strong>Context</strong></td><td>interpreter जी वाचते किंवा लिहिते ती global state धारण करते</td><td>Variable bindings <code>{x: 5}</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>tree बांधतो (बहुधा parser मार्फत) आणि मूल्यमापन सुरू करतो</td><td>Parser अधिक <code>root.interpret(ctx)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Interpreter म्हणजे वर्तनासह जोडलेला Composite पॅटर्न. tree ची रचना ही expressions चा Composite आहे, आणि जोडलेली गंमत अशी की प्रत्येक node ला एका context विरुद्ध स्वतःचे <em>मूल्यमापन</em> कसे करायचे हे माहित असते. tree एकदा बांधा, आणि हवे तितक्या वेळा त्याचा अर्थ लावा.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Interpreter पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">जेव्हा एखादी पुनरावृत्त समस्या खरे तर एक छोटी भाषा असते, तेव्हा तिचे मूल्यमापन करण्यासाठी <code>if/else</code> चे जंगल हार्डकोड करणे देखभालीयोग्य राहत नाही. Interpreter त्या भाषेला first-class objects मध्ये बदलतो जे तुम्ही जोडू शकता, विस्तारू शकता आणि ज्यांबद्दल तर्क करू शकता.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Grammar classes शी जुळते</h4><p>प्रत्येक production नियम एक class बनतो. code ची रचना भाषेच्या रचनेला प्रतिबिंबित करते, त्यामुळे grammar स्वतः type hierarchy द्वारेच दस्तऐवजित होते.</p></div>
+        <div class="card"><h4>➕ नियम विस्तारणे सोपे</h4><p>नवीन operator किंवा नियम जोडणे म्हणजे बहुधा एक नवीन expression class जोडणे. सध्याचे nodes अस्पर्श राहतात कारण मूल्यमापन polymorphic आहे, एखादा प्रचंड switch नाही.</p></div>
+        <div class="card"><h4>🔁 अनेक वेळा स्वस्तात मूल्यमापन</h4><p>एका नियमाला एकदा tree मध्ये parse करा, मग हजारो वेगवेगळ्या contexts विरुद्ध त्याचा अर्थ लावा. महागडा parsing खर्च प्रत्येक मूल्यमापनाला नव्हे तर एकदाच द्यावा लागतो.</p></div>
+        <div class="card"><h4>🔓 वापरकर्ते logic ला data म्हणून मांडतात</h4><p>प्रोग्रामर नसलेले लोक <code>age &gt; 18 AND country = 'US'</code> सारखे नियम लिहू शकतात आणि तुमचे app त्यांना अनियंत्रित code चालवण्याऐवजी सुरक्षित, sandboxed trees मध्ये बदलते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Interpreter समजावून</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असलात तरी ते पटकन समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे व्याकरणाच्या तासात <strong>वाक्याचे पृथक्करण</strong> करण्यासारखे आहे. "मांजर बसली" हे कर्ता आणि विधेय मध्ये विभागते, जे पुढे विभागतात. अर्थ शोधण्यासाठी तुम्ही त्या पृथक्करणातून फिरता, लहान भाग एकत्र करून संपूर्ण बनवता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>एका <strong>calculator च्या expression tree</strong> चा विचार करा. <code>3 + 4 * 2</code> हे अशा tree मध्ये parse होते जिथे <code>*</code> हे <code>+</code> च्या खाली बसते. root वर <code>eval()</code> कॉल केल्यावर ते खाली recursion करते आणि <code>11</code> वर परत आणते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>हे एक <strong>rules engine</strong> आहे. व्यवसाय एका लहान DSL मध्ये पात्रता नियम लिहितो, engine प्रत्येकाला conditions च्या tree मध्ये compile करते, मग code deploy न करता प्रत्येक येणाऱ्या record विरुद्ध ते tree चालवते.</p></div>
+        <div class="card"><h4><span class="ico">🎼</span> रोजच्या जीवनातील आवृत्ती</h4><p><strong>sheet music</strong> वाचणे. प्रत्येक चिन्ह एक terminal आहे, वाक्यांश चिन्हे गटात करतात, आणि एक रचना ही वाक्यांशांची tree आहे. एक संगीतकार प्रत्येक भाग क्रमाने प्रक्रिया करून संपूर्ण score चा "अर्थ लावतो".</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत ते कसे काम करते</h2>
+      <p class="muted">दोन हालचाली आहेत: एक <strong>class hierarchy</strong> परिभाषित करा जिथे प्रत्येक grammar नियम एक expression आहे, मग tree च्या root वर एक polymorphic method कॉल करून <strong>मूल्यमापन</strong> करा. Terminals recursion थांबवतात, non-terminals ती पुढे चालवतात.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🌿</span> Terminal expressions</h4>
+          <p>children नसलेली tree ची पाने: <code>Number(7)</code> सारखी literals किंवा <code>Variable("x")</code> सारखी lookups. गरज पडल्यास context मधून वाचून ते थेट स्वतःचा अर्थ लावतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌲</span> Non-terminal expressions</h4>
+          <p>इतर expressions पासून बनलेले नियम: <code>Add(left, right)</code>, <code>And(a, b)</code>. ते आधी आपल्या children चा अर्थ लावतात, मग निकाल एकत्र करतात. हे recursion हेच संपूर्ण engine आहे.</p>
+        </div>
+      </div>
+
+      <h3>class hierarchy एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">रचना - एक interface, terminal पाने, non-terminal composites</div>
+        <pre class="mermaid">
+classDiagram
+    class Expression {
+        <<interface>>
+        +interpret(ctx) int
+    }
+    class NumberExpr {
+        +int value
+        +interpret(ctx) int
+    }
+    class VariableExpr {
+        +String name
+        +interpret(ctx) int
+    }
+    class AddExpr {
+        +Expression left
+        +Expression right
+        +interpret(ctx) int
+    }
+    class MultiplyExpr {
+        +Expression left
+        +Expression right
+        +interpret(ctx) int
+    }
+    Expression <|.. NumberExpr
+    Expression <|.. VariableExpr
+    Expression <|.. AddExpr
+    Expression <|.. MultiplyExpr
+    AddExpr o-- Expression
+    MultiplyExpr o-- Expression
+        </pre>
+      </div>
+
+      <h3>Java मधील एक चालणारा arithmetic interpreter</h3>
+      <pre><code>import java.util.Map;
+
+// AbstractExpression: the shared contract
+interface Expression {
+    int interpret(Map&lt;String, Integer&gt; context);
+}
+
+// TerminalExpression: a literal number, a leaf
+class NumberExpr implements Expression {
+    private final int value;
+    NumberExpr(int value) { this.value = value; }
+    public int interpret(Map&lt;String, Integer&gt; ctx) { return value; }
+}
+
+// TerminalExpression: a variable looked up in the context
+class VariableExpr implements Expression {
+    private final String name;
+    VariableExpr(String name) { this.name = name; }
+    public int interpret(Map&lt;String, Integer&gt; ctx) {
+        Integer v = ctx.get(name);
+        if (v == null) throw new IllegalStateException("Unbound: " + name);
+        return v;
+    }
+}
+
+// NonterminalExpression: recurses into its children
+class AddExpr implements Expression {
+    private final Expression left, right;
+    AddExpr(Expression left, Expression right) { this.left = left; this.right = right; }
+    public int interpret(Map&lt;String, Integer&gt; ctx) {
+        return left.interpret(ctx) + right.interpret(ctx);
+    }
+}
+
+class MultiplyExpr implements Expression {
+    private final Expression left, right;
+    MultiplyExpr(Expression left, Expression right) { this.left = left; this.right = right; }
+    public int interpret(Map&lt;String, Integer&gt; ctx) {
+        return left.interpret(ctx) * right.interpret(ctx);
+    }
+}
+
+// Client: build the AST for  x + 4 * 2  and evaluate with x = 3
+class Demo {
+    public static void main(String[] args) {
+        Expression ast = new AddExpr(
+            new VariableExpr("x"),
+            new MultiplyExpr(new NumberExpr(4), new NumberExpr(2))
+        );
+        System.out.println(ast.interpret(Map.of("x", 3))); // prints 11
+    }
+}</code></pre>
+      <p class="muted">लक्षात घ्या की tree आधीच precedence दर्शवते: <code>MultiplyExpr</code> हे <code>AddExpr</code> च्या <em>आत</em> nested आहे, म्हणून ते आधी मूल्यमापन होते. हा पॅटर्न <em>रचना</em> (tree बांधणे, बहुधा parser चे काम) या चिंतेला <em>अर्थ</em> (प्रत्येक node ची <code>interpret</code> method) पासून वेगळे करतो.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: एका arithmetic tree चे मूल्यमापन, एका boolean नियमाचे short-circuiting, आणि अनेक contexts मध्ये एकच parse केलेले tree पुन्हा वापरणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - x = 3 सह x + 4 * 2 चे recursive मूल्यमापन</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cl as 👤 Client
+    participant Add as ➕ AddExpr
+    participant Var as 🔤 VariableExpr x
+    participant Mul as ✖️ MultiplyExpr
+    participant N4 as 4️⃣ NumberExpr 4
+    participant N2 as 2️⃣ NumberExpr 2
+
+    Cl->>Add: interpret(ctx)
+    Add->>Var: interpret(ctx)
+    Var-->>Add: 3
+    Add->>Mul: interpret(ctx)
+    Mul->>N4: interpret(ctx)
+    N4-->>Mul: 4
+    Mul->>N2: interpret(ctx)
+    N2-->>Mul: 2
+    Mul-->>Add: 8
+    Add-->>Cl: 11
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - short circuit सह boolean नियम age &gt; 18 AND country = US</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cl as 👤 Rules engine
+    participant And as 🔗 AndExpr
+    participant Gt as 📊 GreaterThan
+    participant Eq as 🟰 Equals
+
+    Cl->>And: interpret(record)
+    And->>Gt: interpret(record)
+    Gt-->>And: true
+    alt left is true, evaluate right
+        And->>Eq: interpret(record)
+        Eq-->>And: false
+        And-->>Cl: false
+    else left is false, skip right
+        And-->>Cl: false (short circuit)
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - एकदा parse करा, अनेक वेळा अर्थ लावा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cl as 👤 Client
+    participant P as 🧰 Parser
+    participant AST as 🌳 Expression tree
+    participant Ctx as 🗂️ Context store
+
+    Cl->>P: parse("price * qty * 1.1")
+    P-->>Cl: root expression
+    loop for each order row
+        Cl->>Ctx: bind price, qty
+        Cl->>AST: interpret(ctx)
+        AST-->>Cl: computed total
+    end
+    Note over Cl,AST: Grammar parsed once, tree reused per row
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">फळ्यावरील एका ढोबळ grammar पासून खरी वाक्ये मूल्यमापन करणाऱ्या चालत्या interpreter पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">व्याप्ती</span><h4>ती एक छोटी भाषा आहे याची खात्री करा</h4><p>समस्या खरेच एक स्थिर छोटी grammar आहे का ते तपासा - नियम, सूत्रे, filters - आणि ती पूर्ण programming language नाही. जर grammar मोठी किंवा अस्थिर असेल, तर थांबा आणि त्याऐवजी parser generator वापरा.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Grammar</span><h4>production नियम लिहा</h4><p>grammar स्पष्टपणे मांडा, उदाहरणार्थ: expr म्हणजे number, किंवा variable, किंवा expr + expr, किंवा expr * expr. प्रत्येक production ओळ एका class शी जुळेल.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Interface</span><h4>AbstractExpression परिभाषित करा</h4><p>सामायिक करार तयार करा, प्रत्येक expression अंमलात आणेल अशी एकच <code>interpret(context)</code> method. हाच तो सांधा आहे जो tree ला polymorphic बनवतो.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Terminals</span><h4>leaf classes बांधा</h4><p><code>Number</code> आणि <code>Variable</code> सारख्या terminal expressions अंमलात आणा. त्या थेट एक मूल्य परत करतात, आणि बाह्य state ची गरज असल्यास context मधून वाचतात.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Non-terminals</span><h4>composite नियम बांधा</h4><p><code>Add</code> आणि <code>Multiply</code> सारखी non-terminal expressions अंमलात आणा जी child expressions धारण करतात आणि त्यांचे interpret केलेले निकाल एकत्र करतात.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Context</span><h4>context परिभाषित करा</h4><p>मूल्यमापनाला कोणती सामायिक state लागते ते ठरवा: variable bindings, तपासला जाणारा record, किंवा एक बदलता येणारा accumulator. तो प्रत्येक <code>interpret</code> कॉलमधून पास करा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">tree बांधा</span><h4>AST रचा</h4><p>एका ठोस वाक्यासाठी expression objects एकत्र करून tree बनवा. tests साठी ते हाताने करा, किंवा खऱ्या input साठी parser मधून तयार करा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Parse</span><h4>मजकुराचे tree मध्ये रूपांतर करा</h4><p>एक लहान parser जोडा जो वापरकर्त्याचा input वाचतो आणि precedence ला मान देत AST बाहेर काढतो. यामुळे callers ला हाताने nodes बांधावी लागत नाहीत.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">मूल्यमापन</span><h4>root चा अर्थ लावा</h4><p><code>root.interpret(context)</code> कॉल करा. recursion tree मधून फिरते, terminals मूल्ये परत करतात, non-terminals ती एकत्र करतात, आणि उत्तर वर येते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">विस्तार</span><h4>नियम आणि operations जोडा</h4><p>एक expression class जोडून नवीन operator ला आधार द्या. जर एकाच tree वर अनेक नवीन operations लागत असतील, तर प्रत्येक node फुगवण्याऐवजी वर एक Visitor स्तर लावा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">कणखर करा</span><h4>तपासा, cache करा आणि पुन्हा वापरा</h4><p>types तपासा, unbound variables पासून रक्षण करा, parse केलेली trees cache करा, आणि contexts मध्ये त्या पुन्हा वापरा. आता ती भाषा एक सुरक्षित, जोडता येण्याजोगी मालमत्ता आहे.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Interpreter छोट्या भाषांसाठी सुंदर आहे आणि मोठ्यांसाठी एक सापळा. या त्याच्या नेहमीच्या चुकीच्या वाटा आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📈 सतत वाढत जाणारी grammar</h4><p>प्रत्येक नवीन नियम एक नवीन class असतो. डझनभर नियमांच्या पलीकडे hierarchy स्फोट होते आणि देखभालीयोग्य राहत नाही. मोठी किंवा उत्क्रांत होणारी grammar हे parser generator कडे वळण्याचे संकेत आहे.</p></div>
+        <div class="card"><h4>🔀 nodes मध्ये कोंबलेले parsing</h4><p>Interpreter tree आणि तिचे मूल्यमापन परिभाषित करतो, ती मजकुरातून कशी बांधायची हे नव्हे. tokenizing आणि parsing हे expression classes मध्ये मिसळल्याने दोन अगदी वेगळ्या चिंता गुंतागुंतीच्या होतात.</p></div>
+        <div class="card"><h4>🧨 नवीन operation प्रत्येक class ला स्पर्श करते</h4><p>pretty-printing किंवा type-checking सारखे दुसरे operation जोडल्याने सर्व node classes मध्ये बदल करावे लागतात. जेव्हा operations वाढतात, तेव्हा प्रत्येक node फुगवण्याऐवजी Visitor कडे वळा.</p></div>
+        <div class="card"><h4>🕳️ खोल trees stack उधळतात</h4><p>भाबडे recursive interpretation खोलवर nested input वर call stack overflow करू शकते. input ची खोली मर्यादित करा किंवा स्पष्ट stack वापरून iterative पद्धतीने मूल्यमापन करा.</p></div>
+        <div class="card"><h4>🐌 प्रत्येक कॉलवर पुन्हा parsing</h4><p>प्रत्येक मूल्यमापनाला मजकूर tree मध्ये parse करणे या पॅटर्नचा सर्वात मोठा फायदा वाया घालवते. एकदा parse करा, मग अनेक contexts मध्ये AST पुन्हा वापरा.</p></div>
+        <div class="card"><h4>🎭 सर्वसामान्य भाषा म्हणून वापरणे</h4><p>Interpreter हा संकुचित DSLs साठी आहे, खरी programming language बांधण्यासाठी नाही. जर तुम्हाला variables, functions आणि control flow लागत असतील, तर तुम्ही पॅटर्नच्या बाहेर वाढला आहात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">वारंवार मूल्यमापन होणाऱ्या लहान, स्थिर grammars साठी Interpreter उजळून निघतो, आणि भाषा वाढत गेल्यास झगडतो. निर्णय घेण्याआधी त्याची खऱ्या parser शी तुलना करा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>Grammar व्यवस्थितपणे classes शी जुळते, नवीन नियम जोडणे सोपे, वाक्ये पुन्हा वापरता येणाऱ्या trees बनतात, logic code ऐवजी सुरक्षित data म्हणून मांडता येते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>grammar च्या आकारासोबत class संख्या वाढते, गुंतागुंतीच्या भाषांसाठी बोजड होते, नवीन operations जोडणे प्रत्येक node ला स्पर्श करते, recursion संथ किंवा stack-भारी असू शकते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>grammar लहान आणि स्थिर असते, वाक्ये ठराविक स्वरूपात पुन्हा येतात (filters, सूत्रे, feature flags), आणि तुम्हाला एकाच नियमांविरुद्ध अनेक inputs मूल्यमापन करायची असतात.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>grammar मोठी किंवा उत्क्रांत होणारी असते, performance महत्त्वाची असते, किंवा तुम्हाला पूर्ण भाषा लागते. ANTLR, हाताने लिहिलेला recursive-descent parser, किंवा खरा DSL toolkit वापरा.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>मूठभर नियमांसाठी कमी ते मध्यम; grammar च्या आकारासोबत वेगाने वाढते. मूल्यमापनाचे logic साधे recursion आहे; देखभालीचा खर्च म्हणजे class स्फोट.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Composite (tree चा आकार), Visitor (nodes ला स्पर्श न करता operations जोडा), Iterator (tree मधून फिरा), Strategy (एका node चे मूल्यमापन बदला).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर तुम्ही संपूर्ण grammar एका रुमालावर लिहू शकत असाल आणि ती फारशी बदलणार नसेल, तर Interpreter एक आनंद आहे. ज्या क्षणी तिला precedence tables, error recovery, किंवा डझनभर नियम लागतात, त्या क्षणी parser तयार करा आणि Interpreter फक्त लहान मूल्यमापन गाभ्यासाठीच ठेवा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>वास्तविक जगातील उदाहरणे</h2>
+      <p class="muted">production-सदृश वापरात Interpreter दर्शवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎯</span><div><h3>1 · Feature-flag आणि targeting नियम</h3><div class="role">नमुना: user record वर boolean expression tree</div></div></div>
+        <p class="muted">एक product संघ features सुरक्षितपणे रोल आउट करण्यासाठी नॉन-इंजिनियर लोकांना <code>plan = 'pro' AND (country = 'US' OR beta = true)</code> सारखे targeting नियम लिहू देतो.</p>
+        <ul>
+          <li>प्रत्येक नियम <code>And</code>, <code>Or</code>, <code>Equals</code>, आणि <code>GreaterThan</code> expressions च्या tree मध्ये parse होतो.</li>
+          <li>context म्हणजे सध्याच्या user चे attributes, त्यामुळे तेच tree प्रत्येक request ला मूल्यमापन करते.</li>
+          <li>नियम database मध्ये data असतात, code नव्हे, त्यामुळे बदल deploy शिवाय पाठवले जातात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Product managers स्वतः targeting बदलतात, आणि engine लहान, sandboxed expression classes च्या संचाविरुद्ध लाखो records मूल्यमापन करते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧮</span><div><h3>2 · Spreadsheet-शैलीचे formula engine</h3><div class="role">नमुना: cell references सह arithmetic AST</div></div></div>
+        <p class="muted">एक analytics साधन वापरकर्त्यांना report fields मध्ये <code>revenue - cost * 1.2</code> सारखी सूत्रे टाइप करू देते.</p>
+        <ul>
+          <li>सूत्रे number, cell-reference, आणि operator nodes असलेल्या arithmetic expression trees मध्ये parse होतात.</li>
+          <li>Cell references या terminal expressions आहेत ज्या sheet context मधून थेट मूल्ये वाचतात.</li>
+          <li>parse केलेले tree cache होते आणि जेव्हा एखादे input cell बदलते तेव्हा पुन्हा मूल्यमापन होते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> वापरकर्त्यांना थेट, पुन्हा गणना होणारी सूत्रे मिळतात तर engine parsing आणि मूल्यमापन स्वच्छपणे वेगळे आणि जलद ठेवते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔍</span><div><h3>3 · Search आणि query filters</h3><div class="role">नमुना: मूल्यमापन करता येणाऱ्या tree मध्ये compile केलेली DSL</div></div></div>
+        <p class="muted">एक log platform events फिल्टर करण्यासाठी <code>level:error AND service:auth NOT env:test</code> सारखी query भाषा उपलब्ध करते.</p>
+        <ul>
+          <li>Queries match, and, or, आणि not expressions च्या tree मध्ये parse होतात.</li>
+          <li>तेच tree एकतर memory मध्ये मूल्यमापन होते किंवा index query मध्ये अनुवादित होते.</li>
+          <li>range किंवा regex सारखे नवीन match प्रकार नवीन expression classes म्हणून जोडले जातात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> इंजिनियर अभिव्यक्त filters लिहितात, आणि platform अंदाजित, चाचणीयोग्य वर्तनासह streaming events विरुद्ध प्रत्येकाचा अर्थ लावते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">शास्त्रीय पॅटर्न लहान आहे, पण त्याचा आकार rules engines पासून compilers पर्यंत आश्चर्यकारकपणे मोठ्या प्रमाणात आधुनिक tooling ला आधार देतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚙️ Rules आणि policy engines</h4><p>Feature flags, pricing, fraud, आणि access policies या सर्व लहान भाषा आहेत ज्या trees म्हणून मूल्यमापन होतात. बहुतेक rules engines चे धडधडणारे हृदय Interpreter आहे.</p></div>
+        <div class="card"><h4>🌳 सर्वत्र ASTs</h4><p>Linters, formatters, आणि codemods हे सर्व एक abstract syntax tree बांधतात आणि त्यातून फिरतात. Interpreter जी AST कल्पना औपचारिक करतो ती आता प्रमाणित developer infrastructure आहे.</p></div>
+        <div class="card"><h4>🧭 Visitor हा नैसर्गिक साथीदार</h4><p>खरे compilers Interpreter मधील tree ठेवतात पण operations visitors मध्ये हलवतात, त्यामुळे type-checking, optimization, आणि codegen nodes च्या बाहेर राहतात.</p></div>
+        <div class="card"><h4>🛡️ सुरक्षित user-पुरवठा केलेले logic</h4><p><code>eval</code> चालवण्याऐवजी user input ला एका मर्यादित expression tree मध्ये बदलणे हा एक सुरक्षा विजय आहे. पॅटर्न एक नियम काय करू शकतो ते sandbox करतो.</p></div>
+        <div class="card"><h4>🔤 अंतर्गत DSLs आणि query builders</h4><p>Fluent query builders आणि अंतर्गत DSLs code मध्ये expression trees एकत्र करतात, मग त्यांचा अर्थ लावतात किंवा अनुवाद करतात, अगदी Interpreter चा आकार.</p></div>
+        <div class="card"><h4>🚀 फक्त अर्थ न लावता compile करा</h4><p>Hot paths वाढत्या प्रमाणात tree एकदा bytecode किंवा native code मध्ये compile करतात, वाचनीय object model ठेवतात पण per-node dispatch खर्च टाकून देतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Interpreter लहान ठेवणे उत्तम - एका संकुचित, स्थिर भाषेला class hierarchy देऊन तिचे मूल्यमापन करण्याचा एक नीटनेटका मार्ग. त्याची कमाल मर्यादा जाणा: जेव्हा grammar वाढते, तेव्हा parser तयार करा आणि Visitor ला operations वाहू द्या, पण object-चे-tree हा सुंदर गाभा टिकवून ठेवा.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Interpreter संबंधित पॅटर्न्सच्या जाळ्यात बसतो. हे त्याच्यासोबत नैसर्गिकरित्या जोडतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>ज्यावर syntax tree बांधले जाते ती tree रचना.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../visitor/"><span class="ico">🧭</span><h4>Visitor</h4><p>nodes संपादित न करता tree वर operations जोडा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔁</span><h4>Iterator</h4><p>expression tree च्या nodes मधून फिरा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎚️</span><h4>Strategy</h4><p>एकच node स्वतःचे मूल्यमापन कसे करते ते बदला.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Interpreter पॅटर्नचे दृश्यात्मक मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · उदाहरणे · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

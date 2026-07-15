@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Factory Method समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Factory Method पॅटर्नसाठी एक सखोल, दृश्य मार्गदर्शक: तो काय आहे, Creator आणि Product पदानुक्रम, तो साध्या factory पेक्षा कसा वेगळा आहे, समांतर पदानुक्रम, sequence आकृत्या, 0-100 प्रवाह, केस स्टडीज आणि आधुनिक प्रासंगिकता." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Creational Pattern</span>
+      <h1>Factory Method - कोणती वस्तू बनवायची हे subclasses ठरवू द्या</h1>
+      <p class="lede">एखाद्या class ला अनेकदा माहीत असते की तिला ऑब्जेक्ट <em>केव्हा</em> तयार करायचा आहे, पण <em>कोणती</em> concrete class instantiate करायची हे माहीत नसते. Factory Method ऑब्जेक्ट तयार करण्यासाठी एक interface परिभाषित करते आणि <strong>concrete प्रकाराची निवड subclasses वर सोपवते</strong>. कॉलर फक्त अ‍ॅब्स्ट्रॅक्शनवर काम करतो, त्यामुळे नवीन product प्रकार त्यांचा वापर करणाऱ्या कोडला स्पर्श न करता आत बसतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Creator</span>
+        <span class="pill">Product</span>
+        <span class="pill">Subclass hook</span>
+        <span class="pill">Polymorphism</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Factory Method म्हणजे काय?</h2>
+      <p class="muted"><strong>Factory Method</strong> हा एक creational pattern आहे जो ऑब्जेक्ट तयार करण्यासाठी एक method परिभाषित करतो, पण कोणती concrete class instantiate करायची हे ठरवण्यासाठी subclasses ला ती method override करू देतो. पालक class मध्ये workflow असतो आणि तो factory method ला एका placeholder प्रमाणे कॉल करतो; प्रत्येक subclass वेगळा product पुरवतो. याचा परिणाम अशी एक class असते जी कोणत्याही concrete product प्रकाराचे नाव न घेता <em>products</em> वर कार्य करते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🏭</span> Creator</h4>
+          <p>ती class जी factory method घोषित करते. त्यात product वापरणारे मुख्य लॉजिक असते, पण प्रत्यक्ष instantiation subclass वर सोडते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Product</h4>
+          <p>तयार केलेले ऑब्जेक्ट्स ज्या interface मध्ये सामायिक असतात ती. Creator नेहमी फक्त या अ‍ॅब्स्ट्रॅक्शनवर अवलंबून असतो, कधीही concrete अंमलबजावणीवर नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔧</span> Concrete Creator</h4>
+          <p>एक subclass जी factory method override करून एक विशिष्ट concrete product परत करते, आणि एक प्रकार सामायिक workflow मध्ये जोडते.</p>
+        </div>
+      </div>
+
+      <h3>चार सहभागी</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>जबाबदारी</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Product</strong></td><td>factory जी ऑब्जेक्ट्स तयार करते त्यांचे interface घोषित करते</td><td><code>Transport</code></td></tr>
+            <tr><td><strong>Concrete Product</strong></td><td>product interface ची एक विशिष्ट अंमलबजावणी</td><td><code>Truck</code>, <code>Ship</code></td></tr>
+            <tr><td><strong>Creator</strong></td><td>factory method घोषित करते आणि तिचा निकाल सामायिक लॉजिकमध्ये वापरते</td><td><code>Logistics</code></td></tr>
+            <tr><td><strong>Concrete Creator</strong></td><td>concrete product परत करण्यासाठी factory method override करते</td><td><code>RoadLogistics</code>, <code>SeaLogistics</code></td></tr>
+            <tr><td><strong>Factory method</strong></td><td>product instance परत करणारा override करण्याजोगा hook</td><td><code>createTransport()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Factory Method हा एक <em>virtual constructor</em> आहे. पालक class "इथे एक product बनवा" याभोवती एक अल्गोरिदम लिहिते, आणि प्रत्येक subclass एकच method override करून "कोणता product" या प्रश्नाचे उत्तर देते. उर्वरित कोड कधीही बदलत नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Factory Method का अस्तित्वात आहे</h2>
+      <p class="muted">संपूर्ण codebase मध्ये <code>new ConcreteThing()</code> विखुरल्याने तो विशिष्ट classes शी घट्ट जोडला जातो. मग प्रत्येक नवीन प्रकार म्हणजे प्रत्येक construction ठिकाण शोधून त्यात बदल करणे. Factory Method तो निर्णय एका override करण्याजोग्या ठिकाणी आणते, त्यामुळे workflow स्थिर राहतो आणि products बदलत राहतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 वापर आणि निर्मिती वेगळे करते</h4><p>क्लायंट कोड product interface वर अवलंबून असतो, concrete classes वर नाही. तुम्ही एक नवीन subclass लिहून नवीन product जोडू शकता, विद्यमान कॉलर्समध्ये बदल न करता.</p></div>
+        <div class="card"><h4>🧩 विस्तारासाठी खुले</h4><p>नवीन प्रकार नवीन Concrete Creators म्हणून येतात. विद्यमान कोड बदलासाठी बंद असतो, ज्यामुळे open-closed तत्त्व नैसर्गिकरीत्या पाळले जाते.</p></div>
+        <div class="card"><h4>♻️ आजूबाजूचा workflow पुनर्वापर करते</h4><p>Creator सामायिक लॉजिक - logging, validation, orchestration - एकदाच धरून ठेवतो. Subclasses फक्त कोणता ऑब्जेक्ट बनवायचा हे override करतात, संपूर्ण प्रवाह नाही.</p></div>
+        <div class="card"><h4>🧪 चाचणी करणे सोपे</h4><p>एका test subclass मध्ये factory method override करून एक fake किंवा stub product इंजेक्ट करा, जेणेकरून आजूबाजूचा अल्गोरिदम स्वतंत्रपणे तपासता येईल.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Factory Method चे स्पष्टीकरण</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती स्पष्ट होते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एका <strong>रिकाम्या जागा भरण्याच्या निबंध टेम्पलेटचा</strong> विचार करा. शिक्षक रचना लिहितात आणि "इथे तुमचे उदाहरण लिहा" असे लेबल असलेली एक रिकामी जागा सोडतात. प्रत्येक विद्यार्थी तीच रचना ठेवतो पण रिकामी जागा वेगळ्या, विशिष्ट उदाहरणाने भरतो.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हा एक <strong>override करण्याजोगा constructor hook</strong> आहे. base class तिच्या अल्गोरिदममध्ये <code>create()</code> कॉल करते; एक subclass तिला हवा तो concrete प्रकार परत करण्यासाठी <code>create()</code> override करते, आणि अल्गोरिदम अबाधित चालू राहतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>भूमिकेनुसार विशिष्ट मुलाखतकार असलेल्या भरती प्रक्रियेसारखे</strong>. HR प्रत्येक जागेसाठी तीच प्रक्रिया चालवते, पण प्रत्येक विभाग तांत्रिक फेरी कोण घेणार हे ठरवतो. प्रक्रिया निश्चित असते; आत जोडला जाणारा तज्ज्ञ बदलतो.</p></div>
+        <div class="card"><h4><span class="ico">🍕</span> दैनंदिन आवृत्ती</h4><p><strong>प्रादेशिक स्वयंपाकघरे असलेली पिझ्झा साखळी</strong>. मुख्य कार्यालय "ऑर्डर घ्या, पिझ्झा बनवा, बॉक्समध्ये भरा" हे ठरवते. प्रत्येक फ्रँचायझी स्वतःची शैली तयार करण्यासाठी "पिझ्झा बनवा" override करते, तर ऑर्डर आणि बॉक्समध्ये भरण्याचे टप्पे तसेच राहतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे कार्य करते</h2>
+      <p class="muted">Creator एक abstract factory method परिभाषित करतो आणि तिला concrete व्यवसाय लॉजिकमधून कॉल करतो. Subclasses एक विशिष्ट product परत करण्यासाठी factory method override करतात. दोन पदानुक्रम, Creator आणि Product, समांतरपणे विकसित होतात.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🏭</span> Creator ची बाजू</h4>
+          <p>एक abstract Creator <code>createProduct()</code> घोषित करते आणि <code>plan()</code> सारखी एक खरी method पुरवते जी तिला कॉल करते. Concrete Creators फक्त <code>createProduct()</code> override करतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Product ची बाजू</h4>
+          <p>एक Product interface Creator अवलंबून असलेल्या क्रिया घोषित करते. प्रत्येक Concrete Product त्या अंमलात आणतो, आणि सहसा एक Concrete Product एका Concrete Creator शी जोडला जातो.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टिक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">रचना - factory method ने बांधलेले समांतर Creator आणि Product पदानुक्रम</div>
+        <pre class="mermaid">
+classDiagram
+    class Logistics {
+        +planDelivery()
+        +createTransport() Transport
+    }
+    class RoadLogistics {
+        +createTransport() Transport
+    }
+    class SeaLogistics {
+        +createTransport() Transport
+    }
+    class Transport {
+        <<interface>>
+        +deliver()
+    }
+    class Truck {
+        +deliver()
+    }
+    class Ship {
+        +deliver()
+    }
+    Logistics <|-- RoadLogistics
+    Logistics <|-- SeaLogistics
+    Transport <|.. Truck
+    Transport <|.. Ship
+    Logistics ..> Transport : creates
+    RoadLogistics ..> Truck : returns
+    SeaLogistics ..> Ship : returns
+        </pre>
+      </div>
+
+      <h3>एक वास्तववादी Java उदाहरण</h3>
+      <pre><code>// Product hierarchy
+interface Transport {
+    String deliver(String cargo);
+}
+
+class Truck implements Transport {
+    public String deliver(String cargo) {
+        return "Delivering " + cargo + " by road in a box.";
+    }
+}
+
+class Ship implements Transport {
+    public String deliver(String cargo) {
+        return "Delivering " + cargo + " by sea in a container.";
+    }
+}
+
+// Creator hierarchy
+abstract class Logistics {
+
+    // The factory method - subclasses decide the concrete Transport.
+    protected abstract Transport createTransport();
+
+    // Shared workflow that depends only on the Transport interface.
+    public String planDelivery(String cargo) {
+        Transport t = createTransport();
+        return "Planning route... " + t.deliver(cargo);
+    }
+}
+
+class RoadLogistics extends Logistics {
+    protected Transport createTransport() {
+        return new Truck();
+    }
+}
+
+class SeaLogistics extends Logistics {
+    protected Transport createTransport() {
+        return new Ship();
+    }
+}
+
+// Usage: pick the Creator, the workflow stays identical.
+Logistics logistics = new SeaLogistics();
+System.out.println(logistics.planDelivery("electronics"));
+// -> "Planning route... Delivering electronics by sea in a container."</code></pre>
+      <p class="muted">लक्षात घ्या की <code>planDelivery</code> कधीही <code>Truck</code> किंवा <code>Ship</code> चे नाव घेत नाही. हवाई मालवाहतूक जोडणे म्हणजे एक नवीन <code>AirLogistics</code> अधिक एक <code>Plane</code> class, विद्यमान workflow मध्ये शून्य बदल. हाच संपूर्ण फायदा आहे.</p>
+
+      <h3>तो साध्या किंवा static factory पेक्षा कसा वेगळा आहे</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>साधी / static factory</th><th>Factory Method</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>यंत्रणा</strong></td><td>एक method (अनेकदा static) ज्यात type flag वर <code>if</code> किंवा <code>switch</code> असते</td><td>polymorphism ने सोडवली जाणारी एक override करण्याजोगी instance method</td></tr>
+            <tr><td><strong>प्रकार जोडणे</strong></td><td>factory मधील switch संपादित करा</td><td>एक नवीन subclass जोडा, विद्यमान काहीही संपादित करू नका</td></tr>
+            <tr><td><strong>विस्तारक्षमता</strong></td><td>बंद - केंद्रीय method बदलावी लागते</td><td>खुली - subclassing ने विस्तार करा</td></tr>
+            <tr><td><strong>GoF pattern?</strong></td><td>नाही, हे एक idiom आहे</td><td>होय, एक औपचारिक GoF pattern</td></tr>
+            <tr><td><strong>Coupling</strong></td><td>factory ला प्रत्येक concrete प्रकार माहीत असतो</td><td>प्रत्येक Creator ला फक्त स्वतःचा product माहीत असतो</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: मूलभूत कॉल प्रवाह, एक नवीन product प्रकार जोडणे, आणि test double इंजेक्ट करण्यासाठी override वापरणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - मूलभूत प्रवाह: workflow factory method ला कॉल करतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Sea as 🚢 SeaLogistics
+    participant Base as 🏭 Logistics workflow
+    participant Ship as 📦 Ship
+
+    Client->>Sea: planDelivery("electronics")
+    Sea->>Base: run shared workflow
+    Base->>Sea: createTransport()
+    Sea-->>Base: new Ship
+    Base->>Ship: deliver("electronics")
+    Ship-->>Base: "by sea in a container"
+    Base-->>Client: planned delivery result
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - विस्तार: एक नवीन Concrete Creator कोणत्याही बदलाशिवाय जोडला जातो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 🧑‍💻 Developer
+    participant Air as ✈️ AirLogistics
+    participant Base as 🏭 Logistics workflow
+    participant Plane as 📦 Plane
+
+    Note over Dev,Plane: Add AirLogistics and Plane only
+    Dev->>Air: planDelivery("vaccines")
+    Air->>Base: reuse shared workflow
+    Base->>Air: createTransport()
+    Air-->>Base: new Plane
+    Base->>Plane: deliver("vaccines")
+    Plane-->>Base: "by air, express"
+    Base-->>Dev: result, existing code untouched
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - चाचणी: fake इंजेक्ट करण्यासाठी factory method override करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Test as 🧪 Test
+    participant Fake as 🎭 TestLogistics
+    participant Base as 🏭 Logistics workflow
+    participant Stub as 📦 FakeTransport
+
+    Test->>Fake: planDelivery("sample")
+    Fake->>Base: run real workflow
+    Base->>Fake: createTransport()
+    Fake-->>Base: new FakeTransport
+    Base->>Stub: deliver("sample")
+    Stub-->>Base: canned response
+    Base-->>Test: assert workflow behavior
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">विखुरलेल्या constructors च्या गुंत्यापासून ते पदानुक्रमांच्या एका स्वच्छ, विस्तारक्षम जोडीपर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">वास</span><h4>शाखा असलेली निर्मिती ओळखा</h4><p>तुम्हाला <code>new X()</code> ने भरलेली एक method किंवा concrete class निवडणारा <code>switch</code> सापडतो. प्रत्येक नवीन प्रकार तुम्हाला तो संपादित करण्यास भाग पाडतो.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">अ‍ॅब्स्ट्रॅक्ट</span><h4>Product interface परिभाषित करा</h4><p>कॉलरला प्रत्यक्षात आवश्यक असलेल्या क्रिया एका interface मध्ये काढा. हा workflow अवलंबून असलेला करार बनतो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">अंमलात आणा</span><h4>Concrete Products तयार करा</h4><p>प्रत्येक concrete प्रकार interface मागे हलवा. Truck, Ship, Plane प्रत्येक <code>deliver()</code> स्वतःच्या पद्धतीने अंमलात आणतात.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Creator</span><h4>abstract Creator घोषित करा</h4><p>अशी एक base class बनवा जी सामायिक workflow धरून ठेवते आणि product interface परत करणारी एक abstract <code>createProduct()</code> factory method घोषित करते.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">पुनर्जोडणी</span><h4>workflow मध्ये factory method कॉल करा</h4><p>workflow मधील थेट <code>new</code> कॉल्स <code>createProduct()</code> च्या कॉलने बदला. आता workflow फक्त अ‍ॅब्स्ट्रॅक्शनशी बोलतो.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Subclass</span><h4>Concrete Creators लिहा</h4><p>प्रत्येक प्रकारासाठी, जुळणारा Concrete Product परत करण्यासाठी <code>createProduct()</code> override करणारी एक subclass जोडा. प्रत्येक Product साठी एक Creator.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">निवडा</span><h4>काठावर Creator निवडा</h4><p>Configuration, DI, किंवा सुरुवातीला एक लहान lookup कोणता Concrete Creator वापरायचा हे निवडतो. निर्णय सीमेवर एकाच ठिकाणी राहतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">चालवा</span><h4>सामायिक workflow कॉल करा</h4><p>क्लायंट निवडलेल्या Creator वर workflow कॉल करतो. Polymorphism योग्य factory method कडे पाठवते आणि योग्य product बनवला जातो.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">विस्तार</span><h4>नवीन प्रकार सुरक्षितपणे जोडा</h4><p>एका नवीन गरजेचा अर्थ म्हणजे एक नवीन Product अधिक एक नवीन Creator. विद्यमान classes बदलासाठी बंद राहतात. बाकी काहीही बदलत नाही.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">चाचणी</span><h4>test doubles साठी override करा</h4><p>एक test subclass fake product परत करण्यासाठी factory method override करते, ज्यामुळे तुम्ही खऱ्या dependencies शिवाय workflow तपासू शकता.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">देखभाल</span><h4>पदानुक्रम समांतरपणे विकसित करा</h4><p>Creator आणि Product शेजारी शेजारी वाढतात. प्रत्येक जोडी वेगळी असते, त्यामुळे केंद्रीय पुनर्लेखनाशिवाय प्रणाली अनेक प्रकारांपर्यंत वाढते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Factory Method खऱ्या विविधतेने त्याचे मूल्य कमावते. तो खूप लवकर किंवा खूप व्यापकपणे वापरा आणि तुम्ही औपचारिकतेच्या रूपात किंमत मोजता.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪆 Subclass स्फोट</h4><p>जिथे कायम फक्त एकच product असतो तिथे तो वापरल्याने विनाकारण संपूर्ण Creator पदानुक्रम भाग पडतो. जर प्रकार कधीच बदलत नसेल, तर फक्त constructor थेट कॉल करा.</p></div>
+        <div class="card"><h4>🔀 Abstract Factory शी गोंधळ</h4><p>Factory Method inheritance द्वारे एक product बनवते. Abstract Factory composition द्वारे संबंधित products चे कुटुंब बनवते. या दोन्हीचे मिश्रण दोन्ही अस्पष्ट करते.</p></div>
+        <div class="card"><h4>🧨 factory मध्ये लॉजिक शिरणे</h4><p>factory method ने फक्त निर्मिती करून परत करावे. त्यात validation, side effects, किंवा branching टाकल्याने एक स्वच्छ hook एका लपलेल्या god-method मध्ये बदलतो.</p></div>
+        <div class="card"><h4>🕳️ concrete प्रकार गळणे</h4><p>जर workflow product ला परत एका concrete class मध्ये cast करत असेल, तर decoupling संपले. काटेकोरपणे product interface वर अवलंबून राहा.</p></div>
+        <div class="card"><h4>🥶 कठोर one-to-one बंधन</h4><p>प्रत्येक Creator साठी एक product hard-code करणे तेव्हा प्रतिबंधात्मक वाटू शकते जेव्हा Creator ला runtime वर अनेकांमधून निवडायचे असते. मग एक parameterized factory किंवा Strategy अधिक चांगले बसते.</p></div>
+        <div class="card"><h4>🌀 static "factory" ला चुकीचे लेबल</h4><p>switch असलेल्या static method ला "factory method" म्हणणे चुकीच्या अपेक्षा निर्माण करते. हा एक साधा factory idiom आहे आणि subclassing ने विस्तारक्षम नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Factory Method classes च्या एका अतिरिक्त थराने विस्तारक्षमता विकत घेते. तुम्हाला मिळणाऱ्या लवचिकतेचे तुम्ही जोडलेल्या अप्रत्यक्षतेशी वजन करा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>कॉलर्सना concrete classes पासून वेगळे करते, open-closed चा सन्मान करते, निर्मिती केंद्रित करते, आणि आजूबाजूचा workflow पुनर्वापरयोग्य व चाचणीयोग्य बनवते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>एक समांतर class पदानुक्रम आणि अधिक अप्रत्यक्षता आणते. जिथे फक्त एकच product प्रकार असतो किंवा प्रकार कधीच बदलत नाहीत तिथे अतिरेक ठरतो.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>जेव्हा एखादी class तिला तयार करावा लागणारा concrete प्रकार अंदाज करू शकत नाही, किंवा तुम्हाला subclasses ने तो निर्दिष्ट करावा असे वाटते, आणि तुम्हाला कालांतराने नवीन प्रकारांची अपेक्षा असते.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>जेव्हा product संच निश्चित आणि लहान असतो, किंवा एक साधा constructor किंवा साधी static factory आधीच स्पष्ट वाचते.</td></tr>
+            <tr><td><strong>जटिलता</strong></td><td>कमी ते मध्यम. एक interface अधिक एक Creator base class, नंतर प्रत्येक प्रकारासाठी एक Creator आणि Product जोडी.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Abstract Factory (products चे कुटुंब), Builder (टप्प्याटप्प्याने निर्मिती), Prototype (subclass ऐवजी clone), Template Method (hook ला कॉल करणारा workflow).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> Factory Method तेव्हा वापरा जेव्हा आजूबाजूचा अल्गोरिदम स्थिर असतो पण तो जो ऑब्जेक्ट तयार करतो तो subclass नुसार बदलावा. त्याऐवजी जर तुम्हाला संबंधित ऑब्जेक्ट्सची संपूर्ण कुटुंबे हवी असतील, तर Abstract Factory कडे जा. जर प्रकार कधीच बदलत नसेल, तर pattern पूर्णपणे वगळा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">production frameworks आणि प्रणालींमध्ये Factory Method दिसणारी तीन ठिकाणे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">☕</span><div><h3>1 · JDK collection iterators</h3><div class="role">Pattern: <code>iterator()</code> द्वारे virtual constructor</div></div></div>
+        <p class="muted">Java चे <code>Collection.iterator()</code> हे एक पाठ्यपुस्तकातील factory method आहे: प्रत्येक collection concrete iterator class उघड न करता स्वतःचा Iterator परत करते.</p>
+        <ul>
+          <li><code>Iterable</code> <code>Iterator</code> product परत करणारी factory method म्हणून <code>iterator()</code> घोषित करते.</li>
+          <li><code>ArrayList</code>, <code>LinkedList</code>, आणि <code>HashSet</code> प्रत्येक त्यांच्या रचनेनुसार जुळवलेला एक private concrete iterator परत करतात.</li>
+          <li>for-each loop आणि stream कोड फक्त <code>Iterator</code> वर अवलंबून असतात, त्यामुळे कोणतीही collection एकसमानपणे काम करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> एकच traversal API प्रत्येक collection प्रकारावर पसरतो, आणि नवीन collections क्लायंट loops न बदलता स्वतःचा iterator जोडतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖼️</span><div><h3>2 · Cross-platform UI toolkits</h3><div class="role">Pattern: समांतर Creator आणि Product पदानुक्रम</div></div></div>
+        <p class="muted">एका dialog framework ला प्रत्येक ऑपरेटिंग सिस्टमवर तोच interaction प्रवाह हवा असतो, तर प्रत्येकावर native controls render करायचे असतात.</p>
+        <ul>
+          <li>एक abstract <code>Dialog</code> Creator <code>render()</code> आणि एक abstract <code>createButton()</code> factory method परिभाषित करते.</li>
+          <li><code>WindowsDialog</code> एक <code>WindowsButton</code> परत करते, <code>WebDialog</code> एक <code>HtmlButton</code> परत करते, प्रत्येक platform साठी एक Creator.</li>
+          <li><code>render()</code> workflow सामायिक <code>Button</code> interface द्वारे button च्या click handler ला जोडतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> dialog लॉजिक एकदाच लिहिले जाते, तर प्रत्येक platform जुळणाऱ्या Creator आणि Product subclasses द्वारे native widgets जोडतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔌</span><div><h3>3 · Pluggable document parsers</h3><div class="role">Pattern: subclass concrete parser ठरवते</div></div></div>
+        <p class="muted">एक import सेवा अनेक फाइल फॉरमॅट घेते पण त्यांच्याभोवती एक स्थिर ingestion pipeline हवी असते.</p>
+        <ul>
+          <li>एक abstract <code>Importer</code> <code>createParser()</code> आणि एक concrete <code>import()</code> घोषित करते जो निकाल validate करून साठवते.</li>
+          <li><code>CsvImporter</code>, <code>JsonImporter</code>, आणि <code>XmlImporter</code> प्रत्येक त्यांच्या फॉरमॅटसाठी <code>createParser()</code> override करतात.</li>
+          <li>नवीन फॉरमॅट जोडणे म्हणजे एक नवीन Importer अधिक एक नवीन Parser, validation किंवा storage मध्ये कोणताही बदल न करता.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> ingestion pipeline स्थिर आणि सुव्यवस्थितपणे चाचणी केलेली राहते तर समर्थित फॉरमॅटची यादी पूर्णपणे विस्ताराने वाढते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Factory Method आधुनिक dependency injection च्या आधीचे आहे, पण मूळ कल्पना, concrete प्रकाराची निवड पुढे ढकलणे, ही नेहमीप्रमाणेच केंद्रस्थानी आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💉 DI containers ते शोषून घेतात</h4><p>Spring सारखे frameworks configuration द्वारे concrete प्रकार सोडवतात, हे Factory Method पुरवत असलेल्या त्याच decoupling चे एक सामान्यीकृत, container-चालित स्वरूप आहे.</p></div>
+        <div class="card"><h4>🧵 Functional factories</h4><p>first-class functions असलेल्या भाषांमध्ये, एक supplier किंवा lambda अनेकदा एका Creator subclass ची जागा घेते, कमी औपचारिकतेसह "निवड पुढे ढकला" ही भावना टिकवते.</p></div>
+        <div class="card"><h4>🧬 Generics करार अधिक तीक्ष्ण करतात</h4><p><code>&lt;T extends Product&gt;</code> परत करणाऱ्या typed factory methods compile-time सुरक्षा देतात जी 1994 च्या pattern कडे नव्हती.</p></div>
+        <div class="card"><h4>🔍 Reflection आणि registries</h4><p>Plugin प्रणाली Creators ना key ने register करतात आणि त्यांना runtime वर सोडवतात, Factory Method ला products च्या खुल्या संचांपर्यंत वाढवतात.</p></div>
+        <div class="card"><h4>🧪 चाचणीयोग्यता टिकते</h4><p>fake इंजेक्ट करण्यासाठी एक factory method override करणे हा एक workflow स्वतंत्रपणे तपासण्याच्या सर्वात सोप्या मार्गांपैकी एक राहतो.</p></div>
+        <div class="card"><h4>🏗️ अजूनही प्रथम शिकवले जाते</h4><p>तो creational patterns चा प्रवेशद्वार राहतो कारण तो एक कल्पना वेगळी करतो: जे बदलते (product) ते जे राहते (workflow) पासून वेगळे करा.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> जिथे एक container किंवा एक lambda जोडणी करते तिथेही, तुम्ही Factory Method चे तत्त्व लागू करत आहात - एका अ‍ॅब्स्ट्रॅक्शनवर अवलंबून राहा आणि concrete प्रकार दुसऱ्या कशाला तरी ठरवू द्या. ते एकदा शिका आणि तुम्हाला ते सर्वत्र दिसते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Factory Method creational patterns आणि एका behavioral चुलतभावंडामध्ये बसतो. हे त्याच्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../abstract-factory/"><span class="ico">🏭</span><h4>Abstract Factory</h4><p>संबंधित products ची संपूर्ण कुटुंबे तयार करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../builder/"><span class="ico">🧱</span><h4>Builder</h4><p>जटिल ऑब्जेक्ट्स टप्प्याटप्प्याने तयार करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>विद्यमान ऑब्जेक्ट्सचे clone करून नवीन ऑब्जेक्ट्स बनवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../template-method/"><span class="ico">📋</span><h4>Template Method</h4><p>override करण्याजोग्या hook ला कॉल करणारा workflow.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>Factory Method साठी एक दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decorator समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Decorator पॅटर्नचे सखोल, दृश्य मार्गदर्शक: एखाद्या ऑब्जेक्टला गुंडाळून त्याला रनटाइममध्ये जबाबदाऱ्या जोडणे, decorators एकावर एक रचणे, subclass स्फोटावर तो कसा मात करतो, Proxy आणि Inheritance पेक्षा तो कसा वेगळा आहे, sequence diagrams, 0 ते 100 प्रवाह, आणि केस स्टडीज." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>Decorator पॅटर्न - subclassing न करता गुंडाळून वर्तन जोडा</h1>
+      <p class="lede">Decorator तुम्हाला एखाद्या ऑब्जेक्टला <strong>रनटाइममध्ये</strong> नवीन जबाबदाऱ्या जोडू देतो, त्याच interface शेअर करणाऱ्या दुसऱ्या ऑब्जेक्टमध्ये त्याला गुंडाळून. कारण wrapper तो ज्याला गुंडाळतो तोच type अंमलात आणतो, म्हणून तुम्ही decorators कोणत्याही क्रमाने <strong>एकावर एक रचू</strong> शकता आणि प्रत्येक एक वर्तनाचा एक तुकडा जोडतो. <code>java.io</code> हे असेच एका कच्च्या stream ला buffered, compressed, data-typed stream मध्ये बदलते, प्रत्येक संयोजनासाठी एकही नवीन subclass न लिहिता.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">पूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">एकच interface</span>
+        <span class="pill">रनटाइम रचना</span>
+        <span class="pill">रचता येणारे wrappers</span>
+        <span class="pill">Open/Closed</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Decorator पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Decorator</strong> हा एक structural पॅटर्न आहे जो तुम्हाला एका स्वतंत्र ऑब्जेक्टला डायनॅमिकपणे जबाबदाऱ्या जोडू देतो. तुम्ही लक्ष्य ऑब्जेक्टला एका decorator ऑब्जेक्टमध्ये गुंडाळता जो <em>तोच interface अंमलात आणतो</em>, गुंडाळलेल्या ऑब्जेक्टकडे calls पुढे पाठवतो, आणि प्रत्येक पुढे पाठवलेल्या call च्या आधी, नंतर किंवा आजूबाजूला वर्तन जोडतो. wrapper आणि गुंडाळलेला दोघे एकच type शेअर करत असल्याने, client कोडला फरक कळत नाही आणि decorators थरांमध्ये रचता येतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> एकच interface</h4>
+          <p>Decorator तो ज्या ऑब्जेक्टला गुंडाळतो त्याचाच नेमका interface अंमलात आणतो, म्हणून जिथे base type अपेक्षित असतो तिथे तो थेट बदली म्हणून वापरता येतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎁</span> एका component ला गुंडाळतो</h4>
+          <p>तो एका गुंडाळलेल्या component चा reference धरून ठेवतो आणि त्याकडे delegate करतो, delegate केलेल्या call च्या आजूबाजूला स्वतःचे वर्तन जोडतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🥞</span> थरांमध्ये रचतो</h4>
+          <p>एक decorator दुसऱ्या decorator ला गुंडाळू शकतो, म्हणून जबाबदाऱ्या कांद्याच्या थरांप्रमाणे एकत्र येतात, प्रत्येक स्वतंत्रपणे जोडलेला.</p>
+        </div>
+      </div>
+
+      <h3>चार भूमिका</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>ती काय करते</th><th>Java I/O उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Component</strong></td><td>खरे ऑब्जेक्ट आणि decorators दोघेही अंमलात आणतात तो शेअर केलेला interface</td><td><code>InputStream</code></td></tr>
+            <tr><td><strong>Concrete Component</strong></td><td>खरे काम करणारा base ऑब्जेक्ट, ज्याला decorators गुंडाळतात</td><td><code>FileInputStream</code></td></tr>
+            <tr><td><strong>Base Decorator</strong></td><td>एका component चा reference धरतो आणि प्रत्येक call त्याकडे पुढे पाठवतो</td><td><code>FilterInputStream</code></td></tr>
+            <tr><td><strong>Concrete Decorator</strong></td><td>पुढे पाठवलेल्या call च्या आजूबाजूला वर्तन जोडतो</td><td><code>BufferedInputStream</code>, <code>GZIPInputStream</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Component interface कडे प्रोग्रॅम करतो, गुंडाळण्याबद्दल अनभिज्ञ</td><td><code>InputStream</code> मार्गे वाचणारा कोड</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>महत्त्वाचे मानसिक मॉडेल:</strong> Decorator म्हणजे "subclassing ऐवजी गुंडाळणे." Inheritance संपूर्ण class साठी वर्तन compile time ला निश्चित करते; एक decorator एका ऑब्जेक्टला रनटाइममध्ये वर्तन जोडतो, आणि कोणते wrappers लावायचे हे निवडून तुम्ही थर काढू किंवा जोडू शकता.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Decorator का अस्तित्वात आहे</h2>
+      <p class="muted">तो जी समस्या नष्ट करतो ती म्हणजे <strong>subclass स्फोट</strong>. जर तुम्ही inheritance ने प्रत्येक ऐच्छिक वैशिष्ट्याच्या प्रत्येक संयोजनाचे मॉडेल करण्याचा प्रयत्न केला, तर classes ची संख्या संयोजनात्मकपणे वाढते. Decorator प्रत्येक वैशिष्ट्याला एक लहान wrapper बनवतो जो तुम्ही रनटाइममध्ये मुक्तपणे मिसळता.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💥 subclass स्फोट नष्ट करतो</h4><p>Inheritance मार्गे तीन वैशिष्ट्ये म्हणजे प्रत्येक संयोजनासाठी एक class: Buffered, Compressed, BufferedCompressed, आणि असेच. decorators सोबत तुम्ही तीन wrappers लिहिता आणि त्यांना एकत्र करता, म्हणून N वैशिष्ट्यांना N classes लागतात, 2 च्या घात N नव्हे.</p></div>
+        <div class="card"><h4>🔓 Open/Closed पाळतो</h4><p>तुम्ही base class किंवा विद्यमान decorators ला हात न लावता क्षमता जोडता. नवीन वर्तन नवीन wrapper म्हणून येते, म्हणून चाचणी केलेला कोड बदलासाठी बंद पण विस्तारासाठी खुला राहतो.</p></div>
+        <div class="card"><h4>🎚️ प्रति-ऑब्जेक्ट, रनटाइममध्ये</h4><p>एकाच class च्या दोन instances कडे वेगवेगळे decorators असू शकतात. compile time ला नव्हे, तर configuration, user input किंवा request context नुसार तुम्ही stack ठरवता.</p></div>
+        <div class="card"><h4>🎯 एकच जबाबदारी</h4><p>प्रत्येक decorator एकच गोष्ट करतो: buffer, compress, encrypt, log. प्रत्येक ऐच्छिक चिंता सांभाळणाऱ्या एका class पेक्षा लहान, केंद्रित classes चाचणी करणे आणि समजणे सोपे असते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Decorator चे स्पष्टीकरण</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ती लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p><strong>कपड्यांच्या थरांचा</strong> विचार करा. माणूस स्वेटर, मग कोट, मग स्कार्फ घातला तरी माणूसच राहतो. प्रत्येक थर माणूस काय आहे ते न बदलता उब जोडतो, आणि तुम्ही गरजेनुसार थर जोडता किंवा काढता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>ते म्हणजे <strong><code>new BufferedInputStream(new FileInputStream(f))</code></strong>. प्रत्येक constructor तोच interface घेतो जो तो परत करतो, म्हणून गुंडाळणे म्हणजे फक्त घरटी करणे, आणि प्रत्येक थर अजूनही <code>InputStream</code> ला प्रतिसाद देतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>मंजुरीच्या शिक्क्यांमधून जाणाऱ्या दस्तऐवजासारखे</strong>. दस्तऐवज अपरिवर्तित असतो, पण प्रत्येक टेबल त्याला शिक्का, कव्हर नोट किंवा redaction ने गुंडाळते. पुढे अजूनही एक "दस्तऐवज" हाताळला जातो, आता त्यावर अतिरिक्त हाताळणी लागू केलेली.</p></div>
+        <div class="card"><h4><span class="ico">☕</span> रोजच्या जीवनातील आवृत्ती</h4><p><strong>कॉफीची ऑर्डर</strong>. तुम्ही espresso ने सुरुवात करता, मग दूध जोडता, मग caramel, मग whipped cream. प्रत्येक add-on पेयाला गुंडाळतो आणि किंमत व वर्णनात भर घालतो, पण ते अजूनही ग्राहकाला देता येणारे पेयच असते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे काम करते</h2>
+      <p class="muted">एक decorator त्याच interface च्या <strong>component</strong> चा reference धरतो, मुख्य call त्याकडे delegate करतो, आणि त्या delegation च्या आजूबाजूला वर्तन जोडतो. रचना कार्य करते कारण एका decorator चे गुंडाळलेले field स्वतः दुसरा decorator असू शकते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔁</span> Delegate करा मग जोडा</h4>
+          <p>प्रत्येक method सहसा <code>wrapped.method()</code> ला call करतो आणि आधी किंवा नंतर काम जोडतो. गुंडाळलेला reference तोच type असतो, म्हणून call साखळी खालपर्यंत एकसमान असते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🥞</span> क्रम महत्त्वाचा</h4>
+          <p>compress-मग-buffer गुंडाळणे हे buffer-मग-compress पेक्षा वेगळे वागते. सर्वात बाहेरचा decorator त्याचे "आधीचे" काम प्रथम आणि "नंतरचे" काम शेवटी चालवतो, stack उलगडल्यासारखे.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">रचना - decorators आणि concrete component एकच interface शेअर करतात</div>
+        <pre class="mermaid">
+classDiagram
+    class DataSource {
+        <<interface>>
+        +read() String
+        +write(data) void
+    }
+    class FileDataSource {
+        +read() String
+        +write(data) void
+    }
+    class DataSourceDecorator {
+        <<abstract>>
+        #wrappee DataSource
+        +read() String
+        +write(data) void
+    }
+    class EncryptionDecorator {
+        +read() String
+        +write(data) void
+    }
+    class CompressionDecorator {
+        +read() String
+        +write(data) void
+    }
+    DataSource <|.. FileDataSource
+    DataSource <|.. DataSourceDecorator
+    DataSourceDecorator <|-- EncryptionDecorator
+    DataSourceDecorator <|-- CompressionDecorator
+    DataSourceDecorator o--> DataSource : wraps
+        </pre>
+      </div>
+
+      <h3>Java मधील एक वास्तववादी उदाहरण</h3>
+      <pre><code>// Component: the shared interface
+interface DataSource {
+    void writeData(String data);
+    String readData();
+}
+
+// Concrete Component: does the real work
+class FileDataSource implements DataSource {
+    private final String path;
+    FileDataSource(String path) { this.path = path; }
+    public void writeData(String data) { /* write raw bytes to file */ }
+    public String readData()          { /* read raw bytes from file */ return "..."; }
+}
+
+// Base Decorator: implements the interface, forwards to the wrappee
+abstract class DataSourceDecorator implements DataSource {
+    protected final DataSource wrappee;
+    DataSourceDecorator(DataSource source) { this.wrappee = source; }
+    public void writeData(String data) { wrappee.writeData(data); }
+    public String readData()           { return wrappee.readData(); }
+}
+
+// Concrete Decorator: adds behavior around the forwarded call
+class CompressionDecorator extends DataSourceDecorator {
+    CompressionDecorator(DataSource source) { super(source); }
+    public void writeData(String data) { wrappee.writeData(compress(data)); }
+    public String readData()           { return decompress(wrappee.readData()); }
+    private String compress(String s)   { /* deflate */ return s; }
+    private String decompress(String s) { /* inflate */ return s; }
+}
+
+class EncryptionDecorator extends DataSourceDecorator {
+    EncryptionDecorator(DataSource source) { super(source); }
+    public void writeData(String data) { wrappee.writeData(encrypt(data)); }
+    public String readData()           { return decrypt(wrappee.readData()); }
+    private String encrypt(String s) { /* cipher */ return s; }
+    private String decrypt(String s) { /* decipher */ return s; }
+}
+
+// Client: composes the stack at runtime, then uses the base interface
+DataSource source = new EncryptionDecorator(
+                        new CompressionDecorator(
+                            new FileDataSource("out.dat")));
+source.writeData("salary report");   // compresses, then encrypts, then writes
+String plain = source.readData();     // reads, decrypts, then decompresses</code></pre>
+      <p class="muted">Client ला फक्त <code>DataSource</code> दिसतो. लिहिणे stack ला बाहेरून आत चालवते (encrypt compress ला गुंडाळते, compress file ला गुंडाळते); वाचणे ते आतून बाहेर उलगडते. एखादी नवीन चिंता, समजा <code>LoggingDecorator</code>, कोणतीही विद्यमान class न बदलता जोडा.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एकच decorator एक call पुढे पाठवतो, दोन decorators मधून रचलेले write, आणि प्रमाणित Java I/O stream read.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - एक decorator: पुढे पाठवलेल्या call च्या आजूबाजूला वर्तन जोडा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant D as 🎁 Decorator
+    participant O as 📦 Concrete component
+
+    C->>D: writeData(data)
+    Note over D: pre-processing (compress)
+    D->>O: writeData(transformed)
+    O-->>D: done
+    Note over D: post-processing (if any)
+    D-->>C: done
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - रचलेले: encryption compression ला गुंडाळते, compression file ला गुंडाळते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant E as 🔐 Encryption
+    participant Z as 🗜️ Compression
+    participant F as 📄 FileDataSource
+
+    C->>E: writeData(text)
+    E->>E: encrypt(text)
+    E->>Z: writeData(cipher)
+    Z->>Z: compress(cipher)
+    Z->>F: writeData(bytes)
+    F-->>Z: written
+    Z-->>E: ok
+    E-->>C: ok
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Java I/O: buffered gzip stream मधून वाचणे</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant B as 🧵 BufferedInputStream
+    participant G as 🗜️ GZIPInputStream
+    participant F as 📄 FileInputStream
+
+    C->>B: read()
+    alt buffer empty
+        B->>G: read(buf)
+        G->>F: read(compressed)
+        F-->>G: raw bytes
+        G->>G: inflate bytes
+        G-->>B: decompressed bytes
+    else buffer has data
+        Note over B: serve from buffer, no downstream call
+    end
+    B-->>C: next byte
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 ते 100 प्रवाह</h2>
+      <p class="muted">interface व्याख्या करण्यापासून ते production मध्ये रचलेली साखळी चालवण्यापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Interface</span><h4>Component व्याख्या करा</h4><p>खरे ऑब्जेक्ट आणि प्रत्येक decorator दोघेही अंमलात आणतील तो शेअर केलेला interface घोषित करा, उदाहरणार्थ read आणि write सह <code>DataSource</code>.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Base</span><h4>Concrete Component बांधा</h4><p>खरे काम करणारी class लिहा, जसे <code>FileDataSource</code>. हेच केंद्रात बसते आणि गुंडाळले जाते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Wrapper</span><h4>Base Decorator तयार करा</h4><p>interface अंमलात आणणारा, त्याच type चे <code>wrappee</code> field धरणारा, आणि प्रत्येक call अपरिवर्तित त्याकडे पुढे पाठवणारा एक abstract decorator बनवा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">वर्तन</span><h4>Concrete Decorator जोडा</h4><p>base decorator ला subclass करा आणि delegate करण्यापूर्वी किंवा नंतर काम जोडण्यासाठी एका method ला override करा, जसे write वर compress करणे आणि read वर decompress करणे.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">वर्तन</span><h4>अधिक decorators जोडा</h4><p>इतर चिंतांसाठी स्वतंत्र wrappers लिहा: encryption, logging, buffering. प्रत्येक लहान राहतो आणि इतरांबद्दल काहीही जाणत नाही.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">रचा</span><h4>रनटाइममध्ये गुंडाळा</h4><p>Client stack बांधण्यासाठी constructors घरटी करतो, उदाहरणार्थ file source भोवती compression, त्या भोवती encryption, क्रम जाणीवपूर्वक निवडून.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Call</span><h4>interface मार्गे invoke करा</h4><p>Client सर्वात बाहेरच्या ऑब्जेक्टला फक्त <code>DataSource</code> type वापरून call करतो, खाली किती थर आहेत याबद्दल अनभिज्ञ.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">खाली</span><h4>stack खाली delegate करा</h4><p>प्रत्येक decorator त्याचे "आधीचे" काम लागू करतो आणि त्याच्या wrappee कडे पुढे पाठवतो, म्हणून call बाहेरून आत प्रवास करतो जोपर्यंत तो concrete component पर्यंत पोहोचत नाही.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">वर</span><h4>निकाल उलगडा</h4><p>Concrete component परत येतो, आणि प्रत्येक decorator परत वर येताना त्याचे "नंतरचे" काम लागू करतो, गुंडाळण्याच्या उलट क्रमाने.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">विस्तार</span><h4>संपादन न करता वैशिष्ट्ये जोडा</h4><p>एक नवीन आवश्यकता stack मध्ये घातलेला नवीन decorator बनते. विद्यमान classes कधीही बदलल्या जात नाहीत, Open/Closed पाळत.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>प्रति context stacks configure करा</h4><p>वेगवेगळ्या requests किंवा configs त्याच बांधकाम ब्लॉक्समधून वेगवेगळ्या साखळ्या जुळवतात, म्हणून नवीन classes शिवाय प्रति ऑब्जेक्ट वर्तन बदलते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Decorator शक्तिशाली आहे पण अतिवापर करणे सोपे आहे. हे नेहमीचे सापळे आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧅 खूप लहान थर</h4><p>दहा wrappers खोल असलेली stack वाचणे आणि debug करणे कठीण असते. stack trace पुढे पाठवणाऱ्या calls ची भिंत बनते. संयोजने खरोखर बदलतात तेव्हाच Decorator कडे वळा, प्रत्येक पर्यायासाठी नव्हे.</p></div>
+        <div class="card"><h4>🔀 क्रम-संवेदनशीलतेकडे दुर्लक्ष</h4><p>compress-मग-encrypt आणि encrypt-मग-compress वेगवेगळे निकाल देतात, आणि एखादे कदाचित चालणारही नाही. गुंडाळण्याचा क्रम अपघात नव्हे तर करारचा भाग माना.</p></div>
+        <div class="card"><h4>🪪 concrete type गळणे</h4><p>जर clients एका decorator च्या अतिरिक्त method पर्यंत पोहोचण्यासाठी downcast करतात, तर substitutability तुटते. Decorators ने शेअर केलेल्या interface मार्गे वर्तन जोडावे, clients अवलंबून असलेल्या रुंद interface मार्गे नव्हे.</p></div>
+        <div class="card"><h4>🧬 फुगीर base interface</h4><p>अनेक methods असलेला component interface प्रत्येक decorator ला त्या सर्वांना पुढे पाठवण्यास भाग पाडतो. interface लहान ठेवा म्हणजे wrappers पातळ राहतात, नाहीतर delegation boilerplate ताबा घेते.</p></div>
+        <div class="card"><h4>🆔 identity आणि equals सापळे</h4><p>गुंडाळलेला ऑब्जेक्ट त्याच्या wrapper ला <code>==</code> नसतो, आणि <code>equals</code> किंवा hashing थरांमध्ये अनपेक्षितपणे वागू शकते. decorator साखळीतून ऑब्जेक्ट identity वर अवलंबून राहू नका.</p></div>
+        <div class="card"><h4>🎭 Strategy बसते तिथे तो वापरणे</h4><p>जर तुम्ही अनेक add-ons थरणे नव्हे तर एक algorithm बदलत असाल, तर Strategy सोपा आहे. जबाबदाऱ्या खरोखर एकावर एक रचल्या जातात तेव्हाच Decorator चमकतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Decorator सपाट class श्रेणीबद्धतेच्या बदल्यात रनटाइम लवचिकता आणि थोडी indirection देतो. हे ताळेबंद आहे.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>प्रति ऑब्जेक्ट रनटाइममध्ये वर्तन जोडतो, मुक्तपणे रचतो, subclass स्फोट टाळतो, प्रत्येक चिंता लहान class मध्ये ठेवतो, आणि Open/Closed पाळतो.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अनेक लहान ऑब्जेक्ट आणि खोल stacks वाचनीयता आणि debugging ला त्रास देतात; क्रम संवेदनशीलता हा एक लपलेला करार आहे; interface सोबत पुढे पाठवण्याचे boilerplate वाढते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>जबाबदाऱ्या ऐच्छिक आणि एकत्र करता येण्यासारख्या असतात, तुम्हाला त्या रनटाइममध्ये प्रति ऑब्जेक्ट जोडाव्या किंवा काढाव्या लागतात, किंवा inheritance संयोजनात्मक class स्फोट निर्माण करेल.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>तुम्ही एकच algorithm बदलत असाल (Strategy वापरा), एका ऑब्जेक्टचा access नियंत्रित करत असाल (Proxy वापरा), किंवा वैशिष्ट्यांचा संच निश्चित व लहान असेल (साधे inheritance ठीक आहे).</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>प्रति decorator कमी, पण stack खोलीसह एकूण मानसिक भार वाढतो. एक शेअर केलेला interface आणि शिस्तबद्ध delegation आवश्यक.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Proxy (तोच interface, वर्तन नव्हे access नियंत्रित करतो), Composite (तोच-interface ऑब्जेक्टचे झाड), Adapter (interface बदलतो), Strategy (algorithm बदलतो).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर तुम्ही स्वतःला वैशिष्ट्यांच्या संयोजनांच्या नावाच्या classes तयार करताना पकडता (BufferedCompressedEncrypted...), तर थांबा आणि Decorator कडे वळा. जर तुम्हाला एका वेळी फक्त एकच पर्याय लागत असेल, तर तुम्हाला बहुधा त्याची अजिबात गरज नाही.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तुम्ही बहुधा आधीच वापरत असलेल्या कोडमध्ये Decorator पॅटर्न दिसतो अशी तीन ठिकाणे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📄</span><div><h3>1 · Java I/O streams</h3><div class="role">पॅटर्न: प्रमाणित Decorator श्रेणीबद्धता</div></div></div>
+        <p class="muted"><code>java.io</code> package हे पाठ्यपुस्तकातील उदाहरण आहे. <code>InputStream</code> हा component, <code>FileInputStream</code> हा concrete component, <code>FilterInputStream</code> हा base decorator, आणि उर्वरित concrete decorators आहेत.</p>
+        <ul>
+          <li><code>new BufferedInputStream(new GZIPInputStream(new FileInputStream(f)))</code> कच्च्या file reads वर decompression आणि त्यावर buffering थरते.</li>
+          <li>प्रत्येक wrapper अजूनही एक <code>InputStream</code> आहे, म्हणून stream वाचणारा कोणताही कोड कोणत्याही संयोजनासह काम करतो.</li>
+          <li>त्याशिवाय, JDK ला प्रत्येक वैशिष्ट्य संयोजनासाठी एक class लागेल, जो नेमका तोच स्फोट आहे जो Decorator प्रतिबंधित करतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> मूठभर stream classes शेकडो उपयुक्त pipelines मध्ये एकत्र येतात, सर्व एका <code>InputStream</code> interface मार्गे.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌐</span><div><h3>2 · HTTP middleware आणि filters</h3><div class="role">पॅटर्न: request handlers गुंडाळणे</div></div></div>
+        <p class="muted">Web frameworks एका request handler ला थरांमध्ये गुंडाळतात: logging, authentication, compression, caching. प्रत्येक थर handler interface शेअर करतो आणि पुढच्याकडे पुढे पाठवतो.</p>
+        <ul>
+          <li>एक auth decorator token तपासतो, मग वैध असेल तरच गुंडाळलेल्या handler कडे delegate करतो.</li>
+          <li>एक gzip decorator प्रथम delegate करतो, मग आतील handler ने तयार केलेला response compress करतो.</li>
+          <li>टीम्स मुख्य handler ला हात न लावता, प्रति route किंवा प्रति app, middleware पुन्हा क्रमबद्ध करतात किंवा जोडतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> प्रत्येक handler मधील गुंतागुंतीच्या कोडऐवजी cross-cutting चिंता एकत्र करता येणारे, पुन्हा क्रमबद्ध करता येणारे wrappers बनतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">☕</span><div><h3>3 · UI components आणि notifiers</h3><div class="role">पॅटर्न: ऐच्छिक दृश्य किंवा channel add-ons थरणे</div></div></div>
+        <p class="muted">एक UI toolkit एका widget ला borders, scrollbars, आणि shadows ने गुंडाळते; एक notifier एका base sender ला Slack, SMS, आणि email channels ने गुंडाळतो, सर्व एका interface मार्गे.</p>
+        <ul>
+          <li>एक <code>ScrollDecorator</code> कोणत्याही component ला गुंडाळतो आणि तो जे रेंडर करतो त्याभोवती scrollbars रंगवतो.</li>
+          <li>एक <code>SlackDecorator</code> Slack ला पाठवतो, मग delegate करतो म्हणजे गुंडाळलेला notifier देखील चालतो.</li>
+          <li>Users रनटाइममध्ये configuration मधून कोणत्या सजावटी किंवा channels रचायचे ते निवडतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एक base ऑब्जेक्ट आणि काही decorators users मागणी करतात ते प्रत्येक संयोजन डायनॅमिकपणे निवडून कव्हर करतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Decorator संग्रहालयातील वस्तूपासून खूप दूर आहे. तो आधुनिक stacks मध्ये middleware, aspect-oriented चिंता, आणि language वैशिष्ट्यांचा पाया आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧵 Middleware pipelines</h4><p>Express, ASP.NET, gRPC interceptors, आणि servlet filters हे सर्व Decorator आहेत: प्रत्येक थर पुढच्या handler ला गुंडाळतो आणि call च्या आजूबाजूला एक चिंता जोडतो.</p></div>
+        <div class="card"><h4>🎀 Language decorators</h4><p>Python आणि TypeScript decorators आणि proxies सह Java annotations तीच कल्पना लागू करतात, व्याख्या वेळी एका function किंवा class ला जोडलेल्या वर्तनाने गुंडाळून.</p></div>
+        <div class="card"><h4>🧷 Functional wrapping</h4><p>एक function घेऊन गुंडाळलेले परत करणारी higher-order functions, जसे memoize किंवा retry, classes शिवाय व्यक्त केलेले Decorator आहेत.</p></div>
+        <div class="card"><h4>🔭 Observability</h4><p>Tracing आणि metrics libraries clients आणि repositories ला तोच-interface decorators मध्ये गुंडाळतात म्हणजे instrumentation business logic बाहेर राहते.</p></div>
+        <div class="card"><h4>🛡️ Resilience layers</h4><p>Retry, circuit breaker, rate limit, आणि cache decorators एका service call भोवती रचतात, प्रत्येक प्रति dependency स्वतंत्रपणे toggle केलेला.</p></div>
+        <div class="card"><h4>🧪 Test doubles</h4><p>Spies आणि recording wrappers calls पाहण्यासाठी एका खऱ्या ऑब्जेक्टला सजवतात तरीही delegate करत राहतात, चाचण्या production वर्तनाजवळ ठेवत.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Decorator हे असे आहे की तुम्ही एका ऑब्जेक्टला रनटाइममध्ये त्याला पुन्हा न लिहिता किंवा तुमची class श्रेणीबद्धता न फुगवता ऐच्छिक, रचता येणारे वर्तन जोडता. जेव्हाही चिंतांना मुक्तपणे एकत्र यायचे असते, तेव्हा गुंडाळणे subclassing पेक्षा सरस असते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Decorator तो ज्यांच्याशी सहज गोंधळतो त्या structural आणि behavioral patterns मध्ये बसतो. हे त्याच्यासोबत नैसर्गिकपणे जोडतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>तोच-interface ऑब्जेक्ट, पण साखळीऐवजी झाडाच्या रूपात मांडलेले.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../proxy/"><span class="ico">🛂</span><h4>Proxy</h4><p>तोच interface देखील, पण वर्तन जोडण्याऐवजी access नियंत्रित करतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../adapter/"><span class="ico">🔌</span><h4>Adapter</h4><p>एका ऑब्जेक्टला त्याचा interface बदलण्यासाठी गुंडाळतो, विस्तारण्यासाठी नव्हे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎯</span><h4>Strategy</h4><p>अनेक add-ons रचण्याऐवजी एक algorithm बदलतो.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Decorator चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

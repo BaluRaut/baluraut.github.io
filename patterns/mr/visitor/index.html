@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visitor पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Visitor डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शन: element क्लासेस न बदलता ऑब्जेक्ट स्ट्रक्चरमध्ये नवीन ऑपरेशन्स जोडणे, double dispatch, accept यंत्रणा, फायदे-तोटे, AST आणि document-tree उदाहरणे, sequence diagrams, आणि 0-100 प्रवाह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">फायदे-तोटे</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral पॅटर्न</span>
+      <h1>Visitor पॅटर्न - ऑपरेशन्स जी तुमच्या ऑब्जेक्ट्सकडे प्रवास करतात</h1>
+      <p class="lede">तुमच्याकडे ऑब्जेक्ट्सचे एक स्थिर झाड आहे (एक AST, एक document, एक shape hierarchy) आणि त्याच्यासोबत <em>करण्याच्या</em> गोष्टींची यादी सतत वाढत आहे. Visitor तुम्हाला <strong>element क्लासेसना स्पर्श न करता नवीन ऑपरेशन्स जोडू</strong> देते. ते प्रत्येक ऑपरेशन स्वतःच्या visitor ऑब्जेक्टमध्ये हलवते आणि <strong>double dispatch</strong> वापरते जेणेकरून योग्य element प्रकारासाठी योग्य कोड चालतो.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Double dispatch</span>
+        <span class="pill">accept / visit</span>
+        <span class="pill">Object structure</span>
+        <span class="pill">नवीन ऑपरेशन्ससाठी खुले</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Visitor पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Visitor</strong> एका ऑब्जेक्ट स्ट्रक्चरच्या elements वर करावयाच्या एका ऑपरेशनचे प्रतिनिधित्व करते. ज्या elements वर ते चालते त्यांच्या क्लासेस न बदलता तुम्हाला नवीन ऑपरेशन परिभाषित करण्याची मुभा देते. प्रत्येक node प्रकारावर एक method विखुरण्याऐवजी, तुम्ही ते ऑपरेशन एका <em>visitor</em> क्लासमध्ये एकत्र करता आणि प्रत्येक element ला <code>accept</code> कॉलद्वारे स्वतःला visitor कडे परत सोपवू देता.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Element</h4>
+          <p>स्ट्रक्चरमधील प्रत्येक node प्रकार एक method उघड करतो, <code>accept(visitor)</code>, ज्याचे एकमेव काम म्हणजे visitor वरील जुळणारी <code>visit</code> method परत बोलावणे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧳</span> Visitor</h4>
+          <p>प्रत्येक concrete element प्रकारासाठी एक <code>visit</code> method असलेला interface. प्रत्येक concrete visitor म्हणजे एक संपूर्ण ऑपरेशन: एक printer, एक type checker, एक evaluator.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌳</span> Object structure</h4>
+          <p>elements चा संग्रह किंवा झाड जे त्याच्या nodes ची यादी करू शकते आणि प्रत्येकाला एक visitor देऊ शकते, बहुधा एका recursive traversal द्वारे.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>ठराविक उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Visitor interface</strong></td><td>प्रत्येक concrete element साठी एक <code>visit</code> overload घोषित करते</td><td><code>visitNumber</code>, <code>visitAdd</code>, <code>visitMul</code></td></tr>
+            <tr><td><strong>Concrete visitor</strong></td><td>सर्व element प्रकारांवर लागू केलेले एक ऑपरेशन</td><td>Printer, Evaluator, TypeChecker</td></tr>
+            <tr><td><strong>Element interface</strong></td><td><code>accept(visitor)</code> घोषित करते</td><td><code>Expr.accept(v)</code></td></tr>
+            <tr><td><strong>Concrete element</strong></td><td>योग्य <code>visit</code> बोलावून <code>accept</code> अंमलात आणते</td><td><code>Add</code>, <code>Number</code>, <code>Variable</code></td></tr>
+            <tr><td><strong>Object structure</strong></td><td>elements धरून ठेवते आणि traversal चालवते</td><td>AST root, document tree</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Visitor प्रत्येक node वर राहणारी method एका स्वतंत्र ऑब्जेक्टमध्ये बदलते. कोणती <code>visit</code> चालवायची हे element च निवडतो (तो त्याचा प्रकार बोलत असतो), पण वर्तन पूर्णपणे visitor मध्ये राहते. प्रत्येक क्लास संपादित करून नव्हे तर एक नवीन visitor लिहून ऑपरेशन जोडा.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Visitor पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">जेव्हा एखादी class hierarchy स्थिर असते पण तिच्यावरील ऑपरेशन्स सतत वाढत राहतात, तेव्हा प्रत्येक ऑपरेशन प्रत्येक node वर एक method म्हणून ठेवल्याने क्लासेस फुगतात आणि प्रत्येक नवीन फीचरसाठी संपूर्ण hierarchy मध्ये बदल करावे लागतात. Visitor अक्ष उलटवते: ते एक ऑपरेशन एका ठिकाणी गटबद्ध करते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>➕ नवीन ऑपरेशन्ससाठी खुले</h4><p>एक नवीन visitor क्लास लिहून serializer, validator किंवा optimizer जोडा. element hierarchy ला कधीही स्पर्श होत नाही, त्यामुळे node प्रकारांचा स्थिर संच बदलांपासून बंद राहतो.</p></div>
+        <div class="card"><h4>📚 ऑपरेशननुसार cohesion</h4><p>एक AST सुरेखपणे छापण्याचे सर्व logic एका PrintVisitor मध्ये राहते, Add, Sub, Number आणि Call वर विखुरलेले नसते. संबंधित कोड एकत्र बसतो, जे वाचायला आणि तपासायला सोपे असते.</p></div>
+        <div class="card"><h4>🎯 Double dispatch, type checks नव्हे</h4><p>योग्य कोड element प्रकार आणि visitor प्रकार दोन्हींवर आधारित चालतो, लांब <code>instanceof</code> किंवा <code>switch (node.kind)</code> साखळ्यांशिवाय ज्या compiler पूर्णपणे तपासू शकत नाही.</p></div>
+        <div class="card"><h4>🧮 स्ट्रक्चरभर जमा करा</h4><p>एक visitor झाडावरून फिरताना state सोबत घेऊन जातो, त्यामुळे तो एका बिलाची बेरीज करू शकतो, free variables गोळा करू शकतो किंवा एकाच traversal मध्ये symbol table बनवू शकतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Visitor समजावून</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एका <strong>पर्यायी शिक्षकाचा विचार करा जो प्रत्येक वर्गात जातो</strong>. प्रत्येक खोली (element) आपले दार उघडते आणि म्हणते "आत या" (accept); शिक्षक प्रत्येक इयत्तेनुसार तोच धडा जुळवून देतो. नवीन धड्यासाठी नवीन शिक्षक पाठवा; वर्ग कधीच बदलत नाहीत.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>ही एक <strong>बाहेर काढलेली method आहे दोन-टप्प्यांच्या dispatch सह</strong>. node <code>visitor.visitAdd(this)</code> बोलावतो, त्यामुळे node प्रकार आणि ऑपरेशन प्रकार दोन्ही कोड निवडतात. <code>ToJsonVisitor</code> जोडायला node क्लासेसमध्ये शून्य बदल लागतात.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>विभागांचा दौरा करणाऱ्या <strong>compliance auditor सारखे</strong>. प्रत्येक विभाग आपली नोंदी सादर करतो (accept); auditor सर्वत्र एकच checklist लागू करतो. पुढच्या तिमाहीत एक वेगळा auditor त्याच विभागांवर वेगळी checklist चालवतो.</p></div>
+        <div class="card"><h4><span class="ico">🏨</span> रोजच्या जीवनातील</h4><p>एक <strong>हॉटेल housekeeping गाडी</strong> जी प्रत्येक खोली प्रकाराजवळ थांबते. एक standard खोली आणि एक suite दोन्ही गाडीला आत घेतात आणि त्यांना शोभेल अशी सेवा मिळवतात. खोल्या पुन्हा न बांधता गाडी बदला (साफसफाईकडून पुरवठ्याकडे).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे कार्य करते</h2>
+      <p class="muted">युक्ती म्हणजे <strong>double dispatch</strong>. बहुतेक भाषांमध्ये एकच virtual call एका प्रकारावर (receiver) dispatch करतो. Visitor दोन virtual calls साखळीत जोडते जेणेकरून चालणारी method element प्रकार आणि visitor प्रकार <em>दोन्हींवर</em> अवलंबून असते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">1️⃣</span> पहिला dispatch (element)</h4>
+          <p>तुम्ही <code>element.accept(visitor)</code> बोलावता. Virtual dispatch concrete element ची <code>accept</code> निवडते, त्यामुळे त्या method मध्ये node चा runtime प्रकार आता ज्ञात असतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">2️⃣</span> दुसरा dispatch (visitor)</h4>
+          <p><code>accept</code> च्या आत, element <code>visitor.visitAdd(this)</code> बोलावतो. Overload resolution आणि virtual dispatch आता त्या नेमक्या element आणि त्या नेमक्या visitor साठी कोड निवडतात.</p>
+        </div>
+      </div>
+
+      <h3>सहभागी घटक आणि त्यांचे संबंध</h3>
+      <div class="diagram">
+        <div class="cap">स्ट्रक्चर - elements एक visitor स्वीकारतात, visitor कडे प्रत्येक element साठी एक method असते</div>
+        <pre class="mermaid">
+classDiagram
+    class Expr {
+        &lt;&lt;interface&gt;&gt;
+        +accept(v Visitor) R
+    }
+    class Number {
+        +value double
+        +accept(v Visitor) R
+    }
+    class Add {
+        +left Expr
+        +right Expr
+        +accept(v Visitor) R
+    }
+    class Visitor {
+        &lt;&lt;interface&gt;&gt;
+        +visitNumber(n Number) R
+        +visitAdd(a Add) R
+    }
+    class EvalVisitor {
+        +visitNumber(n Number) R
+        +visitAdd(a Add) R
+    }
+    class PrintVisitor {
+        +visitNumber(n Number) R
+        +visitAdd(a Add) R
+    }
+    Expr <|.. Number
+    Expr <|.. Add
+    Visitor <|.. EvalVisitor
+    Visitor <|.. PrintVisitor
+    Number ..> Visitor : accept calls visitNumber
+    Add ..> Visitor : accept calls visitAdd
+        </pre>
+      </div>
+
+      <h3>Java मधील एक वास्तववादी AST visitor</h3>
+      <pre><code>// Element hierarchy: a tiny expression AST
+interface Expr {
+    &lt;R&gt; R accept(Visitor&lt;R&gt; v);
+}
+
+record Number(double value) implements Expr {
+    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitNumber(this); }
+}
+
+record Add(Expr left, Expr right) implements Expr {
+    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitAdd(this); }
+}
+
+record Mul(Expr left, Expr right) implements Expr {
+    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitMul(this); }
+}
+
+// Visitor interface: one method per concrete element
+interface Visitor&lt;R&gt; {
+    R visitNumber(Number n);
+    R visitAdd(Add a);
+    R visitMul(Mul m);
+}
+
+// One whole operation = one visitor. Evaluate the tree to a double.
+class EvalVisitor implements Visitor&lt;Double&gt; {
+    public Double visitNumber(Number n) { return n.value(); }
+    public Double visitAdd(Add a) {
+        return a.left().accept(this) + a.right().accept(this);
+    }
+    public Double visitMul(Mul m) {
+        return m.left().accept(this) * m.right().accept(this);
+    }
+}
+
+// A second operation added with ZERO changes to Expr classes.
+class PrintVisitor implements Visitor&lt;String&gt; {
+    public String visitNumber(Number n) { return String.valueOf(n.value()); }
+    public String visitAdd(Add a) {
+        return "(" + a.left().accept(this) + " + " + a.right().accept(this) + ")";
+    }
+    public String visitMul(Mul m) {
+        return "(" + m.left().accept(this) + " * " + m.right().accept(this) + ")";
+    }
+}
+
+// Usage: (1 + 2) * 3
+Expr ast = new Mul(new Add(new Number(1), new Number(2)), new Number(3));
+double result = ast.accept(new EvalVisitor());   // 9.0
+String pretty = ast.accept(new PrintVisitor());  // ((1.0 + 2.0) * 3.0)</code></pre>
+      <p class="muted">लक्षात घ्या की <code>EvalVisitor</code> आणि <code>PrintVisitor</code> पूर्णपणे वेगळी ऑपरेशन्स आहेत, तरीही कोणालाही <code>Number</code>, <code>Add</code> किंवा <code>Mul</code> संपादित करण्याची गरज पडली नाही. recursion visitor मध्ये <code>child.accept(this)</code> द्वारे राहते, त्यामुळे प्रत्येक visitor स्वतःचे traversal आणि return प्रकार नियंत्रित करतो.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="eyebrow" style="display:none"></div>
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: एका node वर double-dispatch यंत्रणा, एका लहान झाडाचे संपूर्ण recursive traversal, आणि visit प्रकार आळीपाळीने बदलणारे document-tree render.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Double dispatch: दोन calls कोड निवडतात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑 Client
+    participant Node as 🧩 Add element
+    participant Vis as 🧳 EvalVisitor
+
+    Client->>Node: accept(visitor)
+    Note over Node: 1st dispatch picks Add.accept
+    Node->>Vis: visitAdd(this)
+    Note over Vis: 2nd dispatch picks EvalVisitor.visitAdd
+    Vis-->>Node: computed value
+    Node-->>Client: result
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - एका visitor द्वारे मूल्यमापन केलेल्या (1 + 2) चे recursive traversal</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Client
+    participant Root as 🧩 Add
+    participant L as 🧩 Number 1
+    participant R as 🧩 Number 2
+    participant V as 🧳 EvalVisitor
+
+    C->>Root: accept(v)
+    Root->>V: visitAdd(this)
+    V->>L: left.accept(v)
+    L->>V: visitNumber(this)
+    V-->>L: 1.0
+    L-->>V: 1.0
+    V->>R: right.accept(v)
+    R->>V: visitNumber(this)
+    V-->>R: 2.0
+    R-->>V: 2.0
+    V-->>Root: 3.0
+    Root-->>C: 3.0
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - एका visitor सह document tree render करणे</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ Renderer
+    participant Doc as 🌳 Document
+    participant HV as 🧳 HtmlVisitor
+
+    App->>Doc: accept(htmlVisitor)
+    loop for each child node
+        Doc->>HV: child.accept(this)
+        alt node is Heading
+            HV-->>Doc: h2 markup
+        else node is Paragraph
+            HV-->>Doc: p markup
+        else node is Image
+            HV-->>Doc: img markup
+        end
+    end
+    Doc-->>App: full HTML string
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका उघड्या element hierarchy पासून चालत्या visitor ऑपरेशनपर्यंत, आणि नंतर फुकटात जोडलेल्या दुसऱ्या ऑपरेशनपर्यंत.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>object structure ओळखा</h4><p>तुम्ही ज्या node प्रकारांवर काम कराल ते निश्चित करा, जसे की AST expressions किंवा document nodes. हा संच स्थिर असतो आणि ऑपरेशन्स वाढतात तेव्हा Visitor फायदेशीर ठरते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Element API</span><h4>element interface मध्ये accept जोडा</h4><p>base element प्रकारावर <code>accept(visitor)</code> घोषित करा जेणेकरून प्रत्येक concrete node स्वतःला visitor कडे सोपवण्याचे वचन देतो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Visitor API</span><h4>Visitor interface घोषित करा</h4><p>प्रत्येक concrete element साठी एक <code>visit</code> method लिहा: <code>visitNumber</code>, <code>visitAdd</code>, इत्यादी. हा interface म्हणजे प्रत्येक ऑपरेशन अंमलात आणणारा करार आहे.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">जोडणी</span><h4>प्रत्येक node वर accept अंमलात आणा</h4><p>प्रत्येक concrete element मध्ये, <code>accept</code> जुळणारी method बोलावते: <code>return v.visitAdd(this)</code>. प्रत्येक क्लासमधील ही एक ओळ double dispatch सक्षम करते.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">ऑपरेशन</span><h4>पहिला concrete visitor लिहा</h4><p>उदाहरणार्थ, प्रत्येक <code>visit</code> method अंमलात आणणारा <code>EvalVisitor</code> बनवा. सर्व मूल्यमापन logic इथे, एका सुसंगत क्लासमध्ये राहते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Traverse</span><h4>children मध्ये recurse करा</h4><p>composite visits च्या आत, खाली उतरण्यासाठी <code>child.accept(this)</code> बोलावा. visitor फेरी चालवतो आणि क्रम, खोली आणि short-circuiting ठरवतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">State</span><h4>जमा होणारा state वाहून न्या</h4><p>visitor ला fields धरू द्या (एक बेरीज, एक symbol table, एक StringBuilder) जेणेकरून एका फेरीत संपूर्ण स्ट्रक्चरभर निकाल गोळा होतात.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Run</span><h4>root पासून सुरुवात करा</h4><p><code>root.accept(new EvalVisitor())</code> बोलावा. पहिला dispatch node ठरवतो, दुसरा ऑपरेशन ठरवतो, आणि traversal उलगडते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">विस्तार</span><h4>फुकटात एक नवीन ऑपरेशन जोडा</h4><p>सुंदर छपाई किंवा JSON export हवे? <code>PrintVisitor</code> लिहा. element क्लासेस अस्पर्शित राहतात, जो या पॅटर्नचा संपूर्ण मुद्दा आहे.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Compose</span><h4>visitors एकत्र करा किंवा साखळीत जोडा</h4><p>त्याच झाडावर एक validating visitor, नंतर एक optimizing visitor, नंतर एक codegen visitor चालवा. प्रत्येक स्वतंत्र आणि वेगळेपणाने तपासण्याजोगा आहे.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Maintain</span><h4>element बदल जाणीवपूर्वक हाताळा</h4><p>एक node प्रकार जोडणे म्हणजे प्रत्येक visitor अद्ययावत करणे. तो खर्च जाणूनबुजून स्वीकारा; ऑपरेशन्स खुली आणि सुसंगत ठेवण्यासाठी तुम्ही केलेला तो सौदा आहे.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Visitor शक्तिशाली आहे पण चुकीच्या पद्धतीने वापरणे सोपे आहे. या नेहमीच्या सापळ्या आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔁 अस्थिर element संच</h4><p>जर node प्रकार वारंवार बदलत असतील, तर प्रत्येक नवीन प्रकार प्रत्येक visitor मध्ये बदल करण्यास भाग पाडतो. hierarchy अस्थिर आणि ऑपरेशन्स थोडी असताना Visitor चुकीची निवड आहे.</p></div>
+        <div class="card"><h4>🕳️ encapsulation मोडणे</h4><p>visitors ना element च्या अंतर्गत भागांची गरज असते, त्यामुळे nodes शेवटी getters किंवा public fields उघड करतात. यामुळे क्लासला लपवायची असलेली implementation तपशील बाहेर पडू शकतात.</p></div>
+        <div class="card"><h4>🧨 Default catch-all visits</h4><p>no-op default असलेला एक base visitor मोठ्याने अपयशी होण्याऐवजी नवीन element प्रकार शांतपणे गिळंकृत करतो. न हाताळलेली प्रकरणे शोधण्यात compiler ची मदत तुम्ही गमावता.</p></div>
+        <div class="card"><h4>🌀 लपलेला traversal क्रम</h4><p>प्रत्येक visit method मध्ये traversal logic मिसळल्याने क्रम अस्पष्ट होतो आणि visitors मध्ये विसंगत राहतो. एका वेगळ्या traversal strategy किंवा एका base walker चा विचार करा.</p></div>
+        <div class="card"><h4>🧱 साध्या प्रकरणांसाठी अतिरेक</h4><p>दोन node प्रकार आणि एक ऑपरेशन यांना accept, एक visitor interface आणि double dispatch ची गरज नसते. एक साधी method किंवा एक switch अधिक स्पष्ट आणि छोटा असतो.</p></div>
+        <div class="card"><h4>🔗 चक्रीय अवलंबित्व</h4><p>elements visitor interface import करतात आणि visitors प्रत्येक element import करतात, ज्यामुळे घट्ट दुहेरी coupling तयार होते जे कोड modules मध्ये विभागण्यास विरोध करते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">फायदे-तोटे</div>
+      <h2>फायदे-तोटे आणि केव्हा वापरावे</h2>
+      <p class="muted">Visitor बदलाचा एक अक्ष स्वस्त आणि दुसरा महाग करते. तुमची प्रणाली प्रत्यक्षात कोणत्या अक्षावर सरकते हे जाणून घ्या.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>elements संपादित न करता नवीन ऑपरेशन्स; संबंधित logic प्रत्येक ऑपरेशननुसार एकत्र; double dispatch type-switch साखळ्यांची जागा घेते; एक visitor संपूर्ण traversal भर निकाल जमा करू शकतो.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>एक element प्रकार जोडल्याने प्रत्येक visitor ला स्पर्श होतो; बहुधा element encapsulation मोडते; भरपूर boilerplate; elements आणि visitors यांच्यात दुहेरी coupling.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>element hierarchy स्थिर आहे पण ऑपरेशन्स वाढत राहतात; तुमच्याकडे अनेक प्रकारे फिरवला जाणारा AST, parse tree, document model किंवा shape hierarchy आहे.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>node प्रकार वारंवार बदलतात, ऑपरेशन्स थोडी आहेत, किंवा एखादे भाषा वैशिष्ट्य (pattern matching, sealed types) आधीच तुम्हाला संपूर्ण, स्वस्त dispatch देते.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>मध्यम. यंत्रणा लहान आहे पण indirection आणि accept/visit सोपस्कार आकलनाचा भार आणि files वाढवतात.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Composite (Visitor ज्या झाडावर फिरतो), Iterator (एक पर्यायी traversal), Interpreter (Visitor बहुधा त्याचे grammar मूल्यमापन करते), Strategy (प्रत्येक visitor एक अदलाबदल करण्याजोगे ऑपरेशन).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जेव्हा तुम्हाला प्रकारांच्या स्थिर संचावर अनेक नवीन ऑपरेशन्सची अपेक्षा असेल तेव्हा Visitor कडे वळा. उलट जर तुम्हाला ऑपरेशन्सच्या स्थिर संचावर अनेक नवीन प्रकारांची अपेक्षा असेल, तर methods क्लासेसवरच ठेवा; Visitor प्रत्येक नवीन node वर तुमच्याशी झगडेल.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>प्रत्यक्ष जगातील उदाहरणे</h2>
+      <p class="muted">production प्रणालींमध्ये Visitor आपली किंमत वसूल करते अशी तीन ठिकाणे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛠️</span><div><h3>1 · Compiler आणि interpreter ASTs</h3><div class="role">पॅटर्न: एका node संचावर अनेक passes</div></div></div>
+        <p class="muted">एक language front end source ला AST मध्ये parse करते, नंतर त्याच nodes वर pass मागून pass चालवते.</p>
+        <ul>
+          <li>वेगवेगळे visitors type checking, constant folding आणि bytecode generation अंमलात आणतात.</li>
+          <li>node क्लासेस (literals, calls, loops) बंद राहतात तर नवीन passes मुक्तपणे जोडली जातात.</li>
+          <li>प्रत्येक visitor स्वतःचा state वाहून नेतो, जसे की एक scope stack किंवा एक emitted-instruction buffer.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> नवीन विश्लेषणे grammar किंवा node hierarchy अस्थिर न करता नवीन visitor क्लासेस म्हणून येतात, जो नेमका बदलाचा पॅटर्न compiler ला हवा असतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📄</span><div><h3>2 · Document trees आणि rendering</h3><div class="role">पॅटर्न: एक model, अनेक output formats</div></div></div>
+        <p class="muted">एक rich-text किंवा Markdown editor documents ना headings, paragraphs, lists आणि images यांचे झाड म्हणून धरून ठेवतो.</p>
+        <ul>
+          <li>एक HtmlVisitor HTML मध्ये render करतो, एक LatexVisitor LaTeX मध्ये, एक WordCountVisitor एका आकडेवारीत.</li>
+          <li>नवीन export formats म्हणजे नवीन visitors; node प्रकारांना output बद्दल कधीच कळत नाही.</li>
+          <li>visitors एक सामायिक traversal पुन्हा वापरतात जेणेकरून स्ट्रक्चर आणि formatting वेगळे राहतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एक PDF किंवा plain-text exporter जोडणे म्हणजे एक स्वयंपूर्ण क्लास, त्यामुळे document model प्रत्येक format भर सत्याचा एकमेव स्रोत राहतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>3 · Static analysis आणि linters</h3><div class="role">पॅटर्न: एका syntax tree वर नियम</div></div></div>
+        <p class="muted">एक linter समस्या दर्शवण्यासाठी एका code AST वरून फिरतो, आणि rule sets सतत वाढतात.</p>
+        <ul>
+          <li>प्रत्येक नियम एक visitor आहे जो विशिष्ट node प्रकार तपासतो आणि निष्कर्ष कळवतो.</li>
+          <li>नियम त्याच parse केलेल्या झाडावर स्वतंत्रपणे चालतात, त्यामुळे अपयशे वेगळी राहतात.</li>
+          <li>parser आणि node model सामायिक असतात आणि भाषा निश्चित झाल्यावर क्वचितच बदलतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> संघ parser कधीही संपादित न करता lint नियम जोडतात आणि चालू-बंद करतात, ज्यामुळे मोठा rule catalog देखभालीजोगा आणि नियमानुसार तपासायला सोपा राहतो.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगतता</div>
+      <h2>आधुनिक सुसंगतता</h2>
+      <p class="muted">भाषा वैशिष्ट्यांनी Visitor केव्हा योग्य साधन आहे हे पुनर्रचित केले आहे, पण ते सोडवत असलेली मूळ समस्या अजूनही जिवंत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧵 Pattern matching त्याच्याशी स्पर्धा करते</h4><p>Java, Kotlin आणि TypeScript-शैलीच्या unions मधील sealed types आणि संपूर्ण <code>switch</code> स्वस्त, compiler-तपासलेले dispatch देतात, बहुधा साध्या प्रकरणांसाठी हाताने लिहिलेल्या visitors ची जागा घेतात.</p></div>
+        <div class="card"><h4>🌲 मोठ्या ASTs साठी अजूनही राजा</h4><p>Compilers, transpilers आणि query engines Visitor वापरत राहतात कारण grammar स्थिर राहत असताना passes वाढतात, नेमका तोच आकार ज्यासाठी Visitor बनवले गेले.</p></div>
+        <div class="card"><h4>⚙️ Generated visitors</h4><p>ANTLR सारखी साधने एका grammar मधून visitor आणि listener base क्लासेस उत्सर्जित करतात, त्यामुळे तुम्ही boilerplate हाताने लिहिण्याऐवजी subclass करता.</p></div>
+        <div class="card"><h4>🔀 Listener variants</h4><p>Event-शैलीचे listeners (enter/exit callbacks) traversal ला action पासून वेगळे करतात, parsing frameworks आणि tree walkers मधील Visitor चा एक सामान्य विकास.</p></div>
+        <div class="card"><h4>🧬 Functional fold</h4><p>FP मध्ये, एका algebraic data type वरील fold किंवा catamorphism हीच कल्पना व्यक्त करते; Visitor म्हणजे त्या recursion scheme चे ऑब्जेक्ट-ओरिएंटेड रूप.</p></div>
+        <div class="card"><h4>🧰 Expression-tree साधने</h4><p>ORMs आणि rule engines queries अनुवादित करण्यासाठी, predicates पुनर्लेखन करण्यासाठी आणि runtime वर plans optimize करण्यासाठी visitors सह expression trees वरून फिरतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> एका स्थिर type hierarchy वर ऑपरेशन्स वाढतात तेव्हा Visitor हे पहिल्या पसंतीचे साधन राहते. जिथे भाषा संपूर्ण pattern matching देतात, तिथे लहान प्रकरणांसाठी त्यालाच प्राधान्य द्या; जिथे तुमच्याकडे अनेक प्रकारे फिरवला जाणारा खरा AST किंवा document tree असतो, तिथे Visitor अजूनही आपल्या सोपस्कारांची किंमत वसूल करते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Visitor त्या इतर पॅटर्न्ससोबत बसते जे ऑब्जेक्ट झाडांची रचना करतात आणि त्यांच्यावरून फिरतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>elements चे झाड ज्यावर एक visitor सहसा फिरतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔁</span><h4>Iterator</h4><p>त्याच स्ट्रक्चरवरून फिरण्याचा एक पर्यायी मार्ग.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../interpreter/"><span class="ico">🧮</span><h4>Interpreter</h4><p>Grammars ज्यांचे एक visitor बहुधा मूल्यमापन किंवा compile करतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎛️</span><h4>Strategy</h4><p>प्रत्येक visitor एक अदलाबदल करण्याजोगे, स्वयंपूर्ण ऑपरेशन आहे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Visitor पॅटर्नचे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · उदाहरणे · सुसंगतता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adapter पॅटर्न समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Adapter डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शक: तो काय आहे, कसा काम करतो, object विरुद्ध class adapter, दुहेरी adapter, legacy कोड wrap करणे, sequence diagram, 0-100 प्रवाह, केस स्टडी, आणि तो Facade, Decorator व Proxy पासून कसा वेगळा आहे." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural पॅटर्न</span>
+      <h1>Adapter पॅटर्न - विसंगत interface एकत्र काम करण्यासाठी</h1>
+      <p class="lede">तुमचा client एक interface अपेक्षित करतो, पण तुमच्याकडे असलेला class वेगळी भाषा बोलतो. Adapter मधे बसतो आणि <strong>भाषांतर करतो</strong>: तो अस्तित्वात असलेला object wrap करतो आणि client ला हवा असलेला interface उघड करतो, वाटेत calls आणि data रूपांतरित करतो. legacy कोड, third-party लायब्ररी आणि जुळत नसलेल्या API कुठलीही बाजू पुन्हा लिहिल्याशिवाय codebase मधे जोडण्याची ही पद्धत आहे.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Target interface</span>
+        <span class="pill">Adaptee</span>
+        <span class="pill">Composition विरुद्ध inheritance</span>
+        <span class="pill">Interface भाषांतर</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Adapter पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Adapter</strong> हा एक structural पॅटर्न आहे जो एका class चा interface, client ला अपेक्षित असलेल्या दुसऱ्या interface मधे रूपांतरित करतो. client एका <em>Target</em> interface विरुद्ध कोड लिहितो; <em>Adaptee</em> हा उपयुक्त अंमलबजावणी असलेला पण चुकीच्या signature असलेला अस्तित्वात असलेला class असतो. <em>Adapter</em> हा Target ची अंमलबजावणी करतो आणि Adaptee धारण करतो किंवा त्याचा विस्तार करतो, प्रत्येक call पुढे पाठवतो आणि arguments व results अशी नव्याने घडवतो की दोन्ही बाजू जुळतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎯</span> Target</h4>
+          <p>client आधीपासूनच ज्यावर अवलंबून आहे तो interface. client कधीच बदलत नाही; त्याला फक्त हाच करार दिसतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Adaptee</h4>
+          <p>तुम्हाला हवी असलेली क्षमता असलेला अस्तित्वातील किंवा third-party class, पण चुकीच्या method नावांसह, आकारांसह किंवा एककांसह.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔄</span> Adapter</h4>
+          <p>Target ची अंमलबजावणी करतो, Adaptee ला काम सोपवतो आणि दोघांमधे भाषांतर करतो. दोन्ही जग जाणणारा एकमेव class.</p>
+        </div>
+      </div>
+
+      <h3>हलणारे भाग</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>ती काय करते</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Client</strong></td><td>Target interface ला call करतो, adapter अस्तित्वात आहे याची जाणीव नसते</td><td><code>PaymentGateway</code> ला call करणारी report service</td></tr>
+            <tr><td><strong>Target</strong></td><td>client ला हवा असलेला domain interface परिभाषित करतो</td><td><code>interface PaymentGateway</code></td></tr>
+            <tr><td><strong>Adaptee</strong></td><td>विसंगत API सह खरे वर्तन पुरवतो</td><td>Vendor SDK <code>StripeClient</code></td></tr>
+            <tr><td><strong>Adapter</strong></td><td>calls आणि data भाषांतर करून दोघांना जोडतो</td><td><code>StripePaymentAdapter</code></td></tr>
+            <tr><td><strong>Delegation</strong></td><td>object adapter Adaptee धारण करतो (composition)</td><td><code>StripeClient</code> प्रकाराचे एक field</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Adapter वर्तन न बदलता interface बदलतो. तो भाषांतरकार आहे, नवीन वैशिष्ट्य नाही. जर तुम्ही जबाबदाऱ्या जोडत असाल, तर तुम्हाला Decorator हवा; जर तुम्ही एखादे subsystem सोपे करत असाल, तर तुम्हाला Facade हवा.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Adapter का अस्तित्वात आहे</h2>
+      <p class="muted">खऱ्या प्रणाली वेगवेगळ्या वेळी वेगवेगळ्या लोकांनी लिहिलेल्या भागांतून जुळवल्या जातात. एखाद्या integration च्या दोन्ही बाजू तुमच्या ताब्यात क्वचितच असतात, आणि एखादी स्थिर लायब्ररी किंवा vendor SDK तुमच्या interface शी जुळण्यासाठी पुन्हा लिहिणे महाग आणि जोखमीचे असते. Adapter दोन्ही बाजूंना जशाच्या तशा राहू देतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 पुन्हा न लिहिता पुनर्वापर</h4><p>तुम्ही एका सिद्ध Adaptee ला जसाच्या तसा ठेवता आणि स्वच्छ Target द्वारे त्याचा पुनर्वापर करता, तुमच्या मालकीचा किंवा विश्वासाचा नसलेला कोड संपादित करण्याऐवजी.</p></div>
+        <div class="card"><h4>🔗 vendor पासून decouple</h4><p>client तुमच्या Target वर अवलंबून असतो, third-party API वर नाही. नवीन adapter लिहून Stripe च्या जागी Adyen आणा; client ला कधीच कळत नाही.</p></div>
+        <div class="card"><h4>🧪 testable जोड</h4><p>client interface शी बोलत असल्यामुळे, तुम्ही चाचण्यांमधे बनावट adapter बदलू शकता आणि खऱ्या प्रणालीला स्पर्श न करता edge cases चालवू शकता.</p></div>
+        <div class="card"><h4>🕰️ legacy कोड आटोक्यात</h4><p>जुने module आधुनिक interface मागे wrap करा, जेणेकरून नवीन कोड स्वच्छ राहील तर legacy अंतर्भाग स्वतःच्या वेळापत्रकानुसार स्थलांतरित किंवा निवृत्त होतील.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Adapter समजावून</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>ती एका <strong>संभाषणातील भाषांतरकार</strong> आहे. तुम्ही इंग्रजी बोलता, समोरची व्यक्ती जपानी बोलते; भाषांतरकार तुमच्यापैकी कोणाचाही अर्थ बदलत नाही, तो फक्त शब्द रूपांतरित करतो जेणेकरून तुम्ही एकमेकांना समजता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>ती एक <strong>wrapper class</strong> आहे जी तुमचा interface अंमलात आणते आणि वेगळ्या signature असलेल्या लायब्ररीला calls पुढे पाठवते, तिचे return प्रकार आणि errors तुमचा कोड आधीच हाताळत असलेल्या आकारांमधे mapping करते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>चलन विनिमय केंद्राचा</strong> विचार करा. तुमच्या पाकिटात euro आहेत, दुकानाला yen हवे आहेत; केंद्र एका ज्ञात दराने एकाचे दुसऱ्यात रूपांतर करते जेणेकरून कोणतीही बाजू न बदलता खरेदी पूर्ण होते.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>प्रवासी वीज adapter</strong>. भिंतीवरचे सॉकेट आणि तुमच्या laptop चा plug दोन्ही ठीक आहेत; adapter फक्त जोडणीचा आकार बदलतो जेणेकरून एका मानकासाठी बनवलेले उपकरण दुसऱ्यासोबत काम करते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतून तो कसा काम करतो</h2>
+      <p class="muted">दोन उत्कृष्ट प्रकार आहेत. <strong>object adapter</strong> Adaptee ला एक field म्हणून धारण करतो आणि त्याला काम सोपवतो (composition). <strong>class adapter</strong> Target आणि Adaptee दोघांकडून वारसा घेतो (inheritance). ज्या भाषांमधे multiple inheritance नाही तेथे object adapters हे मूलभूत असतात; class adapters Adaptee चे वर्तन override करू शकतात पण तुम्हाला त्याच्या class शी जोडतात.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Object adapter (composition)</h4>
+          <p>adapter कडे Adaptee <em>असतो</em>. तो Adaptee च्या कोणत्याही subclass ला wrap करू शकतो आणि एकाच वेळी अनेक adaptees adapt करू शकतो. लवचिक आणि शिफारस केलेला मूलभूत पर्याय.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧬</span> Class adapter (inheritance)</h4>
+          <p>adapter हा Adaptee <em>आहे</em> आणि Target <em>आहे</em>. delegation object नाही, आणि तो protected सदस्य override करू शकतो, पण तो एका ठोस Adaptee शी बांधला जातो आणि त्याला multiple inheritance लागते.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">Class आकृती - client Target वर अवलंबून असतो; object adapter Adaptee ला काम सोपवतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Client
+    class Target {
+      <<interface>>
+      +charge(amount) Receipt
+    }
+    class Adapter {
+      -adaptee Adaptee
+      +charge(amount) Receipt
+    }
+    class Adaptee {
+      +createCharge(cents, currency) StripeResult
+    }
+    Client --> Target : depends on
+    Target <|.. Adapter : implements
+    Adapter o--> Adaptee : delegates to
+        </pre>
+      </div>
+
+      <h3>Java मधील एक object adapter</h3>
+      <pre><code>// Target: the interface our application already speaks
+public interface PaymentGateway {
+    Receipt charge(Money amount, String customerId);
+}
+
+// Adaptee: a third-party SDK we do not control
+public final class StripeClient {
+    public StripeResult createCharge(long cents, String currency, String customer) {
+        // ... real HTTP call to Stripe ...
+        return new StripeResult("ch_123", "succeeded");
+    }
+}
+
+// Adapter: implements Target, holds the Adaptee (composition), translates both ways
+public final class StripePaymentAdapter implements PaymentGateway {
+    private final StripeClient stripe; // has-a Adaptee
+
+    public StripePaymentAdapter(StripeClient stripe) {
+        this.stripe = stripe;
+    }
+
+    @Override
+    public Receipt charge(Money amount, String customerId) {
+        long cents = amount.toMinorUnits();               // reshape input
+        StripeResult r = stripe.createCharge(cents, amount.currencyCode(), customerId);
+        if (!"succeeded".equals(r.status())) {            // translate errors
+            throw new PaymentFailedException(r.id());
+        }
+        return new Receipt(r.id(), amount);               // reshape output
+    }
+}
+
+// Client stays blissfully unaware of Stripe
+PaymentGateway gateway = new StripePaymentAdapter(new StripeClient());
+Receipt receipt = gateway.charge(Money.usd(49.99), "cus_42");</code></pre>
+      <p class="muted">client ला फक्त <code>PaymentGateway</code> दिसतो. सर्व विसंगती - dollars ते cents, vendor result चा आकार, vendor error प्रथा - adapter च्या आत सामावली जाते, त्यामुळे providers बदलणे म्हणजे नवीन adapter लिहिणे, client ला स्पर्श करणे नाही.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: एक मूलभूत object-adapter call, Adaptee कडून error भाषांतर, आणि दोन्ही interface सेवा देणारा दुहेरी adapter.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Object adapter: client Target ला call करतो, adapter Adaptee ला काम सोपवतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Client
+    participant A as 🔄 Adapter
+    participant S as 🔌 Adaptee (SDK)
+
+    C->>A: charge(Money 49.99, customer)
+    A->>A: convert to minor units (cents)
+    A->>S: createCharge(4999, USD, customer)
+    S-->>A: StripeResult(id, succeeded)
+    A->>A: map result to Receipt
+    A-->>C: Receipt(id, amount)
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Error भाषांतर: vendor status एक domain exception बनते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Client
+    participant A as 🔄 Adapter
+    participant S as 🔌 Adaptee (SDK)
+
+    C->>A: charge(Money, customer)
+    A->>S: createCharge(cents, currency, customer)
+    S-->>A: StripeResult(id, declined)
+    alt status not succeeded
+        A->>A: wrap as PaymentFailedException
+        A-->>C: throw PaymentFailedException
+    else status succeeded
+        A-->>C: Receipt(id, amount)
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - दुहेरी adapter: एकच object दोन्ही interface पूर्ण करतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant NewC as 🆕 New client
+    participant TW as 🔁 Two-way adapter
+    participant OldC as 🕰️ Legacy client
+
+    Note over TW: implements NewApi and LegacyApi
+    NewC->>TW: process(request)
+    TW->>TW: translate to legacy shape
+    TW-->>NewC: modern response
+    OldC->>TW: legacyProcess(record)
+    TW->>TW: translate to modern shape
+    TW-->>OldC: legacy response
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">interface विसंगतीपासून एका स्वच्छ, बदलण्यायोग्य integration पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>विसंगती लक्षात घ्या</h4><p>तुमच्याकडे एक class आहे जो तुम्हाला हवे ते करतो पण त्याचा interface तुमचा client कोड ज्याला call करू इच्छितो त्याच्याशी जुळत नाही.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">परिभाषित करा</span><h4>Target interface लिहा</h4><p>तुमच्या client ला हवा असलेला interface domain शब्दांत वर्णन करा - तुमच्या कोडला नैसर्गिक वाटणाऱ्या methods, प्रकार आणि errors.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">ओळखा</span><h4>Adaptee निश्चित करा</h4><p>ज्याचे वर्तन तुम्ही पुनर्वापर कराल तो अस्तित्वातील किंवा third-party class नावाने ठरवा, आणि त्याचा signature Target पेक्षा नेमका कसा वेगळा आहे याची यादी करा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">निवडा</span><h4>Object की class adapter</h4><p>composition ला प्राधान्य द्या: Adaptee ला एक field म्हणून धारण करा. फक्त protected Adaptee वर्तन override करावे लागत असेल तरच inheritance कडे वळा.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">अंमलात आणा</span><h4>adapter ला Target अंमलात आणायला लावा</h4><p>adapter class तयार करा, तो Target अंमलात आणतो असे घोषित करा, आणि त्याला Adaptee चा संदर्भ द्या.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Input map करा</span><h4>arguments भाषांतर करा</h4><p>प्रत्येक method च्या आत, client चे arguments Adaptee ला लागणाऱ्या आकार, एकके आणि क्रमात रूपांतरित करा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">सोपवा</span><h4>Adaptee ला call करा</h4><p>भाषांतरित call Adaptee ला पुढे पाठवा आणि त्याचा result पकडा. हीच एकमेव जागा आहे जिथे दोन जग भेटतात.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Output map करा</span><h4>results आणि errors भाषांतर करा</h4><p>Adaptee चे return मूल्य Target प्रकारात नव्याने घडवा आणि त्याच्या exceptions ला तुमच्या domain errors मधे रूपांतरित करा.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">जोडा</span><h4>adapter inject करा</h4><p>खऱ्या Adaptee सह adapter तयार करा आणि तो client ला Target म्हणून सोपवा, आदर्शतः dependency injection द्वारे.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">चाचणी</span><h4>भाषांतर कव्हर करा</h4><p>दोन्ही दिशांतील mapping आणि error मार्गांची unit-test करा. client ची स्वतःची चाचणी करताना बनावट Target बदला.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">बदला</span><h4>फळ मिळवा</h4><p>जेव्हा नवीन vendor किंवा आवृत्ती येते, तेव्हा त्याच Target मागे आणखी एक adapter लिहा. client कोड कधीच बदलत नाही.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Adapters सोपे असतात, म्हणूनच त्यांचा गैरवापर होतो. या गोष्टींकडे लक्ष ठेवा.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 Logic ची घुसखोरी</h4><p>adapter ने भाषांतर करावे, निर्णय घेऊ नये. जेव्हा business नियम, caching किंवा retries त्याच्या आत साचतात, तेव्हा तुम्ही adapter मागे एक service लपवली आहे आणि जोड गमावली आहे.</p></div>
+        <div class="card"><h4>🪆 Adapter रचणे</h4><p>एका adapter ला adapt करणाऱ्या adapter ला adapt करणे बहुधा चुकीचा Target दर्शवते. भाषांतरकार साखळीत लावण्याऐवजी interface ची पुनर्रचना करा.</p></div>
+        <div class="card"><h4>💧 Leaky abstraction</h4><p>जर Adaptee चे exceptions, प्रकार किंवा विचित्रता Target मधून झिरपत असतील, तर client अजूनही vendor शी जोडलेला आहे आणि adapter ने तुम्हाला काहीच दिले नाही.</p></div>
+        <div class="card"><h4>🎭 Facade शी गोंधळ</h4><p>एक संपूर्ण सोपे केलेले subsystem प्रवेशद्वार बांधून त्याला adapter म्हणणे उद्देश धूसर करते. Adapter अस्तित्वातील interface शी जुळतो; Facade एक सोपा शोधून काढतो.</p></div>
+        <div class="card"><h4>🧬 class adapters चा अतिवापर</h4><p>Adaptee कडून वारसा घेतल्याने तुम्ही एका ठोस class आणि त्याच्या अंतर्भागाशी बांधले जाता. Composition कमी coupling सह अधिक targets adapt करते.</p></div>
+        <div class="card"><h4>🔕 errors गिळणे</h4><p>Adaptee चे अपयश पकडून एक निरस default परत करणे खरे प्रश्न लपवते. errors प्रामाणिकपणे अर्थपूर्ण domain exceptions मधे भाषांतरित करा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS / TRADE-OFFS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Adapter स्वस्त आणि कमी-जोखमीचा आहे, पण तो एक भाषांतर स्तर आहे, वाईट interface वरचा उपाय नाही. त्याचे प्रामाणिकपणे मूल्यमापन करा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>अस्तित्वातील कोड जसाच्या तसा पुनर्वापर करतो, client ला vendors पासून decouple करतो, एक testable जोड तयार करतो, आणि बदल एका छोट्या class पुरता मर्यादित ठेवतो.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>एक indirection स्तर जोडतो, Target नीट न निवडल्यास Adaptee ची विचित्रता झिरपू शकते, आणि logic घुसखोरीचा मोह होतो.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>तुम्हाला एखादा अस्तित्वातील किंवा third-party class अशा interface शी जुळवायचा असतो जो तुम्ही कोणत्याही बाजूने बदलू शकत नाही किंवा बदलू इच्छित नाही.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>तुमच्या ताब्यात दोन्ही interface आहेत आणि तुम्ही ते फक्त संरेखित करू शकता, किंवा खरी गरज नवीन वर्तनाची (Decorator) किंवा सोप्या प्रवेशद्वाराची (Facade) असते.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>कमी. सहसा प्रत्येक integration मागे एक छोटा class, class inheritance पेक्षा object (composition) प्रकार सुरक्षित मूलभूत पर्याय म्हणून.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Bridge आधीच abstraction ला implementation पासून वेगळे करतो; Decorator वर्तन जोडतो; Facade subsystem सोपे करतो; Proxy प्रवेश नियंत्रित करतो.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जेव्हा आकार बरोबर आहेत पण signatures चुकीचे आहेत तेव्हा Adapter कडे वळा. जर तुम्ही जबाबदाऱ्या भाषांतरित करण्याऐवजी जोडत असाल, तर तुम्ही या पॅटर्नच्या पलीकडे गेला आहात.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडी</div>
+      <h2>वास्तविक जगातील केस स्टडी</h2>
+      <p class="muted">production-शैलीच्या कोडमधे Adapter दर्शवणारे तीन प्रातिनिधिक वापर.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment provider abstraction</h3><div class="role">पॅटर्न: vendor-निरपेक्ष Target प्रत्येक provider साठी adapters सह</div></div></div>
+        <p class="muted">एका checkout service ने प्रत्येकासाठी order logic पुन्हा न लिहिता अनेक payment vendors ला आधार द्यायचा असतो.</p>
+        <ul>
+          <li>domain एक <code>PaymentGateway</code> Target परिभाषित करते ज्यात स्वच्छ <code>charge</code> आणि <code>refund</code> असते.</li>
+          <li>प्रत्येक vendor SDK ला स्वतःचा adapter मिळतो जो money, currency आणि result प्रकार map करतो.</li>
+          <li>नवीन provider जोडणे म्हणजे factory मधे नोंदवलेला एक नवीन adapter class, बाकी काही नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> order प्रवाह फक्त Target वर अवलंबून असतो, त्यामुळे business कोडला स्पर्श न करता vendors जोडता, बदलता किंवा A/B चाचणी करता येतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🕰️</span><div><h3>2 · legacy module wrap करणे</h3><div class="role">पॅटर्न: जुन्या अंतर्भागावर आधुनिक interface</div></div></div>
+        <p class="muted">एक दशकभर जुनी reporting लायब्ररी छान काम करते पण एक अवघड, stateful API उघड करते ज्यावर नवीन codebase अवलंबून राहू नये.</p>
+        <ul>
+          <li>एक आधुनिक <code>ReportSource</code> interface नवीन कोडला प्रत्यक्षात काय हवे आहे ते वर्णन करतो.</li>
+          <li>एक adapter legacy लायब्ररी wrap करतो, तिच्या setup calls आणि global state स्वच्छ methods मागे लपवतो.</li>
+          <li>legacy कोड कालांतराने adapter मागे शून्य client बदलांसह स्थलांतरित केला जातो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> नवीन वैशिष्ट्ये स्वच्छ interface विरुद्ध बांधली जातात तर जुनी लायब्ररी जोडेमागे शांतपणे refactor किंवा निवृत्त केली जाते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📚</span><div><h3>3 · java.util adapter (Arrays.asList)</h3><div class="role">पॅटर्न: arrays ला Collections interface शी adapt करणे</div></div></div>
+        <p class="muted">Java arrays आणि Collections framework ही वेगळी जगे आहेत; <code>List</code> साठी लिहिलेला कोड कच्चा array घेऊ शकत नाही.</p>
+        <ul>
+          <li><code>Arrays.asList(arr)</code> एक <code>List</code> view परत करतो जो array ला Collections API शी adapt करतो.</li>
+          <li>Iterators, streams, आणि कोणतीही List-वापरणारी method आता अंतर्निहित array वर काम करते.</li>
+          <li>adapter elements copy न करता reads array कडे पुढे पाठवतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एक साधा array संपूर्ण Collections परिसंस्थेतून वाहतो, लाखो programs वापरतात असा standard-library Adapter.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE / RELEVANCE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Adapter हा सर्वात शांतपणे सर्वव्यापी पॅटर्नांपैकी एक आहे. प्रणाली जसजशा अधिक वितरित आणि बाह्य सेवांवर अधिक अवलंबून होतात, तसतसे भाषांतर स्तर अधिकच सामान्य होतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 Hexagonal architecture</h4><p>Ports आणि adapters म्हणजे Adapter ला architectural शैलीत बढती दिलेली: domain ports परिभाषित करते, आणि adapters त्याला databases, queues आणि APIs शी जोडतात.</p></div>
+        <div class="card"><h4>🌐 Anti-corruption layers</h4><p>domain-driven design मधे, adapter हा anti-corruption layer असतो जो दुसऱ्या प्रणालीचे model तुमच्या bounded context मधे झिरपण्यापासून रोखतो.</p></div>
+        <div class="card"><h4>🤖 LLM tool आणि API bridging</h4><p>Agent frameworks विषम API एका एकसमान tool interface मागे wrap करतात, प्रत्येक integration मागे एक adapter जेणेकरून model एकाच सुसंगत आकाराला call करतो.</p></div>
+        <div class="card"><h4>🧱 Framework binding</h4><p>ORMs, loggers आणि HTTP clients adapters पाठवतात जेणेकरून एक interface (SLF4J, JPA) deploy वेळी निवडलेल्या अनेक ठोस backends समोर उभा राहतो.</p></div>
+        <div class="card"><h4>🧪 Test doubles</h4><p>clients Target वर अवलंबून असल्यामुळे, बनावट adapters integration जोड stub करणे सोपे करतात, जलद आणि निर्धारक चाचण्या चालवतात.</p></div>
+        <div class="card"><h4>🔁 टप्प्याटप्प्याने स्थलांतर</h4><p>Strangler-fig स्थलांतरे adapters वर विसंबून राहतात जेणेकरून प्रणाली तुकड्या-तुकड्याने बदलली जात असताना जुन्या आणि नवीन अंमलबजावणींमधे मार्ग वळवता येतो.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Adapter हा तो सांधा आहे जो स्वतंत्रपणे बांधलेल्या भागांना एकत्र जुळू देतो. जेव्हाही तुम्ही स्वतः न लिहिलेला कोड एकत्रित करता, किंवा तुमच्या ताब्यात नसलेल्या आकारापासून तुमचा गाभा वाचवता, तेव्हा तुम्ही त्याच्याकडे वळता, अनेकदा त्याचे नाव न घेता.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Adapter त्याच्या structural शेजाऱ्यांशी गोंधळणे सोपे आहे. हे त्याच्या अगदी शेजारी बसतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../bridge/"><span class="ico">🌉</span><h4>Bridge</h4><p>नंतर नव्हे तर रचनेनेच abstraction ला implementation पासून वेगळे करतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>interface कायम ठेवतो पण वर्तन जोडतो, तर Adapter interface बदलतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../facade/"><span class="ico">🏛️</span><h4>Facade</h4><p>एका interface शी जुळण्याऐवजी subsystem साठी सोपा दर्शनी भाग शोधून काढतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../proxy/"><span class="ico">🛡️</span><h4>Proxy</h4><p>subject सारखाच interface, पण भाषांतर करण्याऐवजी प्रवेश नियंत्रित करतो.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Adapter पॅटर्नचे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडी · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

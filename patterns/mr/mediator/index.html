@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mediator पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Mediator डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शन: तो काय आहे, ऑब्जेक्टमधील परस्परसंवाद कसा एकाच ठिकाणी केंद्रित करतो, many-to-many coupling का कमी करतो, सीक्वेन्स आकृत्या, टप्प्याटप्प्याने प्रवाह, अडचणी, तडजोडी आणि खरा Java कोड." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral पॅटर्न</span>
+      <h1>Mediator पॅटर्न - तारांच्या गुंत्याऐवजी एकच केंद्र</h1>
+      <p class="lede">जेव्हा अनेक ऑब्जेक्ट एकमेकांशी थेट बोलतात, तेव्हा प्रत्येक नवीन सहभागी कनेक्शनची संख्या वाढवतो आणि कोडबेस स्पॅगेटीसारखा गुंतागुंतीचा होतो. Mediator पॅटर्न तो संवाद एकाच ऑब्जेक्टमध्ये हलवतो: <strong>colleagues</strong> एकमेकांचा संदर्भ घेणे थांबवतात आणि त्याऐवजी एका <strong>mediator</strong> ला सूचित करतात, जो कोणी प्रतिक्रिया द्यायची आणि कशी हे ठरवतो. Many-to-many coupling हे many-to-one मध्ये कोसळते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Colleagues</span>
+        <span class="pill">मध्यवर्ती केंद्र</span>
+        <span class="pill">Loose coupling</span>
+        <span class="pill">Behavioral</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Mediator पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Mediator</strong> हा एक behavioral डिझाइन पॅटर्न आहे जो असा एक ऑब्जेक्ट परिभाषित करतो जो अनेक ऑब्जेक्ट एकमेकांशी कसे संवाद साधतात हे encapsulate करतो. प्रत्येक ऑब्जेक्टने आपल्या शेजारच्यांचे थेट संदर्भ ठेवण्याऐवजी आणि त्यांना कॉल करण्याऐवजी, ते ऑब्जेक्ट (ज्यांना <em>colleagues</em> म्हणतात) फक्त mediator ला ओळखतात. काही घडले की एक colleague mediator ला सांगतो, आणि mediator बाकीचे समन्वय साधतो. यामुळे कनेक्शनचे दाट जाळे hub-and-spoke आकारात बदलते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧑‍🤝‍🧑</span> Colleagues</h4>
+          <p>वैयक्तिक components (form fields, चॅट वापरकर्ते, UI widgets). ते इव्हेंट उत्पन्न करतात आणि सूचनांना प्रतिसाद देतात, पण एकमेकांना कधीही थेट कॉल करत नाहीत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎛️</span> Mediator</h4>
+          <p>मध्यवर्ती समन्वयक. तो colleagues चे संदर्भ ठेवतो आणि पूर्वी त्यांच्यात विखुरलेली असणारी interaction logic स्वतःमध्ये सामावतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> The interface</h4>
+          <p>एक सामायिक करार (बहुतेक वेळा एकच <code>notify(sender, event)</code> method) जेणेकरून colleagues त्याचा concrete प्रकार न ओळखता mediator ला संकेत देऊ शकतात.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य सहभागी</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>जबाबदारी</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Mediator (interface)</strong></td><td>colleagues केंद्राशी कसा संवाद साधतात हे घोषित करतो</td><td><code>notify(sender, event)</code></td></tr>
+            <tr><td><strong>ConcreteMediator</strong></td><td>समन्वयाची logic अंमलात आणतो, colleagues ना एकत्र जोडतो</td><td><code>DialogMediator</code>, <code>ChatRoom</code></td></tr>
+            <tr><td><strong>Colleague (base)</strong></td><td>mediator चा संदर्भ ठेवतो, शेजारच्यांचा काहीही नाही</td><td><code>Component</code>, <code>User</code></td></tr>
+            <tr><td><strong>ConcreteColleague</strong></td><td>इव्हेंट उत्पन्न करतो, mediator च्या सूचनांना प्रतिक्रिया देतो</td><td><code>Checkbox</code>, <code>SubmitButton</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>colleagues तयार करतो, त्यांना mediator कडे नोंदवतो</td><td>Dialog constructor / room setup</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Mediator परस्परसंवाद काढून टाकत नाही, तो त्यांना <em>पुनर्स्थापित</em> करतो. "जर हे field बदलले तर तो button सक्षम करा" असे सांगणारी logic एका जागी राहते जी तुम्ही वरपासून खालपर्यंत वाचू शकता, प्रत्येक widget मध्ये विखुरलेली नसते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Mediator पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">एका ऑब्जेक्टकडून दुसऱ्याला थेट संदर्भ देणे सुरुवातीला नैसर्गिक वाटते, पण ते चांगले scale होत नाही. <em>n</em> ऑब्जेक्ट मुक्तपणे बोलत असतील तर तुमच्याकडे साधारण <em>n squared</em> इतकी कनेक्शन असू शकतात, आणि त्यातील प्रत्येक अशी जागा आहे जिथे एक बदल पसरू शकतो. Mediator तो quadratic गुंता एका linear spokes च्या संचाशी बदलतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕸️ Many-to-many coupling नष्ट करतो</h4><p>प्रत्येक colleague फक्त mediator वर अवलंबून असतो, इतर प्रत्येक colleague वर नाही. एखादा सहभागी जोडणे किंवा काढणे यासाठी डझनभर कनेक्शन पुन्हा जोडण्याऐवजी एका class ला स्पर्श करावा लागतो.</p></div>
+        <div class="card"><h4>🧭 Control flow केंद्रित करतो</h4><p>"काय कशाशी बोलते, आणि केव्हा" याचे नियम एका वाचनीय जागी राहतात, त्यामुळे interaction logic असंबंधित components मध्ये लपणे थांबते.</p></div>
+        <div class="card"><h4>♻️ colleagues पुनर्वापरयोग्य बनवतो</h4><p>एखादा button किंवा field आपल्या शेजारच्यांना यापुढे hardcode करत नसल्यामुळे, तुम्ही तोच component वेगळ्या mediator असलेल्या वेगळ्या dialog मध्ये टाकू शकता.</p></div>
+        <div class="card"><h4>🧪 चाचणी आणि बदल सोपे</h4><p>तुम्ही एका mock mediator सह colleague ची unit-test करू शकता, आणि कोणत्याही colleague ला संपादित न करता mediator बदलून समन्वयाचे वर्तन बदलू शकता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Mediator समजावून</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असा, ते नीट समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एका <strong>गटचर्चा चालवणाऱ्या शिक्षकाचा</strong> विचार करा. विद्यार्थी एकमेकांवर ओरडत नाहीत; ते हात वर करतात आणि पुढे कोण बोलणार हे शिक्षक ठरवतात. वीस विद्यार्थ्यांना एक शिक्षक लागतो, दोनशे बाजूच्या संभाषणांची गरज नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हा एक <strong>चॅट-रूम सर्व्हर</strong> आहे. क्लायंट एकमेकांशी sockets उघडत नाहीत; ते room ला संदेश पाठवतात आणि room तो प्रसारित करतो. एक नवीन वापरकर्ता जोडा आणि तुम्ही एकच कनेक्शन नोंदवता, प्रत्येक विद्यमान वापरकर्त्यासाठी एक नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>हवाई वाहतूक नियंत्रकाची</strong> कल्पना करा. वैमानिक runways बाबत एकमेकांशी थेट वाटाघाटी करत नाहीत; ते टॉवरशी बोलतात, आणि टॉवर सर्वांचा क्रम लावतो. एक अधिकारी peer-to-peer रेडिओ कॉलच्या गोंधळाची जागा घेतो.</p></div>
+        <div class="card"><h4><span class="ico">📞</span> दैनंदिन आवृत्ती</h4><p>एक जुना <strong>टेलिफोन स्विचबोर्ड ऑपरेटर</strong>. कॉल करणारे स्वतःच्या तारा जोडत नाहीत; ते ऑपरेटरला विचारतात, जो योग्य लाइन जोडतो. "कोण कोणापर्यंत पोहोचतो" याची गुंतागुंत ऑपरेटरकडे असते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत कसे कार्य करते</h2>
+      <p class="muted">एक colleague आपल्या शेजारच्यांना कधीही import करत नाही. तो एकच field ठेवतो: mediator चा संदर्भ. state बदलली की तो <code>mediator.notify(this, event)</code> कॉल करतो, आणि concrete mediator समन्वयाची logic चालवतो आणि ज्या colleagues ना गरज आहे त्यांच्याकडे updates पाठवतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📨</span> Colleague कडून mediator कडे</h4>
+          <p>एक colleague वरच्या दिशेने एक इव्हेंट कळवतो: "मी बदललो" किंवा "माझ्यावर क्लिक झाले." तो sender म्हणून स्वतःला पाठवतो जेणेकरून mediator ला स्रोत कळेल, आणि तो सूचनांची वाट पाहतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎚️</span> Mediator कडून colleagues कडे</h4>
+          <p>mediator इव्हेंट तपासतो, नियम लागू करतो (validation, सक्षम करणे, प्रसारण), आणि ज्या विशिष्ट colleagues ना प्रतिक्रिया द्यायची आहे त्यांच्यावर methods कॉल करतो.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">रचना - colleagues mediator वर अवलंबून असतात, एकमेकांवर नाही</div>
+        <pre class="mermaid">
+classDiagram
+    class Mediator {
+        &lt;&lt;interface&gt;&gt;
+        +notify(sender, event)
+    }
+    class DialogMediator {
+        -title : TextBox
+        -okButton : Button
+        +notify(sender, event)
+    }
+    class Component {
+        &lt;&lt;abstract&gt;&gt;
+        #mediator : Mediator
+    }
+    class TextBox {
+        +setText(t)
+    }
+    class Button {
+        +setEnabled(b)
+    }
+    Mediator &lt;|.. DialogMediator
+    Component &lt;|-- TextBox
+    Component &lt;|-- Button
+    Component --&gt; Mediator : notifies
+    DialogMediator --&gt; TextBox : controls
+    DialogMediator --&gt; Button : controls
+        </pre>
+      </div>
+
+      <h3>Java मध्ये एक dialog form</h3>
+      <pre><code>// The contract every colleague uses to talk to the hub
+interface Mediator {
+    void notify(Component sender, String event);
+}
+
+// Colleagues know only the mediator, never each other
+abstract class Component {
+    protected Mediator mediator;
+    Component(Mediator mediator) { this.mediator = mediator; }
+}
+
+class TextBox extends Component {
+    private String text = "";
+    TextBox(Mediator m) { super(m); }
+    void type(String value) {
+        this.text = value;
+        mediator.notify(this, "changed");   // report upward
+    }
+    String getText() { return text; }
+}
+
+class Button extends Component {
+    private boolean enabled = false;
+    Button(Mediator m) { super(m); }
+    void setEnabled(boolean e) { this.enabled = e; }
+    boolean isEnabled() { return enabled; }
+}
+
+// The concrete mediator holds the interaction rules in ONE place
+class LoginDialog implements Mediator {
+    private final TextBox username = new TextBox(this);
+    private final TextBox password = new TextBox(this);
+    private final Button submit = new Button(this);
+
+    public void notify(Component sender, String event) {
+        if (event.equals("changed")) {
+            boolean ready = !username.getText().isBlank()
+                         &amp;&amp; password.getText().length() &gt;= 8;
+            submit.setEnabled(ready);       // coordinate the peers
+        }
+    }
+
+    public TextBox username() { return username; }
+    public TextBox password() { return password; }
+    public Button submit()    { return submit; }
+}
+
+// Usage
+LoginDialog dialog = new LoginDialog();
+dialog.username().type("ada");
+dialog.password().type("hunter2secret");
+// submit is now enabled - the fields never touched each other</code></pre>
+      <p class="muted">लक्षात घ्या की <code>TextBox</code> आणि <code>Button</code> मध्ये कोणतेही परस्पर संदर्भ नाहीत. "दोन्ही fields वैध असतील तेव्हा submit सक्षम करा" हा नियम फक्त <code>LoginDialog.notify</code> मध्ये अस्तित्वात आहे, त्यामुळे तो नियम बदलणे म्हणजे एका फाइलमधील संपादन आहे.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - सीक्वेन्स आकृत्या</div>
+      <h2>तपशीलवार सीक्वेन्स आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: एका button ला चालना देणारे form field, एक चॅट-रूम प्रसारण, आणि एका guard सह समन्वित बहु-टप्पा प्रतिक्रिया.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Dialog: field बदलल्याने submit button सक्षम होतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant TB as 📝 TextBox
+    participant M as 🎛️ DialogMediator
+    participant BT as 🔘 SubmitButton
+
+    U->>TB: type password
+    TB->>M: notify(self, changed)
+    M->>M: validate all fields
+    M->>BT: setEnabled(true)
+    Note over M,BT: TextBox never touched the button
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - चॅट रूम: एक संदेश इतरांकडे पसरतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant A as 🙋 Alice
+    participant R as 💬 ChatRoom
+    participant B as 🧑 Bob
+    participant C as 👩 Carol
+
+    A->>R: send("hi team")
+    R->>R: attach sender + timestamp
+    R->>B: deliver(message)
+    R->>C: deliver(message)
+    Note over R,C: Senders never hold peer references
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Guarded समन्वय: नियम पूर्ण झाल्यावरच प्रतिक्रिया</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant CB as ☑️ Checkbox
+    participant M as 🎛️ Mediator
+    participant DP as 📅 DatePicker
+    participant BT as 🔘 Button
+
+    CB->>M: notify(self, toggled)
+    alt checkbox is on
+        M->>DP: enable()
+        M->>BT: setLabel("Schedule")
+    else checkbox is off
+        M->>DP: disable()
+        M->>BT: setLabel("Save")
+    end
+    Note over M: All branching lives in one hub
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">components च्या गुंतागुंतीच्या संचापासून स्वच्छ hub-and-spoke डिझाइनपर्यंत, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">वास</span><h4>गुंता ओळखा</h4><p>अनेक शेजारच्यांचे थेट संदर्भ ठेवणारे components लक्षात घ्या, ज्यांच्यात interaction logic डुप्लिकेट झालेली आहे. प्रत्येक नवीन widget सर्वत्र संपादन करण्यास भाग पाडतो.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">व्याप्ती</span><h4>colleagues ओळखा</h4><p>सध्या एकमेकांशी बोलणारे ऑब्जेक्ट - form fields, buttons, चॅट वापरकर्ते - आणि त्यांच्यात जाणारे इव्हेंट यांची यादी करा.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">करार</span><h4>mediator interface परिभाषित करा</h4><p>एक छोटा करार घोषित करा, सहसा एकच <code>notify(sender, event)</code> method, जो colleagues केंद्राला संकेत देण्यासाठी वापरतील.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">पाया</span><h4>colleagues ना एक mediator field द्या</h4><p>असा base component जोडा जो mediator चा एक संदर्भ साठवतो आणि colleagues मधून सर्व थेट peer संदर्भ काढून टाका.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">कळवा</span><h4>थेट कॉल notify ने बदला</h4><p>जिथे colleague पूर्वी एका शेजाऱ्याला कॉल करत असे, तिथे त्याऐवजी त्याला <code>mediator.notify(this, event)</code> कॉल करू द्या, स्वतःला sender म्हणून पाठवत.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Concrete</span><h4>concrete mediator बनवा</h4><p>असा mediator तयार करा जो सर्व colleagues चे संदर्भ ठेवतो आणि समन्वयाची logic एका जागी सामावेल.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">हलवा</span><h4>interaction logic पुनर्स्थापित करा</h4><p>विखुरलेले "जर हे तर ते" नियम mediator च्या notify method मध्ये हलवा, sender आणि event वर आधारित branching करत.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">जोडा</span><h4>colleagues नोंदवा</h4><p>client किंवा mediator constructor मध्ये, colleagues instantiate करा आणि प्रत्येकाला mediator शी जोडा जेणेकरून graph पूर्ण होईल.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">चालवा</span><h4>चालना द्या आणि समन्वय साधा</h4><p>एक colleague इव्हेंट उत्पन्न करतो; mediator तो तपासतो, नियम लागू करतो, आणि ज्या विशिष्ट colleagues ना प्रतिक्रिया द्यायची आहे त्यांना परत कॉल करतो.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">सांभाळ</span><h4>god object वर लक्ष ठेवा</h4><p>logic जमा होत असताना, मोठे mediators विषयानुसार विभागा किंवा sub-mediators काढा जेणेकरून केंद्र एका अव्यवस्थापनीय राक्षसात फुगणार नाही.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">विस्तार</span><h4>सहभागी स्वस्तात जोडा</h4><p>नवीन colleagues त्याच interface मध्ये plug होतात. तुम्ही mediator ला स्पर्श करता, प्रत्येक शेजाऱ्याला नाही, आणि परस्परसंवाद एका फाइलमध्ये वाचनीय राहतो.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Mediator चा अतिरेक करणे सोपे आहे. या अशा अपयशाच्या पद्धती आहेत ज्या स्वच्छ केंद्राला पुन्हा गोंधळात बदलतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>👑 god object</h4><p>सर्वात मोठा धोका. तुम्ही colleagues मधून काढलेली सर्व logic mediator मध्ये जमा होते जोपर्यंत त्याला सर्व काही माहीत असते आणि तो सर्व काही करतो. तो अस्पर्श्य होण्यापूर्वी त्याला वैशिष्ट्यानुसार विभागा किंवा sub-mediators काढा.</p></div>
+        <div class="card"><h4>🔗 concretes शी लपलेले coupling</h4><p>जर mediator अगदी विशिष्ट colleague प्रकारांवर अगदी विशिष्ट methods कॉल करत असेल, तर colleagues आणि mediator घट्ट बांधले जातात. जिथे शक्य असेल तिथे mediator ला interfaces वर प्रोग्रॅम करत ठेवा.</p></div>
+        <div class="card"><h4>🌀 साध्या प्रकरणांवर अतिवापर</h4><p>स्वच्छपणे बोलणाऱ्या दोन ऑब्जेक्टना केंद्राची गरज नाही. क्षुल्लक one-to-one संबंधासाठी mediator आणल्याने फक्त indirection आणि सांभाळण्यासाठी एक class वाढते.</p></div>
+        <div class="card"><h4>🧵 इव्हेंट सूप</h4><p>event नावांवर मोठ्या if-else असलेला एकच stringly-typed <code>notify</code> समजायला कठीण होतो. branching वाढल्यावर typed events किंवा dispatch map वापरा.</p></div>
+        <div class="card"><h4>🔁 Notification loops</h4><p>एक colleague mediator ला सूचित करतो, जो दुसऱ्या colleague ला update करतो, जो परत सूचित करतो, अशी अनंत साखळी. re-entrant updates आणि अनंत प्रतिध्वनी विरुद्ध सांभाळ करा.</p></div>
+        <div class="card"><h4>🕳️ मागोवा हरवणे</h4><p>परस्परसंवाद अप्रत्यक्ष असल्यामुळे, mediator मार्गे एक वापरकर्ता क्रिया अनुसरणे थेट कॉलपेक्षा कठीण असू शकते. events ना चांगली नावे द्या आणि प्रवाह log करा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Mediator ही एक coupling ची तडजोड आहे: dependencies विकेंद्रित करण्यासाठी तुम्ही गुंतागुंत केंद्रित करता. तुम्ही काय विकत घेत आहात हे जाणून घ्या.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>Many-to-many coupling हे many-to-one पर्यंत कमी करतो, interaction logic केंद्रित करतो, colleagues पुनर्वापरयोग्य आणि चाचणीयोग्य बनवतो, आणि सहभागी जोडणे स्वस्त करतो.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>mediator god object मध्ये वाढू शकतो, control flow अप्रत्यक्ष आणि मागोवा घ्यायला कठीण होते, आणि तो एक class अधिक indirection चा एक थर जोडतो.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>ऑब्जेक्टचा एक गट गुंतागुंतीच्या, गोंधळलेल्या मार्गांनी संवाद साधतो; तुम्हाला components स्वतंत्रपणे पुनर्वापर करायचे आहेत; किंवा interaction नियम वारंवार बदलतात आणि एका जागी राहावेत.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>संबंध साधे किंवा one-to-one असतात, समन्वयाची logic क्षुल्लक असते, किंवा केंद्रीकरण फक्त एक bottleneck class तयार करेल जो कोणालाही सांभाळायचा नसतो.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>आणण्यासाठी कमी ते मध्यम. चालू खर्च म्हणजे mediator ची वाढ अशी सांभाळणे की तो कचरा साठवण्याचे ठिकाण न होता cohesive राहील.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Observer (notification यंत्रणा), Facade (सोपे प्रवेश), Command (encapsulated requests), Colleague आणि coupling कमी करण्याची तत्त्वे.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जेव्हा ऑब्जेक्टमधील कनेक्शन ही समस्या असते, स्वतः ऑब्जेक्ट नाहीत, तेव्हा Mediator कडे वळा. तुम्ही dependency graph काढू शकत असाल आणि तो एकमेकांना छेदणाऱ्या रेषांच्या गोंधळासारखा दिसत असेल, तर एक केंद्र तो सरळ करेल. तो आधीच स्वच्छ tree असेल, तर त्याला तसाच राहू द्या.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>वास्तविक जगातील उदाहरणे</h2>
+      <p class="muted">तीन प्रातिनिधिक ठिकाणे जिथे Mediator पॅटर्न आपली किंमत सिद्ध करतो.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖥️</span><div><h3>1 · GUI dialogs आणि forms</h3><div class="role">पॅटर्न: dialog controller द्वारे समन्वित components</div></div></div>
+        <p class="muted">एका settings dialog मध्ये date pickers सक्षम करणारी checkboxes असतात, save button ला अटी घालणारी fields असतात, आणि panels बदलणारे radio groups असतात.</p>
+        <ul>
+          <li>प्रत्येक widget आपल्या शेजारच्यांना ढोसण्याऐवजी बदल एका dialog mediator ला कळवतो.</li>
+          <li>mediator सर्व enable, disable, आणि validation नियम एका method मध्ये ठेवतो.</li>
+          <li>तेच widgets वेगळ्या mediator सह इतर dialogs मध्ये पुनर्वापरले जातात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> interaction नियम एका class मध्ये वाचनीय असतात, आणि नवीन field जोडणे म्हणजे प्रत्येक विद्यमान widget नाही तर mediator संपादित करणे.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💬</span><div><h3>2 · चॅट रूम आणि संदेशवहन</h3><div class="role">पॅटर्न: एक room सर्व सहभागींच्या संदेशांची दलाली करते</div></div></div>
+        <p class="muted">गट चॅटमधील वापरकर्त्यांनी प्रत्येक वैयक्तिक शेजाऱ्याशी कनेक्शन न उघडता इतर सर्वांपर्यंत पोहोचायचे असते.</p>
+        <ul>
+          <li>प्रत्येक वापरकर्ता room ला पाठवतो; room वितरण, क्रम, आणि filtering ठरवते.</li>
+          <li>नवीन वापरकर्ते room कडे एकदाच नोंदवतात, प्रत्येक विद्यमान वापरकर्त्यासाठी एकदा नाही.</li>
+          <li>mute, history, आणि moderation सारखी वैशिष्ट्ये clients मध्ये नाही तर room मध्ये राहतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> वापरकर्ता जोडणे हे O(1) जोडणी आहे, आणि cross-cutting वैशिष्ट्ये प्रत्येक client मध्ये नाही तर mediator मध्ये बसतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">✈️</span><div><h3>3 · हवाई वाहतूक आणि dispatch नियंत्रण</h3><div class="role">पॅटर्न: एक controller स्वतंत्र actors चा क्रम लावतो</div></div></div>
+        <p class="muted">विमाने (किंवा ride-share drivers, किंवा warehouse robots) यांनी स्पर्धेच्या परिस्थितीत हालचालीचा समन्वय peer to peer करू नये.</p>
+        <ul>
+          <li>प्रत्येक actor आपले स्थान आणि हेतू एका मध्यवर्ती controller ला कळवतो.</li>
+          <li>controller संघर्ष सोडवतो आणि प्रत्येक actor ला परत सूचना देतो.</li>
+          <li>actors साधे आणि परस्पर बदलण्यायोग्य राहतात; समन्वय धोरण एका जागी असते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> सुरक्षित, ऑडिट करण्यायोग्य क्रमवारी जिथे कठीण logic केंद्रित आणि चाचणीयोग्य असते, आणि actors ना एकमेकांचे कोणतेही ज्ञान नसते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगतता</div>
+      <h2>आधुनिक सुसंगतता</h2>
+      <p class="muted">Mediator ची कल्पना आधुनिक software मध्ये सर्वत्र आहे, बहुतेक वेळा वेगळ्या नावांखाली, कारण loose coupling कधीही जुनी झाली नाही.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Front-end state stores</h4><p>Redux-शैलीचे stores आणि event buses हे mediators आहेत: components एकमेकांना थेट बदलण्याऐवजी एका मध्यवर्ती store कडे actions dispatch करतात.</p></div>
+        <div class="card"><h4>📮 Message brokers</h4><p>Kafka, RabbitMQ, आणि service buses हे वितरित mediators आहेत, जे producers ना consumers पासून decouple करतात जेणेकरून एकाला दुसऱ्याचे अस्तित्व माहीत नसते.</p></div>
+        <div class="card"><h4>🎯 MediatR लायब्ररी</h4><p>.NET जगात, in-process mediators requests हे handlers कडे मार्गस्थ करतात, controllers पातळ ठेवत आणि समन्वय केंद्रित ठेवत.</p></div>
+        <div class="card"><h4>🕹️ microservices मधील orchestration</h4><p>Orchestrators बहु-service workflows चा समन्वय साधतात जेणेकरून वैयक्तिक services व्यापक choreography बद्दल अनभिज्ञ राहतात.</p></div>
+        <div class="card"><h4>🤖 Multi-agent systems</h4><p>specialist agents कडे tasks मार्गस्थ करणारा एक orchestrator agent हा एक mediator आहे, जो agents ना एकमेकांपासून decoupled ठेवतो.</p></div>
+        <div class="card"><h4>⚠️ चिरंतन इशारा</h4><p>प्रत्येक प्रमाणावर तोच इशारा लागू होतो: परस्परसंवाद केंद्रित करा, पण केंद्राला god object किंवा single point of failure मध्ये फुगू देऊ नका.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Mediator हा असा मार्ग आहे ज्याने तुम्ही परस्परसंवाद करणाऱ्या ऑब्जेक्टचा गोंधळ त्यांच्या संभाषणाला एकच घर देऊन आवरता. शिस्तीने वापरल्यास तो quadratic coupling हे linear, वाचनीय समन्वयात बदलतो; निष्काळजीपणे वापरल्यास तो फक्त गोंधळ एका अवाढव्य class मध्ये हलवतो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Mediator अशा patterns आणि तत्त्वांमध्ये बसतो जे ऑब्जेक्ट एकमेकांवर कसे अवलंबून असतात हे घडवतात. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>notify यंत्रणा जी mediator बहुतेक वेळा अंतर्गत वापरतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../facade/"><span class="ico">🚪</span><h4>Facade</h4><p>एक subsystem सोपे करते, पण mediator सारखी नवीन logic जोडत नाही.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../command/"><span class="ico">📜</span><h4>Command</h4><p>एक request encapsulate करतो जो mediator queue किंवा dispatch करू शकतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🧲</span><h4>Coupling आणि cohesion</h4><p>मुख्य तत्त्व ज्यात सुधारणा करण्यासाठी Mediator अस्तित्वात आहे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Mediator चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · तडजोडी · उदाहरणे · सुसंगतता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

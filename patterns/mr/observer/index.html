@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Observer पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Observer पॅटर्नचे सखोल, दृश्यात्मक मार्गदर्शन: one-to-many अवलंबित्व, publish/subscribe, push विरुद्ध pull मॉडेल, reactive streams, lapsed-listener गळती, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि आधुनिक उपयुक्तता." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral पॅटर्न</span>
+      <h1>Observer पॅटर्न - एक बदल, अनेक प्रतिक्रिया</h1>
+      <p class="lede">Observer हे ऑब्जेक्ट्समध्ये <strong>one-to-many</strong> अवलंबित्व निश्चित करते: जेव्हा एक ऑब्जेक्ट (subject) आपली स्थिती बदलतो, तेव्हा त्यावर अवलंबून असलेल्या सर्वांना (observers) आपोआप सूचित केले जाते आणि अद्ययावत केले जाते. हे इव्हेंट सिस्टिम्स, UI डेटा बाइंडिंग आणि reactive streams चा कणा आहे. बदलणारी गोष्ट आणि त्याची काळजी करणाऱ्या अनेक गोष्टी यांच्यात तुम्हाला loose coupling मिळते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Subject आणि observers</span>
+        <span class="pill">Publish/subscribe</span>
+        <span class="pill">Push विरुद्ध pull</span>
+        <span class="pill">Reactive streams</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Observer पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Observer</strong> एका ऑब्जेक्टला कोण ऐकत आहे हे न कळता बदल प्रकाशित करू देते. एक <em>subject</em> <em>observers</em> ची यादी ठेवतो आणि जेव्हा जेव्हा त्याची स्थिती बदलते, तेव्हा तो त्या यादीवर फिरून प्रत्येकावर <code>update</code> मेथड कॉल करतो. Observers रनटाइमला subscribe आणि unsubscribe करू शकतात, त्यामुळे ऐकणाऱ्यांचा संच पूर्णपणे डायनॅमिक असतो आणि subject ला ठोस observer प्रकारांविषयी काहीच माहीत नसते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📣</span> Subject (publisher)</h4>
+          <p>महत्त्वाची स्थिती आणि observers ची नोंदणी ठेवतो. <code>subscribe</code>, <code>unsubscribe</code> आणि <code>notify</code> उपलब्ध करून देतो. त्याला कधीच ठोस observer classes माहीत नसतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">👂</span> Observer (subscriber)</h4>
+          <p>एक समान interface लागू करतो, सहसा एक <code>update</code> मेथड. तो इतर observers पासून स्वतंत्रपणे, त्याला हवे तसे बदलावर प्रतिक्रिया देतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔔</span> सूचना (Notification)</h4>
+          <p>जेव्हा स्थिती बदलते, तेव्हा subject आपल्या यादीवर फिरतो आणि प्रत्येक observer वर <code>update</code> कॉल करतो. डेटा एकतर कॉलमध्ये push केला जातो किंवा subject कडून pull केला जातो.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>सामान्य रूप</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Subject</strong></td><td>स्थिती आणि observer नोंदणीचा मालक</td><td>Concrete class, <code>EventEmitter</code>, <code>Subject</code></td></tr>
+            <tr><td><strong>Observer interface</strong></td><td>बदलावर subject जो करार कॉल करतो</td><td><code>update()</code>, callback, listener</td></tr>
+            <tr><td><strong>Subscription</strong></td><td>रनटाइमला observer जोडतो किंवा काढतो</td><td><code>subscribe</code> एक unsubscribe handle परत करतो</td></tr>
+            <tr><td><strong>Notification</strong></td><td>बदल सर्व observers ना प्रसारित करतो</td><td>Push payload किंवा subject कडून pull</td></tr>
+            <tr><td><strong>Event object</strong></td><td>बदलासोबत वाहून नेलेला ऐच्छिक डेटा</td><td>Event, message, delta, snapshot</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> subject विशिष्ट ऑब्जेक्ट्सना कॉल करत नाही, तो प्रसारण करतो. Observer ज्ञानाची दिशा उलटवते, अनेक जण एकावर अवलंबून असतात आणि तो एक फक्त एका interface शिवाय कशावरही अवलंबून नसतो.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Observer का अस्तित्वात आहे</h2>
+      <p class="muted">त्याशिवाय, बदलणाऱ्या ऑब्जेक्टला प्रतिक्रिया देणाऱ्या प्रत्येक ऑब्जेक्टचे कॉल हार्डकोड करावे लागतात. एक नवीन ग्राहक जोडा आणि तुम्हाला producer मध्ये बदल करावा लागतो. Observer ते अवलंबित्व तोडते जेणेकरून producers आणि consumers वेगवेगळे विकसित होतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔗 Loose coupling</h4><p>Subject फक्त observer interface वर अवलंबून असतो, ठोस listeners वर नाही. स्थिती बदलणाऱ्या कोडला हात न लावता तुम्ही प्रतिक्रिया जोडू, काढू किंवा बदलू शकता.</p></div>
+        <div class="card"><h4>📡 प्रसारण संवाद</h4><p>एका स्थिती-बदलामुळे अनेक इच्छुक पक्षांपर्यंत एकाच पावलात माहिती पसरते. नवीन consumers फक्त subscribe करतात; producer ला त्यांची नावे कधीच कळत नाहीत.</p></div>
+        <div class="card"><h4>⏱️ रनटाइम लवचिकता</h4><p>प्रोग्राम चालू असताना observers नोंदणी करतात आणि नोंदणी रद्द करतात. प्रतिक्रियांचा संच म्हणजे डेटा असतो, compile वेळी निश्चित केलेला कॉल आलेख नसतो.</p></div>
+        <div class="card"><h4>🎯 जबाबदाऱ्यांचे विभाजन</h4><p>स्थितीचा मालक असलेली गोष्ट स्वतःच्या कामावर केंद्रित राहते. Logging, UI रिफ्रेश, caching आणि analytics प्रत्येक स्वतःच्या observer मध्ये राहतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Observer समजावले</h2>
+      <p class="muted">एकच कल्पना, कल्पना करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटकन कळेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे एका <strong>वर्गाच्या ग्रुप चॅट</strong>सारखे आहे. जेव्हा शिक्षक परीक्षेची तारीख पोस्ट करतात, तेव्हा subscribe केलेल्या प्रत्येकाला एकाच वेळी संदेश मिळतो. शिक्षक प्रत्येक विद्यार्थ्याला वेगळा मेसेज करत नाहीत, आणि विद्यार्थी कधीही ग्रुप सोडू शकतात.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे <strong><code>addEventListener</code></strong> आहे. एक बटण callbacks ची यादी ठेवते; क्लिकवर ते सर्वांना कॉल करते. बटणाला तुमच्या handlers विषयी काहीच माहीत नसते, आणि component unmount झाल्यावर तुम्ही listener काढू शकता.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>कंपनीच्या मेलिंग यादीचा</strong> विचार करा. एक घोषणा प्रकाशित करा आणि प्रत्येक subscriber ला ती मिळते. लोक मुक्तपणे सामील होतात आणि बाहेर पडतात, आणि पाठवणारा कधीच प्रत्येक व्यक्तीचे पत्ते ठेवत नाही.</p></div>
+        <div class="card"><h4><span class="ico">📰</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>वृत्तपत्राची वर्गणी</strong>. वृत्तपत्र एकदा छापले जाते आणि प्रत्येक सध्याच्या subscriber पर्यंत पोहोचवले जाते. रद्द करा आणि वितरण थांबते; प्रकाशकाला तुम्ही कोण आहात हे कळण्याची गरज नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे कार्य करते</h2>
+      <p class="muted">दोन हलणारे भाग: एक <strong>subject</strong> जो observers ची यादी सांभाळतो आणि सूचना पाठवतो, आणि <strong>observers</strong> जे एक सामायिक interface लागू करतात आणि प्रतिक्रिया देतात. एकमेव खरी डिझाइन निवड म्हणजे डेटा observer पर्यंत कसा पोहोचतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📤</span> Push मॉडेल</h4>
+          <p>Subject बदललेला डेटा सूचनेच्या आत पाठवतो, उदाहरणार्थ <code>update(temperature)</code>. सोपे आणि स्वयंपूर्ण, पण प्रत्येक observer ला काय हवे आहे याचा subject ला अंदाज लावावा लागतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📥</span> Pull मॉडेल</h4>
+          <p>Subject फक्त काहीतरी बदलले असा संकेत देतो; प्रत्येक observer त्याला हवी असलेली नेमकी स्थिती वाचण्यासाठी परत कॉल करतो. अधिक लवचिक, पण अतिरिक्त फेऱ्या आणि subject वर घट्ट प्रवेशाच्या किंमतीवर.</p>
+        </div>
+      </div>
+
+      <h3>सहभागी आणि नाती</h3>
+      <div class="diagram">
+        <div class="cap">रचना - एक subject अनेक observers ना एका interface मागे ठेवतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Subject {
+        +subscribe(o Observer)
+        +unsubscribe(o Observer)
+        +notify()
+    }
+    class Observer {
+        <<interface>>
+        +update(event)
+    }
+    class WeatherStation {
+        -float temperature
+        +setTemperature(t)
+    }
+    class PhoneDisplay {
+        +update(event)
+    }
+    class LogService {
+        +update(event)
+    }
+    Subject <|-- WeatherStation
+    Observer <|.. PhoneDisplay
+    Observer <|.. LogService
+    Subject o--> Observer : notifies many
+</pre>
+      </div>
+
+      <h3>TypeScript मधील एक वास्तववादी अंमलबजावणी</h3>
+      <pre><code>type Listener&lt;T&gt; = (event: T) =&gt; void;
+
+class Subject&lt;T&gt; {
+  private listeners = new Set&lt;Listener&lt;T&gt;&gt;();
+
+  // subscribe returns an unsubscribe handle - the modern idiom
+  subscribe(fn: Listener&lt;T&gt;): () =&gt; void {
+    this.listeners.add(fn);
+    return () =&gt; this.listeners.delete(fn);
+  }
+
+  // push model: the changed data travels with the notification
+  notify(event: T): void {
+    // copy first so an observer unsubscribing mid-notify is safe
+    for (const fn of [...this.listeners]) fn(event);
+  }
+}
+
+// --- usage ---
+interface Weather { tempC: number; humidity: number }
+const station = new Subject&lt;Weather&gt;();
+
+const off = station.subscribe(w =&gt; console.log(`Phone: ${w.tempC}C`));
+station.subscribe(w =&gt; console.log(`Log: humidity ${w.humidity}%`));
+
+station.notify({ tempC: 21, humidity: 55 }); // both observers fire
+off();                                        // phone stops listening
+station.notify({ tempC: 22, humidity: 50 }); // only the log fires
+</code></pre>
+      <p class="muted"><code>subscribe</code> मधून एक unsubscribe फंक्शन परत करणे ही या पॅटर्नची सर्वात महत्त्वाची सोयीस्कर सुधारणा आहे. ते प्रत्येक subscriber ला जुळणारी teardown देते, जे खालील lapsed-listener गळती नेमके तेच टाळते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: subscribe करणे, अनेक observers ना push सूचना, आणि गळती टाळणाऱ्या unsubscribe सह pull मॉडेल.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Subscribe करणे: observers subject कडे नोंदणी करतात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant O1 as 📱 Phone display
+    participant O2 as 📝 Log service
+    participant S as 📣 Subject
+
+    O1->>S: subscribe(this)
+    S-->>O1: unsubscribe handle
+    O2->>S: subscribe(this)
+    S-->>O2: unsubscribe handle
+    Note over S: Subject now holds two observers
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Push notify: एक बदल सर्व observers पर्यंत पसरतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🌡️ Caller
+    participant S as 📣 Subject
+    participant O1 as 📱 Phone display
+    participant O2 as 📝 Log service
+
+    C->>S: setState(temp=22)
+    S->>S: state changed
+    loop for each observer
+        S->>O1: update(event)
+        O1-->>S: rendered
+        S->>O2: update(event)
+        O2-->>S: written
+    end
+    S-->>C: notify complete
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Pull मॉडेल अधिक lapsed-listener गळती टाळण्यासाठी unsubscribe</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant S as 📣 Subject
+    participant O as 📱 Observer
+
+    S->>O: update() signal only
+    O->>S: getState()
+    S-->>O: current value
+    Note over O: reads exactly what it needs
+    alt observer is destroyed
+        O->>S: unsubscribe()
+        S->>S: drop reference
+        Note over S,O: observer can be garbage collected
+    else observer forgets to unsubscribe
+        Note over S,O: subject keeps reference forever - leak
+    end
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">करार निश्चित करण्यापासून ते स्वच्छ teardown पर्यंत - Observer क्रमाने अंमलात आणणे आणि वापरणे.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">करार</span><h4>Observer interface निश्चित करा</h4><p>Subject जी मेथड कॉल करेल ती ठरवा, उदाहरणार्थ <code>update(event)</code>. हा एक करार म्हणजे subject कधीही अवलंबून असलेली एकमेव गोष्ट आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Subject</span><h4>Subject नोंदणी तयार करा</h4><p>Subject ला observers चा संग्रह अधिक <code>subscribe</code>, <code>unsubscribe</code> आणि <code>notify</code> द्या. एक set डुप्लिकेट नोंदण्या टाळतो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">मॉडेल</span><h4>Push किंवा pull निवडा</h4><p>Push कॉलमध्ये बदललेला डेटा पाठवते; pull फक्त एक संकेत पाठवते आणि observers ना त्यांना हवे ते वाचू देते. Observers किती वैविध्यपूर्ण आहेत यावर आधारित निवडा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Observer</span><h4>ठोस observers अंमलात आणा</h4><p>Interface पूर्ण करणारे classes किंवा callbacks लिहा. प्रत्येक स्वतंत्रपणे प्रतिक्रिया देतो: एक view रिफ्रेश करा, log लिहा, cache अवैध करा.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">नोंदणी</span><h4>रनटाइमला observers subscribe करा</h4><p>Observers <code>subscribe</code> कॉल करतात आणि परत मिळालेला unsubscribe handle ठेवतात. Subject ला आता त्यांना भविष्यातील सूचनांमध्ये समाविष्ट करायचे कळते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">बदल</span><h4>Subject स्थिती बदला</h4><p>काही caller subject अद्ययावत करतो. Subject बदल शोधतो आणि ऐकणाऱ्या प्रत्येकाला तो प्रसारित करण्याची तयारी करतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">सूचना</span><h4>सर्व observers ना प्रसारित करा</h4><p>Subject आपल्या यादीवर फिरतो, प्रत्येक observer वर <code>update</code> कॉल करतो. एका प्रतीवर फिरा जेणेकरून notify दरम्यानचा unsubscribe loop बिघडवू शकणार नाही.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">प्रतिक्रिया</span><h4>Observers इव्हेंट हाताळतात</h4><p>प्रत्येक observer स्वतःचे logic चालवतो. अपयश वेगळे केले पाहिजे जेणेकरून एक अपवाद टाकणारा observer उर्वरित प्रसारणाला अडवणार नाही.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">क्रम</span><h4>क्रम आणि reentrancy विचारात घ्या</h4><p>Notify दरम्यान एक observer subject बदलत असेल, तर तुम्ही एक cascade सुरू करू शकता. Reentrancy विरुद्ध रक्षण करा आणि कोणताही सूचना क्रम गृहीत धरू नका.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Unsubscribe</span><h4>काम झाल्यावर वेगळे करा</h4><p>जेव्हा एक observer यापुढे आवश्यक नसतो, तेव्हा त्याचा unsubscribe handle कॉल करा. हे संदर्भ काढून टाकते आणि मेमरी आरोग्यासाठी एकमेव सर्वात महत्त्वाचे पाऊल आहे.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पडताळणी</span><h4>कोणतीही गळती उरली नाही याची खात्री करा</h4><p>नष्ट झालेले observers नोंदणीतून गेले आहेत का ते तपासा. दीर्घायुषी subjects मध्ये, weak references किंवा स्पष्ट teardown listener यादीला अनंतपणे वाढण्यापासून रोखतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Observer जोडणे सोपे आहे आणि गैरवापर करणेही सोपे आहे. वास्तविक सिस्टिम्समध्ये दिसणारी ही अपयशे आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Lapsed-listener गळती</h4><p>क्लासिक बग: एक observer टाकून दिला जातो पण कधीच unsubscribe केला जात नाही, त्यामुळे subject त्याचा एक strong संदर्भ कायमचा ठेवतो. तो garbage collect होऊ शकत नाही आणि त्याचे <code>update</code> अजूनही चालते. नेहमी subscribe ला unsubscribe सोबत जोडा, किंवा weak references वापरा.</p></div>
+        <div class="card"><h4>🔁 सूचना cascades</h4><p>Notify दरम्यान subject बदलणारा observer आणखी एक notify सुरू करू शकतो, आणि आणखी एक. अनियंत्रित reentrancy मुळे अनावश्यक काम, शिळ्या मध्यवर्ती स्थिती किंवा अनंत loops होतात.</p></div>
+        <div class="card"><h4>🧨 एक observer प्रसारण मोडतो</h4><p>जर <code>notify</code> त्रुटी वेगळ्या न करता observers ना कॉल करते, तर एकच टाकलेला अपवाद loop रद्द करतो आणि नंतरचे observers कधीच चालत नाहीत. प्रत्येक observer साठी catch करा नाहीतर बदल गुपचूप अर्धवट लागू होतो.</p></div>
+        <div class="card"><h4>❓ अनपेक्षित क्रम</h4><p>Observers विशिष्ट क्रमाने चालण्यावर गुपचूप अवलंबून असणारा कोड नाजूक असतो. नोंदणी क्रम हा अंमलबजावणीचा तपशील आहे, तुम्ही अवलंबून राहावा असा करार नाही.</p></div>
+        <div class="card"><h4>🌀 Update वादळे</h4><p>प्रत्येक बारीक बदल एक सूचना सुरू करत असेल तर तो observers ना पूर आणू शकतो - एका तार्किक कृतीसाठी शेकडो updates. Broadcast करण्यापूर्वी batch किंवा debounce करा, किंवा बदल एकत्र करा.</p></div>
+        <div class="card"><h4>🔗 इव्हेंटमार्फत लपलेले coupling</h4><p>Events मध्ये subject चे अंतर्गत तपशील भरणे तुम्ही टाळत असलेले घट्ट coupling पुन्हा निर्माण करते. Payloads लहान आणि स्थिर ठेवा जेणेकरून observers subject च्या अंतर्गत भागांपर्यंत पोहोचणार नाहीत.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Observer decoupling आणि डायनॅमिक प्रतिक्रिया मिळवते, पण ते थेटपणा गमावते आणि नियंत्रण-प्रवाह अस्पष्ट करू शकते.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>Loose coupling, रनटाइम subscribe/unsubscribe, one-to-many प्रसारण, subject मध्ये बदल न करता नवीन observers साठी खुले.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अप्रत्यक्ष नियंत्रण-प्रवाह जो शोधणे कठीण, मेमरी गळतीचा धोका, cascades आणि अनिश्चित सूचना क्रम.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>अनेक ऑब्जेक्ट्सना एका स्थिती-बदलावर प्रतिक्रिया द्यावी लागते, listeners चा संच रनटाइमला बदलतो, आणि producer ला त्याचे consumers माहीत नसावेत.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>नेमका एक, निश्चित consumer असतो, किंवा जेव्हा reactive अप्रत्यक्षपणा एका साध्या थेट कॉलला विनाकारण अनुसरण्यास कठीण बनवते.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>जोडणे सोपे, सुरक्षितपणे चालवणे मध्यम - lifecycle व्यवस्थापन आणि reentrancy ही खरी किंमत आहे, प्रारंभिक कोड नाही.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Publish/subscribe (broker मार्फत decoupled), Mediator (परस्परसंवाद केंद्रित करते), Reactive streams (backpressure आणि operators सह observers).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अनुभवाचा नियम:</strong> जेव्हा एक बदलणारी गोष्ट अनेक, बदलणारे listeners असते तेव्हा Observer कडे वळा. जर संवाद many-to-many असेल आणि समन्वयाच्या नियमांची गरज असेल, तर त्याऐवजी Mediator कडे वळा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन ठिकाणे जिथे Observer पॅटर्न शांतपणे सर्व सूत्रे चालवते.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖱️</span><div><h3>1 · ब्राउझर DOM events</h3><div class="role">पॅटर्न: addEventListener मार्फत push-model observers</div></div></div>
+        <p class="muted">प्रत्येक UI फ्रेमवर्क आणि साधे पान DOM एलिमेंट्सवर अवलंबून असते जे नोंदणीकृत handlers ना events प्रसारित करतात.</p>
+        <ul>
+          <li>एक एलिमेंट म्हणजे subject; <code>addEventListener</code> एका callback observer ला subscribe करते.</li>
+          <li>परस्परसंवादावर एलिमेंट प्रत्येक handler ला एक <code>Event</code> ऑब्जेक्ट push करते.</li>
+          <li><code>removeEventListener</code> unsubscribe करते; काढलेल्या node वर ते विसरल्याने handler ची गळती होते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> कितीही स्वतंत्र handlers एकाच क्लिकला प्रतिसाद देतात, आणि एलिमेंटला त्यांच्याविषयी काहीच माहीत नसते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌊</span><div><h3>2 · Reactive streams (RxJS, Reactor)</h3><div class="role">पॅटर्न: operators आणि backpressure सह observers</div></div></div>
+        <p class="muted">Reactive लायब्ररी Observer ला काळानुसार events च्या composable streams मध्ये सामान्यीकृत करतात.</p>
+        <ul>
+          <li>एक <code>Observable</code> म्हणजे subject; <code>subscribe</code> एक observer जोडते आणि एक <code>Subscription</code> परत करते.</li>
+          <li><code>map</code>, <code>filter</code> आणि <code>debounce</code> सारखे operators सूचना stream रूपांतरित करतात.</li>
+          <li>Unsubscribe केल्याने साखळी विरून जाते, आणि backpressure वेगवान producers नियंत्रित करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> जटिल async इव्हेंट pipelines त्याच subscribe-and-notify गाभ्यावर declarative पद्धतीने तयार होतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗂️</span><div><h3>3 · State stores आणि data binding</h3><div class="role">पॅटर्न: एका मध्यवर्ती store चे UI observers</div></div></div>
+        <p class="muted">Redux, MobX, Vue आणि signals सर्व, अनुप्रयोगाची स्थिती बदलल्यावर subscribe केलेल्या views ना सूचित करतात.</p>
+        <ul>
+          <li>Store म्हणजे subject; components त्यांना ज्याची काळजी आहे त्या स्थितीच्या भागांना subscribe करतात.</li>
+          <li>एक dispatch केलेला बदल subscribers ना सूचित करतो, जे नवीन मूल्यासह पुन्हा render होतात.</li>
+          <li>फ्रेमवर्क unmount वर आपोआप unsubscribe करतात जेणेकरून lapsed-listener गळती टळते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> UI आपोआप स्थितीशी सुसंगत राहते, store आणि प्रत्येक view यांच्यात कोणतीही मॅन्युअल जोडणी न करता.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - उपयुक्तता</div>
+      <h2>आधुनिक उपयुक्तता</h2>
+      <p class="muted">Gang of Four ने त्याला नाव दिले तेव्हापेक्षा Observer आता अधिक केंद्रस्थानी आहे, आपण रोज वापरत असलेल्या साधनांमध्ये लपलेले.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚡ Signals आणि बारीक reactivity</h4><p>Solid, Angular, Vue आणि Preact मधील signals म्हणजे मूल्याच्या पातळीवरचे Observer - एक signal वाचणे subscribe करते, ते लिहिणे notify करते, स्वयंचलित dependency tracking सह.</p></div>
+        <div class="card"><h4>🌊 सर्वत्र reactive programming</h4><p>RxJS, Reactor आणि Combine या पॅटर्नला operators, scheduling आणि async इव्हेंट प्रवाहांसाठी backpressure असलेल्या पूर्ण stream बीजगणितांमध्ये रूपांतरित करतात.</p></div>
+        <div class="card"><h4>📨 Event-driven आर्किटेक्चर</h4><p>Kafka, message brokers आणि pub/sub सिस्टिम्स त्याच publish-and-subscribe कल्पनेला सेवा आणि मशीन्सवर scale करतात.</p></div>
+        <div class="card"><h4>🧹 Lifecycle-सुरक्षित subscriptions</h4><p>फ्रेमवर्क hooks, <code>AbortController</code> आणि effect cleanup unsubscribe स्वयंचलित करतात, आणि lapsed-listener गळती डीफॉल्टपणे निवृत्त करतात.</p></div>
+        <div class="card"><h4>🪶 Weak references</h4><p><code>WeakRef</code> आणि weak listener संग्रह subjects ना garbage collection रोखल्याशिवाय observers धरून ठेवू देतात, गळतीविरुद्ध एक अंगभूत संरक्षण.</p></div>
+        <div class="card"><h4>🔌 WebSockets आणि live data</h4><p>रिअल-टाइम डॅशबोर्ड, सहयोगी संपादक आणि live feeds म्हणजे बदल घडताच त्यांना push करणाऱ्या सर्व्हरला प्रतिक्रिया देणारे observers.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> कोण कशावर प्रतिक्रिया देतो हे हार्डवायर न करता सॉफ्टवेअर बदलावर कशी प्रतिक्रिया देते ते म्हणजे Observer. एका बटण क्लिकपासून ते वितरित इव्हेंट बसपर्यंत, तोच subscribe-and-notify गाभा तुम्ही स्पर्श करता त्या जवळपास प्रत्येक interactive आणि reactive सिस्टिमला आधार देतो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Observer इतर behavioral patterns मध्ये राहते. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../mediator/"><span class="ico">🗣️</span><h4>Mediator</h4><p>प्रसारण करण्याऐवजी many-to-many परस्परसंवाद केंद्रित करते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../command/"><span class="ico">🎛️</span><h4>Command</h4><p>Observers जी अनेकदा वाहून नेतात किंवा सुरू करतात त्या कृतींना ठोस रूप देते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../state/"><span class="ico">🚦</span><h4>State</h4><p>स्थिती-बदल हे नेमके तेच आहे ज्याची observers वाट पाहतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔁</span><h4>Iterator</h4><p>प्रत्येकाला सूचित करण्यासाठी observer यादी पार करणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Observer चे दृश्यात्मक मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · उपयुक्तता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flyweight समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Flyweight या structural pattern चे सखोल, दृश्य मार्गदर्शन: अत्यंत मोठ्या संख्येने ऑब्जेक्ट्स कार्यक्षमतेने साठवण्यासाठी ऑब्जेक्ट्स सामायिक करणे, intrinsic विरुद्ध extrinsic state, flyweight factory, अपरिवर्तनीयता, sequence diagrams, 0 ते 100 प्रवाह, केस स्टडीज आणि आधुनिक प्रासंगिकता." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>Flyweight लाखो ऑब्जेक्ट्स परवडणारे कसे बनवते</h1>
+      <p class="lede">दहा लाख अक्षरे असलेले document किंवा दहा लाख particles असलेला गेम रेंडर करताना, प्रत्येक जर जड ऑब्जेक्ट असेल तर memory फुटून जाते. Flyweight हे दुरुस्त करते: जे भाग पुन्हा पुन्हा येतात ते (intrinsic state) सर्व instances मध्ये ते <strong>सामायिक</strong> करते आणि जे भाग बदलतात ते (extrinsic state) call च्या वेळी <strong>आत पाठवते</strong>, त्यामुळे मूठभर सामायिक ऑब्जेक्ट्स जवळजवळ अमर्याद संख्येने logical ऑब्जेक्ट्सना आधार देऊ शकतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Intrinsic state</span>
+        <span class="pill">Extrinsic state</span>
+        <span class="pill">Flyweight factory</span>
+        <span class="pill">अपरिवर्तनीयता</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Flyweight pattern म्हणजे काय?</h2>
+      <p class="muted"><strong>Flyweight</strong> हा एक structural pattern आहे जो अनेक समान ऑब्जेक्ट्समध्ये शक्य तितका data सामायिक करून memory चा वापर कमी करतो. तो ऑब्जेक्टच्या state चे दोन भाग करून काम करतो: <em>intrinsic</em> state जो अनेक instances मध्ये सारखाच असतो आणि सामायिक करता येतो, आणि <em>extrinsic</em> state जो प्रत्येक वापरागणिक वेगळा असतो आणि caller पुरवतो. एक factory सामायिक flyweights वाटते त्यामुळे एकसारखा intrinsic state फक्त एकदाच साठवला जातो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Intrinsic state</h4>
+          <p>संदर्भरहित, सामायिक करता येण्याजोगा data जो instances मध्ये पुन्हा पुन्हा येतो (एखाद्या glyph चा font आणि outline, एखाद्या झाडाचा mesh आणि texture). flyweight च्या आत एकदाच साठवला जातो आणि कधीही बदलला जात नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📍</span> Extrinsic state</h4>
+          <p>संदर्भावर अवलंबून असलेला data जो प्रत्येक instance गणिक बदलतो (एखाद्या अक्षराचे स्क्रीनवरील स्थान, एखाद्या particle चा velocity). flyweight च्या बाहेर ठेवला जातो आणि arguments म्हणून आत पाठवला जातो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏭</span> Flyweight factory</h4>
+          <p>एक pool जो key नुसार flyweights तयार करतो आणि cache करतो. आधीच अस्तित्वात असलेला मागा आणि तुम्हाला तोच सामायिक instance परत मिळतो, त्यामुळे intrinsic state कधीही डुप्लिकेट होत नाही.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>उदाहरण (text editor)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Flyweight</strong></td><td>intrinsic state धरतो आणि आत पाठवलेल्या extrinsic state वर काम करतो</td><td>'a' या अक्षरासाठी एक <code>Glyph</code></td></tr>
+            <tr><td><strong>Flyweight factory</strong></td><td>flyweights तयार करतो आणि pool करतो, सामायिक instances परत देतो</td><td><code>GlyphFactory.get('a')</code></td></tr>
+            <tr><td><strong>Intrinsic state</strong></td><td>flyweight च्या आतील सामायिक, अपरिवर्तनीय data</td><td>Character code, font, outline</td></tr>
+            <tr><td><strong>Extrinsic state</strong></td><td>client पुरवत असलेला प्रत्येक-वापरागणिक data</td><td>Row, column, color</td></tr>
+            <tr><td><strong>Client / context</strong></td><td>extrinsic state साठवतो आणि flyweight ला call करतो</td><td>glyphs मांडणारे document</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Flyweight <em>logical</em> ऑब्जेक्ट्सची संख्या कमी करत नाही, ती <em>physical</em> ऑब्जेक्ट्सची संख्या कमी करते. स्क्रीनवरील दहा लाख अक्षरे कदाचित शंभर सामायिक glyphs आणि स्थानांच्या एका स्वस्त array द्वारे आधारलेली असतात.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Flyweight का अस्तित्वात आहे</h2>
+      <p class="muted">जेव्हा तुम्हाला बहुतांशी एकसारख्या ऑब्जेक्ट्सची अत्यंत मोठी संख्या हवी असते, तेव्हा भोळसट पद्धत तोच जड data पुन्हा पुन्हा साठवते. Flyweight सामायिक भाग एकदाच साठवून RAM चा वापर सपाट ठेवते, कितीही logical ऑब्जेक्ट्स त्याला संदर्भित करत असले तरी.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪶 Memory चा वापर मोठ्या प्रमाणात कमी करते</h4><p>दहा लाख जड ऑब्जेक्ट्सऐवजी, तुम्ही काही सामायिक flyweights आणि प्रत्येक instance गणिक छोटासा context धरता. डुप्लिकेट झालेला intrinsic state memory मध्ये एकाच copy मध्ये संकुचित होतो.</p></div>
+        <div class="card"><h4>⚡ चांगले cache आणि GC वर्तन</h4><p>कमी, छोट्या allocations म्हणजे garbage collector वर कमी दबाव आणि प्रचंड collections वर iterate करताना खूप चांगली CPU cache locality.</p></div>
+        <div class="card"><h4>♻️ रचनेतूनच deduplication</h4><p>factory याची हमी देते की तोच intrinsic key दोनदा मागितल्यास अगदी तोच ऑब्जेक्ट मिळतो, त्यामुळे समान गोष्टी फक्त logical दृष्ट्या समान नसून physical दृष्ट्या सामायिक होतात.</p></div>
+        <div class="card"><h4>🎯 अशक्य ते शक्य करते</h4><p>जे systems आपले ऑब्जेक्ट्स स्वतंत्रपणे कधीही धरू शकले नसते - forest renderers, particle systems, tile maps - ते पुन्हा पुन्हा येणारा जड भाग सामायिक केल्यावर व्यवहार्य बनतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Flyweight ची स्पष्टता</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, त्यामुळे तुम्ही कोणीही असलात तरी ती डोक्यात बसते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एका <strong>रबर stamp</strong> चा विचार करा. एकच कोरलेला stamp (सामायिक intrinsic भाग) तोच आकार हजारो वेळा उमटवतो; बदलणारी एकच गोष्ट म्हणजे तुम्ही पानावर <em>कुठे</em> उमटवता (extrinsic स्थान). प्रत्येक उमटवण्यासाठी तुम्ही नवीन stamp कधीच कोरत नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>हे <strong>interned strings किंवा constant pool</strong> सारखे आहे. प्रत्येक <code>"OK"</code> literal एकाच सामायिक ऑब्जेक्टकडे निर्देश करते; ते धरणारा variable फक्त एक reference वाहतो. Flyweight संपूर्ण ऑब्जेक्ट्स intern करते आणि बदलणारा data त्यांना parameters म्हणून पुरवते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>call center script</strong> ची कल्पना करा. एकच छापलेली script (सामायिक) प्रत्येक ग्राहकाला वाचून दाखवली जाते; ग्राहकाचे नाव आणि account number (प्रत्येक-call context) जागच्या जागी भरले जातात. प्रत्येक calling साठी तुम्ही script पुन्हा छापत नाही.</p></div>
+        <div class="card"><h4><span class="ico">♟️</span> रोजच्या जीवनातील आवृत्ती</h4><p>एका <strong>बुद्धिबळाच्या संचात</strong> प्याद्याची एकच रचना असते. board आठ पांढरे प्यादे आठ वेगळ्या प्याद्यांची रचना कोरून धरत नाही, तर तोच प्याद्याचा आकार वेगवेगळ्या घरांवर ठेवून धरते. ते घर म्हणजे extrinsic state.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत ते कसे काम करते</h2>
+      <p class="muted">Flyweight ला दोन हलणारे भाग असतात: एक <strong>factory</strong> जो सामायिक intrinsic ऑब्जेक्ट्स pool करतो, आणि एक <strong>client</strong> जो extrinsic state ठेवतो आणि call च्या वेळी तो सामायिक methods मध्ये पाठवतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔑</span> विभाजन ओळखा</h4>
+          <p>जे पुन्हा पुन्हा येते (font, outline, texture) ते जे बदलते (position, color, velocity) यापासून वेगळे करा. सर्व intrinsic flyweight च्या आत जाते आणि अपरिवर्तनीय केले जाते; सर्व extrinsic client कडे राहते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗄️</span> Pool करा आणि पुनर्वापर करा</h4>
+          <p>intrinsic state वर keyed असलेला factory अस्तित्वात असल्यास cache केलेला flyweight परत देतो, किंवा नवीन तयार करून साठवतो. Clients कधीही थेट flyweights बनवत नाहीत, त्यामुळे सामायिकरण अनिवार्य होते.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">रचना - एक factory सामायिक flyweights pool करतो, contexts extrinsic state धरतात</div>
+        <pre class="mermaid">
+classDiagram
+    class GlyphFactory {
+        -pool Map~char, Glyph~
+        +getGlyph(char) Glyph
+    }
+    class Glyph {
+        <<flyweight>>
+        -char intrinsic
+        -font intrinsic
+        +draw(x, y, color)
+    }
+    class Document {
+        -chars CharPosition[]
+        +render()
+    }
+    class CharPosition {
+        +glyph Glyph
+        +x extrinsic
+        +y extrinsic
+        +color extrinsic
+    }
+    GlyphFactory --> Glyph : creates and pools
+    Document --> CharPosition : owns many
+    CharPosition --> Glyph : shares reference
+</pre>
+      </div>
+
+      <h3>Java मधील एक वास्तववादी अंमलबजावणी</h3>
+      <pre><code>import java.util.Map;
+import java.util.HashMap;
+
+// Flyweight: stores only intrinsic, shared, immutable state
+final class Glyph {
+    private final char symbol;   // intrinsic
+    private final String font;   // intrinsic (outline lives here too)
+
+    Glyph(char symbol, String font) {
+        this.symbol = symbol;
+        this.font = font;
+    }
+
+    // Extrinsic state (x, y, color) is passed in, never stored
+    void draw(int x, int y, String color) {
+        System.out.printf("'%c' [%s] at (%d,%d) in %s%n",
+                          symbol, font, x, y, color);
+    }
+}
+
+// Factory: pools flyweights so identical intrinsic state is stored once
+final class GlyphFactory {
+    private final Map&lt;String, Glyph&gt; pool = new HashMap&lt;&gt;();
+
+    Glyph getGlyph(char symbol, String font) {
+        String key = symbol + "@" + font;
+        return pool.computeIfAbsent(key, k -&gt; new Glyph(symbol, font));
+    }
+
+    int distinctGlyphs() { return pool.size(); }
+}
+
+// Client holds extrinsic state and reuses shared flyweights
+final class Document {
+    private record Placed(Glyph glyph, int x, int y, String color) {}
+    private final GlyphFactory factory = new GlyphFactory();
+    private final java.util.List&lt;Placed&gt; chars = new java.util.ArrayList&lt;&gt;();
+
+    void type(String text, String font) {
+        int x = 0;
+        for (char c : text.toCharArray()) {
+            Glyph g = factory.getGlyph(c, font); // shared, not new
+            chars.add(new Placed(g, x, 0, "black"));
+            x += 8;
+        }
+    }
+
+    void render() {
+        for (Placed p : chars) p.glyph().draw(p.x(), p.y(), p.color());
+    }
+
+    int distinctGlyphs() { return factory.distinctGlyphs(); }
+}</code></pre>
+      <p class="muted"><code>"mississippi"</code> टाइप केल्याने अकरा placements तयार होतात पण फक्त चार वेगळे <code>Glyph</code> ऑब्जेक्ट्स (m, i, s, p) तयार होतात. <code>Glyph</code> हे <code>final</code> आहे आणि त्यात फक्त <code>final</code> fields आहेत, त्यामुळे सामायिकरण सुरक्षित आहे: कोणताही client intrinsic state बदलून तो इतर सर्वांसाठी बिघडवू शकत नाही.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: factory cache miss जो flyweight तयार करतो, cache hit जो एक सामायिक करतो, आणि सामायिक pool विरुद्ध अनेक contexts रेंडर करणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Cache miss: factory नवीन flyweight तयार करून pool करतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Client
+    participant F as 🏭 Factory
+    participant P as 🗄️ Pool
+    participant G as 🧬 Glyph
+
+    C->>F: getGlyph('a', font)
+    F->>P: lookup key "a@font"
+    P-->>F: not found
+    F->>G: new Glyph('a', font)
+    G-->>F: flyweight
+    F->>P: store under key
+    F-->>C: shared Glyph
+    Note over C,G: Intrinsic state stored exactly once
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Cache hit: तोच instance सामायिक होतो, नवीन काहीही तयार होत नाही</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Client
+    participant F as 🏭 Factory
+    participant P as 🗄️ Pool
+
+    C->>F: getGlyph('a', font)
+    F->>P: lookup key "a@font"
+    P-->>F: existing Glyph
+    F-->>C: same shared instance
+    Note over C,P: No allocation, memory stays flat
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Render: अनेक contexts सामायिक glyphs मध्ये extrinsic state पुरवतात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant D as 📄 Document
+    participant Ctx as 📍 CharPosition
+    participant G as 🧬 Glyph
+    participant S as 🖨️ Screen
+
+    loop for each placed char
+        D->>Ctx: read x, y, color
+        Ctx->>G: draw(x, y, color)
+        G->>S: render outline at position
+        S-->>G: painted
+    end
+    Note over D,S: One glyph serves thousands of positions
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">Memory-जड रचनेपासून सामायिक, scalable रचनेपर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>scale ची समस्या लक्षात घ्या</h4><p>तुम्हाला हजारो किंवा लाखो समान ऑब्जेक्ट्स लागतात आणि profiling दाखवते की memory वर डुप्लिकेट झालेल्या data चे वर्चस्व आहे. हेच लक्षण आहे की Flyweight योग्य आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">विश्लेषण करा</span><h4>प्रत्येक field ची यादी करा</h4><p>जड ऑब्जेक्टच्या fields ची यादी करा. प्रत्येकासाठी विचारा: हे बहुतांश instances मध्ये पुन्हा येते का, की प्रत्येक instance गणिक बदलते?</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">विभागा</span><h4>intrinsic विरुद्ध extrinsic विभागा</h4><p>पुन्हा पुन्हा येणारे, संदर्भरहित fields intrinsic होतात (flyweight मध्ये राहतात). बदलणारे, संदर्भावर अवलंबून fields extrinsic होतात (client कडे बाहेर जातात).</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">रचा</span><h4>flyweight class ची रचना करा</h4><p>फक्त intrinsic state धरणारा class तयार करा. त्याच्या methods extrinsic state fields मधून वाचण्याऐवजी parameters म्हणून स्वीकारतात.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">गोठवा</span><h4>intrinsic state अपरिवर्तनीय करा</h4><p>fields ना final/readonly करा आणि कोणतेही setters उघड करू नका. सामायिक ऑब्जेक्ट्स अपरिवर्तनीय असले पाहिजेत जेणेकरून एक client ते इतर सर्वांसाठी बिघडवू शकणार नाही.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Pool</span><h4>factory तयार करा</h4><p>intrinsic state वर keyed असलेला factory लिहा. विनंतीवर तो cache केलेला flyweight परत देतो किंवा नवीन तयार करून, साठवून, परत देतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">दार</span><h4>सर्व निर्मिती त्यातूनच वळवा</h4><p>flyweight constructor private किंवा package-scoped करा जेणेकरून clients pool ला बगल देऊ शकणार नाहीत. factory हे एकमेव दार असेल तरच सामायिकरणाची हमी असते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">साठवा</span><h4>extrinsic state client मध्ये धरा</h4><p>client प्रत्येक logical ऑब्जेक्ट गणिक एक संक्षिप्त record ठेवतो: सामायिक flyweight चा reference आणि स्वतःचे position, color, किंवा इतर बदलणारा data.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">आवाहन</span><h4>call च्या वेळी context पाठवा</h4><p>कृती करताना, client flyweight method ला call करतो आणि extrinsic state आत पाठवतो, त्यामुळे एक सामायिक ऑब्जेक्ट प्रत्येक context नुसार वेगळे वर्तन करतो.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">मोजा</span><h4>बचत पडताळा</h4><p>logical ऑब्जेक्ट्सच्या तुलनेत वेगळे flyweights मोजा आणि memory पुन्हा profile करा. pool चा आकार छोटा आहे आणि footprint अपेक्षेप्रमाणे घटला आहे याची खात्री करा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">सुधारणा</span><h4>pool चे जीवनचक्र व्यवस्थापित करा</h4><p>flyweights कधी काढून टाकायचे किंवा process च्या आयुष्यभर ठेवायचे, आणि concurrent access खाली factory thread-safe असावा का, हे ठरवा.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Flyweight चुकीच्या पद्धतीने वापरणे सोपे आहे. हे ते सापळे आहेत जे memory जिंकीचे bug स्त्रोतात रूपांतर करतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 परिवर्तनीय सामायिक state</h4><p>flyweight मध्ये परिवर्तनीय fields टाकणे हे मुख्य पाप आहे. एक client "सामायिक" ऑब्जेक्ट बदलतो आणि गुपचूप इतर प्रत्येक धारकाला बिघडवतो. intrinsic state अपरिवर्तनीय असले पाहिजे.</p></div>
+        <div class="card"><h4>🎭 चुकीचे विभाजन</h4><p>प्रत्येक-instance data ला intrinsic म्हणून चिन्हांकित केल्यास वेगळे ऑब्जेक्ट्स एकात संकुचित होतात; सामायिक data ला extrinsic म्हणून चिन्हांकित केल्यास बचत नष्ट होते. intrinsic/extrinsic रेषा बरोबर आखा नाहीतर pattern अपयशी होतो.</p></div>
+        <div class="card"><h4>🐘 अकाली optimization</h4><p>Flyweight एक factory, एक indirection, आणि मानसिक कर जोडते. जर तुमच्याकडे फक्त काहीशे ऑब्जेक्ट्स असतील, तर ती गुंतागुंत काहीही देत नाही. आधी profile करा, मग वापरा.</p></div>
+        <div class="card"><h4>💧 कधीही आकुंचित न होणारा pool</h4><p>अमर्याद factory cache स्वतःच memory leak बनू शकते, विशेषतः high-cardinality keys सह. ती मर्यादित करा किंवा scope करा जेणेकरून pool त्याने वाचवलेल्यापेक्षा मोठा होणार नाही.</p></div>
+        <div class="card"><h4>🧵 thread safety दुर्लक्षित करणे</h4><p>cache miss वर factory ला धडकणारे दोन threads डुप्लिकेट flyweights तयार करू शकतात किंवा map बिघडवू शकतात. Concurrent pools ना योग्य synchronization किंवा concurrent map लागतो.</p></div>
+        <div class="card"><h4>🔁 Extrinsic खर्च बचतीला बुडवतो</h4><p>जर extrinsic state इकडे-तिकडे पाठवणे त्याने वाचवलेल्यापेक्षा जास्त memory किंवा CPU खर्च करत असेल, किंवा key गणना महाग असेल, तर pattern निव्वळ तोटा ठरू शकतो. दोन्ही बाजू मोजा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि कधी वापरावे</h2>
+      <p class="muted">Flyweight थोडेसे indirection आणि रचनेचे कष्ट देऊन मोठी memory बचत विकत घेते. आकडे न्याय्य ठरवतात तेव्हाच त्याकडे वळा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>नाट्यमयरीत्या कमी memory footprint, कमी GC दबाव, चांगली cache locality, सामायिक state च्या deduplication ची हमी.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अधिक गुंतागुंतीचा code, एक अतिरिक्त factory आणि indirection, keys गणण्याचा आणि extrinsic state पाठवण्याचा CPU खर्च, अपरिवर्तनीयतेच्या मर्यादा.</td></tr>
+            <tr><td><strong>कधी वापरावे</strong></td><td>तुमच्याकडे अत्यंत मोठ्या संख्येने ऑब्जेक्ट्स आहेत, ज्यांचा बहुतांश state पुन्हा पुन्हा येतो आणि थोड्याशा सामायिक मूल्यांमध्ये वेगळा करता येतो.</td></tr>
+            <tr><td><strong>कधी टाळावे</strong></td><td>ऑब्जेक्ट्सची संख्या माफक आहे, state फारसा पुन्हा येत नाही, किंवा intrinsic state परिवर्तनीय असला पाहिजे. गुंतागुंत स्वतःची किंमत वसूल करणार नाही.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>मध्यम. pattern सोपा आहे, पण intrinsic/extrinsic रेषा बरोबर आखणे आणि सामायिक state अपरिवर्तनीय ठेवणे यासाठी काळजी लागते.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Singleton (factory अनेकदा एकच असतो), Prototype (cloning विरुद्ध sharing), Composite (सामायिक leaves म्हणून flyweights), Proxy (दोन्ही अप्रत्यक्ष access).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> Flyweight फक्त तेव्हाच वापरा जेव्हा memory ही खरी मर्यादा असेल आणि ऑब्जेक्टचा state स्वच्छपणे एका छोट्या सामायिक गाभ्यात आणि एका बदलणाऱ्या context मध्ये विभागला जात असेल. यापैकी एक अट अपयशी झाली, तर साधा ऑब्जेक्ट किंवा object pool अधिक सोपा आहे.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>प्रत्यक्ष जगातील केस स्टडीज</h2>
+      <p class="muted">तीन ठिकाणे जिथे Flyweight हेच चालणे आणि memory संपणे यातील फरक आहे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📝</span><div><h3>1 · Text editor glyph rendering</h3><div class="role">Pattern: सामायिक character ऑब्जेक्ट्स, प्रत्येक-position context</div></div></div>
+        <p class="muted">एका document editor ला लाखो अक्षरे दाखवावी लागतात, प्रत्येकाला font, outline, आणि metrics लागतात.</p>
+        <ul>
+          <li>प्रत्येक वेगळी character-आणि-font जोडी म्हणजे एकच सामायिक <code>Glyph</code> जो outline आणि advance width धरतो.</li>
+          <li>document फक्त positions आणि styles चा हलका run साठवतो, सामायिक glyphs ना संदर्भित करतो.</li>
+          <li>Rendering प्रत्येक glyph ला draw च्या वेळी त्याची row, column, आणि color extrinsic state म्हणून पुरवते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> क्लासिक Gang of Four उदाहरण. पुस्तकाएवढे लांब document लाखोंऐवजी काहीशे glyph ऑब्जेक्ट्सद्वारे आधारलेले असते, ज्यामुळे editor प्रतिसाद देणारा राहतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎮</span><div><h3>2 · Game particle आणि foliage systems</h3><div class="role">Pattern: सामायिक mesh आणि texture, प्रत्येक-instance transform</div></div></div>
+        <p class="muted">एक गेम दहा लाख झाडांचे जंगल किंवा हजारो particles चा स्फोट सेकंदाला 60 frames वर रेंडर करतो.</p>
+        <ul>
+          <li>जड mesh, texture, आणि material त्याच प्रजातीच्या प्रत्येक झाडात सामायिक केले जातात.</li>
+          <li>प्रत्येक instance फक्त त्याचे position, rotation, scale, आणि velocity साठवतो, काही डझन bytes.</li>
+          <li>renderer सामायिक asset ला अनेकदा instance करतो, प्रत्येक-instance transforms GPU ला पुरवतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> दाट जग VRAM मध्ये बसते आणि सुरळीत stream होते, कारण megabytes च्या geometry एकदाच अस्तित्वात असते, प्रत्येक ऑब्जेक्ट गणिक एकदा नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">☕</span><div><h3>3 · JVM Integer आणि String interning</h3><div class="role">Pattern: language-पातळीवरील flyweight caches</div></div></div>
+        <p class="muted">एक high-throughput service प्रचंड संख्येने छोटी boxed values आणि पुन्हा येणारे string literals तयार करते.</p>
+        <ul>
+          <li>Java -128 ते 127 पर्यंतच्या boxed <code>Integer</code> values cache करते जेणेकरून <code>valueOf</code> सामायिक instances परत देतो.</li>
+          <li>String literals एका pool मध्ये intern केले जातात, त्यामुळे codebase मधील एकसारखे literals एक ऑब्जेक्ट सामायिक करतात.</li>
+          <li>Application code ला memory जिंक फुकट मिळते, स्वतः कोणताही factory न लिहिता.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> सामान्य छोट्या values एकदाच allocate होतात आणि सर्वत्र पुनर्वापर होतात, संपूर्ण runtime मधील hot paths मध्ये allocation churn कमी करून.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Flyweight आधुनिक hardware च्या आधीचे आहे, पण त्याची मूळ कल्पना, पुन्हा येणारा जड भाग सामायिक करा आणि फक्त context बदला, ती scale वर आजपेक्षा कधीही अधिक प्रासंगिक आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕹️ GPU instanced rendering</h4><p>आधुनिक graphics APIs Flyweight ला native बनवतात: प्रत्येक-instance transforms च्या एका buffer सह हजारो वेळा काढलेला एक mesh म्हणजे hardware मधील Flyweight.</p></div>
+        <div class="card"><h4>🧊 Value types आणि records</h4><p>अपरिवर्तनीय records आणि value objects सुरक्षित, सामायिक करता येण्याजोगे flyweights घोषित करणे क्षुल्लक बनवतात, कारण भाषा pattern ला लागणारी अपरिवर्तनीयता अनिवार्य करते.</p></div>
+        <div class="card"><h4>🌊 Big-data columnar stores</h4><p>columnar formats मधील dictionary encoding प्रत्येक वेगळे मूल्य एकदाच साठवते आणि id द्वारे संदर्भित करते, जे अब्जावधी rows वर लागू केलेले Flyweight आहे.</p></div>
+        <div class="card"><h4>⚛️ UI virtualization</h4><p>Virtualized lists आणि अपरिवर्तनीय component trees प्रचंड views मध्ये सामायिक node descriptions पुनर्वापर करतात, प्रत्येक item गणिक फक्त बदलणारे props ठेवतात.</p></div>
+        <div class="card"><h4>🔗 String आणि object interning</h4><p>Runtimes आणि caches अजूनही डुप्लिकेट values संकुचित करण्यासाठी interning वर विसंबतात, JVM strings पासून interpreters मधील symbol tables पर्यंत.</p></div>
+        <div class="card"><h4>🧠 Tokenizer आणि vocab tables</h4><p>ML pipelines प्रत्येक sequence मध्ये token ऑब्जेक्ट्सचा एक vocabulary सामायिक करतात, प्रत्येक-sequence data संक्षिप्त id arrays म्हणून साठवतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> अत्यंत मोठ्या संख्येने ऑब्जेक्ट्स परवडणारे बनवण्याचा मार्ग म्हणजे Flyweight: जे पुन्हा येते ते एकदाच साठवा, जे बदलते ते आत पाठवा, आणि सामायिक भाग अपरिवर्तनीय ठेवा. जेव्हा जेव्हा scale आणि duplication भेटतात, तेव्हा pattern आपली किंमत वसूल करते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Flyweight इतर structural आणि creational patterns सोबत बसते. हे त्याच्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../singleton/"><span class="ico">1️⃣</span><h4>Singleton</h4><p>flyweight factory अनेकदा एकच सामायिक instance असतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../proxy/"><span class="ico">🛡️</span><h4>Proxy</h4><p>ऑब्जेक्टच्या access ला अप्रत्यक्ष करणारा आणखी एक structural pattern.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>सामायिक flyweights एका tree च्या leaf nodes म्हणून काम करू शकतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>ऑब्जेक्ट्स cloning करणे विरुद्ध सामायिक करणे, creational प्रतिवाद.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Flyweight चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chain of Responsibility समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Chain of Responsibility पॅटर्नचे सखोल, दृश्य मार्गदर्शन: विनंती हँडलरच्या साखळीतून पुढे पाठवणे, sender ला receiver पासून वेगळे करणे, HTTP middleware pipeline, sequence diagram, 0-100 प्रवाह, केस स्टडी आणि आधुनिक उपयुक्तता." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>Chain of Responsibility - कोणीतरी हाताळेपर्यंत विनंती पुढे पाठवणे</h1>
+      <p class="lede">काही विनंत्या एका ठराविक, ज्ञात ऑब्जेक्टच्या मालकीच्या नसतात. Chain of Responsibility तुम्हाला <strong>हँडलर एकमेकांना जोडून</strong> विनंती रांगेत पुढे पाठवण्याची मुभा देते, जोपर्यंत त्यांच्यापैकी कोणीतरी ती हाताळत नाही. sender ला कधीच कळत नाही की कोणत्या हँडलरने उत्तर दिले, आणि caller ला हात न लावता तुम्ही दुवे जोडू, त्यांचा क्रम बदलू किंवा काढून टाकू शकता.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">हँडलर साखळी</span>
+        <span class="pill">Sender / receiver वेगळेपणा</span>
+        <span class="pill">Middleware pipeline</span>
+        <span class="pill">हाताळा किंवा पुढे पाठवा</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Chain of Responsibility म्हणजे काय?</h2>
+      <p class="muted"><strong>Chain of Responsibility</strong> हा एक behavioral pattern आहे जो विनंतीला स्वतंत्र ऑब्जेक्टमध्ये रूपांतरित करतो आणि संभाव्य हँडलरच्या साखळीतून पुढे पाठवतो. प्रत्येक हँडलर दोनपैकी एक गोष्ट ठरवतो: विनंती स्वतः हाताळायची, किंवा साखळीतील पुढच्या हँडलरकडे सोपवायची. विनंती सुरू करणाऱ्या client ला कोणता हँडलर ती हाताळेल हे माहीत नसते किंवा त्याची पर्वाही नसते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Handler interface</h4>
+          <p>प्रत्येक दुवा अंमलात आणतो असा एक समान करार, सहसा <code>handle(request)</code> मेथड आणि पुढच्या हँडलरचा संदर्भ.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔗</span> साखळी</h4>
+          <p>क्रमाने जोडलेले concrete हँडलर. प्रत्येक जण एकतर विनंती पूर्ण करतो किंवा शेवट येईपर्यंत आपल्या उत्तराधिकाऱ्याकडे सोपवतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📨</span> Client</h4>
+          <p>साखळी एकदाच बांधतो, मग पहिल्या दुव्याकडे विनंत्या पाठवतो. शेवटी कोण उत्तर देते याबद्दल तो अनभिज्ञच राहतो.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य बांधकाम घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>नेहमीचे रूप</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Handler</strong></td><td>सर्व दुवे वापरतात असा interface घोषित करतो</td><td><code>handle()</code> असलेला interface किंवा abstract class</td></tr>
+            <tr><td><strong>Base handler</strong></td><td><code>next</code> दुवा आणि डीफॉल्ट पुढे-पाठवण्याचे लॉजिक धरून ठेवतो</td><td>concrete जे वाढवतात असा abstract class</td></tr>
+            <tr><td><strong>Concrete handler</strong></td><td>विनंती पूर्ण करता येते का ते तपासतो, नाहीतर पुढे पाठवतो</td><td>Auth, logging, validation, cache</td></tr>
+            <tr><td><strong>Successor दुवा</strong></td><td>प्रत्येक हँडलरला रांगेतील पुढच्याकडे निर्देशित करतो</td><td>wiring वेळी सेट केलेले <code>next</code> field</td></tr>
+            <tr><td><strong>Request</strong></td><td>साखळीतून पुढे पाठवला जाणारा डेटा</td><td>value object किंवा context bag</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> हा पॅटर्न म्हणजे हँडलरचा एक कन्व्हेयर बेल्ट आहे. प्रत्येक स्टेशन पॅकेजकडे पाहते आणि एकतर त्यावर प्रक्रिया करते किंवा ते पुढच्या स्टेशनकडे सरकू देते. बेल्ट चालवणारा (client) फक्त पॅकेज ठेवतो आणि निघून जातो.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Chain of Responsibility का अस्तित्वात आहे</h2>
+      <p class="muted">याशिवाय, विनंती हाताळणी एका प्रचंड conditional मध्ये कोसळते: एक पसरलेला <code>if / else if</code> जो प्रत्येक संभाव्य हँडलर ठराविक क्रमाने ओळखतो आणि caller ला जोडलेला असतो. तो ब्लॉक वाढवणे कठीण, स्वच्छपणे क्रम बदलणे अशक्य, आणि प्रत्येक वेळी नवीन केस आली की open/closed तत्त्वाचे उल्लंघन करतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔓 Sender ला receiver पासून वेगळे करते</h4><p>caller हँडलरचे नाव न घेता विनंती सुरू करतो. हँडलर बदलू शकतात, वाढू शकतात किंवा नाहीसे होऊ शकतात आणि caller ला कधीच त्याची जाणीव होत नाही.</p></div>
+        <div class="card"><h4>🧱 विस्तारासाठी खुले</h4><p>एक दुवा घालून नवीन बाब जोडा. अस्तित्वातील हँडलर आणि client तसेच राहतात, त्यामुळे तपासलेल्या कोडला संपादित न करता तुम्ही वर्तन वाढवता.</p></div>
+        <div class="card"><h4>🔄 क्रम हे कॉन्फिगरेशन बनते</h4><p>दुवे runtime ला जोडले जात असल्याने, तुम्ही branching लॉजिक पुन्हा लिहिण्याऐवजी साखळी बांधण्याची पद्धत बदलून पायऱ्यांचा क्रम बदलता किंवा त्यांची अदलाबदल करता.</p></div>
+        <div class="card"><h4>🎯 प्रत्येक दुव्याला एकच जबाबदारी</h4><p>प्रत्येक हँडलर नेमके एकच काम करतो आणि फक्त स्वतःचा नियम अन् त्याचा उत्तराधिकारी जाणतो, ज्यामुळे प्रत्येक class लहान आणि testable राहतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांसह Chain of Responsibility ची उकल</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटकन कळेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे <strong>प्रश्न वरच्या स्तरावर नेण्यासारखे</strong> आहे. तुम्ही ट्यूटरला विचारता; त्यांना उत्तर देता आले नाही तर ते तुम्हाला व्याख्यात्याकडे पाठवतात; त्यांना जमले नाही तर तो प्राध्यापकाकडे जातो. तुम्ही फक्त एकदाच विचारता, आणि ज्याला उत्तर देता येईल तो उत्तर देतो.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>ही एक <strong>middleware pipeline</strong> आहे. एक विनंती येते, प्रत्येक middleware एकतर उत्तर देते किंवा <code>next()</code> ला कॉल करते, आणि जोपर्यंत काहीतरी response लिहीत नाही किंवा विनंती पूर्ण होत नाही तोपर्यंत नियंत्रण रांगेत पुढे वाहत जाते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>खर्च मंजुरी प्रवाहाचा</strong> विचार करा. मॅनेजर एका मर्यादेपर्यंत मंजूर करतो; त्याहून अधिक असेल तर विनंती डायरेक्टरकडे, मग finance कडे वर जाते. दावा दाखल करणाऱ्याला कोण मंजुरी देतो हे माहीत असण्याची गरज नसते.</p></div>
+        <div class="card"><h4><span class="ico">🎧</span> रोजच्या जीवनातील रूप</h4><p>एक <strong>सपोर्ट हॉटलाइन</strong>. Tier 1 आधी प्रयत्न करतो; समस्या त्यांच्या आवाक्याबाहेर असेल तर ते तुम्हाला tier 2 कडे, मग एका तज्ज्ञाकडे वळवतात. तुम्ही एकच नंबर फिरवता आणि कॉल योग्य व्यक्तीपर्यंत पोहोचतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतमध्ये हे कसे कार्य करते</h2>
+      <p class="muted">प्रत्येक हँडलर एक समान interface अंमलात आणतो आणि पुढच्या हँडलरचा संदर्भ धरून ठेवतो. जेव्हा विनंती येते, तेव्हा हँडलर ती पूर्ण करायची की सोपवायची हे ठरवतो. दुवे एकत्र जोडल्याने साखळी बनते; सुरुवातीच्या दुव्याकडे विनंती पाठवल्याने ती सुरू होते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔗</span> हँडलर जोडणे</h4>
+          <p>प्रत्येक concrete हँडलर एक <code>next</code> संदर्भ साठवतो. <code>setNext()</code> सारखा एक मदतनीस तो पुढचा हँडलर परत करतो, जेणेकरून तुम्ही साखळी सुबक, वाचनीय क्रमाने जोडू शकता.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚦</span> हाताळा किंवा पुढे पाठवा</h4>
+          <p><code>handle()</code> च्या आत, हँडलर एक अट तपासतो. ती जुळली तर तो कृती करतो आणि साखळी थांबवू शकतो; नाहीतर तो उत्तराधिकाऱ्याला कॉल करतो, किंवा तो शेवटचा दुवा असेल तर काहीच करत नाही.</p>
+        </div>
+      </div>
+
+      <h3>रचना एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">रचना - client एका Handler interface शी बोलतो; concrete दुवे साखळी बनवतात</div>
+        <pre class="mermaid">
+classDiagram
+    class Handler {
+      <<interface>>
+      +setNext(Handler) Handler
+      +handle(Request) void
+    }
+    class BaseHandler {
+      #next Handler
+      +setNext(Handler) Handler
+      +handle(Request) void
+    }
+    class AuthHandler {
+      +handle(Request) void
+    }
+    class RateLimitHandler {
+      +handle(Request) void
+    }
+    class ValidationHandler {
+      +handle(Request) void
+    }
+    class Client
+    Handler <|.. BaseHandler
+    BaseHandler <|-- AuthHandler
+    BaseHandler <|-- RateLimitHandler
+    BaseHandler <|-- ValidationHandler
+    BaseHandler --> Handler : next
+    Client --> Handler : sends request
+        </pre>
+      </div>
+
+      <h3>TypeScript मधील एक वास्तववादी अंमलबजावणी</h3>
+      <pre><code>interface Request {
+  user?: string;
+  role?: string;
+  body: string;
+}
+
+abstract class Handler {
+  private next?: Handler;
+
+  setNext(handler: Handler): Handler {
+    this.next = handler;
+    return handler; // enables fluent wiring
+  }
+
+  // Default: pass the request along the chain.
+  handle(req: Request): void {
+    if (this.next) this.next.handle(req);
+  }
+}
+
+class AuthHandler extends Handler {
+  handle(req: Request): void {
+    if (!req.user) throw new Error("401 Unauthorized");
+    super.handle(req); // authenticated, keep going
+  }
+}
+
+class RoleHandler extends Handler {
+  handle(req: Request): void {
+    if (req.role !== "admin") throw new Error("403 Forbidden");
+    super.handle(req);
+  }
+}
+
+class ValidationHandler extends Handler {
+  handle(req: Request): void {
+    if (req.body.trim() === "") throw new Error("400 Empty body");
+    super.handle(req); // reached the end, request is served
+  }
+}
+
+// Wire the chain once, then just fire requests at the head.
+const chain = new AuthHandler();
+chain.setNext(new RoleHandler()).setNext(new ValidationHandler());
+
+chain.handle({ user: "ada", role: "admin", body: "ship it" });</code></pre>
+      <p class="muted">लक्षात घ्या की <code>AuthHandler</code> ला validation बद्दल काहीच माहीत नाही, आणि caller ला दोन्हींपैकी कशाबद्दलही माहीत नाही. प्रत्येक दुवा एका नियमाचा मालक आहे आणि एकतर विनंती पुढे नेतो किंवा थांबवतो, आणि नेमके हेच साखळीला लवचिक ठेवते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagram</div>
+      <h2>तपशीलवार sequence diagram</h2>
+      <p class="muted">तीन दृश्ये: मध्येच हाताळली गेलेली विनंती, न हाताळता खाली पडणारी विनंती, आणि परत येताना response ला गुंडाळणारी एक HTTP middleware pipeline.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - एक हँडलर पूर्ण करेपर्यंत विनंती साखळीतून प्रवास करते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 📨 Client
+    participant A as 🔐 Auth
+    participant R as 🚦 RateLimit
+    participant V as ✅ Validation
+
+    C->>A: handle(request)
+    A->>A: user present, pass on
+    A->>R: handle(request)
+    R->>R: under limit, pass on
+    R->>V: handle(request)
+    V->>V: body valid, serve it
+    V-->>C: request handled
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - कोणताही हँडलर जुळत नाही, विनंती शेवटातून खाली पडते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 📨 Client
+    participant H1 as 💵 Cash
+    participant H2 as 💳 Card
+    participant H3 as 🏦 Transfer
+
+    C->>H1: handle(payment)
+    alt cannot process
+        H1->>H2: handle(payment)
+        alt cannot process
+            H2->>H3: handle(payment)
+            alt cannot process
+                H3-->>C: no successor, unhandled
+                Note over C,H3: Client must decide the fallback
+            end
+        end
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - परत येताना response ला गुंडाळणारी HTTP middleware pipeline</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cl as 🌐 Client
+    participant Lg as 📝 Logger
+    participant Au as 🔐 Auth
+    participant Rt as 🎯 Route
+
+    Cl->>Lg: incoming request
+    Lg->>Au: next(request)
+    alt token valid
+        Au->>Rt: next(request)
+        Rt-->>Au: response
+        Au-->>Lg: response
+        Lg-->>Cl: response + log line
+    else token invalid
+        Au-->>Lg: 401 response
+        Lg-->>Cl: 401 + log line
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी दर पायरी</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">गुंतागुंतीच्या conditional पासून एका स्वच्छ, क्रमबद्ध साखळीपर्यंत आणि आपला हँडलर शोधणाऱ्या विनंतीपर्यंत, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">वास ओळखा</span><h4>प्रचंड conditional शोधा</h4><p>तुमच्या लक्षात येते की एक वाढत जाणारा <code>if / else if</code> ब्लॉक विनंतीला वेगवेगळ्या हाताळणी लॉजिककडे वळवतो, आणि प्रत्येक नवीन केस आली की तो बदलतो.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">विनंतीचे मॉडेल करा</span><h4>विनंतीला ऑब्जेक्टमध्ये बदला</h4><p>प्रत्येक हँडलरला ठरवण्यासाठी जे लागते, ते user, role, रक्कम किंवा payload, एका विनंती किंवा context ऑब्जेक्टमध्ये पकडा जो साखळीतून पुढे पाठवला जातो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">करार ठरवा</span><h4>Handler interface घोषित करा</h4><p><code>handle(request)</code> मेथड आणि पुढचा हँडलर सेट करण्याचा मार्ग असलेला एक समान interface बनवा, जेणेकरून प्रत्येक दुवा एकमेकांऐवजी वापरता येईल.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Base दुवा</span><h4>एक base handler जोडा</h4><p>उत्तराधिकारी साठवणारा आणि डीफॉल्टपणे पुढे पाठवणारा एक abstract base द्या, जेणेकरून concrete हँडलर फक्त त्यांचे स्वतःचे वेगळे लॉजिक लिहितील.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">वेगळे काढा</span><h4>प्रत्येक केस एका हँडलरमध्ये विभागा</h4><p>जुन्या conditional ची प्रत्येक शाखा आपल्या स्वतंत्र concrete हँडलरमध्ये काढा, प्रत्येकजण नेमकी एक जबाबदारी सांभाळतो.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">धोरण ठरवा</span><h4>हाताळा, किंवा हाताळून थांबा</h4><p>प्रत्येक हँडलरसाठी निवडा की विनंती पूर्ण केल्याने साखळी संपते की विनंती वाहती राहते जेणेकरून नंतरचे दुवेही कृती करू शकतील.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">जोडा</span><h4>हँडलर क्रमाने जोडा</h4><p>concrete हँडलरना साखळीत जोडण्यासाठी <code>setNext()</code> वापरा. क्रम आता कॉन्फिगरेशन आहे जे हँडलरना हात न लावता तुम्ही बदलू शकता.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">पाठवा</span><h4>सुरुवातीच्या दुव्याकडे विनंती पाठवा</h4><p>client पहिल्या दुव्याकडे विनंती सोपवतो आणि शेवटी कोणता हँडलर उत्तर देईल याबद्दल अनभिज्ञ राहतो.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">पार करा</span><h4>प्रत्येक दुवा हाताळतो किंवा पुढे पाठवतो</h4><p>हँडलर आपली अट तपासतो, जुळली तर कृती करतो, नाहीतर उत्तराधिकाऱ्याला कॉल करतो. विनंती दुव्यागणिक साखळीतून चालत जाते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">खाली पडणे</span><h4>शेवटी काय होते ते ठरवा</h4><p>कोणताही हँडलर विनंती पूर्ण करत नसेल, तर धोरण निवडा: डीफॉल्ट परत करा, throw करा, किंवा log करा. हाताळणे-आवश्यक साखळी खाली पडण्याला बग मानते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">उत्क्रांत व्हा</span><h4>निर्भयपणे घाला किंवा क्रम बदला</h4><p>नवीन बाब? एक दुवा जोडा. वेगळा प्राधान्यक्रम? पुन्हा जोडा. client आणि अस्तित्वातील हँडलर कधीच बदलत नाहीत, त्यामुळे रचनेचा फायदा मिळत राहतो.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">नेहमीचे धोके</div>
+      <h2>धोके आणि anti-pattern</h2>
+      <p class="muted">पॅटर्न सोपा आहे, पण साखळी निष्काळजीपणे बांधली किंवा तिच्याबद्दल विचार केला की तो अंदाज करता येण्याजोग्या मार्गांनी अपयशी ठरतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ शांतपणे खाली पडणे</h4><p>कोणताही हँडलर पूर्ण न करणारी विनंती शेवटातून घसरून नाहीशी होते. जर विनंती हाताळणे आवश्यक असेल, तर न हाताळलेली विनंती हा एक दोष आहे, म्हणून शेवटच्या दुव्याला throw किंवा log करायला लावा.</p></div>
+        <div class="card"><h4>🔁 तुटलेले पुढे-पाठवणे</h4><p>एक हँडलर आपल्या उत्तराधिकाऱ्याला कॉल करायला विसरतो, त्यामुळे त्यानंतरचे दुवे कधीच चालत नाहीत. एक हरवलेला <code>super.handle()</code> शांतपणे अर्धी साखळी मारून टाकतो.</p></div>
+        <div class="card"><h4>🧭 लपलेले क्रम-अवलंबित्व</h4><p>दुसऱ्या दुव्याच्या आधी किंवा नंतर चालण्यावर गुप्तपणे अवलंबून असणारे हँडलर साखळीला नाजूक बनवतात. मग क्रम बदलल्याने वर्तन अस्पष्ट मार्गांनी तुटते.</p></div>
+        <div class="card"><h4>🌀 मागोवा घेत debugging</h4><p>caller ला receiver माहीत नसल्याने, अनेक दुव्यांतून विनंतीचा पाठलाग करणे कठीण असते. लांब, गतिशील साखळ्यांबद्दल विचार करणे अवघड होते.</p></div>
+        <div class="card"><h4>🧨 अति-अभियांत्रिकी</h4><p>कधीच न बदलणाऱ्या दोन-तीन केसच्या ठराविक संचासाठी, साखळी अशी औपचारिकता जोडते जी एक साधा <code>switch</code> अधिक स्पष्टपणे हाताळेल.</p></div>
+        <div class="card"><h4>🪢 गुबगुबीत हँडलर</h4><p>एका दुव्यात अनेक असंबंधित नियम कोंबल्याने मूळ हेतूच फोल ठरतो. प्रत्येक हँडलरकडे एकच निर्णय असावा, नाहीतर साखळी लवचिक राहात नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Chain of Responsibility थोड्याशा अप्रत्यक्षतेच्या बदल्यात भरपूर लवचिकता देते. हँडलरचा संच किंवा त्यांचा क्रम बदलण्याची अपेक्षा असेल तेव्हा त्याकडे वळा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>sender ला receiver पासून वेगळे करते, प्रत्येक दुव्याला एकच जबाबदारी, client किंवा इतर हँडलरना संपादित न करता हँडलर जोडा किंवा क्रम बदला.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>विनंती न हाताळता राहू शकते, नियंत्रण प्रवाहाचा मागोवा घेणे कठीण, आणि लांब गतिशील साखळ्या कामगिरी अन् वाचनीयतेला हानी पोहोचवू शकतात.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>अनेक ऑब्जेक्ट एक विनंती हाताळू शकतात, हँडलर आधीच माहीत नसतो, किंवा हँडलरचा संच आणि क्रम runtime ला कॉन्फिगर करता येण्याजोगा असावा.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>नेमका एकच ज्ञात ऑब्जेक्ट नेहमी विनंती हाताळतो, किंवा केसेस थोड्या आणि ठराविक असतात, जिथे एक साधा conditional अधिक स्पष्ट असतो.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>कमी संरचनात्मक खर्च, एक interface अन् लहान हँडलर, पण जोडलेली runtime अप्रत्यक्षता जिचा तुम्हाला मागोवा घेता आला पाहिजे.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Command (विनंत्या ऑब्जेक्ट म्हणून), Decorator (हीदेखील एक गुंडाळणारी साखळी), Mediator (साखळणीऐवजी केंद्रीकरण करते), Observer (सर्वांना प्रसारित करते).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> "हे कोण हाताळतो?" या प्रश्नाचे उत्तर "ते अवलंबून असते, आणि यादी बदलत राहते" असे असेल, तर साखळी वापरा. जर ते "नेहमी हाच एक ऑब्जेक्ट" असेल, तर वापरू नका, फक्त थेट कॉल करा. आणि विनंती खाली पडू शकते की तिला हाताळणे आवश्यक आहे हे नेहमी स्पष्टपणे ठरवा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडी</div>
+      <h2>प्रत्यक्ष जगातील केस स्टडी</h2>
+      <p class="muted">production सिस्टीममध्ये पॅटर्न खरे काम करत असल्याचे दाखवणारे तीन प्रातिनिधिक उपयोग.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌐</span><div><h3>1 · HTTP middleware pipeline</h3><div class="role">पॅटर्न: विनंतीवर प्रक्रिया व्हायलाच हवी, response परत गुंडाळतो</div></div></div>
+        <p class="muted">Express, ASP.NET Core, आणि Java servlet filter सारखे web framework विनंतीच्या जीवनचक्राचे मॉडेल middleware च्या साखळीरूपात करतात.</p>
+        <ul>
+          <li>प्रत्येक middleware, logging, CORS, auth, compression, एकतर उत्तर देते किंवा पुढे जाण्यासाठी <code>next()</code> ला कॉल करते.</li>
+          <li>क्रम हे कॉन्फिगरेशन आहे: authentication route handler च्या आधी चालते, compression नंतर response ला गुंडाळते.</li>
+          <li>एक middleware लगेच 401 परत करून साखळी थांबवू शकते, जेणेकरून खालचे दुवे कधीच चालत नाहीत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> प्रत्येक route मध्ये गुंतागुंतीचे न बनता, cross-cutting बाबी लहान, पुनर्क्रमबद्ध करता येण्याजोग्या, स्वतंत्रपणे testable दुव्यांमध्ये राहतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🪵</span><div><h3>2 · Logging framework चे स्तर</h3><div class="role">पॅटर्न: विनंती खाली पडू शकते, सर्वोत्तम जुळणी जिंकते</div></div></div>
+        <p class="muted">java.util.logging आणि log4j मधील logger severity स्तरानुसार parent logger अन् हँडलरच्या साखळीतून चालतात.</p>
+        <ul>
+          <li>एक log record पदानुक्रमात वरच्या प्रत्येक logger ला दिला जातो, जोपर्यंत एखादा तो उत्सर्जित करण्यासाठी कॉन्फिगर केलेला असतो.</li>
+          <li>Level चे उंबरठे ठरवतात की एक दुवा record हाताळतो की मूळाकडे पुढे पाठवतो.</li>
+          <li>प्रत्येक उंबरठ्याखालचा record सरळ खाली पडतो आणि टाकून दिला जातो, जे इथे अपेक्षित वर्तन आहे.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> कॉल साइटवरील कोडमध्ये कोणताही बदल न करता, साखळी पुन्हा कॉन्फिगर करून टीम प्रत्येक component ची शब्दबहुलता समायोजित करतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>3 · मंजुरी आणि validation workflow</h3><div class="role">पॅटर्न: एखादा अधिकारी निर्णय घेऊ शकेपर्यंत वर न्या</div></div></div>
+        <p class="muted">खर्च मंजुरी, खरेदी ऑर्डर, आणि बहु-टप्प्याचे input validation एका विनंतीला अधिकाराच्या स्तरांमधून वर नेतात.</p>
+        <ul>
+          <li>मॅनेजर एका मर्यादेपर्यंत मंजूर करतो; मोठ्या रकमा डायरेक्टरकडे, मग finance कडे जातात.</li>
+          <li>प्रत्येक validator एक नियम तपासतो, format, range, व्यावसायिक अट, मग यशस्वी झाल्यावर पुढे पाठवतो.</li>
+          <li>सादरकर्ता एकच विनंती पाठवतो आणि कोणता स्तर मंजुरी देतो हे कधीच जाणण्याची गरज नसते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> साखळी संपादित करून मंजुरीच्या मर्यादा अन् validation नियम बदलतात, ज्यामुळे व्यावसायिक धोरण caller बाहेर राहते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - उपयुक्तता</div>
+      <h2>आधुनिक उपयुक्तता</h2>
+      <p class="muted">कालबाह्य होण्यापासून दूर, Chain of Responsibility हा आधुनिक सॉफ्टवेअरमधील सर्वात व्यापकपणे तैनात केलेल्या पॅटर्नपैकी एक आहे, सहसा "pipeline" किंवा "middleware" या नावाखाली लपलेला.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧅 सर्वत्र middleware</h4><p>Express, Koa, ASP.NET Core, Django, आणि gRPC interceptor या सर्व साखळ्या आहेत. तुम्ही <code>next()</code> कॉल लिहिला असेल, तर तुम्ही हा पॅटर्न वापरला आहे.</p></div>
+        <div class="card"><h4>🛡️ API gateway</h4><p>Gateway आणि service mesh विनंत्या क्रमबद्ध filter मधून, auth, rate limiting, routing, चालवतात, जे तुम्ही घोषणात्मकपणे रचता.</p></div>
+        <div class="card"><h4>⚙️ Functional composition</h4><p>आधुनिक codebase मध्ये साखळी बहुधा फक्त composed function असतात, प्रत्येक पुढचा हँडलर घेणारा, जी कमी औपचारिकतेसह तीच कल्पना आहे.</p></div>
+        <div class="card"><h4>🤖 LLM आणि agent pipeline</h4><p>Guardrail आणि tool-routing स्टॅक एका विनंतीला validator अन् हँडलरमधून पाठवतात, जोपर्यंत एखादा ती स्वीकारत नाही, एक ठराविक साखळी.</p></div>
+        <div class="card"><h4>🧪 Event आणि stream प्रक्रिया</h4><p>Kafka, message broker, आणि ETL टप्प्यांतील interceptor साखळ्या प्रत्येक टप्प्याला record रूपांतरित करू, टाकून देऊ किंवा पुढे पाठवू देतात.</p></div>
+        <div class="card"><h4>🔌 Plugin आर्किटेक्चर</h4><p>विस्तारक्षम साधने तिसऱ्या पक्षांना core ला त्यांच्या अस्तित्वाची जाणीव न होता विनंती साखळीत हँडलर घालू देतात.</p></div>
+      </div>
+      <div class="callout"><strong>निष्कर्ष:</strong> जेव्हा एखादी विनंती प्रोसेसरच्या क्रमबद्ध, बदलता येण्याजोग्या संचातून वाहावी, आणि कोण उत्तर देते याबद्दल sender अनभिज्ञ राहावा असे तुम्हाला वाटते, तेव्हा Chain of Responsibility हाच पॅटर्न आहे. विनंत्या हाताळणे आवश्यक आहे की त्या खाली पडू शकतात हे आधीच ठरवा, बाकी सगळे आपोआप जुळेल.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Chain of Responsibility हा behavioral आणि structural पॅटर्नमध्ये आहे. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../command/"><span class="ico">🎬</span><h4>Command</h4><p>विनंतीला ऑब्जेक्टमध्ये बदलतो, नेमके जे साखळीतून खाली प्रवास करते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../mediator/"><span class="ico">🗼</span><h4>Mediator</h4><p>दुव्यागणिक पुढे पाठवण्याऐवजी परस्परसंवाद केंद्रीकृत करतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>हीदेखील एक गुंडाळणारी साखळी, पण वळवण्याऐवजी वर्तन रचून ठेवते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>एका हँडलरऐवजी अनेक श्रोत्यांना एकाच वेळी event प्रसारित करतो.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Chain of Responsibility चे एक दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडी · उपयुक्तता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

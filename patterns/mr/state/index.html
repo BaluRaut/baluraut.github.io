@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>State पॅटर्न समजून घ्या - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="State डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शन: तो काय आहे, पसरलेल्या conditionals ना तो state ऑब्जेक्ट्सने कसा बदलतो, एक finite state machine उदाहरण, sequence diagrams, 0-100 प्रवाह, केस स्टडीज, आणि तो Strategy पेक्षा कसा वेगळा आहे." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral पॅटर्न</span>
+      <h1>State पॅटर्न - ऑब्जेक्टसोबत बदलणारे वर्तन</h1>
+      <p class="lede">काही ऑब्जेक्ट्स ते कोणत्या मोडमध्ये आहेत यावर अवलंबून पूर्णपणे वेगळ्या प्रकारे वागतात: draft ऑर्डर ही shipped ऑर्डर नसते, थांबवलेला (paused) प्लेयर हा वाजणाऱ्या (playing) प्लेयरसारखा नसतो. State पॅटर्न एखाद्या ऑब्जेक्टला त्याच्या <strong>अंतर्गत state बदलल्यावर त्याचे वर्तन बदलू देतो</strong>, आणि हे तो अदलाबदल करता येण्याजोग्या state ऑब्जेक्ट्सकडे काम सोपवून करतो. <code>if</code> आणि <code>switch</code> ब्लॉक्सने भरलेल्या एका class ऐवजी, प्रत्येक state स्वतःचा एक class बनतो, ज्याला माहीत असते की कसे वागायचे आणि पुढच्या state कडे नियंत्रण केव्हा सोपवायचे.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">State ऑब्जेक्ट्स</span>
+        <span class="pill">Finite state machine</span>
+        <span class="pill">Transitions</span>
+        <span class="pill">मोठे switch नाही</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>State पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>State</strong> हा एक behavioral डिझाइन पॅटर्न आहे जो एखाद्या ऑब्जेक्टला त्याच्या अंतर्गत state बदलल्यावर त्याचे वर्तन बदलू देतो, त्यामुळे तो जणू आपला class बदलतो असे वाटते. <em>context</em> म्हटला जाणारा हा ऑब्जेक्ट एका state ऑब्जेक्टचा संदर्भ ठेवतो आणि state वर अवलंबून असलेली सगळी कामे त्याच्याकडे सोपवतो. प्रत्येक concrete state हा एक वेगळा class असतो जो एका सामायिक interface ची अंमलबजावणी करतो, आणि एखादा state context ला वेगळ्या state कडे वळवू शकतो, ज्यामुळे एका finite state machine ची transitions घडतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📦</span> Context</h4>
+          <p>ज्याचे वर्तन बदलते तो ऑब्जेक्ट. तो सध्याच्या-state चा संदर्भ ठेवतो आणि विनंत्या त्याच्याकडे पाठवतो, state वर स्वतः कधीही branching करत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> State interface</h4>
+          <p>state वर अवलंबून असलेल्या क्रियांची यादी असलेला एक सामायिक करार. प्रत्येक concrete state त्याची अंमलबजावणी करतो, त्यामुळे context त्यांना एकसमान वागणूक देऊ शकतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎭</span> Concrete states</h4>
+          <p>प्रत्येक मोडसाठी एक class. प्रत्येक त्या मोडचे वर्तन आपल्यात सामावून घेतो आणि एखाद्या घटनेनंतर पुढचा state कोणता येईल हे ठरवतो.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य भूमिका</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>ती काय करते</th><th>उदाहरण (media player)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Context</strong></td><td>सध्याचा state ठेवतो आणि वर्तन त्याच्याकडे सोपवतो</td><td><code>Player</code></td></tr>
+            <tr><td><strong>State</strong></td><td>state वर अवलंबून असलेल्या क्रिया घोषित करणारा interface</td><td><code>PlayerState</code></td></tr>
+            <tr><td><strong>Concrete states</strong></td><td>प्रत्येकी एका मोडचे वर्तन अंमलात आणतात</td><td><code>Stopped</code>, <code>Playing</code>, <code>Paused</code></td></tr>
+            <tr><td><strong>Transition</strong></td><td>context ला नव्या state कडे वळवणारा एक state</td><td><code>Paused</code> मधून <code>Playing</code> कडे Play</td></tr>
+            <tr><td><strong>Trigger / event</strong></td><td>transition घडवू शकणारे इनपुट</td><td><code>play()</code>, <code>pause()</code>, <code>stop()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> State पॅटर्न एका finite state machine चे ऑब्जेक्ट्समध्ये रूपांतर करतो. states हे nodes असतात, प्रत्येक state वरील methods ह्या नाव दिलेल्या edges असतात, आणि context हा फक्त एक token असतो जो सध्या जो node चालू असेल त्यावर बसतो.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>State पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">एका lifecycle मधून जाणारे ऑब्जेक्ट्स सहसा flags आणि conditionals ची गुंतागुंत वाढवत जातात. प्रत्येक method ला एक <code>switch (status)</code> फुटतो, आणि एक नवा state जोडायचा म्हणजे प्रत्येक method संपादित करावा लागतो. State पॅटर्न त्याऐवजी स्थानिक, single-responsibility state classes आणतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧹 मोठे switch नाहीसे करतो</h4><p>प्रत्येक मोडचे वर्तन प्रत्येक method मधल्या डझनभर conditionals मध्ये पसरण्याऐवजी स्वतःच्या class मध्ये राहते. एक state वाचला की तो काय करतो हे सगळे कळते.</p></div>
+        <div class="card"><h4>➕ नव्या states साठी खुला</h4><p>state जोडणे म्हणजे एक नवा class लिहिणे, context चा प्रत्येक method संपादित करणे नव्हे. हे open-closed तत्त्व पाळते आणि बदल स्थानिक ठेवते.</p></div>
+        <div class="card"><h4>🚦 Transitions स्पष्ट करतो</h4><p>प्रत्येक state तो नेमका कोणत्या states कडे जाऊ शकतो हे नाव घेऊन सांगतो, त्यामुळे machine ची रचना boolean flags मध्ये लपण्याऐवजी code मध्ये दिसते.</p></div>
+        <div class="card"><h4>🛡️ अवैध क्रिया रोखतो</h4><p>एखाद्या मोडमध्ये अवैध असलेली क्रिया त्या state class मध्ये फक्त काहीच करत नाही किंवा error देते, त्यामुळे कधीही payment न झालेली ऑर्डर तुम्ही ship करू शकत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह State ची ओळख</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ती पटकन कळेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p><strong>पाण्याच्या अवस्थां</strong>चा विचार करा. बर्फ, द्रव, आणि वाफ हे सगळे तेच H2O आहेत, पण ते वेगवेगळ्या प्रकारे वागतात. उष्णता द्या आणि प्रत्येक पुढच्या अवस्थेत जातो. पाणी हा context आहे; बर्फ, द्रव, आणि वाफ हे state ऑब्जेक्ट्स आहेत.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे <strong>वर्तनाच्या lookup table चे polymorphism मध्ये रूपांतर</strong> आहे. प्रत्येक method मध्ये <code>switch (status)</code> लिहिण्याऐवजी तुम्ही <code>state.handle()</code> कॉल करता आणि सध्याच्या ऑब्जेक्टला निर्णय घेऊ देता. status जोडल्याने आधीच्या code ला कधीही धक्का लागत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>document मंजुरी workflow</strong> सारखे: Draft, In Review, Approved, Rejected. तुम्ही कोणती बटणे दाबू शकता हे टप्प्यावर अवलंबून असते, आणि एक दाबल्याने document पुढच्या टप्प्यात जाते. प्रत्येक टप्पा एक state आहे.</p></div>
+        <div class="card"><h4><span class="ico">🚦</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>traffic light</strong>. हिरवा, पिवळा, आणि लाल प्रत्येकाला माहीत असते की तो काय दाखवतो आणि पुढे काय येते. light सगळीकडे "मी हिरवा आहे का?" असे तपासत नाही; प्रत्येक रंग फक्त वागतो आणि मग पुढच्याकडे सोपवतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतमध्ये ते कसे काम करते</h2>
+      <p class="muted">तुम्ही प्रत्येक state वर अवलंबून असलेला method एका <strong>state interface</strong> मध्ये काढता, प्रत्येक मोडसाठी एक <strong>concrete state</strong> class लिहिता, आणि <strong>context</strong> ला जो state सध्या चालू असेल त्याच्याकडे काम सोपवायला लावता. states हे context ला त्याचा सध्याचा state बदलायला सांगून transitions घडवतात.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧭</span> सोपवणे, branching नव्हे</h4>
+          <p>context कधीही स्वतःचा status तपासत नाही. तो प्रत्येक कॉल सध्याच्या state ऑब्जेक्टकडे पाठवतो, जो त्या मोडसाठी योग्य वर्तन पुरवतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Transitions चा मालक state असतो</h4>
+          <p>पुढे काय होते हे concrete state ठरवतो. एखादी घटना हाताळल्यानंतर तो context मध्ये परत कॉल करून नवा सध्याचा state सेट करतो, आणि अशा प्रकारे machine ची एक edge encode करतो.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">रचना - context सध्याच्या state कडे सोपवतो, states पुढचा state सेट करतात</div>
+        <pre class="mermaid">
+classDiagram
+    class Player {
+        -PlayerState state
+        +setState(PlayerState) void
+        +play() void
+        +pause() void
+        +stop() void
+    }
+    class PlayerState {
+        <<interface>>
+        +play(Player) void
+        +pause(Player) void
+        +stop(Player) void
+    }
+    class Stopped {
+        +play(Player) void
+        +pause(Player) void
+        +stop(Player) void
+    }
+    class Playing {
+        +play(Player) void
+        +pause(Player) void
+        +stop(Player) void
+    }
+    class Paused {
+        +play(Player) void
+        +pause(Player) void
+        +stop(Player) void
+    }
+    Player o--> PlayerState : current
+    PlayerState <|.. Stopped
+    PlayerState <|.. Playing
+    PlayerState <|.. Paused
+        </pre>
+      </div>
+
+      <h3>Java मध्ये एक finite state machine: एक media player</h3>
+      <pre><code>// State interface: the state-dependent operations
+interface PlayerState {
+    void play(Player p);
+    void pause(Player p);
+    void stop(Player p);
+}
+
+// Context: delegates every request to the current state
+class Player {
+    private PlayerState state = new Stopped();
+
+    void setState(PlayerState next) { this.state = next; }
+
+    void play()  { state.play(this); }
+    void pause() { state.pause(this); }
+    void stop()  { state.stop(this); }
+}
+
+// Concrete state: nothing is playing yet
+class Stopped implements PlayerState {
+    public void play(Player p) {
+        System.out.println("Starting playback");
+        p.setState(new Playing());        // transition
+    }
+    public void pause(Player p) { /* no-op: cannot pause when stopped */ }
+    public void stop(Player p)  { /* already stopped */ }
+}
+
+// Concrete state: audio is running
+class Playing implements PlayerState {
+    public void play(Player p)  { /* already playing */ }
+    public void pause(Player p) {
+        System.out.println("Pausing");
+        p.setState(new Paused());         // transition
+    }
+    public void stop(Player p) {
+        System.out.println("Stopping");
+        p.setState(new Stopped());        // transition
+    }
+}
+
+// Concrete state: playback is suspended
+class Paused implements PlayerState {
+    public void play(Player p) {
+        System.out.println("Resuming");
+        p.setState(new Playing());        // transition
+    }
+    public void pause(Player p) { /* already paused */ }
+    public void stop(Player p) {
+        System.out.println("Stopping");
+        p.setState(new Stopped());        // transition
+    }
+}</code></pre>
+      <p class="muted">लक्षात घ्या की <code>Player</code> मध्ये कुठेही <code>if</code> किंवा <code>switch</code> नाही. प्रत्येक state त्याच तीन methods ला उत्तर देतो पण वेगळ्या प्रकारे वागतो, आणि प्रत्येक जण player पुढे कोणता state बनेल हे ठरवतो. <code>Stopped</code> असताना <code>pause()</code> कॉल करणे हा फक्त एक वैध no-op आहे, त्यामुळे अवैध transitions रचनेनेच हाताळल्या जातात, विखुरलेल्या guards ने नव्हे.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="eyebrow" style="display:none"></div>
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एक साधी transition, नाकारलेली घटना जी जागच्या जागी राहते, आणि एक बहु-टप्प्यांची ऑर्डर lifecycle जी state बदल घडवते.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - एक play घटना context ला Stopped मधून Playing कडे नेते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant P as 📦 Player
+    participant S as 🎭 Stopped
+    participant PL as ▶️ Playing
+
+    C->>P: play()
+    P->>S: play(this)
+    S->>S: start playback
+    S->>P: setState(Playing)
+    P->>PL: becomes current state
+    P-->>C: now playing
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - एक अवैध घटना ही सुरक्षित no-op आहे, त्यामुळे कोणतीही transition घडत नाही</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant P as 📦 Player
+    participant S as 🎭 Stopped
+
+    C->>P: pause()
+    P->>S: pause(this)
+    alt pause valid in this state
+        S->>P: setState(Paused)
+    else not valid when stopped
+        S-->>P: ignore, no transition
+    end
+    P-->>C: still stopped
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - एक ऑर्डर आपल्या lifecycle मधून जाते, प्रत्येक state पुढचा निवडतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant O as 📦 Order
+    participant NP as 🕗 NewPending
+    participant PD as 💳 Paid
+    participant SH as 🚚 Shipped
+
+    U->>O: pay()
+    O->>NP: pay(this)
+    NP->>O: setState(Paid)
+    U->>O: ship()
+    O->>PD: ship(this)
+    PD->>O: setState(Shipped)
+    Note over O,SH: further pay() or cancel() now rejected
+    U->>O: cancel()
+    O->>SH: cancel(this)
+    SH-->>O: reject, shipped is terminal
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">conditionals ने भरलेल्या एका class पासून ते ऑब्जेक्ट्सच्या स्वच्छ finite state machine पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>state चा दुर्गंध ओळखा</h4><p>तुम्हाला तोच <code>switch (status)</code> किंवा booleans ची साखळी अनेक methods मध्ये पुन्हा पुन्हा दिसते, आणि प्रत्येक नवा मोड तुम्हाला त्या सगळ्यांना हात लावायला भाग पाडतो.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">यादी करा</span><h4>states ची यादी करा</h4><p>ऑब्जेक्ट ज्या ज्या वेगळ्या मोडमध्ये असू शकतो ते सगळे लिहून काढा, उदाहरणार्थ Stopped, Playing, Paused, किंवा New, Paid, Shipped, Cancelled.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">नकाशा</span><h4>transitions काढा</h4><p>प्रत्येक state साठी, कोणत्या घटना वैध आहेत आणि प्रत्येक घटना कोणत्या state कडे नेते ते नोंदवा. हीच आकृती म्हणजे तुम्ही encode करणार असलेली finite state machine.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">काढा</span><h4>state interface व्याख्या करा</h4><p>state वर अवलंबून असलेल्या methods एका interface मध्ये एकत्र करा, प्रत्येक context घेतो जेणेकरून एखादा state transition ची विनंती करू शकेल.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">वेगळे करा</span><h4>प्रत्येक state साठी एक class तयार करा</h4><p>प्रत्येक मोडचा branch body interface ची अंमलबजावणी करणाऱ्या स्वतःच्या concrete state class मध्ये हलवा. एक state, एक file, एक जबाबदारी.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">जोडा</span><h4>context ला सध्याचा state द्या</h4><p>एक state field आणि एक <code>setState</code> method जोडा, आणि प्रत्येक public method ला branching ऐवजी सध्याच्या state कडे सोपवायला लावा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Transition</span><h4>states ना पुढचा state सेट करू द्या</h4><p>प्रत्येक state च्या methods मध्ये, machine ची प्रत्येक वैध edge encode करण्यासाठी <code>context.setState(next)</code> कॉल करा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">रक्षण करा</span><h4>अवैध घटना हाताळा</h4><p>एखाद्या state मध्ये अवैध असलेल्या घटनांसाठी, method ला no-op बनवा किंवा स्पष्ट error द्या, जेणेकरून वाईट transitions फक्त परावृत्त न होता अशक्यच होतील.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">प्रारंभ करा</span><h4>सुरुवातीचा state सेट करा</h4><p>context ला त्याच्या सुरुवातीच्या state मध्ये (उदाहरणार्थ Stopped किंवा New) तयार करा जेणेकरून तो अस्तित्वात येताच वैध असेल.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">चाचणी</span><h4>प्रत्येक edge कव्हर करा</h4><p>प्रत्येक state मधून प्रत्येक घटना तपासा, परिणामी state आणि अवैध घटना नाकारल्या जातात हे दोन्ही तपासा. टप्पा 20 मधला नकाशा हीच तुमची checklist आहे.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>निर्भयपणे विस्तार करा</h4><p>Refunded सारखा नवा मोड हवा आहे? एक class आणि त्याच्या आत-बाहेरच्या edges जोडा. आधीचे states अस्पर्श राहतात, आणि मोठे switch कधीही परत येत नाही.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">State पॅटर्न शक्तिशाली आहे पण त्याचा अतिवापर करणे किंवा तो चुकीच्या पद्धतीने जोडणे सोपे आहे. या गोष्टींकडे लक्ष द्या.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪆 दोन states साठी वापरणे</h4><p>एका boolean flag ला class hierarchy ची गरज नाही. जेव्हा अनेक मोड असतील आणि वर्तन खरोखर वेगळे होत असेल तेव्हा State वापरा, on आणि off साठी नव्हे.</p></div>
+        <div class="card"><h4>🕸️ सगळीकडे transition logic</h4><p>कोणत्याही नकाशाशिवाय states मध्ये <code>setState</code> कॉल विखुरल्याने machine वाचणे अशक्य होते. रचना स्पष्ट राहावी म्हणून एक स्पष्ट आकृती किंवा table ठेवा.</p></div>
+        <div class="card"><h4>🔓 context चे अंतर्गत तपशील उघड करणे</h4><p>states ना प्रत्येक field चा थेट access दिल्याने ते घट्टपणे जोडले जातात. context वर एक मर्यादित API उघड करा जेणेकरून states फक्त तेच बदलतील जे त्यांनी बदलावे.</p></div>
+        <div class="card"><h4>💾 transition वर state गमावणे</h4><p>प्रत्येक वेळी नवा state ऑब्जेक्ट तयार करणे वर्तनासाठी ठीक आहे, पण जर data बदलानंतरही टिकावा लागत असेल, तर तो state वर नव्हे तर context वर साठवा.</p></div>
+        <div class="card"><h4>🐘 God states</h4><p>अंतर्गत branching ने अनेक विशेष केसेस हाताळणारा एक state फक्त switch एका class च्या आत सरकवतो. त्याऐवजी त्याचे वेगवेगळ्या states मध्ये विभाजन करा.</p></div>
+        <div class="card"><h4>🎭 त्याचा Strategy शी गोंधळ</h4><p>जर caller एकदाच वर्तन निवडत असेल आणि ते स्वतः कधीही बदलत नसेल, तर तो Strategy आहे. तिथे State वापरल्याने तुम्हाला गरज नसलेली transition यंत्रणा जोडली जाते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">State काही मूठभर लहान classes च्या बदल्यात पसरलेल्या conditionals चे निर्मूलन करतो. हा प्रामाणिक ताळेबंद आहे, त्यात तो Strategy पेक्षा कसा वेगळा आहे हेही आहे.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>बाब</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>मोठे conditional आणि switch ब्लॉक्स काढून टाकतो, प्रत्येक मोडचे वर्तन स्थानिक करतो, transitions स्पष्ट करतो, आणि open-closed व single-responsibility तत्त्वे पाळतो.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अधिक classes आणि indirection, states मध्ये पसरलेली transition logic, आणि जेव्हा फक्त एक-दोन साधे मोड असतात तेव्हा अतिरेक.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>एका ऑब्जेक्टला अनेक वेगळे मोड असतात, प्रत्येक मोडनुसार वर्तन खूप वेगळे होते, आणि मोडांमधली transitions नियमांनुसार होतात, म्हणजेच एक finite state machine.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>जेव्हा किरकोळ फरक असलेले फक्त दोन-चार states असतात, किंवा मोड runtime ला कधीच बदलत नाही, तिथे एक flag किंवा एक Strategy अधिक सोपे असते.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>प्रत्येक state साठी कमी, एकूण मध्यम. प्रत्येक state छोटा असतो, पण संपूर्ण संचात transition नकाशा सुसंगत ठेवावा लागतो.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Strategy ची रचना तीच असते पण client वर्तन निवडतो आणि states कधीही स्वतःची अदलाबदल करत नाहीत. State ऑब्जेक्ट्स स्वतःच्या transitions घडवतात. दोन्ही रचनात्मकदृष्ट्या त्याच सोपवण्याच्या कल्पनेतून येतात.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> जेव्हा तुमचा ऑब्जेक्ट खरोखर एक finite state machine असतो आणि त्याचे methods सतत "मी कोणत्या मोडमध्ये आहे?" असे विचारत राहतात तेव्हा State वापरा. जर त्याऐवजी caller फक्त एक अदलाबदल करता येण्याजोगा algorithm लावतो जो स्वतःहून कधीच बदलत नाही, तर तो Strategy आहे, State नव्हे.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">जिथे lifecycles आणि मोड डिझाइनवर वर्चस्व गाजवतात तिथे State पॅटर्न दाखवणारे तीन प्रातिनिधिक वापर.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · E-commerce ऑर्डर lifecycle</h3><div class="role">पॅटर्न: lifecycle एक finite state machine म्हणून</div></div></div>
+        <p class="muted">एक ऑर्डर New, Paid, Shipped, Delivered, आणि Cancelled मधून जाते, आणि प्रत्येक टप्पा वेगवेगळ्या क्रियांना परवानगी देतो.</p>
+        <ul>
+          <li>प्रत्येक status हा एक state class आहे जो फक्त त्याच्या वैध क्रियांना परवानगी देतो, त्यामुळे payment आधी <code>ship()</code> अशक्य आहे.</li>
+          <li>Transitions state classes मध्ये राहतात, ज्यामुळे ऑर्डर lifecycle चा एकच, तपासता येण्याजोगा नकाशा मिळतो.</li>
+          <li>Refunded state जोडणे म्हणजे एक नवा class आणि त्याच्या edges, आधीच्या statuses मध्ये कोणतीही संपादने न करता.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> अवैध transitions रचनेनेच compile-safe बनतात, आणि पूर्वी ऑर्डर service मध्ये असलेला पसरलेला status switch नाहीसा होतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎬</span><div><h3>2 · Media player नियंत्रणे</h3><div class="role">पॅटर्न: मोडवर अवलंबून असलेले UI वर्तन</div></div></div>
+        <p class="muted">एक player Stopped, Playing, किंवा Paused असतो, आणि तीच बटणे प्रत्येक मोडमध्ये वेगवेगळी कामे करावी लागतात.</p>
+        <ul>
+          <li>प्रत्येक state ठरवतो की play, pause, आणि stop कसे वागतील, त्यामुळे paused असताना play बटण पुन्हा सुरू करते पण stopped असताना सुरुवात करते.</li>
+          <li>UI फक्त क्लिक्स सध्याच्या state कडे पाठवते आणि कधीही status flag तपासत नाही.</li>
+          <li>Buffering किंवा Error state आधीच्या नियंत्रणांना हात न लावता आणखी एक class म्हणून बसतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> नियंत्रण logic प्रत्येक मोडसाठी छोटी आणि योग्य राहते, आणि नवे playback states player ला गुंतागुंतीचा न करता त्याचा विस्तार करतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔌</span><div><h3>3 · TCP connection protocol</h3><div class="role">पॅटर्न: एका classic संदर्भातील protocol states</div></div></div>
+        <p class="muted">एक TCP connection Established, Listening, किंवा Closed असते, हे मूळ design patterns साहित्यातील एक पाठ्यपुस्तकी उदाहरण आहे.</p>
+        <ul>
+          <li>open, close, आणि acknowledge सारख्या क्रिया connection च्या state वर अवलंबून वेगवेगळ्या प्रकारे वागतात.</li>
+          <li>प्रत्येक protocol state आपला प्रतिसाद आणि प्रत्येक घटनेवर तो कोणत्या state कडे जातो हे आपल्यात सामावतो.</li>
+          <li>connection ऑब्जेक्ट सध्याच्या state कडे सोपवतो, ज्यामुळे protocol हाताळणी एका राक्षसी method बाहेर राहते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> protocol चे नियम थेट state classes च्या संचासारखे वाचता येतात, जे spec शी जवळून जुळतात आणि पडताळणी सोपी करतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Finite state machines आधुनिक software मध्ये सर्वत्र आहेत, आणि State पॅटर्न त्यांना व्यक्त करण्याचा स्वच्छ object-oriented मार्ग राहतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚛️ UI state machines</h4><p>Front-end साधने components ना स्पष्ट states आणि transitions म्हणून model करतात, तीच शिस्त State encode करतो, ज्यामुळे गुंतागुंतीचे interactive flows आटोक्यात येतात.</p></div>
+        <div class="card"><h4>🔄 Workflow engines</h4><p>Order, approval, आणि onboarding workflows मुळात finite state machines आहेत, जिथे प्रत्येक टप्पा स्वाभाविकपणे एका state class शी जुळतो.</p></div>
+        <div class="card"><h4>🧩 Enum-आधारित states</h4><p>आधुनिक भाषा एका state ला data आणि वर्तन एकत्र वाहू देतात, त्यामुळे हा पॅटर्न sealed types किंवा methods असलेल्या enums ने व्यक्त करता येतो.</p></div>
+        <div class="card"><h4>🕹️ Game आणि agent logic</h4><p>पात्रे आणि agents idle, patrol, chase, आणि attack मोडांमध्ये बदलतात, जो game development मधील एक प्रातिनिधिक State पॅटर्न वापर आहे.</p></div>
+        <div class="card"><h4>☁️ Distributed sagas</h4><p>दीर्घकाळ चालणारे distributed transactions आपली प्रगती states म्हणून मागोवा घेतात, आणि एखादा टप्पा अयशस्वी झाल्यास compensating transitions सह.</p></div>
+        <div class="card"><h4>🔬 चाचणी करता येण्याजोग्या transitions</h4><p>प्रत्येक edge स्पष्ट असल्यामुळे, state machines model-check आणि property-test करणे सोपे असते, ज्यामुळे महत्त्वाच्या flows वरील विश्वास वाढतो.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> जेव्हा एखाद्या ऑब्जेक्टचे वर्तन नियमांनुसार कालांतराने बदलणाऱ्या मोडवर अवलंबून असते, तेव्हा तुमच्याकडे एक finite state machine असते. State पॅटर्न हा त्या machine ला सतत वाढणाऱ्या conditionals मध्ये लपू न देता स्पष्ट, चाचणी करता येण्याजोगी, आणि सहज विस्तारता येण्याजोगी बनवण्याचा मार्ग आहे.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">State हा behavioral आणि structural पॅटर्न्समध्ये बसतो जे त्याची सोपवण्याची कल्पना सामायिक करतात. हे त्याच्यासोबत स्वाभाविकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../strategy/"><span class="ico">🎯</span><h4>Strategy</h4><p>तीच रचना, पण client वर्तन निवडतो आणि states कधीही स्वतःची अदलाबदल करत नाहीत.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>state बदल घडल्यावर watchers ना सूचित करा, transitions सोबत उत्तम जुळते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../bridge/"><span class="ico">🌉</span><h4>Bridge</h4><p>एका composed abstraction कडे सोपवणे, State चा structural चुलतभाऊ.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../command/"><span class="ico">🎛️</span><h4>Command</h4><p>घटनांना ऑब्जेक्ट्स म्हणून मूर्त रूप द्या जे एका state machine मध्ये transitions घडवतात.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>State पॅटर्नचे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

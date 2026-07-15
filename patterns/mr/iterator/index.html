@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iterator पॅटर्न सोप्या भाषेत - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Iterator पॅटर्नचे सखोल, दृश्य मार्गदर्शन: अंतर्गत रचना उघड न करता क्रमवार प्रवेश, external विरुद्ध internal iterators, Java आणि JavaScript मधील अंगभूत आधार, fail-fast वर्तन, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि आधुनिक उपयुक्तता." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral पॅटर्न</span>
+      <h1>Iterator पॅटर्न प्रत्यक्षात कसा काम करतो</h1>
+      <p class="lede">संग्रह (collections) अनेक आकारांचे असतात: arrays, linked lists, trees, hash tables. Iterator पॅटर्न तुम्हाला <strong>त्या सर्वांमधून फिरण्याचा एकच एकसमान मार्ग</strong> देतो, संग्रह घटक कसे साठवतो हे कधीही न दाखवता <strong>एका वेळी एक घटक</strong> उघड करतो. फिरण्याचे तर्कशास्त्र (traversal logic) एका वेगळ्या cursor object मध्ये राहते, त्यामुळे संग्रह साधा राहतो आणि clients त्याच्या अंतर्गत रचनेपासून वेगळे (decoupled) राहतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">क्रमवार प्रवेश</span>
+        <span class="pill">External विरुद्ध internal</span>
+        <span class="pill">Iterable protocol</span>
+        <span class="pill">Fail-fast</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Iterator पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Iterator</strong> हा एक behavioral design पॅटर्न आहे जो एखाद्या aggregate object च्या घटकांना त्याची अंतर्निहित रचना उघड न करता <em>क्रमवार</em> प्रवेश करण्याचा मार्ग देतो. फिरण्याची स्थिती, म्हणजे तुम्ही संग्रहात कुठे आहात, ही संग्रहातून बाहेर पडून एका लहान समर्पित cursor object मध्ये जाते. हे एकच indirection एका client ला list, tree किंवा stream वर एकसारख्याच कोडने फिरू देते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎯</span> एकसमान फिरणे</h4>
+          <p>संग्रह काहीही असो - array, set, tree, किंवा database cursor - clients एकाच interface मार्फत <code>next()</code> घटक मागतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> झाकलेली अंतर्गत रचना</h4>
+          <p>संग्रह त्याचे buckets, nodes किंवा index गणित कधीही बाहेर पडू देत नाही. कॉल करणाऱ्यांना घटक दिसतात, ते साठवणारी data structure नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧭</span> बाहेर काढलेली स्थिती</h4>
+          <p>प्रत्येक iterator स्वतःची स्थिती धरतो, त्यामुळे एकाच संग्रहावरील अनेक फेऱ्या एकमेकांना अडथळा न आणता एकाच वेळी चालू शकतात.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य भूमिका</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भूमिका</th><th>ती काय करते</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Iterator</strong></td><td>फिरण्याचे interface ठरवते: पुढे सरकणे आणि सध्याचा घटक वाचणे</td><td><code>hasNext()</code>, <code>next()</code></td></tr>
+            <tr><td><strong>Concrete Iterator</strong></td><td>सध्याची स्थिती नोंदवते आणि एका रचनेतून कसे फिरायचे हे जाणते</td><td>List cursor, in-order tree walker</td></tr>
+            <tr><td><strong>Aggregate</strong></td><td>iterator परत करणारी factory method घोषित करते</td><td><code>Iterable.iterator()</code></td></tr>
+            <tr><td><strong>Concrete Aggregate</strong></td><td>प्रत्यक्ष संग्रह जो स्वतःवर iterators तयार करतो</td><td><code>ArrayList</code>, custom range</td></tr>
+            <tr><td><strong>Client</strong></td><td>iterator interface वापरतो, concrete प्रकारांबद्दल अनभिज्ञ</td><td>एक <code>for-each</code> loop</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> संग्रह म्हणजे <em>पुस्तक</em>, iterator म्हणजे <em>बुकमार्क</em>. बुकमार्क तुमचे पान लक्षात ठेवतो आणि पुढचे पान कसे उलटायचे हे जाणतो, आणि तुम्ही एकाच पुस्तकात एकाच वेळी अनेक बुकमार्क ठेवू शकता.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Iterator पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">त्याशिवाय, प्रत्येक संग्रहाला त्याचे आतील भाग - indexes, node pointers, hash buckets - उघड करावे लागतील, आणि प्रत्येक client वेगळा loop हार्डकोड करेल. Iterator फिरणे एका interface मागे नेतो जेणेकरून रचना मुक्तपणे बदलू शकतात आणि clients तसेच राहतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 एकच फिरण्याचे interface</h4><p>कोणत्याही संग्रहावर चालणारा एकच loop लिहा. <code>ArrayList</code> ऐवजी <code>TreeSet</code> टाका आणि कॉल करणारा कोड अजिबात बदलत नाही.</p></div>
+        <div class="card"><h4>🛡️ Encapsulation चे संरक्षण</h4><p>कॉल करणारे अंतर्गत indices किंवा nodes ला कधीही स्पर्श करत नाहीत, त्यामुळे संग्रह कोणालाही न मोडता tree पुन्हा balance करू शकतो किंवा array चा आकार बदलू शकतो.</p></div>
+        <div class="card"><h4>🔀 एकाच वेळी अनेक फेऱ्या</h4><p>प्रत्येक iterator स्वतःची स्थिती वाहून नेत असल्याने, तुम्ही एकाच संग्रहावर nested loops किंवा parallel scans स्वतंत्रपणे चालवू शकता.</p></div>
+        <div class="card"><h4>🌊 Lazy आणि अनंत क्रम</h4><p>iterator मागणीनुसार घटक गणू शकतो, त्यामुळे तुम्ही streams, paginated APIs किंवा अनंत ranges प्रत्यक्षात साकार न करता मॉडेल करू शकता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Iterator चे स्पष्टीकरण</h2>
+      <p class="muted">एकच कल्पना, ती चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती नीट समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>तो एक <strong>बुकमार्क</strong> आहे. पाठ्यपुस्तकाला तुम्ही कुठे थांबलात हे आठवत नाही, बुकमार्कला आठवते. तुम्ही मित्राला त्याच्या स्वतःच्या बुकमार्कसह पुस्तक देऊ शकता, आणि तुमच्यापैकी कोणालाही आपली जागा हरवत नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>तो object आहे जो <strong>for-each loop</strong> गुप्तपणे मागतो. <code>for (x of coll)</code> हे <code>coll.iterator()</code> कॉल करते नंतर संपेपर्यंत <code>next()</code>; त्यामागील array indices तुम्हाला कधीही दिसत नाहीत.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>TV रिमोट</strong> चा विचार करा. चॅनेल बटण "next" आणि "previous" म्हणते, पण खाली चॅनेल्स cable वर आहेत, satellite वर की streaming वर हे तुम्हाला माहीत नसते.</p></div>
+        <div class="card"><h4><span class="ico">🍽️</span> रोजच्या जीवनातील आवृत्ती</h4><p>दुकानाच्या काउंटरवरील <strong>टिकीट डिस्पेन्सर</strong>. प्रत्येकजण क्रमाने पुढचा नंबर एका वेळी एक ओढतो, आणि मशीनच्या आत तिकिटांची गुंडाळी कशी गुंडाळलेली आहे हे कोणालाही पाहण्याची गरज नसते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते पडद्यामागे कसे काम करते</h2>
+      <p class="muted">संग्रह एक factory method उघड करतो जी नवीन cursor परत करते. cursor एक स्थिती धरतो, "अजून आहे का?" याचे उत्तर देतो, आणि पुढे सरकत सध्याचा घटक परत करतो. client फक्त त्या cursor interface शीच बोलतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🚶</span> External iterator</h4>
+          <p><strong>client loop चालवतो</strong>: तो स्वतः <code>hasNext()</code> आणि <code>next()</code> कॉल करतो. कमाल नियंत्रण, त्यामुळे तुम्ही थांबवू शकता, डोकावू शकता किंवा दोन iterators एकमेकांत गुंफू शकता. हे Java चे <code>Iterator</code> आणि JavaScript चे iterator protocol आहे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Internal iterator</h4>
+          <p><strong>संग्रह loop चालवतो</strong> आणि प्रत्येक घटकासाठी तुम्ही दिलेली function कॉल करतो, जसे <code>forEach</code> किंवा <code>Stream.map</code> मध्ये. कमी boilerplate, पण तुम्ही सहजपणे लवकर थांबू शकत नाही किंवा दोन फेऱ्या एका तालात चालवू शकत नाही.</p>
+        </div>
+      </div>
+
+      <h3>रचना एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">Class रचना - aggregate iterators तयार करतो ज्यांमधून client फिरतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Iterator~T~ {
+        <<interface>>
+        +hasNext() boolean
+        +next() T
+    }
+    class Iterable~T~ {
+        <<interface>>
+        +iterator() Iterator~T~
+    }
+    class NameRepository {
+        -String[] names
+        +iterator() Iterator~String~
+    }
+    class NameIterator {
+        -int index
+        +hasNext() boolean
+        +next() String
+    }
+    class Client
+    Iterable~T~ <|.. NameRepository
+    Iterator~T~ <|.. NameIterator
+    NameRepository ..> NameIterator : creates
+    Client --> Iterable~T~ : iterator()
+    Client --> Iterator~T~ : hasNext/next
+        </pre>
+      </div>
+
+      <h3>Java मध्ये एक custom iterator</h3>
+      <pre><code>import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+// Concrete Aggregate: exposes iterators without revealing the array
+public class NameRepository implements Iterable&lt;String&gt; {
+    private final String[] names = { "Ada", "Alan", "Grace", "Linus" };
+
+    @Override
+    public Iterator&lt;String&gt; iterator() {
+        return new NameIterator();       // factory method
+    }
+
+    // Concrete Iterator: an inner class holding the traversal state
+    private class NameIterator implements Iterator&lt;String&gt; {
+        private int index = 0;           // externalized cursor position
+
+        @Override
+        public boolean hasNext() {
+            return index &lt; names.length;
+        }
+
+        @Override
+        public String next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            return names[index++];       // read, then advance
+        }
+    }
+}
+
+// Client: uses the interface, never the array
+class Demo {
+    public static void main(String[] args) {
+        NameRepository repo = new NameRepository();
+        for (String name : repo) {       // for-each calls iterator() + next()
+            System.out.println(name);
+        }
+    }
+}</code></pre>
+      <p class="muted"><code>NameRepository</code> हे <code>Iterable</code> implement करत असल्याने, वर्धित <code>for</code> loop आपोआप चालतो: compiler त्याचा विस्तार <code>iterator()</code>, <code>hasNext()</code>, आणि <code>next()</code> च्या कॉलमध्ये करतो. <code>index</code> iterator मध्ये राहतो, repository मध्ये नाही, त्यामुळे एकाच repo वरील दोन loops कधीही टक्कर घेत नाहीत.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>सविस्तर sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: एक external फिरणे, एक internal iterator, आणि loop च्या मध्येच संग्रह बदलल्यास fail-fast शोध.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - External iterator: client hasNext आणि next चालवतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 📚 Aggregate
+    participant It as 🔖 Iterator
+
+    C->>A: iterator()
+    A-->>C: new Iterator (index 0)
+    loop until exhausted
+        C->>It: hasNext()
+        It-->>C: true
+        C->>It: next()
+        It-->>C: current element
+    end
+    C->>It: hasNext()
+    It-->>C: false
+    Note over C,It: Loop ends, cursor is discarded
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Internal iterator: संग्रह forEach चालवतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 📚 Aggregate
+    participant F as 🧩 Callback
+
+    C->>A: forEach(callback)
+    loop for each element
+        A->>F: apply(element)
+        F-->>A: done
+    end
+    A-->>C: traversal complete
+    Note over A,F: Client passes behavior, collection owns the loop
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Fail-fast: iteration दरम्यानचा रचनात्मक बदल शोधला जातो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 📚 Collection
+    participant It as 🔖 Iterator
+
+    C->>A: iterator()
+    A-->>C: iterator (expectedModCount = modCount)
+    C->>It: next()
+    It-->>C: element
+    C->>A: add(x) during loop
+    A->>A: modCount++
+    C->>It: next()
+    alt modCount changed
+        It-->>C: throw ConcurrentModificationException
+    else unchanged
+        It-->>C: next element
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका aggregate object पासून पूर्णपणे वापरलेल्या, decoupled फिरण्यापर्यंत, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>फिरण्यासाठी एक संग्रह असणे</h4><p>तुम्ही एखाद्या aggregate ने सुरुवात करता: array, linked list, tree, किंवा API कडून पानांचा stream, ज्यामधून client ला घटक-दर-घटक फिरायचे असते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Interface</span><h4>iterator चा करार ठरवा</h4><p>फिरण्याच्या methods घोषित करा, विशेषतः <code>hasNext()</code> आणि <code>next()</code>, जेणेकरून रचना काहीही असो, प्रत्येक walker कॉल करणाऱ्यांना सारखाच दिसतो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Aggregate</span><h4>एक factory method जोडा</h4><p>संग्रहाला <code>Iterable</code> implement करायला लावा, ज्यात एक <code>iterator()</code> method असते जी मागणीनुसार नवीन cursor तयार करते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Cursor</span><h4>concrete iterator लिहा</h4><p>एक लहान class implement करा जी सध्याची स्थिती धरते आणि या विशिष्ट रचनेतून कसे पुढे सरकायचे हे जाणते.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">State</span><h4>स्थिती बाहेर काढा</h4><p>index किंवा node pointer iterator मध्ये साठवा, संग्रहात नाही, जेणेकरून अनेक iterators अडथळ्याशिवाय एकत्र राहू शकतात.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Create</span><h4>Client iterator मागतो</h4><p>client <code>iterator()</code> कॉल करतो. त्याला पहिल्या घटकाच्या आधी ठेवलेला cursor मिळतो आणि अंतर्गत रचनेबद्दल त्याला काहीही माहीत नसते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Check</span><h4>hasNext विचारा</h4><p>प्रत्येक वाचनापूर्वी client <code>hasNext()</code> कॉल करतो. iterator अजून भेट द्यायचे घटक शिल्लक आहेत का हे कळवतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Advance</span><h4>next कॉल करा</h4><p>client <code>next()</code> कॉल करतो, जे सध्याचा घटक परत करते आणि cursor एका स्थानाने पुढे सरकवते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Guard</span><h4>concurrent बदल शोधा</h4><p>fail-fast iterator एका modification counter ची तुलना करतो; loop दरम्यान संग्रह बदलला तर तो भ्रष्ट data परत करण्याऐवजी अपवाद फेकतो.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Exhaust</span><h4>शेवटी पोहोचा</h4><p><code>hasNext()</code> अखेरीस false परत करते. loop स्वच्छपणे थांबतो आणि client <code>next()</code> कॉल करणे बंद करतो.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Reuse</span><h4>संग्रह मुक्तपणे बदला</h4><p>client ने फक्त iterator interface ला स्पर्श केल्याने, तुम्ही अंतर्निहित रचना कोणत्याही दुसऱ्या <code>Iterable</code> ने बदलू शकता आणि loop तरीही चालतो.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">state, mutation आणि laziness एकत्र येईपर्यंत iteration क्षुल्लक वाटते. हे नेहमीचे गुन्हेगार आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💥 Iteration दरम्यान बदल करणे</h4><p>loop दरम्यान संग्रहामार्फत घटक जोडणे किंवा काढणे cursor भ्रष्ट करते. iterator चे स्वतःचे <code>remove()</code> वापरा किंवा बदल गोळा करून नंतर लागू करा.</p></div>
+        <div class="card"><h4>♻️ संपलेला iterator पुन्हा वापरणे</h4><p>बहुतेक iterators एकाच फेरीचे असतात. एकदा <code>hasNext()</code> false झाला की तो false च राहतो. संपलेला पुन्हा वापरण्याऐवजी नवीन फेरीसाठी पुन्हा <code>iterator()</code> कॉल करा.</p></div>
+        <div class="card"><h4>🕳️ तरीही अंतर्गत रचना बाहेर पडणे</h4><p><code>next()</code> मधून backing array किंवा जिवंत node परत करणे मूळ हेतूच नष्ट करते. तुमच्या रचनेतील references नव्हे, तर मूल्ये किंवा defensive copies परत करा.</p></div>
+        <div class="card"><h4>🔁 अंगभूत गोष्टींचा पुनर्शोध</h4><p>भाषा आधीच <code>Iterable</code>, generators किंवा streams देत असताना हाताने cursor बनवणे bugs वाढवते. standard protocol implement करा जेणेकरून <code>for-each</code> सहज चालेल.</p></div>
+        <div class="card"><h4>🧵 एकच iterator अनेक threads मध्ये वाटणे</h4><p>Iterators बदलणारी स्थिती वाहून नेतात आणि thread-safe नसतात. प्रत्येक thread ला स्वतःचा द्या, किंवा वाटलेल्या फिरण्यासाठी बनवलेला concurrent collection वापरा.</p></div>
+        <div class="card"><h4>⏳ laziness चे परिणाम विसरणे</h4><p>generators आणि streams सोबत, तुम्ही ओढेपर्यंत काहीही चालत नाही. फेरी कधीच पूर्ण झाली नाही तर deferred काम कधीच घडत नाही आणि थांबण्याच्या अटीशिवाय अनंत क्रम अडकून राहतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि कधी वापरावे</h2>
+      <p class="muted">Iterator हा शांतपणे सर्वत्र असणाऱ्या पॅटर्नपैकी एक आहे. तो कुठे फळतो आणि कुठे गोंधळ वाढवतो ते येथे आहे.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>एकसमान फिरणे, अंतर्गत रचना झाकते, एकाच वेळी अनेक फेऱ्यांना आधार देते, आणि lazy किंवा अनंत क्रम शक्य करते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>अतिरिक्त objects आणि indirection, एकाच फेरीचे semantics आश्चर्यचकित करू शकतात, आणि साध्या array loop साठी custom iterator अतिरेक ठरतो.</td></tr>
+            <tr><td><strong>कधी वापरावे</strong></td><td>तुमच्याकडे नॉन-ट्रिव्हियल किंवा custom रचना असेल, तिची मांडणी झाकायची असेल, lazy evaluation हवे असेल, किंवा अनेक फिरण्याचे क्रम द्यायचे असतील.</td></tr>
+            <tr><td><strong>कधी टाळावे</strong></td><td>array किंवा list वरील साधा indexed loop अधिक स्पष्ट असेल, किंवा संग्रह अगदी लहान असेल आणि त्याची रचना बदलणार नसेल.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>कमी. दोन methods आणि एक position field. सूक्ष्मता fail-fast checks, laziness आणि thread-safety मध्ये आहे, मूळ loop मध्ये नाही.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Composite (tree एकसमानपणे फिरा), Visitor (प्रत्येक घटकावर एक operation लागू करा), Observer (push विरुद्ध pull सेवन).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर client ला संग्रहातून फिरायचे असेल पण तो कसा साठवला आहे हे कळायला नको, तर iterator उघड करा. जर तो फक्त तुमच्या पूर्ण नियंत्रणातील सपाट array असेल, तर साधा loop पुरेसा आहे, तुम्ही न वापरणारा उपचार जोडू नका.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>प्रत्यक्ष जगातील केस स्टडीज</h2>
+      <p class="muted">Iterator पॅटर्न production कोडमध्ये जिथे दिसतो अशा तीन प्रातिनिधिक जागा.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📦</span><div><h3>1 · Java Collections Framework</h3><div class="role">पॅटर्न: प्रत्येक संग्रहावर fail-fast external iterators</div></div></div>
+        <p class="muted">प्रत्येक <code>ArrayList</code>, <code>HashSet</code>, आणि <code>TreeMap</code> iterators उघड करते, त्यामुळे client कोड त्या सर्वांवर एकसारखाच फिरतो.</p>
+        <ul>
+          <li><code>Iterable.iterator()</code> ही factory method आहे जी वर्धित <code>for</code> loop पडद्यामागे कॉल करते.</li>
+          <li>Iterators एक <code>modCount</code> तपासणी ठेवतात आणि अनपेक्षित रचनात्मक बदलावर <code>ConcurrentModificationException</code> फेकतात.</li>
+          <li><code>ListIterator</code> ही कल्पना मागे फिरणे आणि सुरक्षित in-place संपादनांसह विस्तारते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्पत्ती:</strong> एकच फिरण्याची पद्धत डझनभर data structures वर चालते, आणि loop दरम्यान चुकून बदल झाल्यास ते शांतपणे भ्रष्ट होण्याऐवजी मोठ्याने अपयशी होते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌿</span><div><h3>2 · Paginated API आणि database cursors</h3><div class="role">पॅटर्न: दूरस्थ, असीमित स्रोतावर lazy iterator</div></div></div>
+        <p class="muted">एका client ला REST endpoint किंवा SQL cursor मधून लाखो records सर्व memory मध्ये न भरता प्रक्रिया करायचे असतात.</p>
+        <ul>
+          <li>प्रत्येक <code>next()</code> पुढचे पान किंवा row तेव्हाच आणते जेव्हा consumer मागतो.</li>
+          <li>iterator paging tokens आणि network retries एका साध्या <code>hasNext()</code> loop मागे झाकतो.</li>
+          <li>Back-pressure नैसर्गिक आहे: client जितक्या वेगाने सेवन करतो तितकाच स्रोत ओढला जातो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्पत्ती:</strong> client स्थिर memory वापरून प्रचंड result sets stream करतो, data cache, disk की paged HTTP API मधून येतो याबद्दल अनभिज्ञ राहतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧬</span><div><h3>3 · Compilers मध्ये tree आणि graph फिरणे</h3><div class="role">पॅटर्न: एकाच रचनेवर अनेक iteration क्रम</div></div></div>
+        <p class="muted">compiler त्याच्या abstract syntax tree मधून वेगवेगळ्या टप्प्यांसाठी वेगवेगळ्या क्रमांनी फिरतो: pre-order, post-order, आणि breadth-first.</p>
+        <ul>
+          <li>वेगवेगळे iterator classes एकाच node प्रकारावर प्रत्येक फिरण्याची strategy encode करतात.</li>
+          <li>Optimization passes tree ने त्याचे child pointers न दाखवता त्यांना हवा असलेला क्रम निवडतात.</li>
+          <li>नवीन फिरण्याचे क्रम नवीन iterators म्हणून जोडले जातात, विद्यमान passes तसेच राहतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्पत्ती:</strong> एकच AST अनेक फिरण्याच्या strategies स्वच्छपणे आधार देते, आणि प्रत्येक compiler टप्पा घटक अगदी त्याला हव्या त्या क्रमाने वाचतो.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - उपयुक्तता</div>
+      <h2>आधुनिक उपयुक्तता</h2>
+      <p class="muted">जुनाट होण्यापासून दूर, Iterator जवळजवळ प्रत्येक आधुनिक भाषेच्या syntax मध्ये रुजलेला आहे. आज तो सहसा हाताने लिहिलेल्या classes ऐवजी अंगभूत protocol म्हणून येतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔤 भाषा-स्तरीय protocols</h4><p>Java चे <code>Iterable</code>, JavaScript चे <code>Symbol.iterator</code>, Python चे <code>__iter__</code>, आणि C# चे <code>IEnumerable</code> हे सर्व पॅटर्नला <code>for-each</code> syntax मध्ये प्रमाणित करतात.</p></div>
+        <div class="card"><h4>⚙️ सोपे iterators म्हणून generators</h4><p>JavaScript चे <code>function*</code> किंवा Python चे <code>yield</code> काही ओळींत lazy iterator बनवतात, जिथे position state तुमच्यासाठी runtime सांभाळतो.</p></div>
+        <div class="card"><h4>🌊 Streams आणि pipelines</h4><p>Java Streams आणि LINQ iteration वर <code>map</code>, <code>filter</code>, आणि <code>reduce</code> जोडतात, internal iterators ना composable data pipelines मध्ये बदलतात.</p></div>
+        <div class="card"><h4>⏩ Async iteration</h4><p><code>AsyncIterator</code> आणि <code>for await...of</code> protocol ला कालांतराने येणाऱ्या data पर्यंत विस्तारतात, जसे sockets, event streams, आणि paged fetches.</p></div>
+        <div class="card"><h4>🦀 Zero-cost abstractions</h4><p>Rust सारख्या भाषा iterator chains ना runtime खर्चाशिवाय घट्ट loops मध्ये compile करतात, पॅटर्नला performance खर्च करावाच लागतो असे नाही हे सिद्ध करतात.</p></div>
+        <div class="card"><h4>🧠 Reactive आणि pull विरुद्ध push</h4><p>Reactive streams iteration ला ढकलल्या जाणाऱ्या events पर्यंत सामान्यीकृत करतात, आणि pull-आधारित iterator समजल्याने ती सीमा कुठे आहे हे स्पष्ट होते.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Iterator पॅटर्न इतका पूर्णपणे जिंकला की तो भाषेतच विरून गेला. प्रत्येक वेळी तुम्ही <code>for (const x of items)</code> लिहिता तेव्हा तुम्ही तो वापरत असता, आणि खाली काय घडते हे जाणल्याने तुम्ही custom, lazy आणि async फिरणे आत्मविश्वासाने बनवू शकता.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Iterator संबंधित behavioral आणि structural पॅटर्न्सच्या जाळ्यात बसतो. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>एकाच एकसमान interface ने objects च्या trees मधून फिरा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../visitor/"><span class="ico">🧭</span><h4>Visitor</h4><p>तुम्ही फिरणाऱ्या प्रत्येक घटकावर एक operation लागू करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>Push-आधारित सेवन, pull iteration ची उलट बाजू.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../mediator/"><span class="ico">🕸️</span><h4>Mediator</h4><p>aggregate ज्या प्रकारे cursors वाटतो त्याप्रमाणे objects समन्वयित करतो.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>Iterator पॅटर्नचे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · उपयुक्तता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

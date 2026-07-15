@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Template Method समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Template Method पॅटर्नचे सखोल, दृश्य मार्गदर्शक: बेस मेथडमध्ये अल्गोरिदमचा सांगाडा निश्चित करून सबक्लासेस पायऱ्या ओव्हरराइड करतात, hook मेथड्स, Hollywood Principle, sequence diagrams, 0-100 प्रवाह, केस स्टडीज, आणि हे Strategy पेक्षा कसे वेगळे आहे." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>Template Method - अल्गोरिदम निश्चित करा, पायऱ्या बदला</h1>
+      <p class="lede">Template Method एका बेस-क्लास मेथडमध्ये <strong>अल्गोरिदमचा सांगाडा</strong> निश्चित करते, आणि नंतर विशिष्ट पायऱ्या सबक्लासेसकडे सोपवते. एकंदर क्रम एकाच ठिकाणी बंद केलेला असतो, तर सबक्लासेस वेगळे असणारे भाग भरतात किंवा ओव्हरराइड करतात. बेस क्लास सबक्लासला कॉल करते, उलट नाही, आणि हेच नेमके Hollywood Principle आहे: आम्हाला कॉल करू नका, आम्ही तुम्हाला कॉल करू.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">अल्गोरिदमचा सांगाडा</span>
+        <span class="pill">Abstract पायऱ्या</span>
+        <span class="pill">Hook मेथड्स</span>
+        <span class="pill">Inversion of control</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Template Method म्हणजे काय?</h2>
+      <p class="muted"><strong>Template Method</strong> हा एक behavioral पॅटर्न आहे जिथे बेस क्लास एका मेथडमध्ये अल्गोरिदमला ठराविक पायऱ्यांच्या क्रमाच्या रूपात निश्चित करते, आणि काही पायऱ्या abstract किंवा ओव्हरराइड करण्यायोग्य म्हणून चिन्हांकित करते. सबक्लासेस स्वतः क्रमाला हात न लावता बदलणाऱ्या पायऱ्या पुरवतात. अपरिवर्तनीय रचना पालकात राहते; बदल मुलांमध्ये राहतो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧱</span> Template method</h4>
+          <p>बेस क्लासमधली एक concrete मेथड जी पायऱ्यांना ठराविक क्रमाने कॉल करते. ती सहसा <code>final</code> असते जेणेकरून सबक्लासेस अल्गोरिदमचा क्रम बदलू शकणार नाहीत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧩</span> Abstract पायऱ्या</h4>
+          <p>बेस ज्या ऑपरेशन्स जाहीर करते पण अंमलात आणत नाही. प्रत्येक सबक्लासने त्या पुरवल्याच पाहिजेत, सांगाड्यातील आवश्यक जागा भरत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🪝</span> Hook मेथड्स</h4>
+          <p>रिकाम्या किंवा डीफॉल्ट शरीरासह पर्यायी पायऱ्या. सबक्लासेस त्यांना वर्तन वाढवण्यासाठी किंवा किंचित बदलण्यासाठी ओव्हरराइड करू शकतात, पण त्यांना तसे करण्याची सक्ती नाही.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>ठराविक रूप</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abstract class</strong></td><td>अल्गोरिदमचा सांगाडा आणि सामायिक logic धरून ठेवते</td><td>डीफॉल्ट मेथड्ससह बेस क्लास किंवा interface</td></tr>
+            <tr><td><strong>Template method</strong></td><td>पायऱ्या ठराविक क्रमाने चालवते</td><td><code>final</code> concrete मेथड</td></tr>
+            <tr><td><strong>Primitive operation</strong></td><td>सबक्लासेसने अंमलात आणलीच पाहिजे अशी आवश्यक पायरी</td><td><code>abstract</code> मेथड</td></tr>
+            <tr><td><strong>Hook method</strong></td><td>डीफॉल्ट no-op असलेली पर्यायी पायरी</td><td>Non-abstract, ओव्हरराइड करण्यायोग्य मेथड</td></tr>
+            <tr><td><strong>Concrete class</strong></td><td>बदलणाऱ्या पायऱ्या पुरवते</td><td>primitives आणि hooks ओव्हरराइड करणारा सबक्लास</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> प्रत्येक पायरी <em>कधी</em> चालते हे पालकाच्या मालकीचे असते; एखादी पायरी <em>कशी</em> वागते हे मुलाच्या मालकीचे असते. तुम्ही workflow एकदाच गोठवता आणि प्रत्येक variant साठी तो पुन्हा वापरता, फक्त प्रत्यक्षात वेगळे असणारे भाग बदलत.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Template Method का अस्तित्वात आहे</h2>
+      <p class="muted">जेव्हा अनेक क्लासेस एकाच एकंदर प्रक्रियेत सामायिक असतात पण काही पायऱ्यांमध्ये वेगळे असतात, तेव्हा ती प्रक्रिया प्रत्येकात कॉपी-पेस्ट केल्याने control flow ची पुनरावृत्ती होते. प्रत्येक बग फिक्स किंवा क्रमबदल मग सर्वत्र पुन्हा करावा लागतो. Template Method तो सामायिक सांगाडा एकाच ठिकाणी आणते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>♻️ पुनरावृत्ती काढून टाकते</h4><p>सामायिक क्रम बेस क्लासमध्ये एकदाच राहतो. सबक्लासेस फक्त फरक देतात, त्यामुळे सामायिक control flow variants मध्ये कधीही कॉपी-पेस्ट होत नाही.</p></div>
+        <div class="card"><h4>🔒 अल्गोरिदमचे रक्षण करते</h4><p>Template method ला <code>final</code> चिन्हांकित केल्याने पायऱ्यांचा क्रम बंद होतो. सबक्लासेस चुकून validation वगळू शकत नाहीत किंवा महत्त्वाचे टप्पे क्रमबदल करू शकत नाहीत.</p></div>
+        <div class="card"><h4>🎯 सबक्लासेसना केंद्रित करते</h4><p>नवीन variant फक्त abstract पायऱ्या अंमलात आणतो. डेव्हलपर्सना नेमके कोणते रिकामे भाग भरायचे ते दिसते, संपूर्ण workflow पुन्हा वाचण्याऐवजी.</p></div>
+        <div class="card"><h4>🔄 नियंत्रण उलटवते</h4><p>Framework प्रवाह चालवते आणि ठराविक बिंदूंवर तुमच्या कोडला कॉल करते, त्यामुळे विस्तार पुनर्लेखनांऐवजी सुस्पष्ट hooks मार्फत होतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांनी समजावलेले Template Method</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>ती एक <strong>रिकाम्या जागा भरण्याची कार्यपत्रिका</strong> आहे. शिक्षक प्रश्न आणि त्यांचा क्रम निश्चित करतात; तुम्ही फक्त रिकाम्या जागांमध्ये उत्तरे लिहिता. तुम्ही प्रश्नांची फेरमांडणी करू शकत नाही, फक्त रिकाम्या जागा पूर्ण करता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p><strong>setUp आणि tearDown असलेल्या बेस टेस्ट क्लासचा</strong> विचार करा. Framework आधी setUp चालवते, मग तुमची test, मग tearDown, त्याच क्रमाने. तुम्ही hooks ओव्हरराइड करता; runner क्रमाच्या मालकीचे असते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>ती एक <strong>प्रमाणित कार्यपद्धती</strong> आहे. पायऱ्या आणि त्यांचा क्रम धोरणाने निश्चित केलेला असतो; प्रत्येक विभाग प्रक्रिया न बदलता आपल्या कामाशी संबंधित तपशील भरतो.</p></div>
+        <div class="card"><h4><span class="ico">☕</span> रोजच्या जीवनातील आवृत्ती</h4><p>गरम पेय बनवणे: <strong>पाणी उकळा, मुख्य घटक टाका, ओता, अतिरिक्त गोष्टी टाका</strong>. चहा आणि कॉफी recipe सांगाडा सामायिक करतात; फक्त "घटक टाका" आणि पर्यायी "अतिरिक्त गोष्टी टाका" या पायऱ्या वेगळ्या असतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे काम करते</h2>
+      <p class="muted">बेस क्लास एक सार्वजनिक template method आणि संरक्षित पायऱ्यांचा संच उघड करते. काही पायऱ्या abstract असतात (अंमलात आणल्याच पाहिजेत), इतर hooks असतात (ओव्हरराइड करू शकता). रनटाइमला dynamic dispatch प्रत्येक पायरीच्या कॉलला योग्य concrete सबक्लासकडे मार्गित करते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧭</span> बेस क्लास नेतृत्व करते</h4>
+          <p>ती template method अंमलात आणते आणि प्रत्येक पायरीला नावाने कॉल करते. सामायिक, अपरिवर्तनीय logic थेट बेसमध्ये असते जेणेकरून प्रत्येक सबक्लास ती फुकट वारशाने मिळवते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> सबक्लासेस जोडले जातात</h4>
+          <p>प्रत्येक concrete क्लास abstract पायऱ्या आणि त्याला हव्या असलेल्या कोणत्याही hooks ओव्हरराइड करतो. तो template method चे अंतर्गत भाग कधीही कॉल करत नाही, फक्त तुकडे पुरवतो.</p>
+        </div>
+      </div>
+
+      <h3>रचना एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">Class रचना - बेस अल्गोरिदमच्या मालकीचे असते, सबक्लासेस पायऱ्या पुरवतात</div>
+        <pre class="mermaid">
+classDiagram
+    class AbstractClass {
+        +templateMethod() final
+        #stepOne()* abstract
+        #stepTwo()* abstract
+        #hook() default
+    }
+    class ConcreteA {
+        #stepOne()
+        #stepTwo()
+    }
+    class ConcreteB {
+        #stepOne()
+        #stepTwo()
+        #hook()
+    }
+    AbstractClass &lt;|-- ConcreteA
+    AbstractClass &lt;|-- ConcreteB
+    note for AbstractClass "templateMethod calls stepOne, stepTwo, hook in fixed order"
+        </pre>
+      </div>
+
+      <h3>Java मधले एक वास्तववादी उदाहरण</h3>
+      <pre><code>abstract class DataImporter {
+
+    // The template method: the algorithm skeleton, locked with final.
+    public final void run(String path) {
+        String raw = read(path);          // abstract step
+        List&lt;Record&gt; records = parse(raw); // abstract step
+        if (shouldValidate()) {            // hook controls an optional step
+            validate(records);            // hook step
+        }
+        save(records);                    // shared, invariant step
+        onComplete(records.size());       // hook, empty by default
+    }
+
+    // Required steps: every subclass MUST provide these.
+    protected abstract String read(String path);
+    protected abstract List&lt;Record&gt; parse(String raw);
+
+    // Hook methods: optional, with sensible defaults.
+    protected boolean shouldValidate() { return true; }
+    protected void validate(List&lt;Record&gt; records) { /* default no-op */ }
+    protected void onComplete(int count) { /* subclasses may log here */ }
+
+    // Invariant step shared by all importers.
+    private void save(List&lt;Record&gt; records) {
+        Database.bulkInsert(records);
+    }
+}
+
+class CsvImporter extends DataImporter {
+    protected String read(String path) { return Files.readString(path); }
+    protected List&lt;Record&gt; parse(String raw) { return Csv.toRecords(raw); }
+    protected void onComplete(int count) {
+        System.out.println("Imported " + count + " CSV rows");
+    }
+}
+
+class JsonImporter extends DataImporter {
+    protected String read(String path) { return Http.get(path); }
+    protected List&lt;Record&gt; parse(String raw) { return Json.toRecords(raw); }
+    // Trusted feed, so skip validation via the hook.
+    protected boolean shouldValidate() { return false; }
+}</code></pre>
+      <p class="muted">लक्षात घ्या की <code>run()</code> ही <code>final</code> आहे: सबक्लासेस read, parse, validate, save यांचा क्रम बदलू शकत नाहीत. ते फक्त <em>पायऱ्या</em> ओव्हरराइड करतात. बेस क्लास सबक्लासमध्ये खाली कॉल करते, कधीही उलट नाही, आणि हेच कृतीत असलेले Hollywood Principle आहे: आम्हाला कॉल करू नका, आम्ही तुम्हाला कॉल करू.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>सविस्तर sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: template method चा मूलभूt dispatch, एका पर्यायी पायरीवर नियंत्रण ठेवणारा hook, आणि पॅटर्नला त्याचे नाव देणारे inversion of control.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - मूलभूत dispatch: template method पायऱ्या चालवते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Base as 🧭 AbstractClass
+    participant Sub as 🔌 ConcreteImporter
+
+    Client->>Base: run(path)
+    Base->>Sub: read(path)
+    Sub-->>Base: raw text
+    Base->>Sub: parse(raw)
+    Sub-->>Base: records
+    Base->>Base: save(records)
+    Base-->>Client: done
+    Note over Base,Sub: Base fixes the order, Sub fills the steps
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Hook मेथड्स: सबक्लासने चालू-बंद केलेली एक पर्यायी पायरी</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Base as 🧭 AbstractClass
+    participant Sub as 🔌 ConcreteImporter
+
+    Client->>Base: run(path)
+    Base->>Sub: read then parse
+    Sub-->>Base: records
+    Base->>Sub: shouldValidate()
+    alt hook returns true
+        Base->>Sub: validate(records)
+        Sub-->>Base: ok
+    else hook returns false
+        Note over Base,Sub: Optional step skipped
+    end
+    Base->>Base: save(records)
+    Base->>Sub: onComplete(count)
+    Base-->>Client: done
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Inversion of control: Hollywood Principle</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Fw as 🏗️ Framework base
+    participant App as 🧩 Your subclass
+
+    Note over Fw,App: You do not call the framework loop
+    Fw->>Fw: start template method
+    loop each defined step
+        Fw->>App: call your overridden step
+        App-->>Fw: return result
+    end
+    Fw->>App: call optional hook
+    App-->>Fw: extend or no-op
+    Note over Fw,App: Do not call us, we will call you
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी दर पायरी</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">पुनरावृत्ती झालेल्या प्रक्रिया ओळखण्यापासून ते variants चे स्वच्छ कुटुंब चालवण्यापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>पुनरावृत्त प्रक्रिया लक्षात घ्या</h4><p>अनेक क्लासेस एकच एकंदर पायऱ्यांचा क्रम चालवतात पण काही ठिकाणी वेगळे असतात. Control flow इकडे-तिकडे कॉपी-पेस्ट होत आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">रूपरेषा</span><h4>अल्गोरिदमचा सांगाडा लिहा</h4><p>पायऱ्या ज्या नेमक्या क्रमाने चालल्या पाहिजेत त्या क्रमाने त्यांची यादी करा. ही क्रमबद्ध यादी template method चे शरीर बनते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">वर्गीकरण</span><h4>बदलण्यायोग्यतेनुसार पायऱ्या वर्गीकृत करा</h4><p>कोणत्या पायऱ्या नेहमी सारख्याच असतात, कोणत्या नेहमी वेगळ्या असतात, आणि कोणत्या पर्यायी आहेत हे चिन्हांकित करा. हा विभाग concrete, abstract आणि hook ठरवतो.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">बेस</span><h4>Abstract class तयार करा</h4><p>अपरिवर्तनीय पायऱ्या concrete मेथड्स म्हणून टाका आणि सामायिक state बेसवर ठेवा जेणेकरून प्रत्येक सबक्लास त्या वारशाने मिळवते.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Template</span><h4>Template method लिहा</h4><p>प्रत्येक पायरीला क्रमाने कॉल करणारी एकच मेथड अंमलात आणा. तिला <code>final</code> करा जेणेकरून सबक्लासेस अल्गोरिदमचा क्रम बदलू शकणार नाहीत.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Abstract</span><h4>आवश्यक पायऱ्या जाहीर करा</h4><p>नेहमी वेगळ्या असणाऱ्या पायऱ्या abstract मेथड्समध्ये बदला. आता compiler सबक्लासेसना त्या पुरवण्याची सक्ती करतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Hook</span><h4>पर्यायी hooks जोडा</h4><p>पर्यायी पायऱ्यांना डीफॉल्ट किंवा रिकामे शरीर द्या. सबक्लासेस वर्तन वाढवण्यासाठी ओव्हरराइड करू शकतात, पण त्यांनी तसे केले नाही तरी काहीही तुटत नाही.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">अंमलात आणा</span><h4>एक concrete सबक्लास बांधा</h4><p>एका variant साठी abstract पायऱ्या ओव्हरराइड करा. त्याला खरोखर हव्या असलेल्या hooks च ओव्हरराइड करा आणि बाकीच्या तशाच सोडा.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">विस्तार</span><h4>अधिक variants जोडा</h4><p>प्रत्येक नवीन केस म्हणजे आपल्या पायऱ्या पुरवणारा आणखी एक सबक्लास. सांगाडा अस्पर्श राहतो, त्यामुळे नवीन variants ना फक्त फरकांची किंमत लागते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">चालवा</span><h4>बेस प्रकारातून कॉल करा</h4><p>Clients बेस-प्रकाराच्या संदर्भावर template method कॉल करतात. Dynamic dispatch प्रत्येक पायरीला योग्य सबक्लासकडे मार्गित करते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">देखभाल</span><h4>प्रवाह एकाच ठिकाणी बदला</h4><p>सामायिक पायरीची फेरमांडणी किंवा दुरुस्ती बेसमध्ये एकदाच होते आणि प्रत्येक variant ला लगेच लागू होते. पुनरावृत्ती नाहीशी झाली.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Template Method inheritance वर अवलंबून असते, त्यामुळे त्याचे अपयशाचे प्रकार म्हणजे inheritance चे उत्कृष्ट सापळे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧨 नाजूक बेस क्लास</h4><p>सांगाडा किंवा सामायिक पायरी संपादित केल्याने प्रत्येक सबक्लास गुपचूप तुटू शकतो. Inheritance मार्फत घट्ट coupling म्हणजे बदल अशा प्रकारे खाली पसरतात जे पाहणे कठीण असते.</p></div>
+        <div class="card"><h4>🪜 खूप जास्त abstract पायऱ्या</h4><p>जर जवळजवळ प्रत्येक पायरी abstract असेल, तर बेस थोडाच पुनर्वापर देते आणि सबक्लासेस सर्व ओझे वाहतात. हे लक्षण आहे की सामायिक सांगाडा फारसा अस्तित्वातच नाही.</p></div>
+        <div class="card"><h4>🔓 Template लॉक करायला विसरणे</h4><p>Template method ओव्हरराइड करण्यायोग्य ठेवल्याने एखादा सबक्लास अल्गोरिदमचा क्रम पुन्हा लिहू शकतो, जे संपूर्ण उद्देशच पराभूत करते. तिला <code>final</code> चिन्हांकित करा.</p></div>
+        <div class="card"><h4>🕸️ खोल श्रेणीक्रम</h4><p>अंशतः वर्तन पुन्हा वापरण्यासाठी सबक्लासच्या अनेक स्तरांची साखळी जोडल्याने प्रवाह अनुसरणे अशक्य होते. बदलाचा एक स्तर सहसा योग्य असतो.</p></div>
+        <div class="card"><h4>🎭 आवश्यकता गळणारे hooks</h4><p>जे hooks एकत्र, किंवा ठराविक संयोजनात ओव्हरराइड केले पाहिजेत ते अस्पष्ट करार लपवतात. एखादा लपलेला नियम चुकल्यास सबक्लासेस सूक्ष्मपणे तुटतात.</p></div>
+        <div class="card"><h4>🔁 वर्तन डेटा असताना त्याकडे वळणे</h4><p>जर पायऱ्या प्रत्येक ऑब्जेक्टनुसार रनटाइमला बदलत असतील, तर inheritance मदत करू शकत नाही. प्रत्येक संयोजनासाठी सबक्लास लादल्याने क्लासची संख्या स्फोट पावते. त्याऐवजी compose करा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">जेव्हा अल्गोरिदम निश्चित असतो आणि फक्त त्याच्या पायऱ्या बदलतात तेव्हा Template Method हा पहिला पर्याय असतो. त्याचा मुख्य तणाव Strategy आहे: inheritance विरुद्ध composition.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>पुनरावृत्त control flow काढून टाकते, अल्गोरिदमचा क्रम एकाच ठिकाणी बंद करते, सबक्लासेसना स्पष्ट विस्तार बिंदू देते, आणि inversion of control सक्षम करते.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>Inheritance वर अवलंबून असते, त्यामुळे सबक्लासेसना बेसशी couple करते, नाजूक-बेस-क्लास समस्यांना आमंत्रण देते, आणि compile वेळी वर्तन निश्चित करते.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>तुमच्याकडे एकाच प्रक्रियेचे अनेक variants आहेत जे फक्त काही पायऱ्यांमध्ये वेगळे आहेत, आणि क्रम स्वतः कधीही बदलू नये.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>बदलणारे वर्तन रनटाइमला निवडले किंवा बदलले गेले पाहिजे, किंवा पायऱ्यांची संयोजने झाकण्यासाठी तुम्हाला अनेक सबक्लासेस लागतील.</td></tr>
+            <tr><td><strong>जटिलता</strong></td><td>कमी. एक abstract class अधिक प्रत्येक variant साठी एक सबक्लास. कठीण भाग म्हणजे कोणत्या पायऱ्या abstract आणि कोणत्या hooks हे निवडणे.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Strategy (composition पर्याय), Factory Method (बहुधा template मधली एक पायरी), आणि hooks Observer callback शैलीसारखे असतात.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जेव्हा <em>अल्गोरिदम</em> निश्चित असतो आणि <em>पायऱ्या</em> प्रकारानुसार बदलतात तेव्हा Template Method कडे वळा. जेव्हा संपूर्ण वर्तन रनटाइमला बदलले गेले पाहिजे तेव्हा Strategy कडे वळा. Template Method वारसा घेते, Strategy compose करते: जेव्हा बदलाचा अक्ष गतिशील असतो तेव्हा composition ला प्राधान्य द्या.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन ठिकाणे जिथे तुम्ही जवळजवळ नक्कीच वापरलेल्या कोडमध्ये हा पॅटर्न दिसतो.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧪</span><div><h3>1 · JUnit test lifecycle</h3><div class="role">पॅटर्न: hooks सह framework च्या मालकीचा run क्रम</div></div></div>
+        <p class="muted">Testing framework ने प्रत्येक test सुसंगत lifecycle मध्ये चालवला पाहिजे, तर प्रत्येक test क्लासला setup आणि teardown सानुकूल करू दिले पाहिजे.</p>
+        <ul>
+          <li>Runner निश्चित क्रमाच्या मालकीचे असते: setUp, test body चालवा, tearDown.</li>
+          <li>Test क्लासेस <code>setUp</code> आणि <code>tearDown</code> hooks म्हणून ओव्हरराइड करतात; ओव्हरराइड करणे पर्यायी असते.</li>
+          <li>तुम्ही lifecycle स्वतः कधीही कॉल करत नाही, framework तुमच्या क्लासमध्ये कॉल करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> प्रत्येक test विश्वासार्ह, एकसमान lifecycle सामायिक करतो तर प्रत्येक क्लास फक्त त्याला हवे असलेले भाग सानुकूल करतो, एक पाठ्यपुस्तकी Hollywood Principle मांडणी.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📥</span><div><h3>2 · HTTP servlet request हाताळणी</h3><div class="role">पॅटर्न: ओव्हरराइड करण्यायोग्य पायऱ्यांसह dispatch सांगाडा</div></div></div>
+        <p class="muted">Web framework ला प्रत्येक request सामायिक pipeline मार्फत मार्गित करावे लागते, तर handlers ना फक्त त्यांना हवे असलेले verb अंमलात आणू दिले पाहिजे.</p>
+        <ul>
+          <li><code>service()</code> ही template method आहे: ती HTTP verb तपासते आणि dispatch करते.</li>
+          <li>ती <code>doGet</code>, <code>doPost</code> आणि तत्सम ओव्हरराइड करण्यायोग्य पायऱ्या म्हणून कॉल करते.</li>
+          <li>तुमचे servlet फक्त ते समर्थित करत असलेल्या verbs साठीच्या मेथड्स अंमलात आणते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> सामायिक request dispatch बेस servlet मध्ये एकदाच राहते, आणि प्रत्येक handler pipeline पुन्हा न लिहिता फक्त verb-विशिष्ट logic देते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🍜</span><div><h3>3 · Build आणि deployment pipelines</h3><div class="role">पॅटर्न: निश्चित टप्पे, प्रकल्प-विशिष्ट पायऱ्या</div></div></div>
+        <p class="muted">एक CI बेस job प्रत्येक प्रकल्प चालवत असलेले प्रमाण टप्पे निश्चित करते, तर वैयक्तिक प्रकल्प आपल्या स्वतःच्या commands जोडतात.</p>
+        <ul>
+          <li>बेस क्रम निश्चित करते: checkout, install, build, test, package, publish.</li>
+          <li>प्रकल्प त्यांच्या stack साठी <code>build</code> आणि <code>test</code> सारख्या abstract पायऱ्या ओव्हरराइड करतात.</li>
+          <li><code>afterPublish</code> सारखा एक hook काही प्रकल्पांना releases सूचित किंवा tag करू देतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एकच, ऑडिट करण्यायोग्य pipeline क्रम प्रत्येक प्रकल्पभर लागू होतो, आणि संघ संपूर्ण workflow fork करण्याऐवजी फक्त त्यांच्या स्वतःच्या पायऱ्या बदलतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">हा पॅटर्न तुम्ही वापरता त्या बहुतेक frameworks च्या आधीचा आहे, तरीही त्याचा आकार पुन्हा पुन्हा दिसत राहतो, बहुधा class श्रेणीक्रमाशिवायच व्यक्त होत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🏗️ सर्वत्र frameworks</h4><p>तुमच्या lifecycle मेथड्सना निश्चित क्रमाने कॉल करणारे प्रत्येक framework म्हणजे एक template method. Inversion of control म्हणजे संपूर्ण प्रणालीपर्यंत सामान्यीकृत केलेला हाच पॅटर्न.</p></div>
+        <div class="card"><h4>🧬 डीफॉल्ट interface मेथड्स</h4><p>Java default मेथड्स आणि TypeScript abstract classes template ला interface वर राहू देतात, सामायिक प्रवाह आवश्यक पायऱ्यांशी पूर्वीपेक्षा अधिक लवचिकपणे मिसळत.</p></div>
+        <div class="card"><h4>🧩 Functional variants</h4><p>निश्चित pipeline फंक्शनमध्ये step फंक्शन्स पास केल्याने composition सह तोच सांगाडा साध्य होतो, Strategy शी असलेली रेषा अस्पष्ट करत.</p></div>
+        <div class="card"><h4>🪝 First-class API म्हणून hooks</h4><p>आधुनिक libraries lifecycle hooks (beforeCreate, mounted, onRequest) उघड करतात जे नेमके पर्यायी-पायरीची कल्पनाच आहे, सार्वजनिक आणि दस्तऐवजीकृत केलेली.</p></div>
+        <div class="card"><h4>⚖️ Composition-प्रथम संस्कृती</h4><p>संघ inheritance पेक्षा composition ला पसंती देत असल्याने, अनेक template methods Strategy किंवा higher-order functions मध्ये refactor केले जातात, पण सांगाड्याची कल्पना टिकून राहते.</p></div>
+        <div class="card"><h4>🔌 Plugin architectures</h4><p>Plugin प्रणाली निश्चित विस्तार बिंदू निश्चित करतात आणि ठराविक क्षणी नोंदणीकृत कोड कॉल करतात, Template Method चा एक inversion-of-control वंशज.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Template Method म्हणजे तुम्ही सामायिक अल्गोरिदम कसा वेगळा काढता आणि variants ना रिकाम्या जागा भरू देता. जेव्हा बदल प्रकारानुसार असतो आणि प्रवाह निश्चित असतो, तेव्हा inheritance बसते. जेव्हा बदल instance-नुसार आणि गतिशील असतो, तेव्हा Strategy आणि composition ला प्राधान्य द्या. सांगाड्याची कल्पना यंत्रणेपेक्षा जास्त काळ टिकते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोधत राहा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Template Method ज्या पॅटर्न्सना पूरक आहे आणि ज्यांच्याशी स्पर्धा करते त्यांच्या शेजारी बसते.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../strategy/"><span class="ico">🔀</span><h4>Strategy</h4><p>Composition पर्याय: रनटाइमला संपूर्ण वर्तने बदला.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>एक creation पायरी जी बहुधा template method मध्ये सोपवली जाते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔁</span><h4>Iterator</h4><p>आणखी एक behavioral पॅटर्न जो एखादी पायरी कशी केली जाते ते लपवतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📣</span><h4>Observer</h4><p>Callbacks आणि hooks जे कोण कोणाला कॉल करते हे उलटवतात.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Template Method चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

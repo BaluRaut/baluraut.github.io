@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proxy पॅटर्न समजावून - काय, कसे, का आणि उदाहरणे</title>
+  <meta name="description" content="Proxy डिझाइन पॅटर्नचे सखोल, दृश्य मार्गदर्शन: एका दुसऱ्या ऑब्जेक्टवरील प्रवेश नियंत्रित करणारा, त्याच interface असलेला प्रतिनिधी. यात virtual, remote, protection, caching आणि smart-reference proxies, lazy loading, sequence diagrams, 0 ते 100 प्रवाह, केस स्टडीज आणि तो Decorator व Adapter पेक्षा कसा वेगळा आहे हे समाविष्ट आहे." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">तडजोडी</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural पॅटर्न</span>
+      <h1>Proxy पॅटर्न - प्रवेश नियंत्रित करणारा प्रतिनिधी</h1>
+      <p class="lede">Proxy हा एक <strong>प्रतिनिधी</strong> आहे जो खऱ्या ऑब्जेक्टप्रमाणेच तेच interface अंमलात आणतो आणि त्याच्यासमोर बसतो. कॉल करणाऱ्यांना वाटते की ते खऱ्या ऑब्जेक्टशी बोलत आहेत, पण proxy शांतपणे ठरवतो की कॉल <strong>केव्हा आणि करावा की नाही</strong> पुढे पाठवायचा - महाग काम पुढे ढकलणे, परवानग्या लागू करणे, निकाल cache करणे, किंवा नेटवर्कपलीकडे पोहोचणे. तेच interface, जास्तीचे नियंत्रण.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">पूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">तेच interface</span>
+        <span class="pill">Lazy loading</span>
+        <span class="pill">प्रवेश नियंत्रण</span>
+        <span class="pill">Caching आणि remoting</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Proxy पॅटर्न म्हणजे काय?</h2>
+      <p class="muted"><strong>Proxy</strong> हा दुसऱ्या ऑब्जेक्टसाठी एक जागाधारक पुरवतो जेणेकरून त्यावरील प्रवेश नियंत्रित करता येईल. Proxy आणि खरा ऑब्जेक्ट (<em>subject</em>) एकच interface सामायिक करतात, त्यामुळे proxy हा थेट बदली म्हणून वापरता येतो. Clients interface चा संदर्भ धरतात आणि त्यांना कधीच कळत नाही की ते खऱ्या subject शी जोडलेले आहेत की प्रतिनिधीशी - proxy प्रत्येक कॉल पकडतो आणि खऱ्या ऑब्जेक्टकडे सोपवण्यापूर्वी, नंतर, किंवा त्याऐवजी वर्तन जोडतो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎭</span> तेच interface</h4>
+          <p>Proxy आणि खरा subject एकसारखाच प्रकार अंमलात आणतात. Client interface नुसार कोड लिहितो, त्यामुळे proxy client मध्ये कोणताही बदल न करता पारदर्शकपणे बदली होतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛡️</span> प्रवेश नियंत्रित करतो</h4>
+          <p>Proxy subject कडे जाणाऱ्या मार्गावर बसतो आणि त्यावर पहारा देतो: तो निर्मिती पुढे ढकलू शकतो, परवानग्या तपासू शकतो, cache करू शकतो, log करू शकतो, किंवा सीमेपलीकडे पुढे पाठवू शकतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔗</span> खरा ऑब्जेक्ट धरतो</h4>
+          <p>Proxy खऱ्या subject चा संदर्भ (किंवा तो तयार करण्याचे साधन) धरून ठेवतो आणि एकदा त्याने ठरवले की कॉल पुढे जावा, तेव्हा तो प्रत्यक्ष काम सोपवतो.</p>
+        </div>
+      </div>
+
+      <h3>Proxy चे मुख्य प्रकार</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>प्रकार</th><th>तो काय नियंत्रित करतो</th><th>ठराविक वापर</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Virtual / lazy</strong></td><td>खरा ऑब्जेक्ट केव्हा तयार होतो</td><td>महाग ऑब्जेक्ट पहिल्या खऱ्या वापरापर्यंत बांधणे पुढे ढकलणे</td></tr>
+            <tr><td><strong>Remote</strong></td><td>खरा ऑब्जेक्ट कुठे राहतो</td><td>दुसऱ्या process किंवा मशीनवरील ऑब्जेक्टसाठी स्थानिक प्रतिनिधी</td></tr>
+            <tr><td><strong>Protection</strong></td><td>कोण कोणत्या methods कॉल करू शकतो</td><td>पुढे पाठवण्यापूर्वी roles किंवा परवानग्या तपासणे</td></tr>
+            <tr><td><strong>Caching</strong></td><td>कॉल काम पुन्हा करतो की नाही</td><td>पुन्हा गणना किंवा पुन्हा आणण्याऐवजी साठवलेला निकाल परत करणे</td></tr>
+            <tr><td><strong>Smart reference</strong></td><td>ऑब्जेक्ट वापरण्याचे दुष्परिणाम</td><td>Reference counting, lazy locking, logging, वापरावर लोड करणे</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> proxy <em>ऑपरेशनचा अर्थ काय</em> हे बदलत नाही - फक्त <em>तो खऱ्या ऑब्जेक्टपर्यंत पोहोचतो की नाही, केव्हा, आणि कोणत्या अटींखाली</em> हे बदलतो. जर तुम्ही निकालाचे वर्तन बदलत असाल, तर तुम्हाला बहुधा Decorator हवा असतो; जर तुम्ही interface बदलत असाल, तर तुम्हाला Adapter हवा असतो.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Proxy पॅटर्न का अस्तित्वात आहे</h2>
+      <p class="muted">कधीकधी तुम्ही client ला खऱ्या ऑब्जेक्टला थेट स्पर्श करू देऊ शकत नाही किंवा देऊ नये. निर्मिती महाग असू शकते, ऑब्जेक्ट दुसऱ्या मशीनवर राहू शकतो, प्रवेशाला पहाऱ्याची गरज असू शकते, किंवा वारंवार कॉल्स वाया जाऊ शकतात. Proxy client ला कधीच न कळता एक नियंत्रण बिंदू घालतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⏳ महाग काम पुढे ढकला</h4><p>Virtual proxy जड ऑब्जेक्ट्स (मोठ्या प्रतिमा, DB connections, parse केलेले models) बांधणे ते प्रत्यक्ष वापरात येण्याच्या क्षणापर्यंत पुढे ढकलतो, त्यामुळे startup वेगवान राहते आणि न वापरलेली संसाधने कधीच तयार होत नाहीत.</p></div>
+        <div class="card"><h4>🌐 दूरस्थपणा लपवा</h4><p>Remote proxy स्थानिक कोडला दुसऱ्या process मधील किंवा नेटवर्कपलीकडील ऑब्जेक्ट memory मध्ये असल्यासारखे कॉल करू देतो, serialization, transport, आणि retries त्याच interface मागे बंदिस्त करतो.</p></div>
+        <div class="card"><h4>🔐 प्रवेश नियम लागू करा</h4><p>Protection proxy सोपवण्यापूर्वी credentials किंवा roles तपासतो, authorization एका ठिकाणी केंद्रित करतो जेणेकरून खरा subject त्याच्या मुख्य कामावर लक्ष केंद्रित करू शकेल.</p></div>
+        <div class="card"><h4>⚡ पुनरावृत्त काम टाळा</h4><p>Caching proxy निकाल साठवतो आणि पुन्हा कॉल्सवर ते देतो, client ला कोणतेही cache व्यवस्थापन न करता latency आणि load कमी करतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Proxy समजावून</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Proxy म्हणजे एक <strong>teaching assistant</strong> जो नेहमीचे प्रश्न सोडवतो आणि फक्त अवघड प्रश्नच प्राध्यापकांकडे पाठवतो. तुम्हाला वाटते की तुम्ही प्राध्यापकांना विचारत आहात, पण TA त्यांच्या वतीने गाळून पुढे पाठवत असतो.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>तो एक <strong>wrapper आहे जो subject चे interface सामायिक करतो</strong>. तुम्ही <code>service.load()</code> कॉल करता; proxy cache तपासतो, कदाचित खरी service lazily तयार करतो, मग सोपवतो. तुमचे call site कधीच बदलत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>executive assistant</strong> चा विचार करा. लोक अधिकाऱ्यापर्यंत पोहोचल्यासारखे वेळ ठरवतात, पण assistant विनंत्या तपासतो, अनधिकृत विनंत्या अडवतो, आणि फक्त तपासलेल्या बैठकाच खऱ्या व्यक्तीपर्यंत पोहोचू देतो.</p></div>
+        <div class="card"><h4><span class="ico">💳</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>debit card</strong> तुमच्या bank account चा प्रतिनिधी असतो. तुम्ही card ने पैसे भरता, पण network आधी तुमची balance आणि परवानग्या तपासते, मग पडद्यामागे खरे पैसे हलवते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>पडद्यामागे ते कसे काम करते</h2>
+      <p class="muted">Proxy तेच <strong>Subject interface</strong> अंमलात आणतो जे खरा ऑब्जेक्टही अंमलात आणतो. तो खऱ्या ऑब्जेक्टचा संदर्भ धरतो, आणि प्रत्येक method एकतर थेट सोपवते किंवा नियंत्रण तर्कासह सोपवणे गुंडाळते: मागणीनुसार निर्मिती, परवानगी तपासणी, cache शोध, किंवा remote कॉल्स.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧩</span> सामायिक interface</h4>
+          <p>Client फक्त <code>Subject</code> वर अवलंबून असतो. <code>RealSubject</code> आणि <code>Proxy</code> दोघेही तो अंमलात आणतात, त्यामुळे कोणत्याही call site वर proxy खऱ्या ऑब्जेक्टशी बदली करता येतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎚️</span> आधी पकडा मग सोपवा</h4>
+          <p>Proxy आधी त्याचा नियंत्रण तर्क चालवतो, मग कॉल पुढे जावा असल्यास खऱ्या subject कडे पुढे पाठवतो - शक्यतो पहिल्या कॉलवर तो subject lazily तयार करतो.</p>
+        </div>
+      </div>
+
+      <h3>रचना एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">रचना - client Subject नुसार कोड लिहितो; Proxy RealSubject वर पहारा देतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Subject {
+      &lt;&lt;interface&gt;&gt;
+      +request() Result
+    }
+    class RealSubject {
+      +request() Result
+    }
+    class Proxy {
+      -realSubject RealSubject
+      +request() Result
+    }
+    class Client
+    Subject &lt;|.. RealSubject
+    Subject &lt;|.. Proxy
+    Proxy --&gt; RealSubject : delegates
+    Client --&gt; Subject : depends on
+        </pre>
+      </div>
+
+      <h3>Java मधील एक virtual (lazy-loading) proxy</h3>
+      <pre><code>// Shared interface: both real object and proxy implement it
+interface Image {
+    void render();
+}
+
+// RealSubject: construction is expensive (reads bytes from disk)
+class HighResImage implements Image {
+    private final String path;
+    private byte[] pixels;
+
+    HighResImage(String path) {
+        this.path = path;
+        loadFromDisk(); // heavy work happens in the constructor
+    }
+
+    private void loadFromDisk() {
+        System.out.println("Loading " + path + " from disk...");
+        this.pixels = new byte[10_000_000]; // pretend this is costly
+    }
+
+    public void render() {
+        System.out.println("Rendering " + path);
+    }
+}
+
+// Virtual Proxy: same interface, defers creation until first render()
+class LazyImage implements Image {
+    private final String path;
+    private HighResImage real; // created on demand
+
+    LazyImage(String path) {
+        this.path = path; // cheap: no disk I/O yet
+    }
+
+    public void render() {
+        if (real == null) {            // lazy load on first use
+            real = new HighResImage(path);
+        }
+        real.render();                 // delegate to the real subject
+    }
+}
+
+// Client codes to the interface and never knows it holds a proxy
+class Gallery {
+    public static void main(String[] args) {
+        Image img = new LazyImage("photo.raw"); // instant, nothing loaded
+        System.out.println("Gallery ready.");
+        img.render(); // NOW the real image loads, then renders
+        img.render(); // already loaded: just renders
+    }
+}</code></pre>
+      <p class="muted">लक्षात घ्या की proxy कोणतीही नवी method जोडत नाही - तो नेमके <code>Image</code> उघड करतो. तो फक्त एवढेच बदलतो की जड <code>HighResImage</code> <em>केव्हा</em> बांधले जाते. <code>LazyImage</code> बदलून परवानग्या तपासणारे <code>ProtectedImage</code>, किंवा memoize करणारे <code>CachedImage</code> ठेवा, आणि client अस्पर्शित राहतो.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: lazily load करणारा virtual proxy, पुनरावृत्त कॉल short-circuit करणारा caching proxy, आणि परवानग्यांवर पहारा देणारा protection proxy.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Virtual proxy: खरा ऑब्जेक्ट फक्त पहिल्या वापरावरच तयार करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant P as 🎭 LazyImage proxy
+    participant R as 🖼️ HighResImage
+
+    C->>P: new LazyImage(path)
+    Note over P: cheap, nothing loaded yet
+    C->>P: render()
+    alt real not created
+        P->>R: new HighResImage(path)
+        R-->>P: loaded from disk
+    end
+    P->>R: render()
+    R-->>P: drawn
+    P-->>C: done
+    C->>P: render() again
+    Note over P: real already exists
+    P->>R: render()
+    R-->>P: drawn
+    P-->>C: done
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Caching proxy: साठवलेले निकाल द्या, फक्त miss वरच पुन्हा आणा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant P as ⚡ Caching proxy
+    participant R as 🗄️ Real service
+
+    C->>P: get(key)
+    alt cache hit
+        P-->>C: cached value
+    else cache miss
+        P->>R: get(key)
+        R-->>P: fresh value
+        P->>P: store in cache
+        P-->>C: fresh value
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Protection proxy: सोपवण्यापूर्वी परवानग्या तपासा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant P as 🛡️ Protection proxy
+    participant R as 📁 Real subject
+
+    C->>P: delete(record)
+    P->>P: check caller role
+    alt authorized
+        P->>R: delete(record)
+        R-->>P: removed
+        P-->>C: success
+    else denied
+        P-->>C: throw AccessDenied
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">गरज ओळखण्यापासून ते कार्यरत, पारदर्शक प्रतिनिधीपर्यंत - क्रमाने proxy अंमलात आणणे आणि वापरणे.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>प्रवेशाची समस्या लक्षात घ्या</h4><p>निर्मिती महाग आहे, ऑब्जेक्ट remote आहे, कॉल्सना पहाऱ्याची गरज आहे, किंवा निकाल पुनरावृत्त होतात. प्रत्येक caller न बदलता तुम्हाला एक नियंत्रण बिंदू हवा असतो.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Interface</span><h4>सामायिक Subject व्याख्यित करा</h4><p>खरा ऑब्जेक्ट उघड करणारे interface काढा. खरा subject आणि proxy दोघेही नेमके हाच प्रकार अंमलात आणतील.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Real</span><h4>RealSubject अंमलात आणा</h4><p>प्रत्यक्ष काम करणारा ठोस class लिहा, ज्याला माहीत नाही की त्याच्यासमोर कधी proxy बसेल.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Proxy</span><h4>Proxy class तयार करा</h4><p>असा class बनवा जो Subject सुद्धा अंमलात आणतो आणि खऱ्या ऑब्जेक्टचा संदर्भ (किंवा तो तयार करण्याचे साधन) धरतो.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">निवडा</span><h4>Proxy चा प्रकार निवडा</h4><p>Virtual, remote, protection, caching, किंवा smart reference ठरवा. ती निवड proxy कोणता नियंत्रण तर्क जोडतो हे ठरवते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">पकडा</span><h4>नियंत्रण तर्क जोडा</h4><p>प्रत्येक method मध्ये आधी पहारा चालवा: lazy-create करा, परवानगी तपासा, cache शोधा, किंवा remote channel उघडा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">सोपवा</span><h4>खऱ्या ऑब्जेक्टकडे पुढे पाठवा</h4><p>कॉल पुढे जावा असल्यास, खऱ्या subject कडे सोपवा आणि त्याचा निकाल परत पाठवा, अर्थ एकसारखा ठेवा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">जोडा</span><h4>Proxy clients ला द्या</h4><p>जिथे clients Subject अपेक्षित करतात तिथे proxy परत करा - बहुधा factory किंवा DI container कडून - जेणेकरून callers ला ठोस प्रकार कधीच दिसणार नाही.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">पडताळा</span><h4>पारदर्शकतेची खात्री करा</h4><p>अपेक्षित नियंत्रण परिणाम सोडून, proxy सह clients खऱ्या ऑब्जेक्टप्रमाणेच वागतात का हे तपासा.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">मजबूत करा</span><h4>टोकाच्या केसेस हाताळा</h4><p>समांतर lazy निर्मितीवर पहारा द्या, शिळे caches अवैध करा, आणि remote अपयश भाषांतरित करा जेणेकरून proxy भाराखाली विश्वसनीय राहील.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पाठवा</span><h4>Production मध्ये चालवा</h4><p>Client ला वेगवान startup, पहारा दिलेला प्रवेश, किंवा cache केलेला वेग मिळतो, आणि एक प्रतिनिधी नियंत्रण करत आहे याची कल्पनाही नसते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">नेहमीच्या अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Proxies चुकीच्या पद्धतीने वापरणे सोपे आहे. स्वच्छ प्रतिनिधीला ओझे बनवणारे नेहमीचे सापळे हे आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎭 Decorator शी गोंधळ</h4><p>जर तुमचा wrapper प्रवेश नियंत्रित करण्याऐवजी निकालात नवे वर्तन जोडत असेल, तर तो Decorator आहे. Decorator ला proxy म्हणणे वाचकांपासून त्याचा खरा हेतू लपवते.</p></div>
+        <div class="card"><h4>🧵 असुरक्षित lazy निर्मिती</h4><p>Synchronization शिवाय lazy-load करणारा virtual proxy समांतर कॉल्सखाली खरा ऑब्जेक्ट दोनदा बांधू शकतो. निर्मितीवर पहारा द्या किंवा thread-safe holder वापरा.</p></div>
+        <div class="card"><h4>🕰️ शिळे caches</h4><p>कधीच अवैध न करणारा caching proxy कायमचा जुना डेटा देत राहतो. TTL किंवा invalidation hook शिवाय, वेगाचा फायदा शुद्धतेचा bug बनतो.</p></div>
+        <div class="card"><h4>🫥 लपलेली latency</h4><p>Remote proxy एक network कॉल स्थानिक method सारखा दिसवतो. Callers गृहीत धरतात की तो स्वस्त आहे आणि round trips व failure modes कडे दुर्लक्ष करून तो loops मध्ये हातोडतात.</p></div>
+        <div class="card"><h4>🪆 अति-proxying</h4><p>प्रत्येक चिंतेसाठी proxies रचणे असे indirection जोडते जे शोधणे आणि debug करणे कठीण असते. प्रत्येक थराने आपली जागा कमवावी लागते; निरुपयोगी प्रतिनिधी फक्त खरा ऑब्जेक्ट अस्पष्ट करतात.</p></div>
+        <div class="card"><h4>🧬 Interface विचलन</h4><p>जेव्हा खरा subject अशा methods मिळवतो ज्या proxy पुढे पाठवायला विसरतो, तेव्हा प्रतिनिधी शांतपणे विचलित होतो. Proxy ला Subject interface सोबत ताळमेळात ठेवा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">तडजोडी</div>
+      <h2>तडजोडी आणि केव्हा वापरावे</h2>
+      <p class="muted">Proxy तुम्हाला एका जास्तीच्या थराच्या किमतीत एक नियंत्रण बिंदू देतो. तो वापरण्याआधी त्याचे मोजमाप करा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>तपशील</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>फायदे</strong></td><td>प्रवेश नियंत्रण, laziness, caching, किंवा remoting पारदर्शकपणे जोडतो; client आणि खरा subject अस्पर्शित व अनभिज्ञ राहतात.</td></tr>
+            <tr><td><strong>तोटे</strong></td><td>जास्तीचे indirection आणि सांभाळण्यासाठी एक class; किंमत किंवा latency लपवू शकतो आणि debugging व stack traces गुंतागुंतीचे करू शकतो.</td></tr>
+            <tr><td><strong>केव्हा वापरावे</strong></td><td>तुम्हाला निर्मिती पुढे ढकलायची आहे, प्रवेशावर पहारा द्यायचा आहे, cache करायचे आहे, किंवा खऱ्या ऑब्जेक्टप्रमाणे त्याच interface मागे remote ऑब्जेक्ट दर्शवायचा आहे.</td></tr>
+            <tr><td><strong>केव्हा टाळावे</strong></td><td>तुम्हाला वर्तन जोडायचे आहे (Decorator वापरा) किंवा interface बदलायचे आहे (Adapter वापरा), किंवा नियंत्रणाने कोणतेही खरे मूल्य जोडले जात नाही.</td></tr>
+            <tr><td><strong>गुंतागुंत</strong></td><td>कमी ते मध्यम. पॅटर्न सोपा आहे; अडचण thread safety, invalidation, आणि remote error handling मध्ये राहते.</td></tr>
+            <tr><td><strong>संबंधित</strong></td><td>Decorator (वर्तन जोडतो), Adapter (interface बदलतो), Facade (subsystem सोपे करतो), Flyweight (सूक्ष्म ऑब्जेक्ट्स सामायिक करतो).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जेव्हा wrapper चे काम कॉल खऱ्या ऑब्जेक्टपर्यंत <em>पोहोचतो की नाही, केव्हा, किंवा कुठे</em> हे ठरवणे असते तेव्हा Proxy कडे वळा. जर wrapper चे काम कॉल <em>काय</em> करतो किंवा तो <em>कसा</em> आकार घेतो हे बदलणे असेल, तर तुम्हाला त्याऐवजी Decorator किंवा Adapter हवा असतो.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">Production-दर्जाच्या systems मध्ये Proxy चे तीन प्रातिनिधिक वापर.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌱</span><div><h3>1 · Hibernate lazy-loading proxies</h3><div class="role">प्रकार: virtual / lazy proxy</div></div></div>
+        <p class="muted">ORM ने प्रत्येक वेळी एक row आणताना संपूर्ण ऑब्जेक्ट graph load करू नये, नाहीतर एकच query संपूर्ण database ओढून आणेल.</p>
+        <ul>
+          <li>Hibernate lazy associations साठी खऱ्या entity ऐवजी runtime मध्ये तयार केलेला proxy परत करतो.</li>
+          <li>खरा ऑब्जेक्ट आणि त्याच्या संबंधित rows database मधून फक्त method प्रथम कॉल केल्यावरच load होतात.</li>
+          <li>Proxy entity चा प्रकार अंमलात आणतो, त्यामुळे application कोड त्याला नेमके खऱ्या entity प्रमाणेच वागवतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Queries हलक्या राहतात, memory वाचते, आणि developers ना fetch तर्क हाताने न लिहिता नैसर्गिक ऑब्जेक्ट प्रवेश मिळतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛰️</span><div><h3>2 · gRPC आणि RMI client stubs</h3><div class="role">प्रकार: remote proxy</div></div></div>
+        <p class="muted">एका service ला दुसऱ्या process किंवा datacenter मध्ये राहणाऱ्या ऑब्जेक्टला कॉल करावा लागतो, पण कॉल एका सामान्य method invocation सारखा दिसावा असे वाटते.</p>
+        <ul>
+          <li>तयार केलेला client stub remote server सारखेच तेच service interface अंमलात आणतो.</li>
+          <li>Method कॉल केल्याने arguments serialize होतात, ते wire वरून पाठवले जातात, आणि उत्तर deserialize होते.</li>
+          <li>Transport, retries, आणि connection handling त्या स्थानिक दिसणाऱ्या interface मागे लपून राहतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Teams स्वच्छ, typed method कॉल्सने remote services कॉल करतात तर networking तपशील stub मध्ये बंदिस्त राहतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛡️</span><div><h3>3 · Spring AOP आणि security proxies</h3><div class="role">प्रकार: protection / smart-reference proxy</div></div></div>
+        <p class="muted">Enterprise app ला business logic मध्ये cross-cutting चिंता न भरता परवानग्या, transactions, आणि logging लागू करावे लागते.</p>
+        <ul>
+          <li>Spring beans ना dynamic proxies मध्ये गुंडाळतो जे bean चे interface अंमलात आणतात.</li>
+          <li>Proxy खऱ्या bean कडे सोपवण्यापूर्वी roles तपासतो, transactions सुरू करतो, किंवा metrics नोंदवतो.</li>
+          <li>Business methods स्वच्छ राहतात; प्रतिनिधी प्रत्येक पहारा दिलेल्या कॉलवर धोरण लागू करतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Security आणि transaction नियम सातत्याने आणि केंद्रितपणे लागू होतात, तर खरे ऑब्जेक्ट्स त्यांच्या मुख्य कामावर लक्ष केंद्रित करतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">कालबाह्य होण्यापासून दूर, Proxy पॅटर्न आजच्या बहुतांश पायाभूत सुविधांचा आधार आहे, language runtimes पासून ते service meshes पर्यंत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕸️ Service mesh sidecars</h4><p>Envoy सारखे sidecar proxies प्रत्येक service शेजारी बसतात, प्रवेश, retries, आणि observability पारदर्शकपणे नियंत्रित करतात - platform प्रमाणावर remote proxy ची कल्पना.</p></div>
+        <div class="card"><h4>🧠 JS runtime Proxy object</h4><p>JavaScript चा अंगभूत <code>Proxy</code> property प्रवेश आणि कॉल्स runtime मध्ये पकडतो, classic प्रतिनिधी प्रतिमेने reactive frameworks आणि validation ला चालना देतो.</p></div>
+        <div class="card"><h4>⚙️ Dynamic proxies</h4><p>Java चा <code>java.lang.reflect.Proxy</code> आणि CGLIB runtime मध्ये proxies तयार करतात, जे AOP, mocking libraries, आणि ORM lazy loading चा कणा आहेत.</p></div>
+        <div class="card"><h4>🚪 API gateways</h4><p>Gateways संपूर्ण systems साठी protection आणि caching proxies आहेत, backend services समोर auth, rate limits, आणि response caching लागू करतात.</p></div>
+        <div class="card"><h4>🔒 Lazy आणि सुरक्षित initialization</h4><p>Virtual proxies memory-जागरूक आणि startup-संवेदनशील apps मध्ये महाग निर्मिती पुढे ढकलण्याचा आणि resource lifecycles व्यवस्थापित करण्याचा स्वच्छ मार्ग राहतात.</p></div>
+        <div class="card"><h4>🧪 Test doubles</h4><p>Mocking frameworks असे proxies बांधतात जे खऱ्या सहकाऱ्यांचे प्रतिनिधित्व करतात, tests ना त्याच interface द्वारे परस्परसंवाद नियंत्रित करू आणि निरीक्षण करू देतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Proxy केंद्रस्थानी राहतो कारण ऑब्जेक्टवरील प्रवेश नियंत्रित करण्याची गरज - तो पुढे ढकलणे, पहारा देणे, cache करणे, किंवा remotely पोहोचणे - कधीच नाहीशी होत नाही. जेव्हा एका प्रतिनिधीने खऱ्या ऑब्जेक्टपासून अभेद्य असले पाहिजे, तेव्हा तुम्ही proxy पाहत आहात.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोधत राहा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Proxy structural patterns मध्ये बसतो. हे असे आहेत ज्यांच्याशी तो सर्वाधिक गोंधळला जातो किंवा जोडला जातो.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>तेच interface, पण प्रवेश नियंत्रित करण्याऐवजी वर्तन जोडतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../adapter/"><span class="ico">🔌</span><h4>Adapter</h4><p>एक interface client अपेक्षित करतो त्या दुसऱ्यात रूपांतरित करतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../facade/"><span class="ico">🚪</span><h4>Facade</h4><p>एका ऑब्जेक्टवर नव्हे तर संपूर्ण subsystem वर एक सोपा दर्शनी भाग.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../flyweight/"><span class="ico">🍃</span><h4>Flyweight</h4><p>Memory वाचवण्यासाठी अनेक सूक्ष्म ऑब्जेक्ट्स सामायिक करतो.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Proxy चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>
