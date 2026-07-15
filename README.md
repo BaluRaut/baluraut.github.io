@@ -23,6 +23,10 @@ A landing page tying together fourteen battle-tested playbooks — **14 playbook
 | [PostgreSQL Disaster Recovery on AWS](https://baluraut.github.io/postgres-dr-playbook/) | 26 | RPO/RTO, PITR, WAL, pgBackRest, RDS/Aurora, cross-region failover, drills |
 | [System Design &amp; Technical Leadership Playbook](https://baluraut.github.io/system-design-leadership-playbook/) | 30 | Scaling, SLOs, tradeoffs, code review, mentoring, RFCs |
 
+## Worked case study
+
+[**DR for a 2,000-Engineer SaaS on AWS**](https://baluraut.github.io/dr-case-study/) — the PostgreSQL Disaster Recovery playbook applied end to end to a realistic fintech (NimbusPay): RPO/RTO by data tier, tiered Aurora + RDS, an immutable cross-account backup vault, five step-by-step runbooks, and the architecture shown three ways (ASCII topology, entity/ER diagram, and a region-failover sequence diagram).
+
 ## Why one library
 
 These aren't fourteen separate subjects — they're one stack seen from fourteen heights, and the playbooks cross-reference each other on purpose: a Rails N+1 becomes a Postgres query plan; a container is a Linux process with a cgroup, so a Kubernetes `OOMKilled` and a bare-metal OOM are the same event; jsonb reappears as `store_accessor`; a CIDR block is a CIDR block whether it's a subnet or a VPC; and a prompt-injection defense is the same least-privilege and input-validation instinct the Application Security playbook teaches as its own layer.
