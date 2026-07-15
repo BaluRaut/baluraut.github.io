@@ -89,6 +89,30 @@
   applyFont();
   if (savedTheme) { root.setAttribute('data-theme', savedTheme); markActive(savedTheme); }
 
+  /* ---------- Copy-code buttons on every code block ---------- */
+  var codeBlocks = document.querySelectorAll('pre');
+  Array.prototype.forEach.call(codeBlocks, function (pre) {
+    if (pre.classList.contains('mermaid')) return;         // skip diagrams
+    var codeEl = pre.querySelector('code') || pre;
+    var text = codeEl.textContent;                          // capture BEFORE adding the button
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Copy code');
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var done = function () {
+        btn.textContent = 'Copied'; btn.classList.add('copied');
+        setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else { done(); }
+    });
+    pre.style.position = 'relative';
+    pre.appendChild(btn);
+  });
+
   /* ---------- Mermaid: load from CDN + render once on a fixed light panel ---------- */
   var diagrams = Array.prototype.slice.call(document.querySelectorAll('.mermaid'));
   if (diagrams.length) {

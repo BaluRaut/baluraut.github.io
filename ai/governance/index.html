@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Governance &amp; Model Risk Explained — What, How, Why &amp; the Future</title>
+  <title>AI Governance &amp; Model Risk Explained - What, How, Why &amp; the Future</title>
   <meta name="description" content="A deep, visual guide to AI governance and model risk management (MRM): use-case registries, risk tiering, approval workflows, model cards, ongoing monitoring, the EU AI Act, NIST AI RMF, ISO/IEC 42001, sequence diagrams, a 0-100 flow, and the future." />
   <link rel="stylesheet" href="../assets/style.css" />
 </head>
@@ -14,10 +14,13 @@
       <div class="links">
         <a href="#what">What</a>
         <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
         <a href="#how">How</a>
         <a href="#diagrams">Diagrams</a>
-        <a href="#flow">0–100 Flow</a>
-        <a href="#cases">Case Studies</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#cases">Cases</a>
         <a href="#future">Future</a>
       </div>
     </div>
@@ -27,7 +30,7 @@
     <div class="wrap">
       <span class="kicker">AI Governance &amp; Model Risk</span>
       <h1>How AI governance &amp; model risk management actually work</h1>
-      <p class="lede">Every model you ship is a liability as much as an asset — it can be biased, drift, leak data, or break the law. <strong>AI governance</strong> is the operating system that keeps models accountable: an inventory of every use case, a <strong>risk tier</strong> for each, controls matched to that tier, and independent sign-off before anything reaches production. <strong>Model risk management (MRM)</strong> is the discipline underneath it — validation, documentation, and continuous monitoring.</p>
+      <p class="lede">Every model you ship is a liability as much as an asset - it can be biased, drift, leak data, or break the law. <strong>AI governance</strong> is the operating system that keeps models accountable: an inventory of every use case, a <strong>risk tier</strong> for each, controls matched to that tier, and independent sign-off before anything reaches production. <strong>Model risk management (MRM)</strong> is the discipline underneath it - validation, documentation, and continuous monitoring.</p>
       <div class="cta">
         <a class="btn primary" href="#flow">See the full flow ↓</a>
         <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
@@ -44,18 +47,18 @@
   <!-- WHAT -->
   <section id="what">
     <div class="wrap">
-      <div class="eyebrow">01 — What</div>
+      <div class="eyebrow">01 - What</div>
       <h2>What is AI governance &amp; model risk?</h2>
-      <p class="muted"><strong>AI governance</strong> is the set of policies, roles, and processes that decide <em>which</em> AI you build, <em>how</em> it gets approved, and <em>who</em> is accountable when it goes wrong. <strong>Model risk management</strong> is the technical core — the practice, formalized by the Fed's <strong>SR 11-7</strong> guidance, of identifying, measuring, and controlling the risk that a model produces wrong or misused outputs. Together they turn "we built a model" into "we can defend this model to a regulator, an auditor, and the person it affects."</p>
+      <p class="muted"><strong>AI governance</strong> is the set of policies, roles, and processes that decide <em>which</em> AI you build, <em>how</em> it gets approved, and <em>who</em> is accountable when it goes wrong. <strong>Model risk management</strong> is the technical core - the practice, formalized by the Fed's <strong>SR 11-7</strong> guidance, of identifying, measuring, and controlling the risk that a model produces wrong or misused outputs. Together they turn "we built a model" into "we can defend this model to a regulator, an auditor, and the person it affects."</p>
 
       <div class="grid cols-3">
         <div class="card">
           <h4><span class="ico">🗂️</span> Inventory &amp; registry</h4>
-          <p>A single source of truth listing every AI use case — owner, purpose, data, and status. You cannot govern what you cannot see, so the registry comes first.</p>
+          <p>A single source of truth listing every AI use case - owner, purpose, data, and status. You cannot govern what you cannot see, so the registry comes first.</p>
         </div>
         <div class="card">
           <h4><span class="ico">🎚️</span> Risk tiering</h4>
-          <p>Each use is classified by impact and likelihood into tiers — minimal, limited, high — and controls are matched to the tier. Heavy scrutiny goes where the harm is.</p>
+          <p>Each use is classified by impact and likelihood into tiers - minimal, limited, high - and controls are matched to the tier. Heavy scrutiny goes where the harm is.</p>
         </div>
         <div class="card">
           <h4><span class="ico">✍️</span> Approval &amp; oversight</h4>
@@ -78,21 +81,36 @@
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> governance is the <em>three lines of defense</em> in action — the business builds and owns the model (1st line), an independent risk function challenges and validates it (2nd line), and internal audit checks that the whole process was actually followed (3rd line). Separation of duties is the point.</div>
+      <div class="callout"><strong>Key mental model:</strong> governance is the <em>three lines of defense</em> in action - the business builds and owns the model (1st line), an independent risk function challenges and validates it (2nd line), and internal audit checks that the whole process was actually followed (3rd line). Separation of duties is the point.</div>
     </div>
   </section>
 
   <!-- WHY -->
   <section id="why">
     <div class="wrap">
-      <div class="eyebrow">02 — Why</div>
+      <div class="eyebrow">02 - Why</div>
       <h2>Why AI governance exists</h2>
-      <p class="muted">A model that is accurate in the lab can still be discriminatory, opaque, or illegal in production. Governance exists because the cost of an ungoverned model — a wrongful loan denial, a regulatory fine, a reputational fire — dwarfs the cost of reviewing it first.</p>
+      <p class="muted">A model that is accurate in the lab can still be discriminatory, opaque, or illegal in production. Governance exists because the cost of an ungoverned model - a wrongful loan denial, a regulatory fine, a reputational fire - dwarfs the cost of reviewing it first.</p>
       <div class="grid cols-2">
         <div class="card"><h4>⚖️ Regulatory compliance</h4><p>The EU AI Act, SR 11-7, and sector rules impose hard obligations on high-risk AI. Governance is how you meet them provably instead of hoping no one asks.</p></div>
-        <div class="card"><h4>🛡️ Controls the real harms</h4><p>Bias, drift, data leakage, and unsafe outputs are managed deliberately — measured, mitigated, and monitored — rather than discovered by the people they hurt.</p></div>
+        <div class="card"><h4>🛡️ Controls the real harms</h4><p>Bias, drift, data leakage, and unsafe outputs are managed deliberately - measured, mitigated, and monitored - rather than discovered by the people they hurt.</p></div>
         <div class="card"><h4>👁️ Accountability &amp; traceability</h4><p>Clear owners, documented decisions, and an audit trail mean that when a model fails you know who signed off, on what evidence, and how to fix it.</p></div>
-        <div class="card"><h4>🚀 Scales AI safely</h4><p>A tiered process lets low-risk use cases move fast while concentrating scrutiny on the few that matter — governance enables adoption, it doesn't just block it.</p></div>
+        <div class="card"><h4>🚀 Scales AI safely</h4><p>A tiered process lets low-risk use cases move fast while concentrating scrutiny on the few that matter - governance enables adoption, it doesn't just block it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>AI governance explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Governance is the <strong>proctored exam with a grading rubric</strong>. You cannot just hand in an answer; there are rules for what counts, an invigilator who checks you followed them, and a paper trail of your marks.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Think of it as <strong>code review plus CI gates for models</strong>. Nothing merges to production until an independent reviewer signs off, the checks pass, and the change is logged with an owner.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>It is the <strong>risk and compliance function</strong> around a model: an inventory of what exists, a rating for how dangerous each item is, controls sized to that rating, and an auditor who verifies it all happened.</p></div>
+        <div class="card"><h4><span class="ico">🏗️</span> Everyday version</h4><p>Like <strong>building inspections and permits</strong>. You cannot occupy a new building until an independent inspector certifies it meets code - and the higher the risk, the more inspections it takes.</p></div>
       </div>
     </div>
   </section>
@@ -100,7 +118,7 @@
   <!-- HOW -->
   <section id="how">
     <div class="wrap">
-      <div class="eyebrow">03 — How</div>
+      <div class="eyebrow">03 - How</div>
       <h2>How it works under the hood</h2>
       <p class="muted">Governance has two motions: an <strong>onboarding</strong> path that takes a new use case from intake through tiering, validation, and sign-off, and an <strong>ongoing</strong> path that monitors, re-validates, and audits deployed models over their whole lifecycle.</p>
 
@@ -117,19 +135,19 @@
 
       <h3>The governance architecture at a glance</h3>
       <div class="diagram">
-        <div class="cap">Architecture — three lines of defense route a use case from intake to monitored production</div>
+        <div class="cap">Architecture - three lines of defense route a use case from intake to monitored production</div>
         <pre class="mermaid">
 flowchart LR
-    subgraph L1["🏗️ 1st line — Business & dev"]
+    subgraph L1["🏗️ 1st line - Business & dev"]
         UC["💡 New AI use case"] --> REG["🗂️ Register in inventory"]
         REG --> TIER["🎚️ Risk tiering"]
         TIER --> DEV["🔧 Build + document"]
     end
-    subgraph L2["🔍 2nd line — Independent risk"]
+    subgraph L2["🔍 2nd line - Independent risk"]
         VAL["🧪 Validation"]
         RC["✍️ Risk committee"]
     end
-    subgraph L3["📋 3rd line — Internal audit"]
+    subgraph L3["📋 3rd line - Internal audit"]
         AUD["🔎 Audit the process"]
     end
     DEV --> VAL
@@ -180,12 +198,12 @@ approval:
   <!-- DIAGRAMS -->
   <section id="diagrams">
     <div class="wrap">
-      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <div class="eyebrow">04 - Sequence Diagrams</div>
       <h2>Detailed sequence diagrams</h2>
       <p class="muted">Three views: the approval workflow before deployment, risk-tiering that routes a use case to light or heavy controls, and the ongoing monitoring-and-audit loop.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 — Approval workflow: submit → validate → independent review → sign-off → deploy</div>
+        <div class="cap">Diagram 1 - Approval workflow: submit → validate → independent review → sign-off → deploy</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -211,7 +229,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 — Risk tiering: routing a use case to light vs heavy controls</div>
+        <div class="cap">Diagram 2 - Risk tiering: routing a use case to light vs heavy controls</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -234,7 +252,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 3 — Ongoing monitoring &amp; audit: metrics → drift/bias detection → re-validate or rollback</div>
+        <div class="cap">Diagram 3 - Ongoing monitoring &amp; audit: metrics → drift/bias detection → re-validate or rollback</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -266,17 +284,17 @@ sequenceDiagram
   <!-- FLOW 0-100 -->
   <section id="flow">
     <div class="wrap">
-      <div class="eyebrow">05 — Step by Step</div>
+      <div class="eyebrow">05 - Step by Step</div>
       <h2>The 0 → 100 flow</h2>
-      <p class="muted">From an idea for a model to a monitored, audited production system — the whole governance journey in order.</p>
+      <p class="muted">From an idea for a model to a monitored, audited production system - the whole governance journey in order.</p>
 
       <div class="steps">
         <div class="step"><div class="num">00</div><div class="body"><span class="tag">Register</span><h4>Log the use case in the inventory</h4><p>Every proposed AI use enters the registry with an owner, purpose, and the data it will touch. Nothing gets built off the books.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Tier</span><h4>Classify the risk</h4><p>Score impact and likelihood to assign a tier — minimal, limited, or high — which sets how much validation, documentation, and oversight the use requires.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Tier</span><h4>Classify the risk</h4><p>Score impact and likelihood to assign a tier - minimal, limited, or high - which sets how much validation, documentation, and oversight the use requires.</p></div></div>
         <div class="step"><div class="num">20</div><div class="body"><span class="tag">Scope</span><h4>Match controls to the tier</h4><p>High-risk uses get full MRM; low-risk uses get lightweight self-attestation. Controls are proportionate to the harm, not one-size-fits-all.</p></div></div>
         <div class="step"><div class="num">30</div><div class="body"><span class="tag">Build</span><h4>Develop with documentation</h4><p>The team builds the model while capturing the model card, datasheet for the dataset, and a risk register of known failure modes and their mitigations.</p></div></div>
         <div class="step"><div class="num">40</div><div class="body"><span class="tag">Test</span><h4>Measure bias &amp; performance</h4><p>Evaluate accuracy, robustness, and fairness across subgroups against pre-set thresholds. Document limitations and out-of-scope uses explicitly.</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Validate</span><h4>Independent review challenges it</h4><p>A separate 2nd-line function reproduces results and applies effective challenge — SR 11-7's core idea — testing assumptions the builders may have missed.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Validate</span><h4>Independent review challenges it</h4><p>A separate 2nd-line function reproduces results and applies effective challenge - SR 11-7's core idea - testing assumptions the builders may have missed.</p></div></div>
         <div class="step"><div class="num">60</div><div class="body"><span class="tag">Approve</span><h4>Risk committee signs off</h4><p>Governance weighs residual risk against controls and either approves with conditions, requests changes, or rejects. The decision and evidence are recorded.</p></div></div>
         <div class="step"><div class="num">70</div><div class="body"><span class="tag">Deploy</span><h4>Release under guardrails</h4><p>The model ships with human-in-the-loop where required, adverse-action explanations, and kill-switch or rollback plans wired in from day one.</p></div></div>
         <div class="step"><div class="num">80</div><div class="body"><span class="tag">Monitor</span><h4>Watch drift, bias &amp; decay</h4><p>Production metrics stream to dashboards. Data and concept drift, fairness metrics, and performance are tracked against thresholds continuously.</p></div></div>
@@ -286,22 +304,64 @@ sequenceDiagram
     </div>
   </section>
 
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most governance programs fail on follow-through, not on intent. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>☑️ Governance as a one-time checkbox</h4><p>Treating sign-off as a gate you pass once and forget. Risk is a lifecycle property; a model approved last year can be non-compliant today. Governance is ongoing or it is theater.</p></div>
+        <div class="card"><h4>🗂️ No AI use-case inventory</h4><p>Without a single registry of every model and AI use, shadow AI proliferates. You cannot control, tier, or defend what you cannot even see. The inventory comes first.</p></div>
+        <div class="card"><h4>🎚️ Uniform controls, ignoring risk tiers</h4><p>Applying the same heavy process to a spellchecker and a credit model wastes effort and stalls adoption; applying the same light touch to both leaves real harm ungoverned. Match controls to tier.</p></div>
+        <div class="card"><h4>📄 Documentation that never gets updated</h4><p>A model card written at launch and never touched again slowly becomes fiction. Data shifts, thresholds change, owners leave. Stale docs fail the first audit that reads them.</p></div>
+        <div class="card"><h4>📉 No monitoring for drift or bias post-deploy</h4><p>Validating once and walking away misses the slow decay that follows. Drift, concept shift, and emerging bias only show up in production, so oversight has to continue there.</p></div>
+        <div class="card"><h4>🧭 Unclear ownership, no accountable owner</h4><p>When "everyone" owns a model, no one does. Without a named accountable owner and independent challenge, decisions have no author and failures have no one to fix them.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">How to Measure</div>
+      <h2>How to measure governance</h2>
+      <p class="muted">Track coverage and follow-through, so you know whether the program actually runs or just exists on paper.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>What it tells you</th><th>Good sign</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>% of AI use cases inventoried</strong></td><td>How much of your real AI footprint is on the books</td><td>Near 100%: little shadow AI</td></tr>
+            <tr><td><strong>% with a risk tier assigned</strong></td><td>Whether inventoried uses are actually classified</td><td>High: controls can be matched to risk</td></tr>
+            <tr><td><strong>% with sign-off before deploy</strong></td><td>Whether the approval gate is really enforced</td><td>High: few models slip past review</td></tr>
+            <tr><td><strong>Audit findings closure rate</strong></td><td>Whether identified issues get remediated, not just logged</td><td>High and timely: the loop closes</td></tr>
+            <tr><td><strong>Drift / bias alerts resolved</strong></td><td>How well post-deploy monitoring is acted on</td><td>High: signals lead to fixes, not backlog</td></tr>
+            <tr><td><strong>Time-to-approval</strong></td><td>How long governance takes per use case</td><td>Low for low-risk: the process enables, not blocks</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if coverage metrics are high but closure and resolution rates are low, your program documents risk without controlling it; if time-to-approval is high across every tier, governance has become a bottleneck instead of a proportionate gate. Measure both reach and follow-through.</div>
+    </div>
+  </section>
+
   <!-- CASE STUDIES -->
   <section id="cases">
     <div class="wrap">
-      <div class="eyebrow">06 — Case Studies</div>
+      <div class="eyebrow">06 - Case Studies</div>
       <h2>Real-world case studies</h2>
       <p class="muted">Three representative patterns showing governance and MRM in production-style use.</p>
 
       <div class="case">
         <div class="hd"><span class="badge">🏦</span><div><h3>1 · A bank's MRM for a customer-facing credit model</h3><div class="role">Pattern: SR 11-7 model risk management</div></div></div>
-        <p class="muted">A retail bank deploys an ML model that scores consumer loan applications — a high-stakes, regulated, customer-facing decision.</p>
+        <p class="muted">A retail bank deploys an ML model that scores consumer loan applications - a high-stakes, regulated, customer-facing decision.</p>
         <ul>
           <li>The model is registered in the firm's model inventory and tiered as high risk given its direct impact on customers.</li>
-          <li>An independent validation team applies effective challenge — reproducing results, stress-testing assumptions, and running fair-lending bias tests.</li>
+          <li>An independent validation team applies effective challenge - reproducing results, stress-testing assumptions, and running fair-lending bias tests.</li>
           <li>A model risk committee signs off; declines carry adverse-action reason codes and a human-review path, and re-validation is scheduled annually.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> The model ships with a defensible audit trail — validation report, documented controls, and monitoring — so the bank can answer any regulator or complaint with evidence, not assurances.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> The model ships with a defensible audit trail - validation report, documented controls, and monitoring - so the bank can answer any regulator or complaint with evidence, not assurances.</div>
       </div>
 
       <div class="case">
@@ -312,12 +372,12 @@ sequenceDiagram
           <li>Every new use is tiered; minimal-risk tools self-attest against a checklist while high-risk ones escalate to full review.</li>
           <li>Policy is anchored to <strong>NIST AI RMF</strong> and <strong>ISO/IEC 42001</strong> so the program maps to recognized frameworks and can be certified.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> The enterprise gets one accurate inventory and consistent, proportionate controls — enabling fast, safe adoption instead of shadow AI nobody can account for.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> The enterprise gets one accurate inventory and consistent, proportionate controls - enabling fast, safe adoption instead of shadow AI nobody can account for.</div>
       </div>
 
       <div class="case">
         <div class="hd"><span class="badge">🇪🇺</span><div><h3>3 · An EU AI Act high-risk deployment</h3><div class="role">Pattern: regulatory conformity for high-risk AI</div></div></div>
-        <p class="muted">A company deploys an AI system used in hiring — explicitly classified as <strong>high-risk</strong> under the EU AI Act — into the EU market.</p>
+        <p class="muted">A company deploys an AI system used in hiring - explicitly classified as <strong>high-risk</strong> under the EU AI Act - into the EU market.</p>
         <ul>
           <li>The system undergoes a conformity assessment: risk management system, data governance, technical documentation, and logging are all mandated.</li>
           <li>Human oversight, transparency to affected candidates, and robustness/accuracy requirements are designed in and evidenced.</li>
@@ -331,18 +391,33 @@ sequenceDiagram
   <!-- FUTURE -->
   <section id="future">
     <div class="wrap">
-      <div class="eyebrow">07 — Future</div>
+      <div class="eyebrow">07 - Future</div>
       <h2>Where AI governance is heading</h2>
       <p class="muted">Governance is shifting from periodic paperwork toward automated, continuous, and standardized assurance embedded in the ML platform itself.</p>
       <div class="grid cols-2">
         <div class="card"><h4>⚙️ Governance as code</h4><p>Policy checks, tiering, and model-card generation wired into CI/CD, so a model cannot deploy until its controls and documentation pass automatically.</p></div>
-        <div class="card"><h4>🤖 GenAI &amp; agent risk</h4><p>New tiers and controls for LLMs and autonomous agents — hallucination, prompt injection, and tool-use risk that classic MRM never contemplated.</p></div>
-        <div class="card"><h4>📊 Continuous assurance</h4><p>Real-time monitoring replaces annual review — drift, bias, and incident signals feed dashboards regulators and auditors can inspect on demand.</p></div>
+        <div class="card"><h4>🤖 GenAI &amp; agent risk</h4><p>New tiers and controls for LLMs and autonomous agents - hallucination, prompt injection, and tool-use risk that classic MRM never contemplated.</p></div>
+        <div class="card"><h4>📊 Continuous assurance</h4><p>Real-time monitoring replaces annual review - drift, bias, and incident signals feed dashboards regulators and auditors can inspect on demand.</p></div>
         <div class="card"><h4>📜 Converging standards</h4><p>The EU AI Act, NIST AI RMF, and ISO/IEC 42001 are aligning into a common control vocabulary, letting one program satisfy many regimes.</p></div>
         <div class="card"><h4>🏷️ Provenance &amp; disclosure</h4><p>Content credentials, watermarking, and transparency notices become baseline obligations so people know when they are interacting with AI.</p></div>
-        <div class="card"><h4>🔗 Third-party &amp; supply chain</h4><p>Governance extends to foundation models and vendors — due-diligence, model-card demands, and contractual controls over AI you did not build.</p></div>
+        <div class="card"><h4>🔗 Third-party &amp; supply chain</h4><p>Governance extends to foundation models and vendors - due-diligence, model-card demands, and contractual controls over AI you did not build.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> AI governance is how an organization earns the right to deploy AI — proving, not promising, that each model is understood, controlled, and accountable. As regulation hardens and agents proliferate, a real MRM program is becoming the price of admission for AI in production.</div>
+      <div class="callout"><strong>Bottom line:</strong> AI governance is how an organization earns the right to deploy AI - proving, not promising, that each model is understood, controlled, and accountable. As regulation hardens and agents proliferate, a real MRM program is becoming the price of admission for AI in production.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Governance sits in a web of related controls. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../pii/"><span class="ico">🔒</span><h4>PII &amp; data protection</h4><p>What data a model may touch and how it stays compliant.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🚧</span><h4>Guardrails</h4><p>The runtime controls that keep model outputs in bounds.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../llm-security/"><span class="ico">🛡️</span><h4>LLM security</h4><p>Prompt injection, leakage, and abuse risks to govern.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals &amp; LLM-as-judge</h4><p>The evidence validation and monitoring depend on.</p><span class="go">Read →</span></a>
+      </div>
     </div>
   </section>
 

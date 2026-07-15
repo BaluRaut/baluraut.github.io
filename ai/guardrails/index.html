@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Guardrails Explained — What, How, Why &amp; the Future</title>
+  <title>AI Guardrails Explained - What, How, Why &amp; the Future</title>
   <meta name="description" content="A deep, visual guide to AI guardrails: input and output validation layers that wrap the model, prompt-injection defense, schema enforcement, fail-closed design, sequence diagrams, a 0-100 flow, case studies, and the future." />
   <link rel="stylesheet" href="../assets/style.css" />
 </head>
@@ -14,10 +14,13 @@
       <div class="links">
         <a href="#what">What</a>
         <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
         <a href="#how">How</a>
         <a href="#diagrams">Diagrams</a>
-        <a href="#flow">0–100 Flow</a>
-        <a href="#cases">Case Studies</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#cases">Cases</a>
         <a href="#future">Future</a>
       </div>
     </div>
@@ -26,7 +29,7 @@
   <header class="hero">
     <div class="wrap">
       <span class="kicker">Safety &amp; Validation Layers</span>
-      <h1>How guardrails actually work — the complete picture</h1>
+      <h1>How guardrails actually work - the complete picture</h1>
       <p class="lede">An LLM will happily follow a hostile instruction, invent a fact, or emit malformed JSON. Guardrails are the validation layers that <strong>wrap the model on both sides</strong>: checking the input before it reaches the model and checking the output before it reaches the user. They turn an unpredictable generator into a bounded, policy-compliant component you can ship.</p>
       <div class="cta">
         <a class="btn primary" href="#flow">See the full flow ↓</a>
@@ -44,9 +47,9 @@
   <!-- WHAT -->
   <section id="what">
     <div class="wrap">
-      <div class="eyebrow">01 — What</div>
+      <div class="eyebrow">01 - What</div>
       <h2>What are guardrails?</h2>
-      <p class="muted"><strong>Guardrails</strong> are deterministic and probabilistic checks that sit <em>around</em> a model call, not inside it. On the way in they validate and sanitize the request; on the way out they validate and, if needed, block or repair the response. The model stays the same — guardrails constrain what it is allowed to receive and what it is allowed to return.</p>
+      <p class="muted"><strong>Guardrails</strong> are deterministic and probabilistic checks that sit <em>around</em> a model call, not inside it. On the way in they validate and sanitize the request; on the way out they validate and, if needed, block or repair the response. The model stays the same - guardrails constrain what it is allowed to receive and what it is allowed to return.</p>
 
       <div class="grid cols-3">
         <div class="card">
@@ -59,7 +62,7 @@
         </div>
         <div class="card">
           <h4><span class="ico">🔁</span> Reask loop</h4>
-          <p>When a check fails, the system can re-prompt the model with the error and revalidate — repairing the output instead of shipping it broken.</p>
+          <p>When a check fails, the system can re-prompt the model with the error and revalidate - repairing the output instead of shipping it broken.</p>
         </div>
       </div>
 
@@ -85,14 +88,29 @@
   <!-- WHY -->
   <section id="why">
     <div class="wrap">
-      <div class="eyebrow">02 — Why</div>
+      <div class="eyebrow">02 - Why</div>
       <h2>Why guardrails exist</h2>
       <p class="muted">A raw model call is non-deterministic and trusts every token it reads. That is fine for a demo and dangerous in production, where a single bad output can break a downstream system, leak data, or damage the brand. Guardrails move safety out of the prompt and into an enforceable layer you can test and observe.</p>
       <div class="grid cols-2">
         <div class="card"><h4>🚫 Block hostile input</h4><p>Prompt injection and jailbreaks try to override your instructions. Input guards catch these attempts before they ever reach the model.</p></div>
         <div class="card"><h4>📐 Guarantee structure</h4><p>Downstream code needs valid JSON with the right fields. Schema validation ensures the output is machine-parseable every single time.</p></div>
         <div class="card"><h4>🎯 Keep it grounded &amp; on-topic</h4><p>Groundedness and topic checks stop the model from wandering off-scope or asserting facts the provided context does not support.</p></div>
-        <div class="card"><h4>🔐 Protect users &amp; data</h4><p>Toxicity, PII, and policy filters keep unsafe or sensitive content — and competitor mentions — from ever being shown.</p></div>
+        <div class="card"><h4>🔐 Protect users &amp; data</h4><p>Toxicity, PII, and policy filters keep unsafe or sensitive content - and competitor mentions - from ever being shown.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Guardrails explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Guardrails are the <strong>bumpers on a bowling lane</strong>. You still throw the ball, but the rails keep it out of the gutter - the model can only end up in an allowed spot.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It's <strong>input validation and output validation</strong> wrapped around a function whose return value you do not trust. You sanitize the arguments going in and assert on the shape coming out before anything downstream sees it.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>compliance reviewer</strong> who checks a request before it is worked on and signs off on the reply before it is sent, so nothing off-policy ever leaves the building.</p></div>
+        <div class="card"><h4><span class="ico">🚧</span> Everyday version</h4><p>A <strong>spell-checker plus a bouncer</strong>: one quietly fixes malformed answers, the other simply refuses to let unsafe requests or replies through the door.</p></div>
       </div>
     </div>
   </section>
@@ -100,9 +118,9 @@
   <!-- HOW -->
   <section id="how">
     <div class="wrap">
-      <div class="eyebrow">03 — How</div>
+      <div class="eyebrow">03 - How</div>
       <h2>How it works under the hood</h2>
-      <p class="muted">Guardrails form a <strong>wrapper</strong> around the model call: a chain of input checks, the generation step, then a chain of output checks. Each check returns pass, block, or fix — and the wrapper decides whether to return, reask, or refuse based on a <strong>fail-closed</strong> or <strong>fail-open</strong> policy.</p>
+      <p class="muted">Guardrails form a <strong>wrapper</strong> around the model call: a chain of input checks, the generation step, then a chain of output checks. Each check returns pass, block, or fix - and the wrapper decides whether to return, reask, or refuse based on a <strong>fail-closed</strong> or <strong>fail-open</strong> policy.</p>
 
       <div class="grid cols-2">
         <div class="card">
@@ -117,7 +135,7 @@
 
       <h3>The architecture at a glance</h3>
       <div class="diagram">
-        <div class="cap">Architecture — validation wraps the model on both sides</div>
+        <div class="cap">Architecture - validation wraps the model on both sides</div>
         <pre class="mermaid">
 flowchart LR
     REQ["📨 Request"] --> IN
@@ -159,19 +177,19 @@ flowchart LR
         prompt = reask(prompt, output, errors) # ask model to fix and retry
 
     return refuse("could not produce a valid response")  # fail closed</code></pre>
-      <p class="muted">Notice two decisions baked in: unsafe output is <em>blocked</em> and never repaired, while a malformed-but-benign output triggers a <em>reask</em>. When retries are exhausted the wrapper fails closed — refusing rather than returning something unvalidated.</p>
+      <p class="muted">Notice two decisions baked in: unsafe output is <em>blocked</em> and never repaired, while a malformed-but-benign output triggers a <em>reask</em>. When retries are exhausted the wrapper fails closed - refusing rather than returning something unvalidated.</p>
     </div>
   </section>
 
   <!-- DIAGRAMS -->
   <section id="diagrams">
     <div class="wrap">
-      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <div class="eyebrow">04 - Sequence Diagrams</div>
       <h2>Detailed sequence diagrams</h2>
       <p class="muted">Three views: the two-sided guardrail wrapper, a validation-failure reask loop, and layered defense catching a prompt-injection attempt.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 — The wrapper: input checks, model, output checks</div>
+        <div class="cap">Diagram 1 - The wrapper: input checks, model, output checks</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -194,7 +212,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 — Reask loop: output fails schema, model retries</div>
+        <div class="cap">Diagram 2 - Reask loop: output fails schema, model retries</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -205,7 +223,7 @@ sequenceDiagram
     G->>M: Generate structured output
     M-->>G: Response (attempt 1)
     G->>V: Validate against JSON schema
-    V-->>G: Invalid — missing field, bad type
+    V-->>G: Invalid - missing field, bad type
     loop reask until valid or retries spent
         G->>M: Reask with validation errors
         M-->>G: Repaired response
@@ -217,7 +235,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 3 — Layered defense: prompt injection caught at the input guard</div>
+        <div class="cap">Diagram 3 - Layered defense: prompt injection caught at the input guard</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -231,9 +249,9 @@ sequenceDiagram
     G->>R: Check against deny-list
     R-->>G: No exact match
     G->>C: Classify injection intent
-    C-->>G: High risk — override attempt
+    C-->>G: High risk - override attempt
     alt injection detected
-        G-->>U: ⛔ Blocked — request not allowed
+        G-->>U: ⛔ Blocked - request not allowed
         Note over G,M: Model is never called on hostile input
     else clean input
         G->>M: Proceed to generation
@@ -247,30 +265,72 @@ sequenceDiagram
   <!-- FLOW 0-100 -->
   <section id="flow">
     <div class="wrap">
-      <div class="eyebrow">05 — Step by Step</div>
+      <div class="eyebrow">05 - Step by Step</div>
       <h2>The 0 → 100 flow</h2>
-      <p class="muted">From a raw request to a validated, policy-compliant response — the whole journey in order.</p>
+      <p class="muted">From a raw request to a validated, policy-compliant response - the whole journey in order.</p>
 
       <div class="steps">
         <div class="step"><div class="num">00</div><div class="body"><span class="tag">Receive</span><h4>Accept the request</h4><p>A user message or upstream call arrives. It is treated as untrusted input until it has passed every input guardrail.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Normalize</span><h4>Check length &amp; format</h4><p>Enforce size limits, strip control characters, and reject malformed payloads early — cheap checks before any expensive ones run.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Normalize</span><h4>Check length &amp; format</h4><p>Enforce size limits, strip control characters, and reject malformed payloads early - cheap checks before any expensive ones run.</p></div></div>
         <div class="step"><div class="num">20</div><div class="body"><span class="tag">Detect</span><h4>Screen for injection &amp; jailbreaks</h4><p>Rules plus a classifier look for override attempts, role-play jailbreaks, and instructions hidden in the request or retrieved content.</p></div></div>
         <div class="step"><div class="num">30</div><div class="body"><span class="tag">Filter</span><h4>Apply topic &amp; abuse checks</h4><p>Off-topic, abusive, or disallowed requests are blocked here so the model is only ever asked in-scope questions.</p></div></div>
         <div class="step"><div class="num">40</div><div class="body"><span class="tag">Gate</span><h4>Decide: proceed or refuse</h4><p>If any input guard hard-fails, the wrapper fails closed and returns a safe refusal without spending a token on the model.</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Generate</span><h4>Call the model</h4><p>With input validated, the wrapper builds the prompt and asks the model for a response — still treated as a draft, not a final answer.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Generate</span><h4>Call the model</h4><p>With input validated, the wrapper builds the prompt and asks the model for a response - still treated as a draft, not a final answer.</p></div></div>
         <div class="step"><div class="num">60</div><div class="body"><span class="tag">Validate</span><h4>Check schema &amp; format</h4><p>The draft is parsed against a JSON schema or type model. Required fields, types, and structure must all match the contract.</p></div></div>
         <div class="step"><div class="num">70</div><div class="body"><span class="tag">Verify</span><h4>Check groundedness</h4><p>Claims are compared against the provided context; unsupported or hallucinated statements flag the response for repair or refusal.</p></div></div>
-        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Screen</span><h4>Apply safety &amp; policy filters</h4><p>Toxicity, PII, secrets, and policy checks — like competitor mentions — run last. Unsafe output is blocked, never repaired.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Screen</span><h4>Apply safety &amp; policy filters</h4><p>Toxicity, PII, secrets, and policy checks - like competitor mentions - run last. Unsafe output is blocked, never repaired.</p></div></div>
         <div class="step"><div class="num">90</div><div class="body"><span class="tag">Reask</span><h4>Repair or fail closed</h4><p>A repairable failure re-prompts the model with the exact errors and revalidates. When retries run out, the wrapper refuses.</p></div></div>
         <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>Return the validated response</h4><p>Only fully-passing output reaches the user. Every block, fix, and refusal is logged so the guardrails can be tuned over time.</p></div></div>
       </div>
     </div>
   </section>
 
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Guardrails fail quietly. These are the mistakes that let bad input in or bad output out.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⬅️ Output-only guarding</h4><p>Validating the response but trusting the request leaves prompt injection and jailbreaks untouched. Hostile instructions reach the model unchecked. Guard both sides, not just the exit.</p></div>
+        <div class="card"><h4>🚪 Fail-open on errors</h4><p>When a classifier times out or a validator throws, silently returning the raw output turns your guard into a no-op exactly when it matters. Fail closed: an errored check is a failed check.</p></div>
+        <div class="card"><h4>🙅 Over-blocking</h4><p>Thresholds set too aggressively refuse legitimate requests and frustrate real users. A guard that blocks everything is as useless as one that blocks nothing. Tune against a labeled set.</p></div>
+        <div class="card"><h4>🔤 Regex-only checks</h4><p>Keyword and pattern lists catch the exact phrasing you thought of and miss every paraphrase, translation, or obfuscation. Layer classifiers and LLM judges on top of rules.</p></div>
+        <div class="card"><h4>🔁 No retry or reask</h4><p>Hard-failing on the first malformed output wastes a recoverable response. Without a reask loop that feeds the error back, benign formatting slips become outages.</p></div>
+        <div class="card"><h4>⏱️ Ignoring latency &amp; cost</h4><p>Stacking several LLM-judge guards on every call can double latency and spend. Order checks cheap-to-expensive and short-circuit early so most requests never hit the slow guards.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">How to Measure</div>
+      <h2>How to measure guardrails</h2>
+      <p class="muted">A guardrail is only as good as its numbers. Track how much it catches, how much it wrongly blocks, and what it costs.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>What it tells you</th><th>Good sign</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Catch rate (recall)</strong></td><td>Of all real violations, how many the guard actually blocked</td><td>High: few threats slip past</td></tr>
+            <tr><td><strong>False-positive / over-block rate</strong></td><td>How often legitimate requests or replies are wrongly refused</td><td>Low: real users are not blocked</td></tr>
+            <tr><td><strong>Precision</strong></td><td>Of everything the guard blocked, how much truly was a violation</td><td>High: blocks are trustworthy</td></tr>
+            <tr><td><strong>Added latency</strong></td><td>Extra end-to-end time the guard chain adds per request</td><td>Within your SLA budget</td></tr>
+            <tr><td><strong>Reask success rate</strong></td><td>Share of failed outputs repaired within the retry budget</td><td>High: fewer hard refusals</td></tr>
+            <tr><td><strong>Incidents slipped through</strong></td><td>Violations found in production that no guard caught</td><td>Trending to zero over time</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> catch rate and over-block rate move in opposite directions - tightening one loosens the other. Pick the operating point from the cost of each error: a leaked secret usually hurts far more than a polite false refusal, so bias sensitive guards toward recall.</div>
+    </div>
+  </section>
+
   <!-- CASE STUDIES -->
   <section id="cases">
     <div class="wrap">
-      <div class="eyebrow">06 — Case Studies</div>
+      <div class="eyebrow">06 - Case Studies</div>
       <h2>Real-world case studies</h2>
       <p class="muted">Three representative patterns showing guardrails in production-style use.</p>
 
@@ -280,17 +340,17 @@ sequenceDiagram
         <ul>
           <li>An input topic classifier blocks prompts unrelated to support and refuses abuse attempts before generation.</li>
           <li>Output filters strip toxicity, PII, and any mention of competitors or unapproved promises.</li>
-          <li>Both layers fail closed — when a guard is unsure, the bot refuses politely rather than risk a bad answer.</li>
+          <li>Both layers fail closed - when a guard is unsure, the bot refuses politely rather than risk a bad answer.</li>
         </ul>
         <div class="outcome">✅ <strong>Outcome:</strong> The bot answers real questions while staying provably on-topic and safe, with every blocked interaction logged for review.</div>
       </div>
 
       <div class="case">
         <div class="hd"><span class="badge">🧾</span><div><h3>2 · Strict structured output for a downstream system</h3><div class="role">Pattern: schema enforcement + reask loop</div></div></div>
-        <p class="muted">An extraction service must emit JSON that a downstream pipeline ingests — a single malformed field breaks the whole job.</p>
+        <p class="muted">An extraction service must emit JSON that a downstream pipeline ingests - a single malformed field breaks the whole job.</p>
         <ul>
           <li>Every response is validated against a strict JSON schema with typed, required fields.</li>
-          <li>On a validation error the model is reasked with the exact failure, then revalidated — usually fixed within one retry.</li>
+          <li>On a validation error the model is reasked with the exact failure, then revalidated - usually fixed within one retry.</li>
           <li>If retries are exhausted the call fails closed and raises, so no invalid record ever enters the pipeline.</li>
         </ul>
         <div class="outcome">✅ <strong>Outcome:</strong> The downstream system receives 100% schema-valid records, and transient formatting slips are repaired automatically instead of paging an engineer.</div>
@@ -298,13 +358,13 @@ sequenceDiagram
 
       <div class="case">
         <div class="hd"><span class="badge">🕷️</span><div><h3>3 · Prompt-injection defense in a browsing agent</h3><div class="role">Pattern: layered defense over untrusted content</div></div></div>
-        <p class="muted">A RAG-powered agent browses external pages and documents — any of which may contain instructions crafted to hijack it.</p>
+        <p class="muted">A RAG-powered agent browses external pages and documents - any of which may contain instructions crafted to hijack it.</p>
         <ul>
           <li>Retrieved and fetched content is treated as untrusted data and scanned for embedded instructions before it enters the prompt.</li>
           <li>Rules catch known injection patterns; a classifier and an LLM judge catch novel phrasings the rules miss.</li>
           <li>Output guards double-check that no action or data exfiltration was triggered by hidden instructions.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> Injection attempts buried in web pages are caught at the input layer, so the agent follows its own instructions — not an attacker's.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Injection attempts buried in web pages are caught at the input layer, so the agent follows its own instructions - not an attacker's.</div>
       </div>
     </div>
   </section>
@@ -312,18 +372,33 @@ sequenceDiagram
   <!-- FUTURE -->
   <section id="future">
     <div class="wrap">
-      <div class="eyebrow">07 — Future</div>
+      <div class="eyebrow">07 - Future</div>
       <h2>Where guardrails are heading</h2>
       <p class="muted">Guardrails are moving from bolt-on filters to a first-class, adaptive safety layer woven through every agent and pipeline.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🧩 Agentic guardrails</h4><p>Per-tool and per-action checks that validate what an agent is about to <em>do</em>, not just what it says — gating side effects before they happen.</p></div>
+        <div class="card"><h4>🧩 Agentic guardrails</h4><p>Per-tool and per-action checks that validate what an agent is about to <em>do</em>, not just what it says - gating side effects before they happen.</p></div>
         <div class="card"><h4>🤖 Model-based guards</h4><p>Purpose-built small classifiers and judge models that run fast and cheap, replacing brittle regex with learned detection.</p></div>
         <div class="card"><h4>📊 Guardrail evals as first-class</h4><p>Continuously measuring false-block and leak rates, treating guardrail precision and recall as core production metrics.</p></div>
         <div class="card"><h4>⚙️ Standardized policy config</h4><p>Declarative policies and shared frameworks let teams version, test, and reuse guardrails like any other infrastructure.</p></div>
         <div class="card"><h4>⚡ Streaming validation</h4><p>Checking tokens as they stream so unsafe content is stopped mid-generation instead of after the full response is built.</p></div>
-        <div class="card"><h4>🧠 Adaptive strictness</h4><p>Guards that tune their thresholds to risk — stricter for sensitive actions or untrusted sources, lighter for low-stakes chat.</p></div>
+        <div class="card"><h4>🧠 Adaptive strictness</h4><p>Guards that tune their thresholds to risk - stricter for sensitive actions or untrusted sources, lighter for low-stakes chat.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> guardrails are how you turn a capable but unpredictable model into a component you can trust in production — validating both what goes in and what comes out. As models gain autonomy and tools, layered, fail-closed guardrails only become more essential.</div>
+      <div class="callout"><strong>Bottom line:</strong> guardrails are how you turn a capable but unpredictable model into a component you can trust in production - validating both what goes in and what comes out. As models gain autonomy and tools, layered, fail-closed guardrails only become more essential.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Guardrails sit in a web of related skills. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../llm-security/"><span class="ico">🔒</span><h4>LLM security</h4><p>Prompt injection, jailbreaks, and the threats guards defend against.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../pii/"><span class="ico">🕵️</span><h4>PII &amp; redaction</h4><p>Detecting and stripping personal data before it leaks.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../structured-outputs/"><span class="ico">📐</span><h4>Structured outputs</h4><p>Schema-valid JSON that output guards enforce.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals &amp; LLM-as-judge</h4><p>Measuring guard precision, recall, and leak rates.</p><span class="go">Read →</span></a>
+      </div>
     </div>
   </section>
 

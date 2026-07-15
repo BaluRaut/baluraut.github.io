@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Agentic Orchestration Explained — What, How, Why &amp; the Future</title>
+  <title>Agentic Orchestration Explained - What, How, Why &amp; the Future</title>
   <meta name="description" content="A deep, visual guide to agentic and multi-agent systems: the agent loop, ReAct reasoning, tool use, memory, guardrails, orchestration patterns, sequence diagrams, a 0-100 flow, case studies, and the future." />
   <link rel="stylesheet" href="../assets/style.css" />
 </head>
@@ -14,10 +14,13 @@
       <div class="links">
         <a href="#what">What</a>
         <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
         <a href="#how">How</a>
         <a href="#diagrams">Diagrams</a>
-        <a href="#flow">0–100 Flow</a>
-        <a href="#cases">Case Studies</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#cases">Cases</a>
         <a href="#future">Future</a>
       </div>
     </div>
@@ -26,8 +29,8 @@
   <header class="hero">
     <div class="wrap">
       <span class="kicker">Agentic &amp; Multi-Agent Orchestration</span>
-      <h1>How agentic systems actually work — the complete picture</h1>
-      <p class="lede">A plain LLM answers once and stops. An <strong>agent</strong> runs a loop: it reasons about a goal, picks a <strong>tool</strong>, observes the result, and reasons again — repeating until the task is done. Scale that idea to many specialized agents coordinating under a supervisor, and you get systems that plan, act, and self-correct.</p>
+      <h1>How agentic systems actually work - the complete picture</h1>
+      <p class="lede">A plain LLM answers once and stops. An <strong>agent</strong> runs a loop: it reasons about a goal, picks a <strong>tool</strong>, observes the result, and reasons again - repeating until the task is done. Scale that idea to many specialized agents coordinating under a supervisor, and you get systems that plan, act, and self-correct.</p>
       <div class="cta">
         <a class="btn primary" href="#flow">See the full flow ↓</a>
         <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
@@ -44,9 +47,9 @@
   <!-- WHAT -->
   <section id="what">
     <div class="wrap">
-      <div class="eyebrow">01 — What</div>
+      <div class="eyebrow">01 - What</div>
       <h2>What is an agentic system?</h2>
-      <p class="muted">An <strong>agent</strong> is an LLM placed inside a control loop and given tools. Instead of producing a single answer, it decides <em>what to do next</em> — call a search API, run code, query a database — then observes the outcome and reasons about it. It keeps looping until it reaches the goal or hits a stopping condition. <strong>Multi-agent orchestration</strong> is the next step up: several agents, each with a narrow role, coordinating to solve a task no single agent handles well.</p>
+      <p class="muted">An <strong>agent</strong> is an LLM placed inside a control loop and given tools. Instead of producing a single answer, it decides <em>what to do next</em> - call a search API, run code, query a database - then observes the outcome and reasons about it. It keeps looping until it reaches the goal or hits a stopping condition. <strong>Multi-agent orchestration</strong> is the next step up: several agents, each with a narrow role, coordinating to solve a task no single agent handles well.</p>
 
       <div class="grid cols-3">
         <div class="card">
@@ -55,7 +58,7 @@
         </div>
         <div class="card">
           <h4><span class="ico">🧰</span> Tools</h4>
-          <p>Functions the model can call — search, code execution, HTTP, DB queries. Tools are how an agent affects the world beyond text.</p>
+          <p>Functions the model can call - search, code execution, HTTP, DB queries. Tools are how an agent affects the world beyond text.</p>
         </div>
         <div class="card">
           <h4><span class="ico">🧠</span> Memory</h4>
@@ -78,21 +81,36 @@
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> an agent is not a smarter prompt — it is a <em>loop</em> with tools and a stop condition. The intelligence comes from iterating: acting, observing what actually happened, and adjusting. Control the loop (steps, budget, termination) and you control the agent.</div>
+      <div class="callout"><strong>Key mental model:</strong> an agent is not a smarter prompt - it is a <em>loop</em> with tools and a stop condition. The intelligence comes from iterating: acting, observing what actually happened, and adjusting. Control the loop (steps, budget, termination) and you control the agent.</div>
     </div>
   </section>
 
   <!-- WHY -->
   <section id="why">
     <div class="wrap">
-      <div class="eyebrow">02 — Why</div>
+      <div class="eyebrow">02 - Why</div>
       <h2>Why agents exist</h2>
-      <p class="muted">Many real tasks can't be solved in one shot — they need lookups, intermediate results, and course-correction. A single prompt has no way to react to what it learns midway. Agents close that gap by turning a one-shot call into an adaptive, tool-using process.</p>
+      <p class="muted">Many real tasks can't be solved in one shot - they need lookups, intermediate results, and course-correction. A single prompt has no way to react to what it learns midway. Agents close that gap by turning a one-shot call into an adaptive, tool-using process.</p>
       <div class="grid cols-2">
         <div class="card"><h4>🧩 Handles multi-step tasks</h4><p>Goals like "research this and draft a report" decompose into many actions. An agent sequences them, using each result to inform the next step.</p></div>
-        <div class="card"><h4>🌍 Acts on the real world</h4><p>Tools let the model do things — run code, hit APIs, update records — not just describe them. That turns a chatbot into a worker.</p></div>
-        <div class="card"><h4>♻️ Self-corrects</h4><p>By observing tool outputs and errors, an agent can retry, backtrack, or ask a critic to review — recovering from mistakes a single pass would ship.</p></div>
+        <div class="card"><h4>🌍 Acts on the real world</h4><p>Tools let the model do things - run code, hit APIs, update records - not just describe them. That turns a chatbot into a worker.</p></div>
+        <div class="card"><h4>♻️ Self-corrects</h4><p>By observing tool outputs and errors, an agent can retry, backtrack, or ask a critic to review - recovering from mistakes a single pass would ship.</p></div>
         <div class="card"><h4>🧑‍🤝‍🧑 Divides labor</h4><p>Multi-agent setups give each agent a focused role and prompt. Specialists outperform one overloaded generalist and are easier to test.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Agentic systems explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>An agent is like <strong>working through a hard problem set with scratch paper</strong>. You don't answer in one line; you try a step, check the result, cross out what failed, and keep going until the answer holds up. A multi-agent team is a <strong>study group</strong> where one person researches, one calculates, and one writes it up.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It's a <strong>while-loop around an LLM call</strong>, where each iteration can invoke a function, read its return value, and decide the next call. Orchestration is like a <strong>job queue with a coordinator</strong>: the supervisor dispatches subtasks to worker functions, then joins their results.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>project manager delegating to specialists</strong>. The PM breaks a goal into tasks, hands each to the right expert, reviews what comes back, and asks for a redo when something is off, rather than doing every part alone.</p></div>
+        <div class="card"><h4><span class="ico">🍳</span> Everyday version</h4><p>A <strong>cook following a recipe and tasting as they go</strong>. Each step produces a result they check - too salty, not done - and adjust before the next step, instead of blindly plating whatever comes out first.</p></div>
       </div>
     </div>
   </section>
@@ -100,7 +118,7 @@
   <!-- HOW -->
   <section id="how">
     <div class="wrap">
-      <div class="eyebrow">03 — How</div>
+      <div class="eyebrow">03 - How</div>
       <h2>How it works under the hood</h2>
       <p class="muted">Two layers make an agentic system: the <strong>single-agent loop</strong> that reasons and acts, and the <strong>orchestration layer</strong> that coordinates multiple agents around a shared goal.</p>
 
@@ -111,13 +129,13 @@
         </div>
         <div class="card">
           <h4><span class="ico">🗂️</span> Orchestration layer</h4>
-          <p>A supervisor decomposes the goal and routes subtasks to worker agents — sequentially, in parallel, or through a critic — then synthesizes their outputs into one result.</p>
+          <p>A supervisor decomposes the goal and routes subtasks to worker agents - sequentially, in parallel, or through a critic - then synthesizes their outputs into one result.</p>
         </div>
       </div>
 
       <h3>The architecture at a glance</h3>
       <div class="diagram">
-        <div class="cap">Architecture — a supervisor drives worker agents; each worker runs its own tool loop against shared memory</div>
+        <div class="cap">Architecture - a supervisor drives worker agents; each worker runs its own tool loop against shared memory</div>
         <pre class="mermaid">
 flowchart LR
     U["👤 Goal"] --> SUP["🧭 Supervisor / planner"]
@@ -145,37 +163,47 @@ flowchart LR
         </pre>
       </div>
 
-      <h3>A minimal agent loop in pseudocode</h3>
-      <pre><code>state = {"goal": goal, "scratchpad": []}
+      <h3>A minimal agent loop in Python</h3>
+      <pre><code>messages = [
+    {"role": "system", "content": "Reason step by step. Call ONE tool per turn, or reply to finish."},
+    {"role": "user", "content": goal},
+]
 
-for step in range(MAX_STEPS):          # guardrail: bounded loop
-    thought, action = llm.decide(
-        system="Reason step by step. Pick ONE tool or FINISH.",
-        context=render(state)
+for step in range(MAX_STEPS):                 # guardrail: bounded loop
+    reply = client.messages.create(
+        model="claude-opus-4-8",
+        tools=TOOL_SCHEMAS,
+        messages=messages,
     )
-    if action.name == "FINISH":
-        return action.answer
+    messages.append({"role": "assistant", "content": reply.content})
 
-    observation = tools[action.name](**action.args)   # tool use
-    state["scratchpad"].append((thought, action, observation))
+    tool_calls = [b for b in reply.content if b.type == "tool_use"]
+    if not tool_calls:                        # no tool -> agent is done
+        return reply.text
 
-    if budget_exceeded() or looks_stuck(state):        # termination
-        return escalate_to_human(state)
+    results = []
+    for call in tool_calls:                   # tool use
+        output = TOOLS[call.name](**call.input)
+        results.append({"type": "tool_result", "tool_use_id": call.id, "content": output})
+    messages.append({"role": "user", "content": results})
 
-return "Step limit reached — returning best effort"</code></pre>
-      <p class="muted">Notice the two termination conditions: a hard <em>step limit</em> and a soft <em>stuck/budget</em> check. Without them an agent can loop forever or burn tokens repeating a failing action — guardrails are what make the loop safe to run in production.</p>
+    if spend.exceeded() or looks_stuck(messages):   # soft termination
+        return escalate_to_human(messages)
+
+return "Step limit reached, returning best effort"</code></pre>
+      <p class="muted">Notice the two termination conditions: a hard <em>step limit</em> and a soft <em>stuck/budget</em> check. Without them an agent can loop forever or burn tokens repeating a failing action - guardrails are what make the loop safe to run in production.</p>
     </div>
   </section>
 
   <!-- DIAGRAMS -->
   <section id="diagrams">
     <div class="wrap">
-      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <div class="eyebrow">04 - Sequence Diagrams</div>
       <h2>Detailed sequence diagrams</h2>
       <p class="muted">Three views: a single agent's ReAct loop, a supervisor delegating to specialist workers, and a generator paired with a critic for review.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 — Single agent: the ReAct think → act → observe loop</div>
+        <div class="cap">Diagram 1 - Single agent: the ReAct think → act → observe loop</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -197,7 +225,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 — Supervisor delegating subtasks to specialist workers, then synthesizing</div>
+        <div class="cap">Diagram 2 - Supervisor delegating subtasks to specialist workers, then synthesizing</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -224,7 +252,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 3 — Generator plus critic: an iterative review loop with a verifier</div>
+        <div class="cap">Diagram 3 - Generator plus critic: an iterative review loop with a verifier</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -254,17 +282,17 @@ sequenceDiagram
   <!-- FLOW 0-100 -->
   <section id="flow">
     <div class="wrap">
-      <div class="eyebrow">05 — Step by Step</div>
+      <div class="eyebrow">05 - Step by Step</div>
       <h2>The 0 → 100 flow</h2>
-      <p class="muted">From a raw goal to a verified, delivered result — the full agentic journey in order.</p>
+      <p class="muted">From a raw goal to a verified, delivered result - the full agentic journey in order.</p>
 
       <div class="steps">
         <div class="step"><div class="num">00</div><div class="body"><span class="tag">Goal</span><h4>Receive the objective</h4><p>A user or upstream system hands the agent a goal in natural language, along with any constraints, context, and success criteria.</p></div></div>
         <div class="step"><div class="num">10</div><div class="body"><span class="tag">Plan</span><h4>Decompose into subtasks</h4><p>The planner breaks the goal into an ordered set of steps and decides whether one agent suffices or the work should be split across specialists.</p></div></div>
         <div class="step"><div class="num">20</div><div class="body"><span class="tag">Perceive</span><h4>Assemble working context</h4><p>Relevant facts are pulled from short-term context and long-term memory so the agent starts each step with the state it needs.</p></div></div>
-        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Reason</span><h4>Choose the next action</h4><p>Using ReAct, the model writes a thought and selects exactly one tool call — or decides it already has enough to finish.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Act</span><h4>Call a tool</h4><p>The agent invokes the tool with typed arguments — search, code execution, an API, a database query — to take a concrete action.</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Observe</span><h4>Read the result</h4><p>The tool returns an observation — data, a value, or an error. This real-world feedback is appended to the scratchpad.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Reason</span><h4>Choose the next action</h4><p>Using ReAct, the model writes a thought and selects exactly one tool call - or decides it already has enough to finish.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Act</span><h4>Call a tool</h4><p>The agent invokes the tool with typed arguments - search, code execution, an API, a database query - to take a concrete action.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Observe</span><h4>Read the result</h4><p>The tool returns an observation - data, a value, or an error. This real-world feedback is appended to the scratchpad.</p></div></div>
         <div class="step"><div class="num">60</div><div class="body"><span class="tag">Reflect</span><h4>Assess progress</h4><p>The agent judges whether the observation moved it toward the goal, whether to retry, backtrack, or change approach.</p></div></div>
         <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guard</span><h4>Check limits &amp; safety</h4><p>Step count, token budget, and policy checks run every loop. Risky actions may pause for human approval before proceeding.</p></div></div>
         <div class="step"><div class="num">80</div><div class="body"><span class="tag">Orchestrate</span><h4>Coordinate agents</h4><p>For multi-agent work the supervisor fans out subtasks in parallel, chains them in a pipeline, or routes a draft to a critic.</p></div></div>
@@ -274,20 +302,62 @@ sequenceDiagram
     </div>
   </section>
 
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most agents fail on control, not on reasoning. These are the failure modes that bite in production.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔁 Infinite loops</h4><p>With no step limit or termination check, an agent retries the same failing action forever, burning tokens and time. Every loop needs a hard cap and a way to detect it is stuck and give up.</p></div>
+        <div class="card"><h4>📚 Context bloat</h4><p>Appending every thought, tool output, and error to the scratchpad grows the prompt until it is slow, costly, and "lost in the middle." Summarize or prune old steps instead of carrying the whole history.</p></div>
+        <div class="card"><h4>💥 Error cascades</h4><p>One bad tool result feeds the next step, which compounds the mistake across the trajectory. Without validation between steps, a single wrong observation can derail the entire run.</p></div>
+        <div class="card"><h4>🧩 Over-decomposition</h4><p>Splitting a simple goal into a dozen agents and subtasks adds coordination overhead, latency, and more places to fail. Reach for one agent first; add specialists only when a single loop truly cannot cope.</p></div>
+        <div class="card"><h4>🔓 Unbounded tool permissions</h4><p>Giving an agent write access to prod, unrestricted shell, or a real payments API invites irreversible damage. Scope every tool to least privilege and gate risky actions behind approvals.</p></div>
+        <div class="card"><h4>🎯 No trajectory evals</h4><p>Judging only the final answer hides how the agent got there - wasteful paths, lucky guesses, silent side effects. Without evals over the whole trajectory you cannot tell reliable agents from fragile ones.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">How to Measure</div>
+      <h2>How to measure agents</h2>
+      <p class="muted">Score the whole trajectory, not just the last message, so you know whether an agent is reliable and affordable.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>What it tells you</th><th>Good sign</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Task success rate</strong></td><td>How often the agent actually reaches the goal end to end</td><td>High and stable across cases</td></tr>
+            <tr><td><strong>Steps / tool-calls per task</strong></td><td>How efficiently it reaches the answer</td><td>Low: few detours or wasted actions</td></tr>
+            <tr><td><strong>Cost &amp; latency per task</strong></td><td>Token spend and wall-clock time for a full run</td><td>Within your budget and SLA</td></tr>
+            <tr><td><strong>Tool-call error rate</strong></td><td>Fraction of tool calls that fail or return bad args</td><td>Low: schemas and inputs are sound</td></tr>
+            <tr><td><strong>Loop / termination rate</strong></td><td>How often runs hit the step cap instead of finishing</td><td>Low: the agent knows when it is done</td></tr>
+            <tr><td><strong>Human intervention rate</strong></td><td>Share of tasks needing a person to unstick or approve</td><td>Low for routine work, gated for risky work</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if success is high but steps and cost are also high, the agent is right but wasteful - tighten prompts and tools; if success is low while loop rate is high, fix termination and error handling before blaming the model.</div>
+    </div>
+  </section>
+
   <!-- CASE STUDIES -->
   <section id="cases">
     <div class="wrap">
-      <div class="eyebrow">06 — Case Studies</div>
+      <div class="eyebrow">06 - Case Studies</div>
       <h2>Real-world case studies</h2>
       <p class="muted">Three representative patterns showing agentic orchestration in production-style use.</p>
 
       <div class="case">
         <div class="hd"><span class="badge">💻</span><div><h3>1 · A coding-agent fleet</h3><div class="role">Pattern: supervisor + parallel workers with a verifier</div></div></div>
-        <p class="muted">An engineering platform wants agents that resolve issues end to end — read the repo, edit code, run tests, and open a pull request.</p>
+        <p class="muted">An engineering platform wants agents that resolve issues end to end - read the repo, edit code, run tests, and open a pull request.</p>
         <ul>
           <li>A supervisor splits an issue into files to change and dispatches worker agents in parallel across them.</li>
           <li>Each worker loops: read code, edit, run the test tool, and observe failures until the suite passes.</li>
-          <li>A verifier agent gates the PR — tests must pass and a critic must approve the diff before it merges.</li>
+          <li>A verifier agent gates the PR - tests must pass and a critic must approve the diff before it merges.</li>
         </ul>
         <div class="outcome">✅ <strong>Outcome:</strong> Routine bugs and refactors are resolved with a green test run and a reviewed diff, while step limits and required approvals keep risky changes from shipping unchecked.</div>
       </div>
@@ -308,7 +378,7 @@ sequenceDiagram
         <p class="muted">A support org wants agents to triage tickets, take routine actions, and escalate anything sensitive to a person.</p>
         <ul>
           <li>A classifier agent routes each ticket, then a specialist agent looks up the account and drafts an action.</li>
-          <li>Tools let the agent issue refunds or update records — but only within policy limits enforced as guardrails.</li>
+          <li>Tools let the agent issue refunds or update records - but only within policy limits enforced as guardrails.</li>
           <li>High-value or ambiguous cases pause for human approval before any irreversible action executes.</li>
         </ul>
         <div class="outcome">✅ <strong>Outcome:</strong> Common requests are handled automatically end to end, while guardrails and approval gates ensure risky operations always get a human sign-off.</div>
@@ -319,18 +389,33 @@ sequenceDiagram
   <!-- FUTURE -->
   <section id="future">
     <div class="wrap">
-      <div class="eyebrow">07 — Future</div>
+      <div class="eyebrow">07 - Future</div>
       <h2>Where agents are heading</h2>
-      <p class="muted">Agentic systems are moving from clever demos to reliable infrastructure — the frontier is coordination, memory, and trust at scale.</p>
+      <p class="muted">Agentic systems are moving from clever demos to reliable infrastructure - the frontier is coordination, memory, and trust at scale.</p>
       <div class="grid cols-2">
         <div class="card"><h4>🧭 Better planners</h4><p>Explicit plan-and-execute and tree-search over actions make agents look several steps ahead instead of greedily reacting one turn at a time.</p></div>
         <div class="card"><h4>🗣️ Standard protocols</h4><p>Tool and agent protocols like MCP and agent-to-agent messaging let agents share tools and talk across vendors and frameworks.</p></div>
-        <div class="card"><h4>📚 Durable memory</h4><p>Richer long-term memory — episodic, semantic, and procedural — lets agents learn from past runs rather than starting cold every time.</p></div>
+        <div class="card"><h4>📚 Durable memory</h4><p>Richer long-term memory - episodic, semantic, and procedural - lets agents learn from past runs rather than starting cold every time.</p></div>
         <div class="card"><h4>🛡️ Guardrails as a layer</h4><p>Policy engines, sandboxes, and permissioned tools become a dedicated safety layer around every action an agent can take.</p></div>
-        <div class="card"><h4>📊 Agent evals</h4><p>Trajectory-level evaluation — did the agent reach the goal, at what cost, with what side effects — becomes the metric teams optimize.</p></div>
+        <div class="card"><h4>📊 Agent evals</h4><p>Trajectory-level evaluation - did the agent reach the goal, at what cost, with what side effects - becomes the metric teams optimize.</p></div>
         <div class="card"><h4>🧑‍💼 Human-in-the-loop by design</h4><p>Approval gates and interruptible loops shift from afterthoughts to first-class controls so people stay in command of consequential steps.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> an agent is a loop with tools, memory, and a stop condition — and multi-agent orchestration is how you compose those loops into systems that plan, act, and self-correct. The winners won't just have the smartest model; they'll have the best control, memory, and guardrails around it.</div>
+      <div class="callout"><strong>Bottom line:</strong> an agent is a loop with tools, memory, and a stop condition - and multi-agent orchestration is how you compose those loops into systems that plan, act, and self-correct. The winners won't just have the smartest model; they'll have the best control, memory, and guardrails around it.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Agents sit at the center of a web of related skills. These pair naturally with orchestration.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../tool-calling/"><span class="ico">🧰</span><h4>Tool calling</h4><p>How agents turn intent into typed function calls.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="/mcp/"><span class="ico">🔌</span><h4>MCP</h4><p>A standard protocol for sharing tools across agents.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals &amp; LLM-as-judge</h4><p>Scoring whole trajectories, not just final answers.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails</h4><p>Bounding cost, loops, and unsafe agent actions.</p><span class="go">Read →</span></a>
+      </div>
     </div>
   </section>
 

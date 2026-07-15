@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fine-tuning, LoRA &amp; PEFT Explained - What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to fine-tuning, LoRA, and PEFT: what it is, how it works, why it matters, sequence diagrams, a 0-100 flow, case studies, and the future of parameter-efficient model adaptation." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Fine-tuning · LoRA · PEFT</span>
+      <h1>Fine-tuning without the pain - LoRA and PEFT explained</h1>
+      <p class="lede">A base model has broad skills but not <em>your</em> behavior. Fine-tuning <strong>updates the model on your task data</strong> so it adopts a style, format, or capability by default. Modern <strong>parameter-efficient fine-tuning</strong> (LoRA, QLoRA, adapters) does this by training a tiny set of added weights instead of the whole network, so it is cheap, fast, and swappable.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">LoRA &amp; QLoRA</span>
+        <span class="pill">Adapters &amp; PEFT</span>
+        <span class="pill">SFT data quality</span>
+        <span class="pill">Behavior vs knowledge</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is fine-tuning?</h2>
+      <p class="muted"><strong>Fine-tuning</strong> continues the training of a pretrained model on a smaller, task-specific dataset so its weights shift toward the behavior you want. Where prompting steers a frozen model at inference time, fine-tuning <em>bakes</em> a pattern into the weights themselves, so the model produces the right tone, format, or decision without you re-explaining it in every prompt.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧊</span> Full fine-tuning</h4>
+          <p>Every weight is updated. Most powerful and most expensive - you need the full model in memory, big GPUs, and a fresh copy of all parameters per task.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🪶</span> PEFT (LoRA, adapters)</h4>
+          <p>The base weights are frozen; you train a small set of added parameters. Same effect for most tasks at a fraction of the compute and storage.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> When it wins</h4>
+          <p>Best for teaching <em>behavior</em>: consistent style, strict output formats, tool-use conventions, or a narrow classification skill - not fresh facts.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common choices</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Base model</strong></td><td>The pretrained network you adapt</td><td>Llama, Mistral, Qwen, small SLMs</td></tr>
+            <tr><td><strong>Dataset (SFT)</strong></td><td>Instruction / response pairs teaching the target behavior</td><td>JSONL, chat-format, preference pairs</td></tr>
+            <tr><td><strong>PEFT method</strong></td><td>How you inject trainable parameters</td><td>LoRA, QLoRA, adapters, prefix tuning</td></tr>
+            <tr><td><strong>Trainer</strong></td><td>Runs the optimization loop over the data</td><td><code>trl</code> SFTTrainer, Axolotl, Unsloth</td></tr>
+            <tr><td><strong>Adapter artifact</strong></td><td>The small trained weights you ship and serve</td><td>LoRA weights (tens of MB), registry</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> fine-tuning changes <em>how</em> the model behaves, not <em>what</em> it currently knows. If you need fresh or private facts, reach for RAG. If you need a reliable style, format, or skill, fine-tune - and with PEFT you are only training a thin layer bolted onto a frozen base.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why parameter-efficient fine-tuning exists</h2>
+      <p class="muted">Full fine-tuning of a large model means updating billions of parameters, storing a full copy per task, and burning serious GPU hours. PEFT keeps the base frozen and trains a tiny fraction of new weights, which changes the economics entirely.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💸 Far cheaper to train</h4><p>LoRA trains well under 1% of the parameters, so it fits on a single GPU. QLoRA quantizes the frozen base to 4-bit, shrinking memory further so large models fine-tune on modest hardware.</p></div>
+        <div class="card"><h4>📦 Tiny, swappable artifacts</h4><p>An adapter is tens of megabytes, not tens of gigabytes. You keep one base model and hot-swap many adapters, one per customer, tone, or task.</p></div>
+        <div class="card"><h4>🛡️ Base stays intact</h4><p>Because the original weights are frozen, the model keeps its general abilities and you sidestep the worst of catastrophic forgetting compared to updating everything.</p></div>
+        <div class="card"><h4>⚡ Reliable behavior, shorter prompts</h4><p>Once a format or style lives in the weights, you stop paying for long few-shot prompts on every call - lower latency and token cost at inference.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Fine-tuning explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Prompting is <strong>giving worked examples on the exam sheet</strong> every single time. Fine-tuning is <strong>practicing hundreds of problems beforehand</strong> so the method becomes second nature and you no longer need the examples in front of you.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>LoRA is like a <strong>patch or plugin layered on a shared library</strong>. You do not fork and recompile the whole dependency; you ship a small diff that overrides behavior, and you can load a different patch per deployment.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>It is an <strong>experienced hire taking a short specialization course</strong>. They already know the field; a focused course teaches your house style and process, so they stop needing a manual re-read for every task.</p></div>
+        <div class="card"><h4><span class="ico">🎸</span> Everyday version</h4><p>A skilled musician <strong>rehearsing one setlist until it is muscle memory</strong>. The general talent was already there; the practice locks in the specific songs so the performance is automatic.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Fine-tuning has two halves: an <strong>offline preparation and training</strong> pipeline that produces an adapter, and an <strong>inference</strong> path where that adapter runs alongside the frozen base to change its behavior.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📚</span> Data + training</h4>
+          <p>Curate clean instruction / response pairs, split train and eval, then run supervised fine-tuning. LoRA freezes the base and learns two small low-rank matrices per target layer.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Adapter at inference</h4>
+          <p>At serving time the LoRA weights are added into the frozen base activations. The math is <code>W + (B·A)·scale</code>, so the tiny learned matrices nudge the original model.</p>
+        </div>
+      </div>
+
+      <h3>The architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture - data trains a small adapter; serving loads it onto a frozen base</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Train["📚 Offline training"]
+        D["📄 SFT dataset"] --> PP["🧹 Clean + format"]
+        PP --> BASE["🧊 Frozen base"]
+        BASE --> LR["🪶 LoRA matrices A,B"]
+        LR --> AD["📦 Adapter artifact"]
+    end
+    subgraph Serve["🔌 Online serving"]
+        REQ["❓ Prompt"] --> RT["🧠 Base + adapter"]
+        AD --> RT
+        RT --> OUT["✅ Tuned response"]
+    end
+        </pre>
+      </div>
+
+      <h3>A realistic LoRA / SFT training config</h3>
+      <pre><code>from peft import LoraConfig
+from trl import SFTTrainer, SFTConfig
+
+lora = LoraConfig(
+    r=16,                 # rank of the low-rank update
+    lora_alpha=32,        # scaling factor for the adapter
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM",
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+)
+
+args = SFTConfig(
+    output_dir="out/brand-tone-lora",
+    num_train_epochs=3,
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=4,
+    learning_rate=2e-4,          # higher LR is fine for LoRA
+    lr_scheduler_type="cosine",
+    warmup_ratio=0.03,
+    bf16=True,
+    eval_strategy="steps",
+    eval_steps=50,
+)
+
+trainer = SFTTrainer(
+    model="mistralai/Mistral-7B-v0.3",
+    args=args,
+    peft_config=lora,            # freezes base, trains only LoRA
+    train_dataset=train_ds,      # chat-format instruction pairs
+    eval_dataset=eval_ds,
+)
+trainer.train()
+trainer.save_model()             # saves ~tens of MB of adapter weights</code></pre>
+      <p class="muted">Notice only the LoRA matrices carry gradients - the 7B base is frozen. That is why the saved artifact is tiny and a single GPU is enough, while the eval split guards against overfitting during the run.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the offline training pipeline, LoRA adapters at inference, and how you choose between prompting, RAG, and fine-tuning.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Training: data prep to a registered adapter (offline)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Eng as 👩‍🔧 ML engineer
+    participant Data as 🧹 Data pipeline
+    participant Tr as 🏋️ Trainer
+    participant Ev as 🧪 Eval harness
+    participant Reg as 📦 Model registry
+
+    Eng->>Data: Collect instruction and response pairs
+    Data->>Data: Clean, dedupe, split train and eval
+    Data->>Tr: Formatted SFT dataset
+    loop each epoch
+        Tr->>Tr: Update LoRA matrices, base frozen
+    end
+    Tr->>Ev: Candidate adapter
+    Ev-->>Tr: Scores on held out eval
+    alt quality above bar
+        Tr->>Reg: Register versioned adapter
+        Reg-->>Eng: Adapter ready to serve
+    else regressed or overfit
+        Ev-->>Eng: Reject, adjust data and hyperparams
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Inference: LoRA adapter injected alongside frozen base weights</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant Srv as 🖥️ Serving runtime
+    participant Base as 🧊 Frozen base weights
+    participant Lora as 🪶 LoRA adapter
+    participant Dec as 🔤 Decoder
+
+    U->>Srv: Prompt
+    Srv->>Base: Forward pass through layers
+    Base->>Lora: Layer activations
+    Lora-->>Base: Add low rank update B times A times scale
+    Note over Base,Lora: Base unchanged, adapter nudges output
+    Base->>Dec: Adjusted logits
+    Dec-->>Srv: Tokens in the tuned style
+    Srv-->>U: Response with learned format
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Decision: choose prompting, RAG, or fine-tuning</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Team as 🧭 Team
+    participant P as ✍️ Prompt engineering
+    participant R as 📚 RAG
+    participant F as 🪶 Fine-tuning
+
+    Team->>P: Try a better prompt and few shot examples
+    alt prompt alone is good enough
+        P-->>Team: Ship it, cheapest option
+    else needs fresh or private facts
+        Team->>R: Add retrieval over knowledge base
+        R-->>Team: Grounded, always current answers
+    else needs consistent behavior, format or style
+        Team->>F: Fine-tune with LoRA on task data
+        F-->>Team: Behavior baked into the weights
+        Note over Team,F: Often combine RAG for facts plus a tuned adapter for style
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a base model and a goal to a served, monitored adapter - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Frame</span><h4>Define the target behavior</h4><p>Write down exactly what should change: a tone, a strict JSON format, a classification, a tool-use convention. If it is really missing knowledge, stop and use RAG instead.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Baseline</span><h4>Exhaust prompting first</h4><p>Try system prompts and few-shot examples. Fine-tune only when prompting cannot get consistent enough results or the prompt is too long and costly.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Collect</span><h4>Gather instruction data</h4><p>Assemble representative input and ideal-output pairs from logs, human writers, or a stronger model. Cover the edge cases you care about.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Curate</span><h4>Clean and format</h4><p>Deduplicate, fix bad labels, and convert to chat or instruction format. A few hundred clean examples beat thousands of noisy ones.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Split</span><h4>Hold out an eval set</h4><p>Reserve a representative slice the model never trains on, so you can measure real generalization and catch overfitting honestly.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Configure</span><h4>Pick base and PEFT method</h4><p>Choose a base model sized to your latency and quality needs, then set LoRA rank, alpha, target modules, and learning rate. Use QLoRA if memory is tight.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Train</span><h4>Run the fine-tune</h4><p>Run a few epochs while watching train and eval loss. The base stays frozen; only the adapter learns. Stop before eval loss turns back up.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Evaluate</span><h4>Score against the baseline</h4><p>Compare the adapter to the base model on task metrics and on general capability, so you confirm a gain without regressing everything else.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Guard</span><h4>Check for forgetting</h4><p>Run a broad capability suite to detect catastrophic forgetting. If general skills dropped, lower the learning rate or mix in general data.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Register</span><h4>Version and package</h4><p>Store the adapter with its data snapshot, config, and eval report in a registry so the result is reproducible and auditable.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Serve</span><h4>Deploy and monitor</h4><p>Load the adapter onto the shared base, optionally serving many adapters at once, and watch production metrics to trigger the next data and retrain cycle.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most fine-tuning failures come from the data and the goal, not the optimizer. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📚 Fine-tuning for knowledge</h4><p>Trying to teach fresh facts by fine-tuning is slow, expensive, and goes stale. Facts belong in retrieval; fine-tune for behavior, format, and style instead.</p></div>
+        <div class="card"><h4>🗑️ Dirty or thin data</h4><p>Noisy labels, duplicates, and inconsistent formatting teach the wrong pattern. A small, clean, consistent dataset beats a large messy one every time.</p></div>
+        <div class="card"><h4>🔥 Overfitting</h4><p>Too many epochs or too high a learning rate memorizes the training set. Eval loss rising while train loss falls is the classic warning sign.</p></div>
+        <div class="card"><h4>🧠 Catastrophic forgetting</h4><p>Aggressive updates on a narrow task erode general ability. Keep learning rates modest, prefer PEFT, and mix in some general examples.</p></div>
+        <div class="card"><h4>🎚️ Bad LoRA settings</h4><p>Rank too low underfits the behavior; targeting the wrong modules or a huge alpha destabilizes training. Tune rank, alpha, and target modules deliberately.</p></div>
+        <div class="card"><h4>📏 No real eval</h4><p>Judging by a few cherry-picked prompts hides regressions. Without a held-out set and a capability suite you cannot tell improvement from luck.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">How to Measure</div>
+      <h2>How to measure a fine-tune</h2>
+      <p class="muted">Track training health and downstream quality separately, so you know whether to fix the run or the data.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>What it tells you</th><th>Good sign</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Eval loss / perplexity</strong></td><td>How well the adapter fits held-out data</td><td>Falls then flattens, no upturn</td></tr>
+            <tr><td><strong>Task success rate</strong></td><td>Does output meet the target format or label?</td><td>High: the behavior actually learned</td></tr>
+            <tr><td><strong>Win rate vs base</strong></td><td>Preference of tuned vs base outputs (human or judge)</td><td>Clearly above 50 percent</td></tr>
+            <tr><td><strong>Capability retention</strong></td><td>General benchmark scores after tuning</td><td>Unchanged: no catastrophic forgetting</td></tr>
+            <tr><td><strong>Train vs eval gap</strong></td><td>Distance between training and eval loss</td><td>Small: not overfitting</td></tr>
+            <tr><td><strong>Inference cost / latency</strong></td><td>Serving overhead of the adapter per request</td><td>Within SLA, prompts got shorter</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if task success is high but general benchmarks dropped, you overfit or forgot - lower the learning rate or add general data. If eval loss will not fall at all, fix the dataset before touching hyperparameters.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing fine-tuning in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>1 · Brand tone and format adapter</h3><div class="role">Pattern: style and format baked into the weights</div></div></div>
+        <p class="muted">A marketing team wants every generated snippet to match a precise brand voice and layout without a giant style prompt on each call.</p>
+        <ul>
+          <li>A few hundred hand-approved examples capture the exact tone, structure, and forbidden phrasings.</li>
+          <li>A LoRA adapter trains the voice into the model so short prompts now produce on-brand copy.</li>
+          <li>The adapter is versioned per brand, so one base model serves many house styles.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Consistent on-brand output with far shorter prompts, cutting token cost while removing the drift that plagued the few-shot approach.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏷️</span><div><h3>2 · Distilling a classifier from a big model</h3><div class="role">Pattern: small specialized model from a large teacher</div></div></div>
+        <p class="muted">A team runs a large model to label support tickets, but the per-call cost and latency are too high at scale.</p>
+        <ul>
+          <li>The large model labels a big batch of tickets, creating a high-quality training set.</li>
+          <li>A small base model is fine-tuned on those labels to reproduce the decisions cheaply.</li>
+          <li>Evaluation confirms the small tuned model matches the teacher on the held-out set.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A compact classifier that runs at a fraction of the cost and latency of the large model, with accuracy close to the original.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔧</span><div><h3>3 · Consistent tool-use and output format</h3><div class="role">Pattern: reliable structured output for an agent</div></div></div>
+        <p class="muted">An agent must emit strict JSON tool calls, but the base model occasionally drifts, breaking the downstream parser.</p>
+        <ul>
+          <li>Traces of correct tool calls become instruction and response training pairs.</li>
+          <li>Fine-tuning teaches the exact schema and calling convention so valid output is the default.</li>
+          <li>An eval gate measures schema-valid rate before any adapter is promoted.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Near-perfect schema adherence with shorter prompts, eliminating the parser failures that previously required brittle retry logic.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Future</div>
+      <h2>Where fine-tuning is heading</h2>
+      <p class="muted">Adaptation is moving from a heavyweight training project toward fast, composable, preference-aware tuning.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Multi-adapter serving</h4><p>Runtimes that host many LoRA adapters on one base and route each request to the right one, making per-customer or per-task models economical at scale.</p></div>
+        <div class="card"><h4>🎛️ Preference tuning</h4><p>Lightweight alignment methods like DPO and its successors tune models toward preferred behavior directly from comparison data, without a separate reward model.</p></div>
+        <div class="card"><h4>🪶 Ever-cheaper PEFT</h4><p>Advances beyond QLoRA keep shrinking the memory and time needed, pushing fine-tuning of large models onto commodity hardware.</p></div>
+        <div class="card"><h4>🔗 RAG plus tuning together</h4><p>The winning pattern pairs retrieval for facts with a tuned adapter for behavior, rather than treating them as either-or choices.</p></div>
+        <div class="card"><h4>🧬 Adapter composition</h4><p>Research into merging and stacking adapters points to mixing learned skills at serve time, closer to modular, composable capabilities.</p></div>
+        <div class="card"><h4>🤖 Automated data curation</h4><p>Synthetic data generation and automatic filtering make the dataset - the real bottleneck - faster to build and easier to keep clean.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> fine-tuning is how you teach a general model your specific behavior, and PEFT makes it cheap, fast, and swappable. As adapters get smaller and serving gets smarter, tuning becomes a routine, composable step in every serious AI product.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Fine-tuning sits in a web of related skills. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../rag/"><span class="ico">📚</span><h4>Retrieval-augmented generation</h4><p>Use RAG for facts, fine-tuning for behavior.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../embeddings/"><span class="ico">🧭</span><h4>Embeddings &amp; vector DBs</h4><p>Curate and dedupe training data by similarity.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals &amp; LLM-as-judge</h4><p>Measure win rate and catch regressions.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>The cheaper baseline to exhaust first.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to fine-tuning · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

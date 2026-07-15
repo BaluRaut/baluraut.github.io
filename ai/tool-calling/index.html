@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tool &amp; Function Calling Explained — What, How, Why &amp; the Future</title>
+  <title>Tool &amp; Function Calling Explained - What, How, Why &amp; the Future</title>
   <meta name="description" content="A deep, visual guide to tool / function calling with LLMs: what it is, how the tool_use loop works, why it matters, sequence diagrams, a 0-100 flow, case studies, and the future." />
   <link rel="stylesheet" href="../assets/style.css" />
 </head>
@@ -14,10 +14,13 @@
       <div class="links">
         <a href="#what">What</a>
         <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
         <a href="#how">How</a>
         <a href="#diagrams">Diagrams</a>
-        <a href="#flow">0–100 Flow</a>
-        <a href="#cases">Case Studies</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#cases">Cases</a>
         <a href="#future">Future</a>
       </div>
     </div>
@@ -26,8 +29,8 @@
   <header class="hero">
     <div class="wrap">
       <span class="kicker">Tool / Function-Calling Design</span>
-      <h1>How tool calling actually works — the complete picture</h1>
-      <p class="lede">A language model can't book a flight, run a query, or read today's price on its own — it only produces text. Tool calling bridges that gap: you describe your functions as <strong>typed schemas</strong>, the model emits a <strong>structured call</strong> when it needs one, your host executes it, and the <strong>result flows back</strong> into the conversation. Repeat the loop and a chat model becomes an agent that can act.</p>
+      <h1>How tool calling actually works - the complete picture</h1>
+      <p class="lede">A language model can't book a flight, run a query, or read today's price on its own - it only produces text. Tool calling bridges that gap: you describe your functions as <strong>typed schemas</strong>, the model emits a <strong>structured call</strong> when it needs one, your host executes it, and the <strong>result flows back</strong> into the conversation. Repeat the loop and a chat model becomes an agent that can act.</p>
       <div class="cta">
         <a class="btn primary" href="#flow">See the full flow ↓</a>
         <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
@@ -44,9 +47,9 @@
   <!-- WHAT -->
   <section id="what">
     <div class="wrap">
-      <div class="eyebrow">01 — What</div>
+      <div class="eyebrow">01 - What</div>
       <h2>What is tool calling?</h2>
-      <p class="muted"><strong>Tool calling</strong> (also called function calling) lets a language model invoke code you control. You give the model a list of tool <em>definitions</em> — each with a name, a description, and a JSON-Schema for its arguments. When the model decides a tool would help, it doesn't run anything itself; it emits a structured request naming the tool and its arguments. Your application executes the function and hands the result back, and the model continues with that new information in hand.</p>
+      <p class="muted"><strong>Tool calling</strong> (also called function calling) lets a language model invoke code you control. You give the model a list of tool <em>definitions</em> - each with a name, a description, and a JSON-Schema for its arguments. When the model decides a tool would help, it doesn't run anything itself; it emits a structured request naming the tool and its arguments. Your application executes the function and hands the result back, and the model continues with that new information in hand.</p>
 
       <div class="grid cols-3">
         <div class="card">
@@ -55,7 +58,7 @@
         </div>
         <div class="card">
           <h4><span class="ico">🛠️</span> Decide (model)</h4>
-          <p>Given the conversation and tools, the model emits a structured <code>tool_use</code> block with arguments — or answers directly if no tool is needed.</p>
+          <p>Given the conversation and tools, the model emits a structured <code>tool_use</code> block with arguments - or answers directly if no tool is needed.</p>
         </div>
         <div class="card">
           <h4><span class="ico">↩️</span> Execute &amp; return (you)</h4>
@@ -70,29 +73,44 @@
             <tr><th>Piece</th><th>What it does</th><th>Notes</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Tool definition</strong></td><td>Name, description, and JSON-Schema of parameters</td><td>The description is prompt — write it for the model to read</td></tr>
+            <tr><td><strong>Tool definition</strong></td><td>Name, description, and JSON-Schema of parameters</td><td>The description is prompt - write it for the model to read</td></tr>
             <tr><td><strong>tool_use block</strong></td><td>Model's structured request: tool name + argument object</td><td>Carries a unique <code>id</code> to pair with its result</td></tr>
-            <tr><td><strong>Host executor</strong></td><td>Validates args, runs the function, catches errors</td><td>Your trust boundary — never execute blindly</td></tr>
+            <tr><td><strong>Host executor</strong></td><td>Validates args, runs the function, catches errors</td><td>Your trust boundary - never execute blindly</td></tr>
             <tr><td><strong>tool_result block</strong></td><td>Return value (or error) sent back to the model</td><td>References the same <code>tool_use_id</code></td></tr>
             <tr><td><strong>Agent loop</strong></td><td>Repeats call → execute → return until done</td><td>Ends when the model stops requesting tools</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> the model never runs your code — it only <em>asks</em> for a call in a structured, schema-shaped form. The host is always in the loop, which is exactly where you put validation, permissions, and safety.</div>
+      <div class="callout"><strong>Key mental model:</strong> the model never runs your code - it only <em>asks</em> for a call in a structured, schema-shaped form. The host is always in the loop, which is exactly where you put validation, permissions, and safety.</div>
     </div>
   </section>
 
   <!-- WHY -->
   <section id="why">
     <div class="wrap">
-      <div class="eyebrow">02 — Why</div>
+      <div class="eyebrow">02 - Why</div>
       <h2>Why tool calling exists</h2>
-      <p class="muted">On its own a model is a closed box: no live data, no side effects, no arithmetic you can trust. Tool calling turns it into a controller that reasons about <em>which</em> action to take, while your code does the acting — reliably, verifiably, and within your rules.</p>
+      <p class="muted">On its own a model is a closed box: no live data, no side effects, no arithmetic you can trust. Tool calling turns it into a controller that reasons about <em>which</em> action to take, while your code does the acting - reliably, verifiably, and within your rules.</p>
       <div class="grid cols-2">
         <div class="card"><h4>🌐 Real-time &amp; private data</h4><p>Fetch today's inventory, a customer record, or a live price. The model reasons; your tool provides ground truth it never memorized.</p></div>
-        <div class="card"><h4>🎬 Take real actions</h4><p>Send an email, open a ticket, run a deployment. Tools let a model <em>do</em> things, not just describe them — turning chat into an agent.</p></div>
+        <div class="card"><h4>🎬 Take real actions</h4><p>Send an email, open a ticket, run a deployment. Tools let a model <em>do</em> things, not just describe them - turning chat into an agent.</p></div>
         <div class="card"><h4>📐 Structured, reliable outputs</h4><p>A JSON-Schema forces arguments into typed, validated shapes, so you get parseable structure instead of free-text you must guess at.</p></div>
         <div class="card"><h4>🔒 Control &amp; auditability</h4><p>Every action passes through your executor, where you enforce permissions, log calls, and gate anything risky behind confirmation.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Tool calling explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Tool calling is like a <strong>take-home test where you may use a calculator</strong>. You still do the thinking, but for the arithmetic you fill in the exact numbers on the calculator, press the button, and copy the result back into your answer.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It's the model calling a <strong>typed API</strong>. You publish function signatures as JSON-Schema; the model returns a structured argument object; your code runs the real function and returns the value, just like an RPC where the model is the caller.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>manager who delegates</strong> by filling out a proper request form. The manager decides what needs doing and specifies the details, but a specialist actually executes it and reports the outcome back.</p></div>
+        <div class="card"><h4><span class="ico">🍽️</span> Everyday version</h4><p>A <strong>waiter taking a structured order to the kitchen</strong>. The waiter does not cook; they write down exactly what you want in a form the kitchen understands, hand it over, and bring back the finished dish.</p></div>
       </div>
     </div>
   </section>
@@ -100,7 +118,7 @@
   <!-- HOW -->
   <section id="how">
     <div class="wrap">
-      <div class="eyebrow">03 — How</div>
+      <div class="eyebrow">03 - How</div>
       <h2>How it works under the hood</h2>
       <p class="muted">Tool calling is a <strong>multi-turn loop</strong>, not a single request. The host sends the tools plus the conversation; the model replies with either an answer or one or more <code>tool_use</code> blocks; the host executes and appends <code>tool_result</code> blocks; the loop repeats until the model is done.</p>
 
@@ -117,7 +135,7 @@
 
       <h3>The architecture at a glance</h3>
       <div class="diagram">
-        <div class="cap">Architecture — the model decides, the host executes, results feed back</div>
+        <div class="cap">Architecture - the model decides, the host executes, results feed back</div>
         <pre class="mermaid">
 flowchart LR
     subgraph Client["🖥️ Host application"]
@@ -162,19 +180,19 @@ while True:
         result = registry[call.name](**args)   # actually run it
         messages.append(tool_result(call.id, result))
     messages.append(reply)                      # keep the tool_use turn too</code></pre>
-      <p class="muted">Notice the <code>id</code> that ties each <code>tool_result</code> to its originating <code>tool_use</code>, and that the host — never the model — is the thing that validates arguments and executes code. That boundary is where safety lives.</p>
+      <p class="muted">Notice the <code>id</code> that ties each <code>tool_result</code> to its originating <code>tool_use</code>, and that the host - never the model - is the thing that validates arguments and executes code. That boundary is where safety lives.</p>
     </div>
   </section>
 
   <!-- DIAGRAMS -->
   <section id="diagrams">
     <div class="wrap">
-      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <div class="eyebrow">04 - Sequence Diagrams</div>
       <h2>Detailed sequence diagrams</h2>
       <p class="muted">Three views: a single tool-call round trip, parallel tool calls that fan out and rejoin, and an invalid-arguments validation-and-retry loop.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 — A single tool-call round trip (the core loop)</div>
+        <div class="cap">Diagram 1 - A single tool-call round trip (the core loop)</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -196,7 +214,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 — Parallel tool calls fan out and rejoin before the model continues</div>
+        <div class="cap">Diagram 2 - Parallel tool calls fan out and rejoin before the model continues</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -222,7 +240,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 3 — Invalid arguments: validate, report the error, let the model retry</div>
+        <div class="cap">Diagram 3 - Invalid arguments: validate, report the error, let the model retry</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -253,36 +271,78 @@ sequenceDiagram
   <!-- FLOW 0-100 -->
   <section id="flow">
     <div class="wrap">
-      <div class="eyebrow">05 — Step by Step</div>
+      <div class="eyebrow">05 - Step by Step</div>
       <h2>The 0 → 100 flow</h2>
-      <p class="muted">From defining a tool to delivering an answer built from real actions — the whole journey in order.</p>
+      <p class="muted">From defining a tool to delivering an answer built from real actions - the whole journey in order.</p>
 
       <div class="steps">
         <div class="step"><div class="num">00</div><div class="body"><span class="tag">Design</span><h4>Define the tool contract</h4><p>Give each tool a clear name, a description written for the model, and a JSON-Schema for its parameters with types, enums, and required fields.</p></div></div>
         <div class="step"><div class="num">10</div><div class="body"><span class="tag">Register</span><h4>Expose a minimal tool set</h4><p>Hand the model only the tools this task needs. Too many overlapping tools confuse selection; a tight, well-named set improves accuracy.</p></div></div>
         <div class="step"><div class="num">20</div><div class="body"><span class="tag">Prompt</span><h4>Send messages + tools</h4><p>The host sends the conversation plus the tool definitions. The model reads the descriptions and schemas to understand what it can do.</p></div></div>
         <div class="step"><div class="num">30</div><div class="body"><span class="tag">Decide</span><h4>Model chooses a tool</h4><p>The model reasons about the request and either answers directly or emits one or more structured <code>tool_use</code> blocks with arguments.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Validate</span><h4>Check the arguments</h4><p>The host validates the emitted arguments against the schema — types, ranges, enums, required fields — rejecting anything malformed before it runs.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Validate</span><h4>Check the arguments</h4><p>The host validates the emitted arguments against the schema - types, ranges, enums, required fields - rejecting anything malformed before it runs.</p></div></div>
         <div class="step"><div class="num">50</div><div class="body"><span class="tag">Authorize</span><h4>Enforce permissions &amp; safety</h4><p>For side-effecting tools, check the user's rights, apply rate limits, and gate destructive actions behind confirmation or a dry run.</p></div></div>
         <div class="step"><div class="num">60</div><div class="body"><span class="tag">Execute</span><h4>Run the function</h4><p>Call the underlying API, database, or service. Parallel calls fan out concurrently; use idempotency keys so retries never double-apply.</p></div></div>
         <div class="step"><div class="num">70</div><div class="body"><span class="tag">Handle</span><h4>Capture results or errors</h4><p>Return a structured result, or a clear <code>is_error</code> message on failure, so the model can adapt, retry, or ask the user for missing input.</p></div></div>
         <div class="step"><div class="num">80</div><div class="body"><span class="tag">Return</span><h4>Feed results back</h4><p>Append each <code>tool_result</code> keyed to its <code>tool_use</code> id, plus the model's own tool-use turn, so the conversation stays consistent.</p></div></div>
-        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Loop</span><h4>Continue or finish</h4><p>The model reads the results and either requests more tools — repeating the loop — or produces a final natural-language answer.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Loop</span><h4>Continue or finish</h4><p>The model reads the results and either requests more tools - repeating the loop - or produces a final natural-language answer.</p></div></div>
         <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>Answer grounded in actions</h4><p>The user gets a response built from real data and real effects. Logs of every call feed evals and guardrail tuning over time.</p></div></div>
       </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most tool-calling failures come from the tool design, not the model. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧰 Too many, overlapping tools</h4><p>Handing the model dozens of tools, several doing near-identical things, wrecks selection accuracy. It picks the wrong one or dithers. Expose a small, distinct set scoped to the task.</p></div>
+        <div class="card"><h4>🏷️ Vague names &amp; descriptions</h4><p>Names like <code>do_thing</code> and one-line descriptions leave the model guessing when to call and how. The description is prompt, write it to say precisely what the tool does and when to use it.</p></div>
+        <div class="card"><h4>🚫 Unvalidated arguments</h4><p>Trusting the model's emitted arguments and passing them straight to an API invites bad dates, injection, and out-of-range values. Validate types, enums, and ranges against the schema before executing.</p></div>
+        <div class="card"><h4>💥 Non-idempotent side effects</h4><p>Write actions with no confirmation or idempotency key double-charge, double-book, or double-send on a retry. Gate destructive actions behind approval and key them so replays are safe.</p></div>
+        <div class="card"><h4>♻️ No error handling / infinite retry</h4><p>Returning raw stack traces, or looping forever on the same failing call, burns tokens and stalls the agent. Return a clear <code>is_error</code> message and cap retries so the model can adapt or stop.</p></div>
+        <div class="card"><h4>📜 Oversized JSON schemas</h4><p>Sprawling schemas with deep nesting, dozens of optional fields, and no descriptions confuse the model and bloat the prompt. Keep parameter shapes flat, minimal, and clearly documented.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">How to Measure</div>
+      <h2>How to measure tool calling</h2>
+      <p class="muted">Track selection and execution separately, so you know whether to fix the tool set or the tools themselves.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>What it tells you</th><th>Good sign</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Correct tool-selection rate</strong></td><td>How often the model picks the right tool for the task</td><td>High: names and descriptions are clear</td></tr>
+            <tr><td><strong>Argument validity rate</strong></td><td>Fraction of calls whose arguments pass schema validation</td><td>High: schemas guide the model well</td></tr>
+            <tr><td><strong>Task completion rate</strong></td><td>Share of requests the agent finishes end to end</td><td>High: the loop resolves reliably</td></tr>
+            <tr><td><strong>Tool error / exception rate</strong></td><td>How often executions fail or throw</td><td>Low: robust tools and inputs</td></tr>
+            <tr><td><strong>Unnecessary-call rate</strong></td><td>Calls made when none was needed, or redundant repeats</td><td>Low: the model calls only when useful</td></tr>
+            <tr><td><strong>Latency per call</strong></td><td>Time each tool round trip adds to the turn</td><td>Within your SLA and budget</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if selection is wrong, fix names and descriptions and prune overlapping tools; if arguments are invalid, tighten the schema and its field descriptions. Measure both before blaming the model.</div>
     </div>
   </section>
 
   <!-- CASE STUDIES -->
   <section id="cases">
     <div class="wrap">
-      <div class="eyebrow">06 — Case Studies</div>
+      <div class="eyebrow">06 - Case Studies</div>
       <h2>Real-world case studies</h2>
       <p class="muted">Three representative patterns showing tool calling in production-style use.</p>
 
       <div class="case">
         <div class="hd"><span class="badge">✈️</span><div><h3>1 · Travel &amp; booking assistant</h3><div class="role">Pattern: multi-step tool orchestration with guarded actions</div></div></div>
-        <p class="muted">A travel assistant plans trips end to end — searching flights, checking hotels, then booking — mixing read-only lookups with real, side-effecting purchases.</p>
+        <p class="muted">A travel assistant plans trips end to end - searching flights, checking hotels, then booking - mixing read-only lookups with real, side-effecting purchases.</p>
         <ul>
           <li>Read tools (<code>search_flights</code>, <code>get_hotel_availability</code>) run freely and often in parallel to compare options fast.</li>
           <li>The write tool <code>book_flight</code> is gated: it requires explicit user confirmation and carries an idempotency key so a retry never double-books.</li>
@@ -304,7 +364,7 @@ sequenceDiagram
 
       <div class="case">
         <div class="hd"><span class="badge">🔧</span><div><h3>3 · DevOps agent taking guarded actions</h3><div class="role">Pattern: side-effecting operations with idempotency &amp; approval</div></div></div>
-        <p class="muted">An on-call assistant triages incidents — reading logs and metrics, then executing remediation like scaling a service or rolling back a deploy.</p>
+        <p class="muted">An on-call assistant triages incidents - reading logs and metrics, then executing remediation like scaling a service or rolling back a deploy.</p>
         <ul>
           <li>Diagnostic tools (<code>get_logs</code>, <code>get_metrics</code>) are read-only and unrestricted for fast investigation.</li>
           <li>Action tools (<code>scale_service</code>, <code>rollback</code>) require an approval step and run with idempotency keys so replays are safe.</li>
@@ -318,18 +378,33 @@ sequenceDiagram
   <!-- FUTURE -->
   <section id="future">
     <div class="wrap">
-      <div class="eyebrow">07 — Future</div>
+      <div class="eyebrow">07 - Future</div>
       <h2>Where tool calling is heading</h2>
-      <p class="muted">Tool calling is evolving from a single function invocation into the backbone of agentic systems — standardized, composable, and safer by design.</p>
+      <p class="muted">Tool calling is evolving from a single function invocation into the backbone of agentic systems - standardized, composable, and safer by design.</p>
       <div class="grid cols-2">
         <div class="card"><h4>🔌 MCP &amp; standard tool protocols</h4><p>Open standards like the Model Context Protocol let any model connect to any tool server, so integrations become plug-and-play instead of bespoke.</p></div>
         <div class="card"><h4>🤝 Multi-agent tool sharing</h4><p>Specialized agents expose their skills as tools to one another, composing into systems where each agent calls the right teammate for a subtask.</p></div>
         <div class="card"><h4>🛡️ Fine-grained permissions</h4><p>Capability scopes, per-tool policies, and human-in-the-loop gates make side-effecting actions auditable and safe by default.</p></div>
         <div class="card"><h4>⚡ Smarter parallelism</h4><p>Models increasingly plan and dispatch independent calls at once, cutting latency for tasks that touch many systems.</p></div>
         <div class="card"><h4>🎯 Tool-use evals as first-class</h4><p>Measuring selection accuracy, argument validity, and recovery from errors becomes the metric that governs agent reliability.</p></div>
-        <div class="card"><h4>🧠 Self-correcting agents</h4><p>Agents that read tool errors, reflect, and retry with corrected arguments — turning brittle calls into robust, resilient workflows.</p></div>
+        <div class="card"><h4>🧠 Self-correcting agents</h4><p>Agents that read tool errors, reflect, and retry with corrected arguments - turning brittle calls into robust, resilient workflows.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> tool calling is how a text-only model becomes a system that can see live data and take real action — under your validation, permissions, and audit. As protocols standardize and agents compose, well-designed tools become the most durable part of any AI product.</div>
+      <div class="callout"><strong>Bottom line:</strong> tool calling is how a text-only model becomes a system that can see live data and take real action - under your validation, permissions, and audit. As protocols standardize and agents compose, well-designed tools become the most durable part of any AI product.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Tool calling sits in a web of related skills. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="/mcp/"><span class="ico">🔌</span><h4>Model Context Protocol</h4><p>The open standard for connecting models to tool servers.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../agentic/"><span class="ico">🕹️</span><h4>Agentic orchestration</h4><p>Looping tool calls into multi-step autonomous agents.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../structured-outputs/"><span class="ico">📐</span><h4>Structured outputs</h4><p>Schema-constrained generation that shapes tool arguments.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails &amp; safety</h4><p>Validating and gating the actions tools can take.</p><span class="go">Read →</span></a>
+      </div>
     </div>
   </section>
 

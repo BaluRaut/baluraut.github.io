@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prompt Engineering Explained — What, How, Why &amp; the Future</title>
+  <title>Prompt Engineering Explained - What, How, Why &amp; the Future</title>
   <meta name="description" content="A deep, visual guide to prompt engineering: the anatomy of a prompt, core techniques, sequence diagrams, a 0-100 flow, case studies, and where prompting is heading." />
   <link rel="stylesheet" href="../assets/style.css" />
 </head>
@@ -14,10 +14,13 @@
       <div class="links">
         <a href="#what">What</a>
         <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
         <a href="#how">How</a>
         <a href="#diagrams">Diagrams</a>
-        <a href="#flow">0–100 Flow</a>
-        <a href="#cases">Case Studies</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#cases">Cases</a>
         <a href="#future">Future</a>
       </div>
     </div>
@@ -26,8 +29,8 @@
   <header class="hero">
     <div class="wrap">
       <span class="kicker">Prompt Engineering</span>
-      <h1>How prompt engineering actually works — the complete picture</h1>
-      <p class="lede">A prompt is the program you write for a language model in plain language. Prompt engineering is the craft of <strong>structuring</strong> that input — role, instructions, context, examples, and format — so the model reliably produces the output you want. Done well, it turns a general model into a dependable component you can build products on.</p>
+      <h1>How prompt engineering actually works - the complete picture</h1>
+      <p class="lede">A prompt is the program you write for a language model in plain language. Prompt engineering is the craft of <strong>structuring</strong> that input - role, instructions, context, examples, and format - so the model reliably produces the output you want. Done well, it turns a general model into a dependable component you can build products on.</p>
       <div class="cta">
         <a class="btn primary" href="#flow">See the full flow ↓</a>
         <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
@@ -44,7 +47,7 @@
   <!-- WHAT -->
   <section id="what">
     <div class="wrap">
-      <div class="eyebrow">01 — What</div>
+      <div class="eyebrow">01 - What</div>
       <h2>What is prompt engineering?</h2>
       <p class="muted"><strong>Prompt engineering</strong> is the practice of designing the text you send to a language model so that its behavior is predictable, accurate, and useful. Because a model's output is entirely conditioned on its input, small changes in wording, structure, and examples produce large changes in quality. Good prompting is less about clever phrasing and more about giving the model a clear <em>role</em>, unambiguous <em>instructions</em>, the right <em>context</em>, and a precise <em>output contract</em>.</p>
 
@@ -59,7 +62,7 @@
         </div>
         <div class="card">
           <h4><span class="ico">📐</span> Output contract</h4>
-          <p>An explicit format spec — JSON schema, headings, length limits — makes responses machine-parseable and consistent.</p>
+          <p>An explicit format spec - JSON schema, headings, length limits - makes responses machine-parseable and consistent.</p>
         </div>
       </div>
 
@@ -79,18 +82,18 @@
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> a prompt is a specification, not a wish. The model does exactly what the text conditions it to do — so ambiguity, conflicting instructions, and missing format specs are <em>your</em> bugs, not the model's. Engineer the input like you'd engineer an API contract.</div>
+      <div class="callout"><strong>Key mental model:</strong> a prompt is a specification, not a wish. The model does exactly what the text conditions it to do - so ambiguity, conflicting instructions, and missing format specs are <em>your</em> bugs, not the model's. Engineer the input like you'd engineer an API contract.</div>
     </div>
   </section>
 
   <!-- WHY -->
   <section id="why">
     <div class="wrap">
-      <div class="eyebrow">02 — Why</div>
+      <div class="eyebrow">02 - Why</div>
       <h2>Why prompt engineering matters</h2>
-      <p class="muted">Fine-tuning changes weights — slow, costly, and hard to iterate. Prompting changes behavior <em>instantly</em>, at zero training cost, and is the fastest lever you have for quality. Most of a model's usable capability is unlocked or wasted by how you ask.</p>
+      <p class="muted">Fine-tuning changes weights - slow, costly, and hard to iterate. Prompting changes behavior <em>instantly</em>, at zero training cost, and is the fastest lever you have for quality. Most of a model's usable capability is unlocked or wasted by how you ask.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>⚡ Instant iteration</h4><p>Reword the prompt and rerun — no retraining, no deploys. You can go from failing to passing an eval in minutes, not days.</p></div>
+        <div class="card"><h4>⚡ Instant iteration</h4><p>Reword the prompt and rerun - no retraining, no deploys. You can go from failing to passing an eval in minutes, not days.</p></div>
         <div class="card"><h4>🎯 Reliability &amp; control</h4><p>Structure, constraints, and format specs turn a chatty model into a deterministic-enough component you can put behind an API.</p></div>
         <div class="card"><h4>💸 Cheaper than fine-tuning</h4><p>No labeled datasets, no GPU hours. A well-designed prompt often matches or beats a fine-tune for a fraction of the effort.</p></div>
         <div class="card"><h4>🔍 Steers reasoning quality</h4><p>Techniques like step-by-step reasoning and decomposition materially raise accuracy on hard, multi-step tasks.</p></div>
@@ -98,10 +101,25 @@
     </div>
   </section>
 
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Prompt engineering explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>A prompt is a <strong>well-written exam question</strong>. A vague question gets a rambling answer; a precise one with the format spelled out ("show your working, then box the final number") gets exactly what you asked for.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>The prompt is the <strong>function signature and docstring</strong> you write for the model. Clear parameters, an explicit return type (JSON schema), and worked examples make the output predictable and parseable.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>It's writing a <strong>tight project brief</strong>. State the goal, the constraints, the deliverable format, and a sample of "good," and the work comes back on target instead of needing three rounds of rework.</p></div>
+        <div class="card"><h4><span class="ico">🧑‍🍳</span> Everyday version</h4><p>Like giving <strong>precise directions to a very capable but literal new hire</strong>. They will do exactly what you say, so "summarize this in three bullets, no jargon" beats "make it good."</p></div>
+      </div>
+    </div>
+  </section>
+
   <!-- HOW -->
   <section id="how">
     <div class="wrap">
-      <div class="eyebrow">03 — How</div>
+      <div class="eyebrow">03 - How</div>
       <h2>How it works under the hood</h2>
       <p class="muted">A production prompt is <em>assembled</em> at request time from static and dynamic parts, then sent as a single conditioned input. The two concerns are <strong>composition</strong> (what goes in, in what order) and <strong>technique</strong> (how you phrase it to steer behavior).</p>
 
@@ -118,7 +136,7 @@
 
       <h3>The prompt-assembly architecture</h3>
       <div class="diagram">
-        <div class="cap">Architecture — static template + dynamic parts compose into one conditioned input</div>
+        <div class="cap">Architecture - static template + dynamic parts compose into one conditioned input</div>
         <pre class="mermaid">
 flowchart LR
     subgraph Static["🧱 Static template"]
@@ -165,12 +183,12 @@ Ticket: "Can you add dark mode to the mobile app?"</code></pre>
   <!-- DIAGRAMS -->
   <section id="diagrams">
     <div class="wrap">
-      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <div class="eyebrow">04 - Sequence Diagrams</div>
       <h2>Detailed sequence diagrams</h2>
       <p class="muted">Three views: how a prompt is assembled and sent, chain-of-thought versus a direct answer, and the eval-driven refinement loop.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 — Prompt assembly: composing system, context, few-shot, and query</div>
+        <div class="cap">Diagram 1 - Prompt assembly: composing system, context, few-shot, and query</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -194,7 +212,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 — Chain-of-thought vs direct answer on a hard task</div>
+        <div class="cap">Diagram 2 - Chain-of-thought vs direct answer on a hard task</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -219,7 +237,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 3 — Eval-driven refinement: author, run, score, revise</div>
+        <div class="cap">Diagram 3 - Eval-driven refinement: author, run, score, revise</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -251,19 +269,19 @@ sequenceDiagram
   <!-- FLOW 0-100 -->
   <section id="flow">
     <div class="wrap">
-      <div class="eyebrow">05 — Step by Step</div>
+      <div class="eyebrow">05 - Step by Step</div>
       <h2>The 0 → 100 flow</h2>
-      <p class="muted">From a vague goal to a hardened, evaluated prompt in production — the whole journey in order.</p>
+      <p class="muted">From a vague goal to a hardened, evaluated prompt in production - the whole journey in order.</p>
 
       <div class="steps">
         <div class="step"><div class="num">00</div><div class="body"><span class="tag">Define</span><h4>Pin down the task &amp; success criteria</h4><p>State exactly what the model must do and what a good output looks like. If you can't describe success, you can't prompt or evaluate for it.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Role</span><h4>Set the system persona &amp; rules</h4><p>Give the model a role and the non-negotiable constraints — scope, tone, and what it must never do — in the system message.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Role</span><h4>Set the system persona &amp; rules</h4><p>Give the model a role and the non-negotiable constraints - scope, tone, and what it must never do - in the system message.</p></div></div>
         <div class="step"><div class="num">20</div><div class="body"><span class="tag">Instruct</span><h4>Write clear, specific instructions</h4><p>Turn the task into unambiguous steps. Prefer positive, testable directives over vague adjectives like "good" or "professional".</p></div></div>
         <div class="step"><div class="num">30</div><div class="body"><span class="tag">Structure</span><h4>Add delimiters &amp; sections</h4><p>Separate instructions, context, and the query with clear markers (headings, XML tags, triple quotes) so the model never confuses them.</p></div></div>
         <div class="step"><div class="num">40</div><div class="body"><span class="tag">Exemplify</span><h4>Provide few-shot examples</h4><p>Show 2–5 input → output pairs that cover the tricky cases. Examples teach the pattern more reliably than description alone.</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Format</span><h4>Specify the output contract</h4><p>Declare the exact shape — JSON schema, template, length limits — so downstream code can parse the response deterministically.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Format</span><h4>Specify the output contract</h4><p>Declare the exact shape - JSON schema, template, length limits - so downstream code can parse the response deterministically.</p></div></div>
         <div class="step"><div class="num">60</div><div class="body"><span class="tag">Reason</span><h4>Add step-by-step reasoning if needed</h4><p>For multi-step tasks, ask the model to think through the problem before answering, then extract the final answer.</p></div></div>
-        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guardrail</span><h4>Add negative instructions &amp; fallbacks</h4><p>State what to avoid and what to do on uncertainty — "if unsure, return null" — to prevent hallucination and off-scope output.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guardrail</span><h4>Add negative instructions &amp; fallbacks</h4><p>State what to avoid and what to do on uncertainty - "if unsure, return null" - to prevent hallucination and off-scope output.</p></div></div>
         <div class="step"><div class="num">80</div><div class="body"><span class="tag">Evaluate</span><h4>Run against an eval set</h4><p>Test the prompt on a labeled set of representative cases and score outputs automatically or with an LLM judge.</p></div></div>
         <div class="step"><div class="num">90</div><div class="body"><span class="tag">Iterate</span><h4>Change → eval → keep or revert</h4><p>Make one change at a time, re-run the evals, and keep it only if the score improves. Never tune on a single anecdote.</p></div></div>
         <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Version, monitor &amp; maintain</h4><p>Pin the winning prompt as a versioned artifact, log real outputs, and feed failures back into the eval set to keep improving.</p></div></div>
@@ -271,10 +289,52 @@ sequenceDiagram
     </div>
   </section>
 
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most prompts fail on clarity and structure, not on model capability. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🌫️ Ambiguous instructions</h4><p>Vague adjectives like "good," "concise," or "professional" have no testable meaning. The model guesses, and the guess drifts run to run. Replace them with specific, checkable directives.</p></div>
+        <div class="card"><h4>⚔️ Conflicting rules</h4><p>Telling the model to "be thorough" and "answer in one sentence" forces it to silently pick one. Contradictory constraints produce unpredictable trade-offs no one chose on purpose.</p></div>
+        <div class="card"><h4>📦 Overloading one prompt</h4><p>Cramming classification, extraction, and rewriting into a single mega-prompt degrades every task. Decompose into focused steps or separate calls the model can actually nail.</p></div>
+        <div class="card"><h4>📐 No output-format spec</h4><p>Without an explicit schema or template, the model returns free-form prose that downstream code cannot parse. Declare the exact shape and demand it validates.</p></div>
+        <div class="card"><h4>🎰 Tweaking instead of evaluating</h4><p>Endlessly rewording against a single anecdote optimizes for one example and regresses on others. Without an eval set you are tuning blind. Measure, then change.</p></div>
+        <div class="card"><h4>🎭 Leaky or biased few-shot</h4><p>Examples that share the answer, skew toward one class, or ignore context ordering bias the model. Watch "lost in the middle," where content buried mid-context gets ignored.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">How to Measure</div>
+      <h2>How to measure prompt quality</h2>
+      <p class="muted">A prompt is only "good" against numbers on a representative eval set. Track these together, not in isolation.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>What it tells you</th><th>Good sign</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Task accuracy on an eval set</strong></td><td>How often the output is correct across labeled representative cases</td><td>High and stable across versions</td></tr>
+            <tr><td><strong>Format-valid rate</strong></td><td>Fraction of responses that parse against the declared schema or template</td><td>Near 100%: downstream code never breaks</td></tr>
+            <tr><td><strong>Instruction-adherence rate</strong></td><td>How reliably the model respects the stated rules and constraints</td><td>High: the spec is actually followed</td></tr>
+            <tr><td><strong>Consistency across runs</strong></td><td>Whether the same input yields the same answer on repeat calls</td><td>High: low variance, predictable behavior</td></tr>
+            <tr><td><strong>Token cost / latency</strong></td><td>Prompt + completion tokens and end-to-end time per request</td><td>Within your budget and SLA</td></tr>
+            <tr><td><strong>Refusal / over-refusal rate</strong></td><td>How often the model wrongly declines valid, in-scope requests</td><td>Low: helpful without being reckless</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if format-valid rate is low, tighten the schema and add examples before touching wording; if accuracy is low but format is fine, fix the instructions and few-shot coverage. Always change one thing, then re-run the evals.</div>
+    </div>
+  </section>
+
   <!-- CASE STUDIES -->
   <section id="cases">
     <div class="wrap">
-      <div class="eyebrow">06 — Case Studies</div>
+      <div class="eyebrow">06 - Case Studies</div>
       <h2>Real-world case studies</h2>
       <p class="muted">Three representative patterns showing prompt engineering in production-style use.</p>
 
@@ -291,7 +351,7 @@ sequenceDiagram
 
       <div class="case">
         <div class="hd"><span class="badge">🧾</span><div><h3>2 · Structured data extraction to JSON</h3><div class="role">Pattern: schema-locked extraction</div></div></div>
-        <p class="muted">A finance team must pull fields — vendor, amount, date, line items — out of messy invoices into a clean schema.</p>
+        <p class="muted">A finance team must pull fields - vendor, amount, date, line items - out of messy invoices into a clean schema.</p>
         <ul>
           <li>The prompt embeds the target JSON schema and demands output that validates against it.</li>
           <li>Negative guardrails ("return null for missing fields, never guess") prevent fabricated values.</li>
@@ -304,7 +364,7 @@ sequenceDiagram
         <div class="hd"><span class="badge">✍️</span><div><h3>3 · Brand-voice writing assistant</h3><div class="role">Pattern: persona + style constraints</div></div></div>
         <p class="muted">A marketing org wants copy that always sounds like the brand across dozens of writers and channels.</p>
         <ul>
-          <li>A detailed persona and style guide live in the system role — tone, reading level, words to avoid.</li>
+          <li>A detailed persona and style guide live in the system role - tone, reading level, words to avoid.</li>
           <li>Few-shot examples of on-brand and off-brand copy anchor the target voice concretely.</li>
           <li>An LLM judge scores drafts against the style rubric so the prompt can be tuned against real evals.</li>
         </ul>
@@ -316,18 +376,33 @@ sequenceDiagram
   <!-- FUTURE -->
   <section id="future">
     <div class="wrap">
-      <div class="eyebrow">07 — Future</div>
+      <div class="eyebrow">07 - Future</div>
       <h2>Where prompt engineering is heading</h2>
-      <p class="muted">Prompting is maturing from hand-crafted strings into a disciplined, tooled engineering practice — measured, versioned, and increasingly automated.</p>
+      <p class="muted">Prompting is maturing from hand-crafted strings into a disciplined, tooled engineering practice - measured, versioned, and increasingly automated.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🤖 Automated prompt optimization</h4><p>Tools that search and rewrite prompts against an eval set — treating prompt design as an optimization problem rather than manual guesswork.</p></div>
+        <div class="card"><h4>🤖 Automated prompt optimization</h4><p>Tools that search and rewrite prompts against an eval set - treating prompt design as an optimization problem rather than manual guesswork.</p></div>
         <div class="card"><h4>📊 Evals as first-class</h4><p>Prompt changes gated by regression tests and scored on labeled sets, so quality is a metric you track, not a vibe you hope for.</p></div>
         <div class="card"><h4>🧠 Reasoning models shift the craft</h4><p>Models that reason internally reduce the need for manual chain-of-thought, moving effort toward clear specs and verification.</p></div>
-        <div class="card"><h4>🗂️ Context engineering</h4><p>Managing the "lost in the middle" effect — ordering, compressing, and budgeting context across long windows becomes its own discipline.</p></div>
+        <div class="card"><h4>🗂️ Context engineering</h4><p>Managing the "lost in the middle" effect - ordering, compressing, and budgeting context across long windows becomes its own discipline.</p></div>
         <div class="card"><h4>🧰 Structured &amp; tool-aware prompts</h4><p>Native JSON modes, function calling, and tool schemas make the output contract part of the API, not just prose in the prompt.</p></div>
-        <div class="card"><h4>🔁 Prompts as versioned artifacts</h4><p>Prompt registries, diffs, and rollbacks bring software-engineering rigor — version control, review, and CI — to the prompt layer.</p></div>
+        <div class="card"><h4>🔁 Prompts as versioned artifacts</h4><p>Prompt registries, diffs, and rollbacks bring software-engineering rigor - version control, review, and CI - to the prompt layer.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> prompt engineering is how you turn a general model into a reliable component — cheaply, quickly, and verifiably. As models get stronger, the craft shifts from wording tricks toward clear specifications, evaluation, and context management, but it doesn't go away — it becomes more of an engineering discipline.</div>
+      <div class="callout"><strong>Bottom line:</strong> prompt engineering is how you turn a general model into a reliable component - cheaply, quickly, and verifiably. As models get stronger, the craft shifts from wording tricks toward clear specifications, evaluation, and context management, but it doesn't go away - it becomes more of an engineering discipline.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Prompt engineering sits in a web of related skills. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../structured-outputs/"><span class="ico">📐</span><h4>Structured outputs</h4><p>Lock responses to a schema so code can parse them.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals &amp; LLM-as-judge</h4><p>Score prompt changes instead of tuning on vibes.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../prompt-management/"><span class="ico">🗂️</span><h4>Prompt management</h4><p>Version, diff, and roll back prompts as artifacts.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../rag/"><span class="ico">🔎</span><h4>Retrieval-augmented generation</h4><p>Feed the right context into the prompt at query time.</p><span class="go">Read →</span></a>
+      </div>
     </div>
   </section>
 

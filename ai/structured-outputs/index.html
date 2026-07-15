@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Structured Outputs Explained - What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to structured outputs from LLMs: what they are, how schema-constrained decoding guarantees valid JSON, validate-and-reask loops, sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structured Outputs</span>
+      <h1>How structured outputs turn text into reliable data</h1>
+      <p class="lede">LLMs speak prose, but software needs data. Structured outputs make the model return <strong>machine-readable JSON</strong> that conforms to a schema you define, so its answers drop straight into your code, APIs, and databases <strong>without brittle string parsing</strong> or fingers-crossed regex.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">JSON Schema</span>
+        <span class="pill">Constrained decoding</span>
+        <span class="pill">Pydantic &amp; zod</span>
+        <span class="pill">Validate &amp; reask</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What are structured outputs?</h2>
+      <p class="muted"><strong>Structured outputs</strong> are model responses that follow a machine-readable shape you specify in advance - typically JSON matching a schema - instead of free-form prose. You hand the model a contract ("return an object with these fields and these types"), and the response comes back as data your program can parse, validate, and act on directly.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📐</span> Define the shape</h4>
+          <p>You describe the target as a JSON Schema or a typed model (Pydantic, zod). This is the contract the output must satisfy.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> Constrain generation</h4>
+          <p>The model is steered to emit only tokens that keep the output valid against the schema, so it cannot drift into prose.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">✅</span> Parse &amp; validate</h4>
+          <p>The result is parsed into a typed object and validated. Anything that slips through is caught before it reaches your code.</p>
+        </div>
+      </div>
+
+      <h3>The spectrum of approaches</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Approach</th><th>What it does</th><th>Guarantee</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Prompt-and-hope</strong></td><td>Ask nicely for JSON in the prompt; parse whatever comes back</td><td>None - best effort only</td></tr>
+            <tr><td><strong>JSON mode</strong></td><td>Provider flag forcing syntactically valid JSON, but any shape</td><td>Valid JSON, not your schema</td></tr>
+            <tr><td><strong>Schema-constrained</strong></td><td>Decoding restricted to a supplied JSON Schema at token level</td><td>Valid JSON <em>and</em> your schema</td></tr>
+            <tr><td><strong>Grammar-based</strong></td><td>A formal grammar (GBNF, regex) masks illegal tokens each step</td><td>Any formal shape you can express</td></tr>
+            <tr><td><strong>Typed models</strong></td><td>Pydantic / zod define, coerce, and validate the result in code</td><td>Runtime type safety + retries</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a prompt asking for JSON is a <em>request</em>; schema-constrained decoding is a <em>guarantee</em>. The stronger the enforcement, the less defensive parsing your downstream code needs to carry.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why structured outputs exist</h2>
+      <p class="muted">Prose is great for humans and terrible for machines. The moment an LLM output feeds another system - a database, an API call, a UI component - you need a predictable shape, not a paragraph you have to reverse-engineer.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 Machine-readable by default</h4><p>Downstream systems consume fields, not sentences. A guaranteed schema means you can index, store, and route the output without fragile text extraction.</p></div>
+        <div class="card"><h4>🧱 Fewer parsing failures</h4><p>No more regex against "roughly JSON-ish" text. Constrained decoding removes the whole class of "the model added a friendly sentence before the braces" bugs.</p></div>
+        <div class="card"><h4>🧩 Reliable tool &amp; API calls</h4><p>Function and tool calling is structured output under the hood - arguments must match the tool's parameter schema exactly or the call fails.</p></div>
+        <div class="card"><h4>🤝 Contracts between components</h4><p>A schema is a typed interface. Producers and consumers agree on it, so teams can evolve each side independently and catch drift early.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Structured outputs explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It's a <strong>multiple-choice answer sheet</strong> instead of an essay. You cannot scribble in the margins; you fill the exact boxes, so the grading machine can read your answers instantly.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It's <strong>a typed return value</strong> instead of a raw string. The function signature promises a shape, and the type checker refuses anything that does not match before it reaches your logic.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>standardized intake form</strong>. Every applicant supplies name, date, and amount in the same slots, so processing is uniform and nothing gets misfiled.</p></div>
+        <div class="card"><h4><span class="ico">📝</span> Everyday version</h4><p>Like <strong>filling in a strict paper form with labeled boxes</strong>: one letter per square, date in DD/MM/YYYY. The boxes force the shape, so whoever reads it later never has to guess.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Structured output has two moving parts: <strong>constraint</strong> during generation, which shapes what the model can emit, and <strong>validation</strong> after generation, which verifies and coerces the result into a typed object your code can trust.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Constrained decoding</h4>
+          <p>At each step the decoder computes which tokens would keep the output valid against the schema, masks the rest to zero probability, and samples only from what remains. Invalid JSON becomes impossible to produce.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">✅</span> Validate then coerce</h4>
+          <p>The raw text is parsed and checked against a typed model. Missing fields, wrong types, or extra keys are rejected, and a failed check can trigger an automatic reask instead of a crash.</p>
+        </div>
+      </div>
+
+      <h3>The pipeline at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Pipeline - schema drives constrained decoding, then validation into a typed object</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Define["📐 Define"]
+        SC["🧾 JSON Schema / typed model"]
+    end
+    subgraph Generate["🔒 Constrained generation"]
+        PR["🧩 Prompt + schema"] --> CD["⛓️ Constrained decode"]
+        CD --> RAW["📄 Raw JSON tokens"]
+    end
+    subgraph Consume["✅ Validate & use"]
+        VAL["🔍 Validate"] --> OBJ["📦 Typed object"]
+        OBJ --> SVC["🚀 Downstream service"]
+    end
+    SC --> PR
+    RAW --> VAL
+        </pre>
+      </div>
+
+      <h3>A realistic structured call in Python</h3>
+      <pre><code>from pydantic import BaseModel, Field
+from openai import OpenAI
+
+class Invoice(BaseModel):
+    vendor: str
+    invoice_number: str
+    total_amount: float = Field(ge=0)
+    currency: str = Field(pattern=r"^[A-Z]{3}$")
+    due_date: str  # ISO 8601
+
+client = OpenAI()
+
+# The SDK sends Invoice's JSON Schema and constrains decoding to it.
+resp = client.chat.completions.parse(
+    model="gpt-model",
+    messages=[
+        {"role": "system", "content": "Extract invoice fields from the text."},
+        {"role": "user", "content": document_text},
+    ],
+    response_format=Invoice,   # schema-constrained output
+)
+
+invoice: Invoice = resp.choices[0].message.parsed
+save_to_ledger(invoice)        # already a validated, typed object</code></pre>
+      <p class="muted">The <code>response_format</code> is the whole trick: the schema derived from <code>Invoice</code> both <em>steers</em> generation and <em>validates</em> the result, so <code>parsed</code> is a real typed object, not a string you still have to trust.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: token-by-token constrained decoding, the validate-then-reask loop, and the end-to-end path from schema to a typed object handed downstream.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Constrained decoding: enforcing the schema token by token</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant Dec as ⛓️ Decoder
+    participant SM as 📐 Schema mask
+    participant LM as 🧠 Language model
+
+    App->>Dec: generate(prompt, schema)
+    Dec->>SM: compile schema to token constraints
+    SM-->>Dec: valid next-token set
+    loop for each token
+        Dec->>LM: next-token logits
+        LM-->>Dec: raw probabilities
+        Dec->>SM: which tokens keep JSON valid
+        SM-->>Dec: allowed token mask
+        Dec->>Dec: mask illegal tokens then sample
+    end
+    Dec-->>App: guaranteed schema-valid JSON
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Validate then reask when the output fails the schema</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant LLM as 🧠 LLM
+    participant Val as 🔍 Validator
+
+    App->>LLM: prompt + schema
+    LLM-->>App: candidate JSON
+    App->>Val: validate(candidate, schema)
+    alt valid
+        Val-->>App: typed object
+        App-->>App: proceed
+    else invalid
+        Val-->>App: errors (wrong type, missing field)
+        loop until valid or max retries
+            App->>LLM: reask with errors + prior output
+            LLM-->>App: corrected JSON
+            App->>Val: validate again
+        end
+        Note over App,Val: give up gracefully after max retries
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Schema to prompt to generate to a typed object for a downstream service</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 👩‍💻 Schema author
+    participant App as 🖥️ App
+    participant LLM as 🧠 LLM
+    participant Svc as 🚀 Downstream service
+
+    Dev->>App: define typed model (Pydantic / zod)
+    App->>App: derive JSON Schema from model
+    App->>LLM: prompt + schema (constrained)
+    LLM-->>App: schema-valid JSON
+    App->>App: parse into typed object
+    App->>Svc: call API with typed payload
+    Svc-->>App: 200 OK, record created
+    App-->>Dev: structured result logged
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an unstructured request to a validated, typed object flowing into your systems - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Define the target shape</h4><p>Write the desired output as a typed model or JSON Schema: fields, types, enums, required keys, and constraints like ranges and patterns.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Derive</span><h4>Generate the schema</h4><p>Turn the typed model (Pydantic, zod) into a JSON Schema the provider understands. This is the contract both sides agree on.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Prompt</span><h4>Assemble the request</h4><p>Combine your instructions with the schema. Describe each field's meaning so the model fills the right value, not just the right type.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Constrain</span><h4>Attach the output format</h4><p>Pass the schema as the response format so the provider switches on schema-constrained decoding rather than free-form text.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Compile</span><h4>Build the token mask</h4><p>The decoder compiles the schema into a state machine that knows, at every position, which tokens keep the JSON valid.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Decode</span><h4>Generate under constraint</h4><p>At each step the model's logits are masked to the allowed set, so it can only emit tokens that continue a valid document.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Stream</span><h4>Emit partial structure</h4><p>Optionally stream tokens as they arrive, parsing the growing JSON so the UI can render fields the moment they complete.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Parse</span><h4>Turn text into an object</h4><p>Once complete, parse the JSON and load it into the typed model, coercing values where the schema allows it.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Validate</span><h4>Check business rules</h4><p>Run semantic validation the schema can't express - cross-field logic, referential checks, sane ranges - beyond mere type correctness.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Reask</span><h4>Retry on failure</h4><p>If validation fails, send the errors and prior output back for correction, looping up to a retry cap before falling back gracefully.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>Hand off the typed object</h4><p>Pass the validated object to the API, database, or UI. Logs of failures and reasks feed evals to tighten the schema over time.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Valid JSON is not the same as correct data. These are the failure modes that bite in production.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>✂️ Truncation</h4><p>Hitting the token limit mid-object yields JSON that starts valid and ends abruptly. Set a generous max, detect unterminated output, and reask rather than ship half a record.</p></div>
+        <div class="card"><h4>🔢 Wrong types</h4><p>Without constraint the model returns <code>"42"</code> for a number or <code>"true"</code> for a boolean. Typed validation with coercion catches and fixes these before they poison downstream math.</p></div>
+        <div class="card"><h4>👻 Hallucinated fields</h4><p>The model invents keys you never defined or fills required fields with confident guesses. Forbid extra properties and treat "unknown" as a first-class allowed value.</p></div>
+        <div class="card"><h4>📦 Over-nested schemas</h4><p>Deeply nested, sprawling schemas raise error rates and latency. Flatten where you can and split huge extractions into smaller, focused calls.</p></div>
+        <div class="card"><h4>🎭 Valid but wrong</h4><p>A schema guarantees shape, not truth. A perfectly typed invoice can still carry the wrong total. Pair structural checks with semantic evals and spot audits.</p></div>
+        <div class="card"><h4>🔁 Infinite reask loops</h4><p>Retrying forever on an impossible constraint burns tokens and stalls requests. Always cap retries and define a clean fallback for genuine failures.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">How to Measure</div>
+      <h2>How to measure structured outputs</h2>
+      <p class="muted">Track structural validity and semantic correctness separately, so you know whether to fix the schema or the prompt.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>What it tells you</th><th>Good sign</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Schema validity rate</strong></td><td>Fraction of outputs that parse and match the schema first try</td><td>High: constraints are working</td></tr>
+            <tr><td><strong>Field-level accuracy</strong></td><td>Are extracted values actually correct against ground truth?</td><td>High: right data, not just right shape</td></tr>
+            <tr><td><strong>Reask rate</strong></td><td>How often a retry is needed to reach a valid output</td><td>Low: fewer wasted round-trips</td></tr>
+            <tr><td><strong>Truncation rate</strong></td><td>Share of responses cut off before completion</td><td>Low: token budget is sufficient</td></tr>
+            <tr><td><strong>Hallucinated-field rate</strong></td><td>How often invented or wrongly-filled fields appear</td><td>Low: model stays inside the contract</td></tr>
+            <tr><td><strong>Latency &amp; cost / call</strong></td><td>Extra time and tokens from constraints and reasks</td><td>Within your SLA and budget</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if validity is high but field accuracy is low, fix the prompt and field descriptions; if validity itself is low, tighten the schema or turn on stronger constrained decoding first. Measure both before blaming the model.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing structured outputs in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📄</span><div><h3>1 · Extracting fields from documents</h3><div class="role">Pattern: unstructured text to typed records</div></div></div>
+        <p class="muted">A finance team needs vendor, amount, currency, and due date pulled from thousands of PDF invoices into their ledger.</p>
+        <ul>
+          <li>A Pydantic model defines every field with types, patterns, and ranges as the extraction contract.</li>
+          <li>Schema-constrained decoding guarantees each response parses cleanly into that model.</li>
+          <li>Cross-field validation (totals equal line-item sums) triggers a reask when the numbers don't add up.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Invoices flow straight into the ledger as validated objects, with only genuine ambiguities routed to a human instead of every document.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔧</span><div><h3>2 · Generating tool and API call arguments</h3><div class="role">Pattern: structured output as function calling</div></div></div>
+        <p class="muted">An assistant must translate natural-language requests into precise calls against internal APIs - search, booking, refunds.</p>
+        <ul>
+          <li>Each tool's parameter schema constrains the arguments the model is allowed to emit.</li>
+          <li>Enums and required fields ensure the model picks real operations with complete inputs.</li>
+          <li>Invalid argument sets are rejected and reasked before any API is ever touched.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The assistant calls real endpoints with well-formed arguments, so malformed requests never reach production systems and error handling stays simple.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗂️</span><div><h3>3 · Form and data-entry automation</h3><div class="role">Pattern: conversation to completed form</div></div></div>
+        <p class="muted">An onboarding flow collects applicant details from free-form chat and must populate a strict backend form.</p>
+        <ul>
+          <li>A zod schema mirrors the form's exact fields, formats, and required boxes.</li>
+          <li>Partial structured output streams into the UI, filling boxes live as the model resolves them.</li>
+          <li>Missing or malformed entries prompt targeted follow-up questions rather than a silent failure.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Conversations become clean, validated form submissions, cutting manual re-keying while keeping the backend's strict contract intact.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Future</div>
+      <h2>Where structured outputs are heading</h2>
+      <p class="muted">Structured outputs are moving from a bolt-on parsing trick into a first-class, guaranteed capability of the model runtime.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⛓️ Native constrained decoding</h4><p>Grammar and schema enforcement built into the serving stack, so valid output is the default rather than an SDK wrapper around retries.</p></div>
+        <div class="card"><h4>🌊 Streaming typed objects</h4><p>Standardized partial parsing that yields typed, incrementally-complete objects, so UIs render fields the instant they resolve.</p></div>
+        <div class="card"><h4>🧩 Richer schema support</h4><p>Fuller JSON Schema coverage - recursion, unions, conditionals, formats - closing the gap between what you can express and what decoding can enforce.</p></div>
+        <div class="card"><h4>🔗 Structured plus tools plus RAG</h4><p>Typed outputs as the connective tissue of agents: retrieval fills fields, tools consume them, and each hop stays machine-checkable.</p></div>
+        <div class="card"><h4>🧪 Semantic validation layers</h4><p>Model-graded and rule-based checks that verify meaning, not just shape, catching the "valid but wrong" outputs schemas miss.</p></div>
+        <div class="card"><h4>⚡ Lower-overhead enforcement</h4><p>Faster constraint compilation and token masking, shrinking the latency cost so structured output is free to turn on everywhere.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> structured outputs are how you make a probabilistic model behave like a dependable software component - typed, validated, and safe to wire into real systems. As enforcement moves into the runtime, "just give me valid data" stops being a hope and becomes a guarantee.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Structured outputs sit in a web of related skills. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../tool-calling/"><span class="ico">🔧</span><h4>Tool &amp; function calling</h4><p>Structured arguments that drive real API calls.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails</h4><p>Validating and constraining model behavior safely.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>Describing fields so the right values get filled.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals &amp; LLM-as-judge</h4><p>Measuring validity and field-level accuracy.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to structured outputs · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

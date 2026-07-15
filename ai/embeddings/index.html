@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embeddings &amp; Vector Databases Explained - What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to embeddings and vector databases: what a vector is, similarity metrics, ANN indexes (HNSW, IVF, PQ), hybrid search, sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Embeddings &amp; Vector Databases</span>
+      <h1>Embeddings and vector databases - the complete picture</h1>
+      <p class="lede">An embedding turns text, images, or code into a <strong>vector</strong> that captures meaning, so semantically similar things land close together in space. A vector database <strong>indexes</strong> those vectors and finds nearest neighbors in milliseconds, even across billions of items. Together they are the engine behind semantic search, recommendations, deduplication, and RAG.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Embedding models</span>
+        <span class="pill">Similarity metrics</span>
+        <span class="pill">ANN indexes</span>
+        <span class="pill">Hybrid search</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What are embeddings?</h2>
+      <p class="muted">An <strong>embedding</strong> is a list of numbers - a vector - that represents the meaning of a piece of content. An embedding model maps inputs into a shared high-dimensional space where distance encodes similarity: two paraphrases sit near each other, unrelated sentences sit far apart. A <strong>vector database</strong> stores these vectors and answers the question "which items are closest to this one?" quickly, using an approximate nearest neighbor index.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔢</span> Embed</h4>
+          <p>A model turns each item into a fixed-length vector, for example 768 or 1536 floats, that captures its meaning.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗄️</span> Index</h4>
+          <p>Vectors are stored in a vector database with an ANN index and metadata, ready for fast similarity search.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔎</span> Search</h4>
+          <p>A query is embedded the same way; the database returns the nearest neighbors ranked by a similarity metric.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common choices</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Embedding model</strong></td><td>Maps content to a vector capturing meaning</td><td><code>text-embedding-3</code>, <code>bge</code>, <code>e5</code>, CLIP</td></tr>
+            <tr><td><strong>Dimensionality</strong></td><td>Length of the vector; sets capacity and cost</td><td>384, 768, 1024, 1536, 3072</td></tr>
+            <tr><td><strong>Similarity metric</strong></td><td>Scores how close two vectors are</td><td>Cosine, dot product, Euclidean (L2)</td></tr>
+            <tr><td><strong>ANN index</strong></td><td>Finds near neighbors without scanning all</td><td>HNSW, IVF, IVF-PQ, ScaNN</td></tr>
+            <tr><td><strong>Vector store</strong></td><td>Persists vectors, metadata, and the index</td><td>pgvector, Pinecone, Weaviate, Qdrant, FAISS</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the embedding model decides <em>what "similar" means</em>; the vector database decides <em>how fast you can find similar things</em>. Get the model wrong and no index can save you; get the model right and the index is a pure speed-versus-cost trade-off.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why embeddings matter</h2>
+      <p class="muted">Keyword search matches characters; embeddings match meaning. That single shift unlocks semantic search, recommendations, clustering, and the retrieval half of every RAG system, without hand-tuned rules.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 Meaning, not keywords</h4><p>"How do I reset my password" finds "steps to recover your login" even with zero shared words, because the vectors are close in meaning.</p></div>
+        <div class="card"><h4>🌐 One space for everything</h4><p>Text, code, images, and audio can share an embedding space, so you can search across modalities and languages with the same query.</p></div>
+        <div class="card"><h4>⚡ Fast at scale</h4><p>ANN indexes answer nearest-neighbor queries over millions or billions of vectors in single-digit milliseconds, far faster than brute force.</p></div>
+        <div class="card"><h4>🧩 A reusable primitive</h4><p>Embed once and reuse the vectors for search, deduplication, clustering, recommendation, and RAG - the same representation powers many features.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Embeddings explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>An embedding is like <strong>giving every idea a set of coordinates</strong>. Ideas about the same topic end up sitting close together on the map, so "find related notes" becomes "find the nearest dots."</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Think of it as a <strong>hash that preserves similarity</strong>. Unlike a normal hash, near-identical inputs produce near-identical vectors, so you can index them and query by distance instead of exact match.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>It is a <strong>smart filing system</strong> where documents are shelved by topic rather than by title. You hand it a question and it walks straight to the right shelf, no exact wording required.</p></div>
+        <div class="card"><h4><span class="ico">🗺️</span> Everyday version</h4><p>A <strong>library floor map</strong> where similar books sit near each other. Once you find one good book, everything relevant is within arm's reach on the same aisle.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">There are two phases: an <strong>offline indexing</strong> phase that embeds and upserts your data, and an <strong>online search</strong> phase that embeds a query and finds its nearest neighbors through an approximate index.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📦</span> Indexing phase</h4>
+          <p>Load content, embed each item into a vector, and upsert the vector plus metadata into the store. The database builds an ANN structure such as HNSW or IVF so queries avoid scanning everything.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚡</span> Search phase</h4>
+          <p>Embed the query with the same model, pick a metric such as cosine, and traverse the index for the top-k nearest vectors, optionally filtered by metadata like tenant, language, or date.</p>
+        </div>
+      </div>
+
+      <h3>The architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture - indexing builds the ANN structure; queries search it</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Index["📦 Offline indexing"]
+        D["📄 Items"] --> EM1["🔢 Embed"]
+        EM1 --> UP["⬆️ Upsert"]
+        UP --> VDB[("🗄️ Vector DB")]
+        VDB --> ANN["🕸️ ANN index (HNSW / IVF-PQ)"]
+    end
+    subgraph Search["⚡ Online search"]
+        Q["❓ Query"] --> EM2["🔢 Embed query"]
+        EM2 --> MF["🏷️ Metadata filter"]
+        MF --> NN["🔎 ANN nearest neighbors"]
+        ANN --> NN
+        NN --> RES["✅ Top-k results + scores"]
+    end
+        </pre>
+      </div>
+
+      <h3>A minimal index-and-query in Python</h3>
+      <pre><code>from openai import OpenAI
+client = OpenAI()
+
+def embed(texts):
+    r = client.embeddings.create(model="text-embedding-3-small", input=texts)
+    return [d.embedding for d in r.data]
+
+# 1. Embed documents and upsert into the vector store
+docs = ["reset your password", "cancel a subscription", "export invoices"]
+vectors = embed(docs)
+index.upsert([
+    {"id": f"doc-{i}", "values": v, "metadata": {"text": docs[i]}}
+    for i, v in enumerate(vectors)
+])
+
+# 2. Embed the query and search for nearest neighbors
+q_vec = embed(["how do I change my login credentials"])[0]
+hits = index.query(vector=q_vec, top_k=5, metric="cosine",
+                   filter={"lang": "en"})
+for h in hits.matches:
+    print(round(h.score, 3), h.metadata["text"])</code></pre>
+      <p class="muted">The same model must embed both documents and queries so their vectors share one space. The metric (cosine here) defines closeness, and the metadata filter narrows the candidate set before the nearest-neighbor search runs.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: building the index, a query-time similarity search, and a hybrid search that fuses dense and keyword results with reranking.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Build the index: embed docs then upsert (offline)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Src as 📄 Source items
+    participant Pipe as ⚙️ Index pipeline
+    participant Emb as 🔢 Embedding model
+    participant VDB as 🗄️ Vector DB
+
+    Src->>Pipe: Load items (docs, rows, images)
+    loop for each item
+        Pipe->>Emb: embed(item)
+        Emb-->>Pipe: vector plus metadata
+    end
+    Pipe->>VDB: upsert(vectors + metadata)
+    VDB->>VDB: Build ANN index (HNSW or IVF-PQ)
+    VDB-->>Pipe: index ready
+    Note over Pipe,VDB: Re-embed only items that changed
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Query time: embed query, ANN search, return neighbors</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 Client
+    participant App as 🖥️ Search app
+    participant Emb as 🔢 Embedding model
+    participant VDB as 🗄️ Vector DB
+
+    U->>App: Send query text
+    App->>Emb: embed(query)
+    Emb-->>App: query vector
+    App->>VDB: search(vector, top_k, filter)
+    VDB->>VDB: Traverse ANN index by cosine
+    VDB-->>App: top-k neighbors + scores
+    App-->>U: Ranked results
+    Note over App,VDB: Higher ef or nprobe means better recall, more latency
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Hybrid search: fuse dense and keyword, then rerank</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 Client
+    participant App as 🖥️ Search app
+    participant VDB as 🗄️ Vector DB
+    participant KW as 🔤 Keyword index
+    participant RR as 📊 Reranker
+
+    U->>App: Query
+    par dense path
+        App->>VDB: ANN search (semantic)
+        VDB-->>App: dense candidates
+    and keyword path
+        App->>KW: BM25 search (lexical)
+        KW-->>App: keyword candidates
+    end
+    App->>App: Fuse lists (RRF)
+    alt reranker enabled
+        App->>RR: rerank(query, fused set)
+        RR-->>App: reordered by relevance
+    else score only
+        App->>App: keep fused order
+    end
+    App-->>U: Final ranked results
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From raw content to fast, filtered semantic search - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Collect</span><h4>Gather &amp; normalize content</h4><p>Pull together the items you want searchable - documents, catalog rows, images - and clean them into consistent, embeddable units.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Model</span><h4>Choose an embedding model</h4><p>Pick a model that fits your domain, languages, and modality, and note its dimensionality and cost. Every item and query will use this same model.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Embed</span><h4>Turn items into vectors</h4><p>Run each item through the model to get a fixed-length vector that captures its meaning in high-dimensional space.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Metric</span><h4>Pick a similarity metric</h4><p>Choose cosine, dot product, or Euclidean. Normalize vectors so cosine and dot product agree, and match the metric your model was trained for.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Upsert</span><h4>Store vectors + metadata</h4><p>Write each vector with its metadata (source, tenant, language, timestamp) into the vector database, keyed by a stable id for later updates.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Index</span><h4>Build the ANN structure</h4><p>The database builds an approximate index - HNSW graph, IVF lists, or product quantization - so searches skip most of the data.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Query</span><h4>Embed the incoming query</h4><p>A request arrives; embed the query with the same model so its vector lives in the same space as the indexed items.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Filter</span><h4>Apply metadata constraints</h4><p>Restrict the search by attributes like user, language, or date so results respect permissions and relevance before neighbors are scored.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Search</span><h4>Find the nearest neighbors</h4><p>Traverse the ANN index for the top-k closest vectors. Tune ef or nprobe to trade a little latency for higher recall.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Fuse</span><h4>Blend dense &amp; keyword, rerank</h4><p>Combine semantic and keyword hits with reciprocal rank fusion, then optionally rerank with a cross-encoder for precision.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Serve</span><h4>Return results &amp; keep fresh</h4><p>Deliver ranked, scored results to the app. Re-embed changed items, watch recall and latency, and scale shards as the corpus grows.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most vector-search problems trace back to the embedding step or index configuration, not the database itself.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔀 Model mismatch</h4><p>Embedding documents with one model and queries with another, or upgrading the model without re-embedding everything, puts vectors in incompatible spaces and search quality collapses.</p></div>
+        <div class="card"><h4>📐 Wrong metric</h4><p>Using dot product on unnormalized vectors lets magnitude dominate meaning, and mixing metrics between index and query gives silently wrong rankings. Match the metric the model expects.</p></div>
+        <div class="card"><h4>🎚️ Over-tuned ANN</h4><p>Cranking recall parameters like ef or nprobe too low saves latency but drops relevant neighbors; too high wastes compute. Measure recall against exact search before shipping.</p></div>
+        <div class="card"><h4>🏷️ Ignoring metadata filters</h4><p>Searching without tenant or permission filters leaks data across users and floods results with irrelevant items. Filter first, then rank by similarity.</p></div>
+        <div class="card"><h4>🕰️ Stale index</h4><p>Forgetting to re-embed and upsert changed items serves outdated vectors, so results drift from the real content. Treat the index as a living, versioned asset.</p></div>
+        <div class="card"><h4>💸 Dimensionality &amp; cost blindness</h4><p>Defaulting to the largest vector size multiplies storage, memory, and query cost with little quality gain. Right-size dimensions and use quantization when the corpus is large.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">How to Measure</div>
+      <h2>How to measure vector search</h2>
+      <p class="muted">Judge retrieval quality and system efficiency separately, so you know whether to fix the model, the index, or the hardware.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>What it tells you</th><th>Good sign</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Recall@k vs exact</strong></td><td>How many true nearest neighbors the ANN index returns</td><td>High: approximation loses little</td></tr>
+            <tr><td><strong>Precision / MRR / nDCG</strong></td><td>Whether the top results are actually relevant and well ordered</td><td>High: users see the right items first</td></tr>
+            <tr><td><strong>Query latency (p95)</strong></td><td>Tail response time under real load</td><td>Low and stable within your SLA</td></tr>
+            <tr><td><strong>Queries per second</strong></td><td>Throughput a shard or node sustains</td><td>Meets peak traffic with headroom</td></tr>
+            <tr><td><strong>Memory &amp; storage / vector</strong></td><td>Footprint driven by dimensionality and quantization</td><td>Fits budget after PQ compression</td></tr>
+            <tr><td><strong>Index build / upsert time</strong></td><td>Cost to add or refresh items in the index</td><td>Fast enough for your update rate</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if recall against exact search is high but users still complain, the embedding model is the problem, not the index; if recall is low, raise ef or nprobe or rebuild the index before touching the model.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing embeddings and vector search in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛍️</span><div><h3>1 · Semantic search over a product catalog</h3><div class="role">Pattern: meaning-based retrieval with metadata filters</div></div></div>
+        <p class="muted">An e-commerce team wants shoppers to find products by intent, not exact keywords, across a large multilingual catalog.</p>
+        <ul>
+          <li>Product titles and descriptions are embedded and upserted into a vector store with an HNSW index.</li>
+          <li>Metadata filters on category, price, and availability narrow the search before nearest-neighbor ranking.</li>
+          <li>Hybrid search adds keyword matching so exact brand and model names still rank correctly.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> "waterproof jacket for hiking" surfaces the right gear even without shared words, lifting relevance and conversion over pure keyword search.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧬</span><div><h3>2 · Near-duplicate detection &amp; clustering</h3><div class="role">Pattern: similarity thresholds over embeddings</div></div></div>
+        <p class="muted">A content platform needs to catch reposted articles, spam variants, and near-identical support tickets at scale.</p>
+        <ul>
+          <li>Every item is embedded once; new items are queried against the index for their nearest neighbors.</li>
+          <li>A cosine-similarity threshold flags near-duplicates, while clustering groups variants of the same content.</li>
+          <li>Product quantization keeps memory low so billions of vectors stay searchable on modest hardware.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> duplicates and spam are caught in near real time, and tickets are auto-grouped, cutting manual triage without brittle rules.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📚</span><div><h3>3 · Embeddings as the backbone of RAG</h3><div class="role">Pattern: retrieval layer for grounded generation</div></div></div>
+        <p class="muted">A knowledge team builds an assistant that answers from internal docs, and embeddings power the retrieval step.</p>
+        <ul>
+          <li>Document chunks are embedded and indexed; each query is embedded and matched by ANN search.</li>
+          <li>Access-control metadata filters retrieval so users only see chunks they are permitted to read.</li>
+          <li>Changed docs are re-embedded on write, keeping the index and therefore the answers current.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> the LLM answers from real, current, permissioned context, because the embedding-powered retriever consistently surfaces the right chunks.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Future</div>
+      <h2>Where embeddings are heading</h2>
+      <p class="muted">Embedding models and vector infrastructure are maturing fast, pushing search to be cheaper, richer, and more adaptive.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📏 Adaptive dimensions</h4><p>Matryoshka-style embeddings let one model emit vectors you can truncate, trading precision for cost without re-embedding your corpus.</p></div>
+        <div class="card"><h4>🖼️ Multimodal by default</h4><p>Shared text, image, audio, and video spaces make cross-modal search - query with text, retrieve an image - a first-class feature.</p></div>
+        <div class="card"><h4>🗜️ Smarter quantization</h4><p>Binary and product quantization shrink vectors by orders of magnitude while keeping recall high, making billion-scale search affordable.</p></div>
+        <div class="card"><h4>🔗 Hybrid as standard</h4><p>Dense plus lexical retrieval with rank fusion becomes the default, giving both semantic recall and exact-term precision out of the box.</p></div>
+        <div class="card"><h4>🧮 Vectors in the database</h4><p>Native vector types in general-purpose databases like Postgres blur the line between search infrastructure and your primary store.</p></div>
+        <div class="card"><h4>🎯 Late-interaction retrieval</h4><p>Token-level models such as ColBERT rerank with fine-grained matching, closing the gap between fast ANN recall and precise relevance.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> embeddings turn meaning into geometry and vector databases make that geometry searchable at scale. As models get cheaper and indexes get smarter, similarity search becomes a default building block in nearly every AI product.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Embeddings sit at the center of a web of related skills. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../rag/"><span class="ico">📚</span><h4>Retrieval-Augmented Generation</h4><p>Where embeddings power the retrieval step.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../fine-tuning/"><span class="ico">🎛️</span><h4>Fine-tuning</h4><p>The alternative to keeping knowledge outside the model.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>Turning retrieved neighbors into grounded prompts.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../edge-inference/"><span class="ico">📶</span><h4>Edge inference</h4><p>Running embedding and search close to the user.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to embeddings &amp; vector databases · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>
