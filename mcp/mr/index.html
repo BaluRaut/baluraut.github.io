@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="mr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MCP Explained - What, How, Why & the Future</title>
-  <meta name="description" content="A deep, visual guide to the Model Context Protocol (MCP): what it is, how it works, why it matters, sequence diagrams, a 0–100 flow, case studies, and the future." />
+  <title>MCP समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="Model Context Protocol (MCP) चे सखोल, दृश्यात्मक मार्गदर्शक: ते काय आहे, कसे चालते, का महत्त्वाचे आहे, sequence diagrams, एक 0 ते 100 प्रवाह, केस स्टडीज आणि भविष्य." />
   <style>
     :root {
       --bg: #ffffff;
@@ -274,13 +274,13 @@
     <div class="wrap">
       <div class="brand">MCP<span>·</span>Guide</div>
       <div class="links">
-        <a href="#what">What</a>
-        <a href="#why">Why</a>
-        <a href="#how">How</a>
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#how">कसे</a>
         <a href="#diagrams">Diagrams</a>
-        <a href="#flow">0–100 Flow</a>
-        <a href="#cases">Case Studies</a>
-        <a href="#future">Future</a>
+        <a href="#flow">0 ते 100 प्रवाह</a>
+        <a href="#cases">केस स्टडीज</a>
+        <a href="#future">भविष्य</a>
       </div>
       <div class="lang-switch">
         <button class="lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">🌐 <span id="langLabel">English</span> ▾</button>
@@ -295,17 +295,17 @@
   <header class="hero">
     <div class="wrap">
       <span class="kicker">Model Context Protocol</span>
-      <h1>How MCP actually works - the complete picture</h1>
-      <p class="lede">MCP is the "USB-C for AI apps": one open protocol that lets any AI assistant plug into any tool, database, or API without custom glue code. Here's the what, how, why, and where it's going - with sequence diagrams, a full 0→100 runtime flow, and real case studies.</p>
+      <h1>MCP प्रत्यक्षात कसे चालते - संपूर्ण चित्र</h1>
+      <p class="lede">MCP म्हणजे "AI अ‍ॅप्ससाठीचे USB-C": एकच खुले protocol जे कोणत्याही AI सहाय्यकाला कोणत्याही tool, database किंवा API शी, कस्टम जोडणी कोडशिवाय, जोडू देते. हे काय आहे, कसे चालते, का आणि कोणत्या दिशेने जात आहे, हे इथे आहे - sequence diagrams, संपूर्ण 0 ते 100 runtime प्रवाह आणि खऱ्या केस स्टडीजसह.</p>
       <div class="cta">
-        <a class="btn primary" href="#flow">See the full flow ↓</a>
-        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">Diagrams कडे जा</a>
       </div>
       <div class="pill-row">
         <span class="pill">JSON-RPC 2.0</span>
         <span class="pill">stdio · HTTP/SSE</span>
         <span class="pill">Tools · Resources · Prompts</span>
-        <span class="pill">Open standard</span>
+        <span class="pill">खुला मानक</span>
       </div>
     </div>
   </header>
@@ -313,53 +313,53 @@
   <!-- WHAT -->
   <section id="what">
     <div class="wrap">
-      <div class="eyebrow">01 - What</div>
-      <h2>What is MCP?</h2>
-      <p class="muted">The <strong>Model Context Protocol</strong> is an open standard (introduced by Anthropic in late 2024) that defines a universal way for AI applications to connect to external systems. Before MCP, every integration between an AI app and a tool was bespoke: <em>M</em> apps × <em>N</em> tools = M×N custom connectors. MCP turns that into M+N - build a server once, and every MCP-compatible client can use it.</p>
+      <div class="eyebrow">01 - काय</div>
+      <h2>MCP म्हणजे काय?</h2>
+      <p class="muted"><strong>Model Context Protocol</strong> हा एक खुला मानक आहे (Anthropic ने 2024 च्या उत्तरार्धात सादर केला) जो AI अ‍ॅप्लिकेशन्सना बाह्य प्रणालींशी जोडण्याचा एक सर्वव्यापी मार्ग निश्चित करतो. MCP आधी, एका AI अ‍ॅप आणि एका tool मधील प्रत्येक एकत्रीकरण खास बनवावे लागत असे: <em>M</em> अ‍ॅप्स × <em>N</em> tools = M×N कस्टम connectors. MCP ते M+N मध्ये बदलते - एकदा server बनवा, आणि प्रत्येक MCP-सुसंगत client तो वापरू शकतो.</p>
 
       <div class="grid cols-3">
         <div class="card">
           <h4><span class="ico">🖥️</span> Host</h4>
-          <p>The user-facing AI app - Claude Code, Claude Desktop, an IDE, or your own agent built on the SDK. It runs the model and orchestrates everything.</p>
+          <p>वापरकर्त्यासमोर असणारे AI अ‍ॅप - Claude Code, Claude Desktop, एखादे IDE, किंवा SDK वर बनवलेला तुमचा स्वतःचा agent. तो model चालवतो आणि सर्व काही व्यवस्थापित करतो.</p>
         </div>
         <div class="card">
           <h4><span class="ico">🔌</span> Client</h4>
-          <p>A connector living inside the host. One client per server, maintaining a 1:1 stateful session and speaking MCP on the model's behalf.</p>
+          <p>host च्या आत राहणारा एक connector. प्रत्येक server साठी एक client, जो 1:1 stateful session राखतो आणि model च्या वतीने MCP बोलतो.</p>
         </div>
         <div class="card">
           <h4><span class="ico">⚙️</span> Server</h4>
-          <p>A separate program exposing capabilities - a filesystem, a database, GitHub, Slack, a private API. It does the real work when asked.</p>
+          <p>क्षमता उघड करणारा एक स्वतंत्र प्रोग्राम - एक filesystem, एक database, GitHub, Slack, एक खाजगी API. विचारल्यावर तो खरे काम करतो.</p>
         </div>
       </div>
 
-      <h3>The three things a server exposes</h3>
+      <h3>एक server तीन गोष्टी उघड करतो</h3>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Primitive</th><th>What it is</th><th>Controlled by</th><th>Example</th></tr>
+            <tr><th>Primitive</th><th>ते काय आहे</th><th>कोण नियंत्रित करते</th><th>उदाहरण</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Tools</strong></td><td>Callable functions with typed inputs/outputs</td><td>The <strong>model</strong> decides when to call</td><td><code>create_issue()</code>, <code>run_query()</code></td></tr>
-            <tr><td><strong>Resources</strong></td><td>Readable data / context, addressed by URI</td><td>The <strong>app / user</strong> attaches</td><td><code>file:///report.pdf</code>, <code>db://users/42</code></td></tr>
-            <tr><td><strong>Prompts</strong></td><td>Reusable, parameterized prompt templates</td><td>The <strong>user</strong> invokes (slash commands)</td><td><code>/summarize-pr</code>, <code>/plan-sprint</code></td></tr>
+            <tr><td><strong>Tools</strong></td><td>typed इनपुट/आउटपुटसह कॉल करता येणारी functions</td><td><strong>model</strong> केव्हा कॉल करायचे ते ठरवतो</td><td><code>create_issue()</code>, <code>run_query()</code></td></tr>
+            <tr><td><strong>Resources</strong></td><td>URI ने संबोधित केलेला, वाचता येणारा data / context</td><td><strong>अ‍ॅप / वापरकर्ता</strong> जोडतो</td><td><code>file:///report.pdf</code>, <code>db://users/42</code></td></tr>
+            <tr><td><strong>Prompts</strong></td><td>पुन्हा वापरता येणारे, parameterized prompt templates</td><td><strong>वापरकर्ता</strong> चालवतो (slash commands)</td><td><code>/summarize-pr</code>, <code>/plan-sprint</code></td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> the LLM never touches your database or API directly. It emits a structured request; the host mediates and approves; the server executes. MCP is the standardized contract in the middle.</div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> LLM तुमच्या database किंवा API ला थेट कधीच स्पर्श करत नाही. तो एक संरचित विनंती तयार करतो; host मध्यस्थी करतो आणि मंजुरी देतो; server अंमलबजावणी करतो. MCP हा मध्यभागी असलेला प्रमाणित करार आहे.</div>
     </div>
   </section>
 
   <!-- WHY -->
   <section id="why">
     <div class="wrap">
-      <div class="eyebrow">02 - Why</div>
-      <h2>Why MCP exists</h2>
-      <p class="muted">LLMs are powerful but isolated - trapped behind their training cutoff with no access to your live data or the ability to act. Every team solving this independently produced brittle, one-off integrations. MCP standardizes the connection layer.</p>
+      <div class="eyebrow">02 - का</div>
+      <h2>MCP का अस्तित्वात आहे</h2>
+      <p class="muted">LLMs शक्तिशाली आहेत पण वेगळे पडलेले असतात - त्यांच्या training cutoff मागे अडकलेले, तुमच्या live data पर्यंत पोहोच नसलेले आणि कृती करण्याची क्षमता नसलेले. प्रत्येक टीमने हे स्वतंत्रपणे सोडवल्याने ठिसूळ, एकावेळचे एकत्रीकरण तयार झाले. MCP जोडणी स्तर प्रमाणित करते.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🧩 Solves the M×N problem</h4><p>Write a server once; every MCP host (Claude, Cursor, Windsurf, custom agents) can use it. No re-integration per app.</p></div>
-        <div class="card"><h4>🔄 Swappable &amp; composable</h4><p>Because tools are discovered at runtime, you can add, remove, or upgrade servers without touching the host. Agents compose many servers.</p></div>
-        <div class="card"><h4>🔐 Clear trust boundaries</h4><p>The host mediates every call and can require user approval. Servers run as isolated processes with scoped permissions and their own auth.</p></div>
-        <div class="card"><h4>🌍 Open &amp; vendor-neutral</h4><p>An open spec with SDKs in Python, TypeScript, Java, C#, Go and more. Not tied to one model or one company.</p></div>
+        <div class="card"><h4>🧩 M×N समस्या सोडवते</h4><p>एकदा server लिहा; प्रत्येक MCP host (Claude, Cursor, Windsurf, कस्टम agents) तो वापरू शकतो. प्रत्येक अ‍ॅपसाठी पुन्हा एकत्रीकरण नाही.</p></div>
+        <div class="card"><h4>🔄 अदलाबदल करता येणारे आणि जोडता येणारे</h4><p>tools runtime ला शोधले जात असल्याने, तुम्ही host ला हात न लावता servers जोडू, काढू किंवा अपग्रेड करू शकता. Agents अनेक servers एकत्र करतात.</p></div>
+        <div class="card"><h4>🔐 स्पष्ट विश्वासाच्या सीमा</h4><p>host प्रत्येक कॉलमध्ये मध्यस्थी करतो आणि वापरकर्त्याची मंजुरी मागू शकतो. Servers scoped परवानग्या आणि स्वतःच्या auth सह वेगळ्या प्रक्रिया म्हणून चालतात.</p></div>
+        <div class="card"><h4>🌍 खुले आणि विक्रेता-निरपेक्ष</h4><p>Python, TypeScript, Java, C#, Go आणि इतर भाषांमध्ये SDKs असलेला एक खुला spec. एका model किंवा एका कंपनीशी बांधलेला नाही.</p></div>
       </div>
     </div>
   </section>
@@ -367,24 +367,24 @@
   <!-- HOW -->
   <section id="how">
     <div class="wrap">
-      <div class="eyebrow">03 - How</div>
-      <h2>How it works under the hood</h2>
-      <p class="muted">Every message is <strong>JSON-RPC 2.0</strong>. The client and server exchange requests, responses, and notifications over a <em>transport</em>. Two transports dominate:</p>
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे चालते</h2>
+      <p class="muted">प्रत्येक संदेश <strong>JSON-RPC 2.0</strong> असतो. client आणि server एका <em>transport</em> वरून requests, responses आणि notifications ची देवाणघेवाण करतात. दोन transports प्रामुख्याने वापरले जातात:</p>
 
       <div class="grid cols-2">
         <div class="card">
-          <h4><span class="ico">📟</span> stdio (local)</h4>
-          <p>The server is a subprocess; messages flow over stdin/stdout. Fast, no network, ideal for local tools (filesystem, git). Auth is implicit - it runs as you.</p>
+          <h4><span class="ico">📟</span> stdio (लोकल)</h4>
+          <p>server एक subprocess असतो; संदेश stdin/stdout वरून वाहतात. जलद, network नाही, लोकल tools साठी (filesystem, git) आदर्श. Auth अंतर्भूत आहे - तो तुमच्याच रूपात चालतो.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🌐</span> Streamable HTTP + SSE (remote)</h4>
-          <p>The server is a web service reached over HTTP, with Server-Sent Events for streaming. Serves many clients, and uses OAuth 2.1 for authentication.</p>
+          <h4><span class="ico">🌐</span> Streamable HTTP + SSE (रिमोट)</h4>
+          <p>server एक web service आहे जो HTTP वरून पोहोचता येतो, streaming साठी Server-Sent Events सह. अनेक clients ना सेवा देतो आणि प्रमाणीकरणासाठी OAuth 2.1 वापरतो.</p>
         </div>
       </div>
 
-      <h3>The connection lifecycle</h3>
+      <h3>जोडणीचे जीवनचक्र</h3>
       <div class="diagram">
-        <div class="cap">Architecture - one host, many servers, one client per server</div>
+        <div class="cap">आर्किटेक्चर - एक host, अनेक servers, प्रत्येक server साठी एक client</div>
         <pre class="mermaid">
 flowchart LR
     subgraph Host["🖥️  Host  (Claude Code / Desktop)"]
@@ -405,7 +405,7 @@ flowchart LR
         </pre>
       </div>
 
-      <h3>A minimal config (Claude Code / Desktop)</h3>
+      <h3>एक किमान config (Claude Code / Desktop)</h3>
       <pre><code>{
   "mcpServers": {
     "postgres": {
@@ -419,7 +419,7 @@ flowchart LR
     }
   }
 }</code></pre>
-      <p class="muted">The first is a local <strong>stdio</strong> server spawned as a subprocess; the second is a remote <strong>HTTP</strong> server. Same protocol, different transport.</p>
+      <p class="muted">पहिला एक लोकल <strong>stdio</strong> server आहे जो subprocess म्हणून चालवला जातो; दुसरा एक रिमोट <strong>HTTP</strong> server आहे. तेच protocol, वेगळे transport.</p>
     </div>
   </section>
 
@@ -427,11 +427,11 @@ flowchart LR
   <section id="diagrams">
     <div class="wrap">
       <div class="eyebrow">04 - Sequence Diagrams</div>
-      <h2>Detailed sequence diagrams</h2>
-      <p class="muted">Three views: the initial handshake &amp; discovery, a tool call at runtime, and the OAuth flow for remote servers.</p>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: सुरुवातीचा handshake आणि discovery, runtime ला एक tool call, आणि रिमोट servers साठीचा OAuth प्रवाह.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 - Initialization &amp; capability discovery (once, at connect)</div>
+        <div class="cap">Diagram 1 - Initialization आणि capability discovery (एकदा, जोडणीच्या वेळी)</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -458,7 +458,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 - A tool call during a conversation (the hot path)</div>
+        <div class="cap">Diagram 2 - संभाषणादरम्यान एक tool call (मुख्य मार्ग)</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -487,7 +487,7 @@ sequenceDiagram
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 3 - OAuth 2.1 authorization for a remote server</div>
+        <div class="cap">Diagram 3 - एका रिमोट server साठी OAuth 2.1 प्राधिकृतीकरण</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -514,22 +514,22 @@ sequenceDiagram
   <!-- FLOW 0-100 -->
   <section id="flow">
     <div class="wrap">
-      <div class="eyebrow">05 - Step by Step</div>
-      <h2>The 0 → 100 flow</h2>
-      <p class="muted">Everything that happens from cold start to a completed, tool-assisted answer - the whole journey in order.</p>
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 ते 100 प्रवाह</h2>
+      <p class="muted">cold start पासून पूर्ण झालेल्या, tool-सहाय्यित उत्तरापर्यंत घडणारे सर्व काही - संपूर्ण प्रवास क्रमाने.</p>
 
       <div class="steps">
-        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Setup</span><h4>Author or install a server</h4><p>Someone writes an MCP server (or you install a published one) that wraps a system - a DB, an API, the filesystem - and declares its tools, resources, and prompts.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Configure</span><h4>Register the server with the host</h4><p>Add it to config: a <code>command</code> for stdio, or a <code>url</code> for HTTP. The host now knows the server exists.</p></div></div>
-        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Launch</span><h4>Host starts the client &amp; transport</h4><p>On startup the host spawns one client per server and opens the transport - a subprocess pipe (stdio) or an HTTP connection.</p></div></div>
-        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Handshake</span><h4><code>initialize</code> exchange</h4><p>Client and server negotiate protocol version and advertise capabilities, then the client sends <code>notifications/initialized</code>. The session is live.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Discovery</span><h4>List tools, resources, prompts</h4><p>The client calls <code>tools/list</code>, <code>resources/list</code>, <code>prompts/list</code>. The server returns names, descriptions, and JSON Schemas.</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Inject</span><h4>Host hands tools to the model</h4><p>The discovered tool definitions are formatted and placed into the model's context so it knows what it can call and with what arguments.</p></div></div>
-        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Reason</span><h4>User asks; model decides</h4><p>The user sends a request. The model reasons over it and the available tools, and emits a structured <code>tool_use</code> request if a tool would help.</p></div></div>
-        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guard</span><h4>Host intercepts &amp; (maybe) asks approval</h4><p>The host catches the tool call. For sensitive actions it prompts the user to approve. Auth is checked; remote servers may trigger the OAuth flow here.</p></div></div>
-        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Execute</span><h4>Server does the real work</h4><p>The client sends <code>tools/call</code>; the server runs the query / hits the API / reads the file and returns structured results (and can stream progress).</p></div></div>
-        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Integrate</span><h4>Result flows back into context</h4><p>The host appends the tool result to the conversation and calls the model again. The model may chain more tool calls - loop back to step 60 as needed.</p></div></div>
-        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>Model answers the user</h4><p>With the fresh, real-world data in context, the model produces a grounded final answer. Session stays open for the next turn.</p></div></div>
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">सेटअप</span><h4>एक server लिहा किंवा install करा</h4><p>कोणीतरी एक MCP server लिहितो (किंवा तुम्ही प्रकाशित केलेला install करता) जो एका प्रणालीला - एक DB, एक API, filesystem - गुंडाळतो आणि त्याची tools, resources आणि prompts जाहीर करतो.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">कॉन्फिगर</span><h4>host कडे server नोंदवा</h4><p>ते config मध्ये जोडा: stdio साठी एक <code>command</code>, किंवा HTTP साठी एक <code>url</code>. आता host ला माहित आहे की server अस्तित्वात आहे.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Launch</span><h4>host client आणि transport सुरू करतो</h4><p>सुरुवातीला host प्रत्येक server साठी एक client तयार करतो आणि transport उघडतो - एक subprocess pipe (stdio) किंवा एक HTTP जोडणी.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Handshake</span><h4><code>initialize</code> देवाणघेवाण</h4><p>client आणि server protocol version वर वाटाघाटी करतात आणि क्षमता जाहीर करतात, मग client <code>notifications/initialized</code> पाठवतो. session live झाली.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Discovery</span><h4>tools, resources, prompts ची यादी</h4><p>client <code>tools/list</code>, <code>resources/list</code>, <code>prompts/list</code> कॉल करतो. server नावे, वर्णने आणि JSON Schemas परत करतो.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Inject</span><h4>host model कडे tools सोपवतो</h4><p>शोधलेल्या tool व्याख्या स्वरूपित करून model च्या context मध्ये ठेवल्या जातात जेणेकरून त्याला कळेल की तो काय आणि कोणत्या arguments सह कॉल करू शकतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">तर्क</span><h4>वापरकर्ता विचारतो; model ठरवतो</h4><p>वापरकर्ता एक विनंती पाठवतो. model तिच्यावर आणि उपलब्ध tools वर तर्क करतो, आणि एखादे tool उपयुक्त ठरणार असल्यास एक संरचित <code>tool_use</code> विनंती तयार करतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guard</span><h4>host मध्ये अडवतो आणि (कदाचित) मंजुरी विचारतो</h4><p>host tool call पकडतो. संवेदनशील कृतींसाठी तो वापरकर्त्याला मंजुरीसाठी विचारतो. Auth तपासले जाते; रिमोट servers इथे OAuth प्रवाह सुरू करू शकतात.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">अंमलबजावणी</span><h4>server खरे काम करतो</h4><p>client <code>tools/call</code> पाठवतो; server query चालवतो / API ला भेटतो / file वाचतो आणि संरचित निकाल परत करतो (आणि प्रगती stream करू शकतो).</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">एकत्रीकरण</span><h4>निकाल पुन्हा context मध्ये वाहतो</h4><p>host tool निकाल संभाषणाला जोडतो आणि model ला पुन्हा कॉल करतो. model आणखी tool calls साखळू शकतो - गरजेनुसार टप्पा 60 कडे परत जा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">वितरण</span><h4>model वापरकर्त्याला उत्तर देतो</h4><p>context मध्ये ताज्या, वास्तविक जगातील data सह, model एक आधारभूत अंतिम उत्तर तयार करतो. पुढील फेरीसाठी session उघडी राहते.</p></div></div>
       </div>
     </div>
   </section>
@@ -537,41 +537,41 @@ sequenceDiagram
   <!-- CASE STUDIES -->
   <section id="cases">
     <div class="wrap">
-      <div class="eyebrow">06 - Case Studies</div>
-      <h2>Real-world case studies</h2>
-      <p class="muted">Three representative patterns showing MCP in production-style use.</p>
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">production-सारख्या वापरात MCP दाखवणारे तीन प्रातिनिधिक नमुने.</p>
 
       <div class="case">
-        <div class="hd"><span class="badge">👩‍💻</span><div><h3>1 · The coding agent (Claude Code + GitHub + Postgres)</h3><div class="role">Pattern: developer productivity</div></div></div>
-        <p class="muted">A developer asks their assistant to "find the flaky test causing CI failures and open a fix PR." The agent composes three MCP servers.</p>
+        <div class="hd"><span class="badge">👩‍💻</span><div><h3>1 · coding agent (Claude Code + GitHub + Postgres)</h3><div class="role">नमुना: developer उत्पादकता</div></div></div>
+        <p class="muted">एक developer त्याच्या सहाय्यकाला विचारतो की "CI अपयशी करणारी flaky test शोधा आणि एक fix PR उघडा." agent तीन MCP servers एकत्र करतो.</p>
         <ul>
-          <li><strong>Filesystem server</strong> (stdio) reads the failing test files and source.</li>
-          <li><strong>Postgres server</strong> queries the CI results table to identify which test fails intermittently.</li>
-          <li><strong>GitHub server</strong> (HTTP + OAuth) creates a branch, commits the fix, and opens a PR.</li>
+          <li><strong>Filesystem server</strong> (stdio) अपयशी test files आणि source वाचतो.</li>
+          <li><strong>Postgres server</strong> कोणती test मधूनमधून अपयशी होते हे ओळखण्यासाठी CI निकालांच्या table ला query करतो.</li>
+          <li><strong>GitHub server</strong> (HTTP + OAuth) एक branch तयार करतो, fix commit करतो आणि एक PR उघडतो.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> One natural-language request spans three systems with no custom integration code - each server was installed once and is reused across every project.</div>
+        <div class="outcome">✅ <strong>निकाल:</strong> एक नैसर्गिक-भाषेतील विनंती कोणत्याही कस्टम एकत्रीकरण कोडशिवाय तीन प्रणालींना व्यापते - प्रत्येक server एकदा install केला आणि प्रत्येक project मध्ये पुन्हा वापरला जातो.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">🏢</span><div><h3>2 · Enterprise knowledge assistant (internal wiki + Jira + Slack)</h3><div class="role">Pattern: retrieval + action over private data</div></div></div>
-        <p class="muted">A support engineer asks: "Summarize open P1 incidents this week and post a digest to #ops." The company runs remote MCP servers behind SSO.</p>
+        <div class="hd"><span class="badge">🏢</span><div><h3>2 · एंटरप्राइझ ज्ञान सहाय्यक (अंतर्गत wiki + Jira + Slack)</h3><div class="role">नमुना: खाजगी data वर retrieval + कृती</div></div></div>
+        <p class="muted">एक support engineer विचारतो: "या आठवड्यातील खुल्या P1 incidents चा सारांश द्या आणि #ops ला एक digest पोस्ट करा." कंपनी SSO मागे रिमोट MCP servers चालवते.</p>
         <ul>
-          <li><strong>Jira server</strong> exposes <code>search_issues</code> as a tool and issues as resources - the model pulls live P1 tickets.</li>
-          <li><strong>Wiki server</strong> resources supply runbook context for each incident type.</li>
-          <li><strong>Slack server</strong> exposes <code>post_message</code>; the host requires explicit approval before posting.</li>
+          <li><strong>Jira server</strong> <code>search_issues</code> ला एक tool म्हणून आणि issues ना resources म्हणून उघड करतो - model live P1 tickets खेचतो.</li>
+          <li><strong>Wiki server</strong> resources प्रत्येक incident प्रकारासाठी runbook context पुरवतात.</li>
+          <li><strong>Slack server</strong> <code>post_message</code> उघड करतो; पोस्ट करण्यापूर्वी host स्पष्ट मंजुरी मागतो.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> OAuth scopes keep each user's access correct; the host's approval gate ensures the "write" action (posting) is human-confirmed. Same protocol, enterprise-grade trust.</div>
+        <div class="outcome">✅ <strong>निकाल:</strong> OAuth scopes प्रत्येक वापरकर्त्याची पोहोच बरोबर ठेवतात; host चा मंजुरी दरवाजा हे सुनिश्चित करतो की "write" कृती (पोस्ट करणे) माणसाकडून पुष्टी केली जाते. तेच protocol, एंटरप्राइझ-दर्जाचा विश्वास.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">🎨</span><div><h3>3 · Design-to-code with Figma MCP</h3><div class="role">Pattern: bridging a proprietary app to any agent</div></div></div>
-        <p class="muted">A front-end dev selects a component in Figma and asks the agent to "build this as a React component." Figma ships an MCP server exposing the live design context.</p>
+        <div class="hd"><span class="badge">🎨</span><div><h3>3 · Figma MCP सह design-to-code</h3><div class="role">नमुना: एका मालकीच्या अ‍ॅपला कोणत्याही agent शी जोडणे</div></div></div>
+        <p class="muted">एक front-end dev Figma मध्ये एक component निवडतो आणि agent ला विचारतो की "हे एक React component म्हणून बनवा." Figma एक MCP server पुरवते जो live design context उघड करतो.</p>
         <ul>
-          <li>The <strong>Figma server</strong> exposes the selected frame's structure, tokens, and layout as resources/tools.</li>
-          <li>The agent reads exact spacing, colors, and variants - not a screenshot guess.</li>
-          <li>The <strong>filesystem server</strong> writes the generated component into the repo.</li>
+          <li><strong>Figma server</strong> निवडलेल्या frame ची रचना, tokens आणि layout resources/tools म्हणून उघड करतो.</li>
+          <li>agent अचूक अंतर, रंग आणि variants वाचतो - screenshot वरून अंदाज नाही.</li>
+          <li><strong>filesystem server</strong> तयार केलेला component repo मध्ये लिहितो.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> A proprietary desktop app becomes usable by <em>any</em> MCP client. Design intent transfers with high fidelity because the model reads structured data, not pixels.</div>
+        <div class="outcome">✅ <strong>निकाल:</strong> एक मालकीचे desktop अ‍ॅप <em>कोणत्याही</em> MCP client ला वापरण्यायोग्य बनते. model pixels नव्हे तर संरचित data वाचत असल्याने design हेतू उच्च अचूकतेने हस्तांतरित होतो.</div>
       </div>
     </div>
   </section>
@@ -579,38 +579,38 @@ sequenceDiagram
   <!-- FUTURE -->
   <section id="future">
     <div class="wrap">
-      <div class="eyebrow">07 - Future</div>
-      <h2>Where MCP is heading</h2>
-      <p class="muted">MCP went from a single-vendor spec to a broadly adopted standard remarkably fast. The trajectory points at richer, safer, more autonomous agents.</p>
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>MCP कोणत्या दिशेने जात आहे</h2>
+      <p class="muted">MCP एका विक्रेत्याच्या spec पासून व्यापकपणे स्वीकारलेल्या मानकापर्यंत उल्लेखनीयरीत्या जलद पोहोचले. मार्गक्रमण अधिक समृद्ध, अधिक सुरक्षित, अधिक स्वायत्त agents कडे निर्देश करते.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🌐 A registry &amp; ecosystem</h4><p>Public server registries for discovery and one-click install - an "app store" for agent capabilities, with signing and provenance.</p></div>
-        <div class="card"><h4>🤝 Agent-to-agent composition</h4><p>Servers that are themselves agents, plus emerging agent-to-agent protocols, enabling networks of specialized agents that delegate to each other.</p></div>
-        <div class="card"><h4>🔐 Stronger security &amp; identity</h4><p>Fine-grained scopes, standardized OAuth 2.1, tool-poisoning defenses, and auditability as MCP moves deeper into enterprises.</p></div>
-        <div class="card"><h4>🧠 Elicitation &amp; sampling</h4><p>Servers can ask the user for input mid-task (elicitation) and request model completions from the host (sampling) - richer two-way interaction.</p></div>
-        <div class="card"><h4>📦 Native platform support</h4><p>OS-level and IDE-level MCP hosts, so any app can become an agent surface without bespoke plumbing.</p></div>
-        <div class="card"><h4>⚡ Streaming &amp; long-running work</h4><p>Better support for progress streaming, cancellation, and durable long-running tasks - essential for real autonomous agents.</p></div>
+        <div class="card"><h4>🌐 एक registry आणि परिसंस्था</h4><p>discovery आणि एक-क्लिक install साठी सार्वजनिक server registries - agent क्षमतांसाठी एक "app store", signing आणि provenance सह.</p></div>
+        <div class="card"><h4>🤝 agent-ते-agent जोडणी</h4><p>स्वतःच agents असणारे servers, तसेच उदयोन्मुख agent-ते-agent protocols, जे एकमेकांना काम सोपवणाऱ्या विशेष agents ची नेटवर्क्स शक्य करतात.</p></div>
+        <div class="card"><h4>🔐 मजबूत सुरक्षा आणि ओळख</h4><p>MCP एंटरप्राइझमध्ये अधिक खोलवर जात असताना fine-grained scopes, प्रमाणित OAuth 2.1, tool-poisoning बचाव आणि लेखापरीक्षणक्षमता.</p></div>
+        <div class="card"><h4>🧠 Elicitation आणि sampling</h4><p>Servers कामाच्या मध्येच वापरकर्त्याकडून इनपुट मागू शकतात (elicitation) आणि host कडून model completions ची विनंती करू शकतात (sampling) - अधिक समृद्ध दुतर्फा संवाद.</p></div>
+        <div class="card"><h4>📦 native platform समर्थन</h4><p>OS-स्तरीय आणि IDE-स्तरीय MCP hosts, जेणेकरून कोणतेही अ‍ॅप खास जोडणीशिवाय एक agent पृष्ठभाग बनू शकते.</p></div>
+        <div class="card"><h4>⚡ Streaming आणि दीर्घकाळ चालणारे काम</h4><p>प्रगती streaming, रद्दीकरण आणि टिकाऊ दीर्घकाळ चालणाऱ्या कामांसाठी उत्तम समर्थन - खऱ्या स्वायत्त agents साठी अत्यावश्यक.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> just as HTTP standardized the web and USB standardized peripherals, MCP is becoming the standard socket between AI models and the real world. Build a capability once - every agent, present and future, can use it.</div>
+      <div class="callout"><strong>तळटीप:</strong> ज्याप्रमाणे HTTP ने web प्रमाणित केले आणि USB ने peripherals प्रमाणित केले, त्याचप्रमाणे MCP AI models आणि वास्तविक जग यांच्यातील मानक socket बनत आहे. एकदा एक क्षमता बनवा - प्रत्येक agent, वर्तमान आणि भविष्यातील, ती वापरू शकतो.</div>
     </div>
   </section>
 
   <footer>
     <div class="wrap">
-      <p>A visual guide to the Model Context Protocol · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
-      <p>Learn more at <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">modelcontextprotocol.io</a> · Spec is open source.</p>
+      <p>Model Context Protocol चे एक दृश्यात्मक मार्गदर्शक · काय · का · कसे · Diagrams · प्रवाह · केस स्टडीज · भविष्य</p>
+      <p>अधिक जाणून घ्या <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">modelcontextprotocol.io</a> वर · Spec खुला स्रोत आहे.</p>
     </div>
   </footer>
 
   <!-- Floating reading-settings widget -->
   <div class="a11y-fab">
     <div class="a11y-panel" id="a11yPanel" role="dialog" aria-label="Reading settings">
-      <h5>Text size</h5>
+      <h5>मजकुराचा आकार</h5>
       <div class="a11y-row">
         <button class="a11y-btn" id="fontMinus" aria-label="Decrease text size">A&minus;</button>
         <span class="a11y-size" id="fontVal">100%</span>
         <button class="a11y-btn" id="fontPlus" aria-label="Increase text size">A+</button>
       </div>
-      <h5>Color theme</h5>
+      <h5>रंग थीम</h5>
       <div class="a11y-themes">
         <button class="a11y-theme" data-set-theme="light"><span class="a11y-swatch" style="background:#ffffff"></span>Light</button>
         <button class="a11y-theme" data-set-theme="dark"><span class="a11y-swatch" style="background:#141a24"></span>Dark</button>
