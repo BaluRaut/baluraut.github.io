@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Agent SDK — What It Is & When To Use It</title>
+<meta name="description" content="A plain-English field guide to the Claude Agent SDK: what it is, the problem it solves, how it compares to the Client SDK, CLI, and Managed Agents, and a decision guide for picking the right tool.">
+<style>
+:root{
+  --bg:#0b0e14; --panel:#11151f; --card:#121826; --card2:#0f1420;
+  --border:#242c3d; --border2:#2e3850;
+  --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488;
+  --cl:#d97757;         /* Claude clay/terracotta */
+  --violet:#a78bfa; --cyan:#22d3ee; --green:#4ade80; --amber:#ff9d2e; --pink:#f472b6;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(1100px 520px at 15% -8%, #241611 0%, transparent 55%),
+    radial-gradient(1000px 460px at 88% -12%, #1a1428 0%, transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.6; font-size:16px; min-height:100vh;
+}
+.wrap{max-width:1000px; margin:0 auto; padding:0 20px 100px}
+a{color:var(--cl)}
+
+/* nav */
+.nav{max-width:1000px; margin:0 auto; padding:20px; display:flex; justify-content:space-between; align-items:center; font-size:.85rem}
+.nav a{color:var(--muted); text-decoration:none}
+.nav a:hover{color:var(--text)}
+.badge{font-family:ui-monospace,Menlo,monospace; color:var(--dim)}
+
+/* hero */
+.hero{padding:64px 0 18px; text-align:center}
+.kicker{
+  display:inline-block; font-size:.72rem; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--cl); border:1px solid #43302a; background:#1a110d;
+  padding:6px 15px; border-radius:999px; font-weight:600;
+}
+h1{
+  font-size:3.1rem; margin:22px 0 14px; letter-spacing:-.028em; line-height:1.06;
+  background:linear-gradient(100deg,#d97757,#f472b6 42%,#a78bfa 78%,#22d3ee);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+@media(max-width:560px){h1{font-size:2.1rem}}
+.lede{color:var(--muted); max-width:680px; margin:0 auto 26px; font-size:1.1rem}
+.stats{display:flex; gap:30px; justify-content:center; flex-wrap:wrap; margin-top:14px}
+.stat{text-align:center}
+.stat b{display:block; font-size:1.6rem; font-weight:800; color:var(--text); line-height:1.1}
+.stat span{font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--dim)}
+
+/* section frame */
+.section{margin-top:64px}
+.section > h3{
+  font-size:.82rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+  font-weight:700; display:flex; align-items:center; gap:12px; margin-bottom:20px;
+}
+.section > h3::before{content:""; width:26px; height:3px; background:var(--cl); border-radius:2px}
+
+/* prose panel */
+.panel{
+  background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px 26px;
+  color:#c2ccdb; font-size:1rem;
+}
+.panel p{margin:0 0 14px}
+.panel p:last-child{margin:0}
+.panel b{color:var(--text)}
+.tldr{border-left:3px solid var(--cl)}
+
+/* inline code + code block */
+code{
+  font-family:ui-monospace,Menlo,monospace; font-size:.85em; background:#0c1018;
+  border:1px solid var(--border); padding:1px 6px; border-radius:5px; color:#f0a98c;
+}
+pre{
+  background:#0c1018; border:1px solid var(--border); border-radius:12px;
+  padding:18px 20px; overflow-x:auto; margin:6px 0 0;
+  font-family:ui-monospace,Menlo,monospace; font-size:.86rem; line-height:1.65; color:#c9d3e3;
+}
+pre code{background:none; border:none; padding:0; color:inherit; font-size:1em}
+.c-key{color:#f472b6} .c-str{color:#9ae6b4} .c-com{color:#5d6b82; font-style:italic} .c-fn{color:#7cc7ff}
+
+/* capability grid */
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.cap{
+  background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px 22px;
+  transition:.18s;
+}
+.cap:hover{transform:translateY(-3px); border-color:var(--ac); box-shadow:0 12px 40px -20px var(--ac)}
+.cap .ic{font-size:1.4rem; display:block; margin-bottom:10px}
+.cap h4{font-size:1.05rem; margin-bottom:5px; color:var(--ac)}
+.cap p{font-size:.9rem; color:var(--muted)}
+.v{--ac:var(--violet)} .cy{--ac:var(--cyan)} .gr{--ac:var(--green)} .am{--ac:var(--amber)} .pk{--ac:var(--pink)} .cll{--ac:var(--cl)}
+
+/* comparison table */
+.tablewrap{overflow-x:auto; border:1px solid var(--border); border-radius:14px}
+table{border-collapse:collapse; width:100%; min-width:560px; font-size:.92rem}
+th,td{text-align:left; padding:13px 16px; border-bottom:1px solid var(--border)}
+thead th{background:#0e1420; color:var(--text); font-size:.78rem; letter-spacing:.05em; text-transform:uppercase}
+tbody tr:last-child td{border-bottom:none}
+td:first-child{color:var(--text); font-weight:600}
+td b{color:var(--cl)}
+
+/* decision cards */
+.decide{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+@media(max-width:720px){.decide{grid-template-columns:1fr}}
+.dc{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--ac); border-radius:12px; padding:18px 20px}
+.dc .when{font-size:.82rem; color:var(--muted); margin-bottom:6px}
+.dc .pick{font-size:1.02rem; font-weight:800; color:var(--ac)}
+.dc.now{box-shadow:0 0 0 1px var(--ac) inset}
+
+/* path steps */
+.path{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+@media(max-width:640px){.path{grid-template-columns:1fr}}
+.step{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px}
+.step .n{
+  font-family:ui-monospace,Menlo,monospace; font-weight:800; font-size:.78rem; color:var(--cl);
+  border:1px solid #43302a; border-radius:8px; width:26px; height:26px;
+  display:flex; align-items:center; justify-content:center; margin-bottom:10px;
+}
+.step h4{font-size:.98rem; margin-bottom:4px; color:var(--text)}
+.step p{font-size:.85rem; color:var(--muted)}
+.step code{font-size:.8rem}
+
+/* footer */
+.foot{margin-top:70px; padding-top:26px; border-top:1px solid var(--border); text-align:center; color:var(--dim); font-size:.85rem}
+.foot a{color:var(--muted); text-decoration:none}
+.foot a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="../">← The Backend Engineer's Field Library</a>
+  <span class="badge">baluraut.github.io/claude</span>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="kicker">Claude Agent SDK</span>
+    <h1>Claude Code, as a library.</h1>
+    <p class="lede">
+      An agent loop you can call from your own code. You hand it a prompt; it reads files,
+      runs commands, edits code, and searches the web — until the task is done. Here's what
+      it is, why it exists, and how to know whether it's the right tool for you.
+    </p>
+    <div class="stats">
+      <div class="stat"><b>Python · TS</b><span>Two SDKs</span></div>
+      <div class="stat"><b>Built-in</b><span>Tools &amp; loop</span></div>
+      <div class="stat"><b>Your infra</b><span>Runs in-process</span></div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section class="section">
+    <h3>What it actually is</h3>
+    <div class="panel tldr">
+      <p>The <b>Claude Agent SDK</b> is Claude Code packaged as a <b>library</b> for Python and TypeScript.
+      You give it a prompt, and it runs the full <b>agent loop</b> for you — Claude decides what to do,
+      calls tools, sees the results, and keeps going until the work is finished.</p>
+      <p>The point: <b>you don't build the tools or the loop</b>. Reading files, running Bash, editing
+      code, web search — it's all built in and ready on the first call.</p>
+    </div>
+    <pre><code><span class="c-key">async for</span> message <span class="c-key">in</span> <span class="c-fn">query</span>(
+    prompt=<span class="c-str">"Find and fix the bug in auth.py"</span>,
+    options=<span class="c-fn">ClaudeAgentOptions</span>(allowed_tools=[<span class="c-str">"Read"</span>, <span class="c-str">"Edit"</span>, <span class="c-str">"Bash"</span>]),
+):
+    <span class="c-fn">print</span>(message)  <span class="c-com"># Claude reads the file, finds the bug, edits it</span></code></pre>
+  </section>
+
+  <!-- WHY -->
+  <section class="section">
+    <h3>The problem it solves</h3>
+    <div class="panel">
+      <p>To make Claude <i>do</i> things — not just chat — you normally write a manual loop:
+      send prompt → Claude asks to use a tool → <b>you</b> execute it → send the result back → repeat.
+      That's the raw API / Client SDK path, and you build all the plumbing yourself.</p>
+      <p>The Agent SDK hands you that plumbing for free, plus everything that makes Claude Code good
+      at real work: built-in tools, subagents, hooks, permissions, sessions, MCP, and automatic
+      context management so long tasks don't blow the context window.</p>
+    </div>
+  </section>
+
+  <!-- CAPABILITIES -->
+  <section class="section">
+    <h3>What you get out of the box</h3>
+    <div class="grid">
+      <div class="cap cll"><span class="ic">🧰</span><h4>Built-in tools</h4><p>Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch — nothing to implement.</p></div>
+      <div class="cap v"><span class="ic">🤖</span><h4>Subagents</h4><p>Spawn specialized agents for focused subtasks; they report back with results.</p></div>
+      <div class="cap cy"><span class="ic">🪝</span><h4>Hooks</h4><p>Run your own code at lifecycle points — log, validate, block, or transform behavior.</p></div>
+      <div class="cap gr"><span class="ic">🔒</span><h4>Permissions</h4><p>Whitelist safe tools, block dangerous ones, or require approval for sensitive actions.</p></div>
+      <div class="cap am"><span class="ic">🧵</span><h4>Sessions</h4><p>Persistent context across exchanges. Resume later or fork to explore alternatives.</p></div>
+      <div class="cap pk"><span class="ic">🔌</span><h4>MCP</h4><p>Connect databases, browsers, and APIs through the Model Context Protocol.</p></div>
+    </div>
+  </section>
+
+  <!-- WHICH TOOL -->
+  <section class="section">
+    <h3>Which Claude tool should you use?</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Option</th><th>Runs where</th><th>Best for</th></tr></thead>
+        <tbody>
+          <tr><td>Claude Code CLI</td><td>Your terminal</td><td>Interactive dev, one-off tasks</td></tr>
+          <tr><td>Client SDK <span style="color:var(--dim)">(raw API)</span></td><td>Your process</td><td>Plain text generation — <b>you</b> wire up any tools</td></tr>
+          <tr><td>Agent SDK</td><td>Your process &amp; infra</td><td>Autonomous agents that work on <b>your</b> files &amp; services</td></tr>
+          <tr><td>Managed Agents</td><td>Anthropic infra</td><td>Production agents without running your own sandbox</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- DECISION -->
+  <section class="section">
+    <h3>The decision, in four rules</h3>
+    <div class="decide">
+      <div class="dc" style="--ac:var(--cyan)"><div class="when">Just generating text, no autonomous actions</div><div class="pick">→ Client SDK</div></div>
+      <div class="dc" style="--ac:var(--green)"><div class="when">Coding by hand, interactively</div><div class="pick">→ Claude Code CLI</div></div>
+      <div class="dc now" style="--ac:var(--cl)"><div class="when">An agent that reads, edits &amp; runs things on your machine</div><div class="pick">→ Agent SDK</div></div>
+      <div class="dc" style="--ac:var(--violet)"><div class="when">Same, but let Anthropic run the sandbox &amp; scaling</div><div class="pick">→ Managed Agents</div></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <p style="margin:0"><b>Common path:</b> prototype with the Agent SDK locally, then graduate to
+      Managed Agents for production if you'd rather not run the infrastructure yourself.</p>
+    </div>
+  </section>
+
+  <!-- GET STARTED -->
+  <section class="section">
+    <h3>Get started in three steps</h3>
+    <div class="path">
+      <div class="step"><div class="n">1</div><h4>Install</h4><p><code>npm i @anthropic-ai/claude-agent-sdk</code> or <code>pip install claude-agent-sdk</code> (Python 3.10+).</p></div>
+      <div class="step"><div class="n">2</div><h4>Set your key</h4><p><code>export ANTHROPIC_API_KEY=…</code> from the Console. Bedrock, Vertex &amp; Azure also supported.</p></div>
+      <div class="step"><div class="n">3</div><h4>Run an agent</h4><p>Call <code>query()</code> with a prompt and <code>allowed_tools</code> — that's a working agent.</p></div>
+    </div>
+    <pre style="margin-top:16px"><code><span class="c-com">// TypeScript — bundles the Claude Code binary, nothing else to install</span>
+<span class="c-key">import</span> { query } <span class="c-key">from</span> <span class="c-str">"@anthropic-ai/claude-agent-sdk"</span>;
+
+<span class="c-key">for await</span> (<span class="c-key">const</span> message <span class="c-key">of</span> <span class="c-fn">query</span>({
+  prompt: <span class="c-str">"Find all TODO comments and create a summary"</span>,
+  options: { allowedTools: [<span class="c-str">"Read"</span>, <span class="c-str">"Glob"</span>, <span class="c-str">"Grep"</span>] }
+})) {
+  <span class="c-key">if</span> (<span class="c-str">"result"</span> <span class="c-key">in</span> message) <span class="c-fn">console.log</span>(message.result);
+}</code></pre>
+  </section>
+
+  <!-- LINKS -->
+  <section class="section">
+    <h3>Go deeper</h3>
+    <div class="panel">
+      <p style="margin:0">
+        📖 <a href="https://code.claude.com/docs/en/agent-sdk/overview">Agent SDK overview &amp; quickstart</a> &nbsp;·&nbsp;
+        ⭐ <a href="https://github.com/anthropics/claude-agent-sdk-demos">Example agents (email, research &amp; more)</a> &nbsp;·&nbsp;
+        🐍 <a href="https://github.com/anthropics/claude-agent-sdk-python">Python SDK</a> &nbsp;·&nbsp;
+        🟦 <a href="https://github.com/anthropics/claude-agent-sdk-typescript">TypeScript SDK</a>
+      </p>
+    </div>
+  </section>
+
+  <div class="foot">
+    Built as a field note · <a href="../">Back to the Field Library</a> · Content summarized from the official Claude Agent SDK docs
+  </div>
+
+</div>
+</body>
+</html>
