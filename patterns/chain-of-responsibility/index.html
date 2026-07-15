@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chain of Responsibility Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Chain of Responsibility pattern: passing a request along a chain of handlers, decoupling sender from receiver, HTTP middleware pipelines, sequence diagrams, a 0-100 flow, case studies, and modern relevance." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>Chain of Responsibility - passing a request until someone handles it</h1>
+      <p class="lede">Some requests do not belong to a single, known object. Chain of Responsibility lets you <strong>string handlers together</strong> and pass a request down the line until one of them handles it. The sender never learns which handler responded, and you can add, reorder, or remove links without touching the caller.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Handler chain</span>
+        <span class="pill">Sender / receiver decoupling</span>
+        <span class="pill">Middleware pipelines</span>
+        <span class="pill">Handle or pass on</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is Chain of Responsibility?</h2>
+      <p class="muted"><strong>Chain of Responsibility</strong> is a behavioral pattern that turns a request into a standalone object and sends it along a chain of potential handlers. Each handler decides one of two things: handle the request itself, or pass it to the next handler in the chain. The client that fires the request does not know or care which handler will deal with it.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Handler interface</h4>
+          <p>A common contract every link implements, typically a <code>handle(request)</code> method and a reference to the next handler.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔗</span> The chain</h4>
+          <p>Concrete handlers linked in order. Each either serves the request or delegates to its successor until the end is reached.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📨</span> The client</h4>
+          <p>Builds the chain once, then sends requests to the first link. It stays blind to who ultimately responds.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Typical form</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Handler</strong></td><td>Declares the interface all links share</td><td>Interface or abstract class with <code>handle()</code></td></tr>
+            <tr><td><strong>Base handler</strong></td><td>Holds the <code>next</code> link and default pass-through logic</td><td>Abstract class the concretes extend</td></tr>
+            <tr><td><strong>Concrete handler</strong></td><td>Checks if it can serve the request, else forwards</td><td>Auth, logging, validation, cache</td></tr>
+            <tr><td><strong>Successor link</strong></td><td>Points each handler to the next in line</td><td>A <code>next</code> field set at wiring time</td></tr>
+            <tr><td><strong>Request</strong></td><td>The data passed down the chain</td><td>Value object or context bag</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the pattern is a conveyor belt of handlers. Each station looks at the package and either processes it or lets it slide to the next station. The belt operator (the client) just drops the package on and walks away.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Chain of Responsibility exists</h2>
+      <p class="muted">Without it, request handling collapses into one giant conditional: a sprawling <code>if / else if</code> that knows every possible handler, in a fixed order, welded to the caller. That block is hard to extend, impossible to reorder cleanly, and violates the open/closed principle every time a new case appears.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔓 Decouples sender from receiver</h4><p>The caller fires a request without naming a handler. Handlers can change, multiply, or disappear and the caller never notices.</p></div>
+        <div class="card"><h4>🧱 Open for extension</h4><p>Add a new concern by inserting a link. Existing handlers and the client stay untouched, so you extend behavior without editing tested code.</p></div>
+        <div class="card"><h4>🔄 Order becomes configuration</h4><p>Because links are wired at runtime, you reorder or swap steps by changing how you build the chain, not by rewriting branching logic.</p></div>
+        <div class="card"><h4>🎯 Single responsibility per link</h4><p>Each handler does exactly one thing and knows only its own rule plus its successor, which keeps every class small and testable.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Chain of Responsibility explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is like <strong>escalating a question</strong>. You ask the tutor; if they cannot answer, they send you to the lecturer; if they cannot, it goes to the professor. You just ask once, and whoever can answer, answers.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a <strong>middleware pipeline</strong>. A request enters, each middleware either responds or calls <code>next()</code>, and control flows down the line until something writes a response or the request is served.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of an <strong>expense approval flow</strong>. A manager approves up to a limit; above it the request rises to a director, then to finance. The person filing the claim does not need to know who signs off.</p></div>
+        <div class="card"><h4><span class="ico">🎧</span> Everyday version</h4><p>A <strong>support hotline</strong>. Tier 1 tries first; if the issue is beyond them they route you to tier 2, then to a specialist. You dial one number and the call finds the right person.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Every handler implements a shared interface and holds a reference to the next handler. When a request arrives, a handler decides to serve it or delegate. Wiring the links together builds the chain; sending a request to the head kicks it off.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔗</span> Linking the handlers</h4>
+          <p>Each concrete handler stores a <code>next</code> reference. A helper like <code>setNext()</code> returns that next handler so you can wire the chain in a fluent, readable order.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚦</span> Handle or forward</h4>
+          <p>Inside <code>handle()</code>, a handler checks a condition. If it matches, it acts and may stop the chain; otherwise it calls the successor, or does nothing if it is the last link.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - a client talks to a Handler interface; concrete links form the chain</div>
+        <pre class="mermaid">
+classDiagram
+    class Handler {
+      <<interface>>
+      +setNext(Handler) Handler
+      +handle(Request) void
+    }
+    class BaseHandler {
+      #next Handler
+      +setNext(Handler) Handler
+      +handle(Request) void
+    }
+    class AuthHandler {
+      +handle(Request) void
+    }
+    class RateLimitHandler {
+      +handle(Request) void
+    }
+    class ValidationHandler {
+      +handle(Request) void
+    }
+    class Client
+    Handler <|.. BaseHandler
+    BaseHandler <|-- AuthHandler
+    BaseHandler <|-- RateLimitHandler
+    BaseHandler <|-- ValidationHandler
+    BaseHandler --> Handler : next
+    Client --> Handler : sends request
+        </pre>
+      </div>
+
+      <h3>A realistic implementation in TypeScript</h3>
+      <pre><code>interface Request {
+  user?: string;
+  role?: string;
+  body: string;
+}
+
+abstract class Handler {
+  private next?: Handler;
+
+  setNext(handler: Handler): Handler {
+    this.next = handler;
+    return handler; // enables fluent wiring
+  }
+
+  // Default: pass the request along the chain.
+  handle(req: Request): void {
+    if (this.next) this.next.handle(req);
+  }
+}
+
+class AuthHandler extends Handler {
+  handle(req: Request): void {
+    if (!req.user) throw new Error("401 Unauthorized");
+    super.handle(req); // authenticated, keep going
+  }
+}
+
+class RoleHandler extends Handler {
+  handle(req: Request): void {
+    if (req.role !== "admin") throw new Error("403 Forbidden");
+    super.handle(req);
+  }
+}
+
+class ValidationHandler extends Handler {
+  handle(req: Request): void {
+    if (req.body.trim() === "") throw new Error("400 Empty body");
+    super.handle(req); // reached the end, request is served
+  }
+}
+
+// Wire the chain once, then just fire requests at the head.
+const chain = new AuthHandler();
+chain.setNext(new RoleHandler()).setNext(new ValidationHandler());
+
+chain.handle({ user: "ada", role: "admin", body: "ship it" });</code></pre>
+      <p class="muted">Notice that <code>AuthHandler</code> knows nothing about validation, and the caller knows nothing about either. Each link owns one rule and either advances the request or stops it, which is exactly what keeps the chain flexible.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a request handled midway, a request that falls through unhandled, and an HTTP middleware pipeline that wraps the response on the way back.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - A request travels the chain until a handler serves it</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 📨 Client
+    participant A as 🔐 Auth
+    participant R as 🚦 RateLimit
+    participant V as ✅ Validation
+
+    C->>A: handle(request)
+    A->>A: user present, pass on
+    A->>R: handle(request)
+    R->>R: under limit, pass on
+    R->>V: handle(request)
+    V->>V: body valid, serve it
+    V-->>C: request handled
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - No handler matches, the request falls through the end</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 📨 Client
+    participant H1 as 💵 Cash
+    participant H2 as 💳 Card
+    participant H3 as 🏦 Transfer
+
+    C->>H1: handle(payment)
+    alt cannot process
+        H1->>H2: handle(payment)
+        alt cannot process
+            H2->>H3: handle(payment)
+            alt cannot process
+                H3-->>C: no successor, unhandled
+                Note over C,H3: Client must decide the fallback
+            end
+        end
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - HTTP middleware pipeline wrapping the response on the way back</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cl as 🌐 Client
+    participant Lg as 📝 Logger
+    participant Au as 🔐 Auth
+    participant Rt as 🎯 Route
+
+    Cl->>Lg: incoming request
+    Lg->>Au: next(request)
+    alt token valid
+        Au->>Rt: next(request)
+        Rt-->>Au: response
+        Au-->>Lg: response
+        Lg-->>Cl: response + log line
+    else token invalid
+        Au-->>Lg: 401 response
+        Lg-->>Cl: 401 + log line
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a tangled conditional to a clean, ordered chain and a request that finds its handler, the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot the smell</span><h4>Find the giant conditional</h4><p>You notice a growing <code>if / else if</code> block that routes a request to different handling logic, and it changes every time a new case appears.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Model the request</span><h4>Turn the request into an object</h4><p>Capture what each handler needs to decide, user, role, amount, or payload, into a single request or context object passed down the chain.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Define contract</span><h4>Declare the Handler interface</h4><p>Create a shared interface with a <code>handle(request)</code> method and a way to set the next handler, so every link is interchangeable.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Base link</span><h4>Add a base handler</h4><p>Provide an abstract base that stores the successor and forwards by default, so concrete handlers only write the logic unique to them.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Extract</span><h4>Split each case into a handler</h4><p>Pull every branch of the old conditional into its own concrete handler, each owning exactly one responsibility.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Decide policy</span><h4>Handle, or handle and stop</h4><p>Choose per handler whether serving the request ends the chain or the request keeps flowing so later links can also act.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Wire</span><h4>Link the handlers in order</h4><p>Use <code>setNext()</code> to connect the concretes into a chain. Order is now configuration you can change without touching the handlers.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Send</span><h4>Fire the request at the head</h4><p>The client hands the request to the first link and stays blind to which handler will ultimately respond.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Traverse</span><h4>Each link handles or forwards</h4><p>A handler checks its condition, acts if it matches, otherwise calls its successor. The request walks the chain link by link.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Fall-through</span><h4>Decide what happens at the end</h4><p>If no handler serves the request, choose a policy: return a default, throw, or log. A must-handle chain treats fall-through as a bug.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Evolve</span><h4>Insert or reorder without fear</h4><p>New concern? Add a link. Different priority? Rewire. The client and existing handlers never change, so the design keeps paying off.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">The pattern is simple, but it fails in predictable ways when the chain is built or reasoned about carelessly.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Silent fall-through</h4><p>A request that no handler serves slips off the end and vanishes. If the request must be handled, an unhandled request is a defect, so make the tail throw or log.</p></div>
+        <div class="card"><h4>🔁 Broken forwarding</h4><p>A handler forgets to call its successor, so links after it never run. One missing <code>super.handle()</code> quietly kills half the chain.</p></div>
+        <div class="card"><h4>🧭 Order dependence hidden</h4><p>Handlers that secretly depend on running before or after another link make the chain fragile. Reordering then breaks behavior in non-obvious ways.</p></div>
+        <div class="card"><h4>🌀 Debugging by tracing</h4><p>Because the caller does not know the receiver, following a request through many links is hard. Long, dynamic chains become tricky to reason about.</p></div>
+        <div class="card"><h4>🧨 Over-engineering</h4><p>For a fixed set of two or three cases that never change, a chain adds ceremony a simple <code>switch</code> would handle more clearly.</p></div>
+        <div class="card"><h4>🪢 Fat handlers</h4><p>Stuffing several unrelated rules into one link defeats the point. Each handler should own a single decision, or the chain stops being flexible.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Chain of Responsibility trades a little indirection for a lot of flexibility. Reach for it when the set of handlers, or their order, is expected to change.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Decouples sender from receiver, one responsibility per link, add or reorder handlers without editing the client or other handlers.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>A request can go unhandled, control flow is harder to trace, and long dynamic chains can hurt performance and readability.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>Multiple objects may handle a request, the handler is not known up front, or the set and order of handlers should be configurable at runtime.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>Exactly one known object always handles the request, or the cases are few and fixed, where a simple conditional is clearer.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low structural cost, one interface plus small handlers, but added runtime indirection you must be able to trace.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Command (requests as objects), Decorator (also a wrapping chain), Mediator (centralizes instead of chaining), Observer (broadcasts to all).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if the answer to "who handles this?" is "it depends, and the list keeps changing," use a chain. If it is "always this one object," do not, just call it directly. And always decide explicitly whether a request may fall through or must be handled.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative uses showing the pattern doing real work in production systems.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌐</span><div><h3>1 · HTTP middleware pipeline</h3><div class="role">Pattern: request must be processed, response wraps back</div></div></div>
+        <p class="muted">Web frameworks like Express, ASP.NET Core, and Java servlet filters model the request lifecycle as a chain of middleware.</p>
+        <ul>
+          <li>Each middleware, logging, CORS, auth, compression, either responds or calls <code>next()</code> to advance.</li>
+          <li>Order is configuration: authentication runs before the route handler, compression wraps the response after.</li>
+          <li>A middleware can short-circuit, returning 401 immediately so downstream links never run.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> cross-cutting concerns live in small, reorderable, independently testable links instead of being tangled into every route.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🪵</span><div><h3>2 · Logging framework levels</h3><div class="role">Pattern: request may fall through, best match wins</div></div></div>
+        <p class="muted">Loggers in java.util.logging and log4j walk a chain of parent loggers and handlers by severity level.</p>
+        <ul>
+          <li>A log record is offered to each logger up the hierarchy until one is configured to emit it.</li>
+          <li>Level thresholds decide whether a link handles the record or passes it toward the root.</li>
+          <li>A record below every threshold simply falls through and is dropped, which is intended behavior here.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> teams tune verbosity per component by reconfiguring the chain, with no code changes to the call sites.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>3 · Approval and validation workflows</h3><div class="role">Pattern: escalate until an authority can decide</div></div></div>
+        <p class="muted">Expense approvals, purchase orders, and multi-stage input validation escalate a request through tiers of authority.</p>
+        <ul>
+          <li>A manager approves up to a limit; larger amounts pass to a director, then to finance.</li>
+          <li>Each validator checks one rule, format, range, business constraint, then forwards on success.</li>
+          <li>The submitter fires one request and never needs to know which tier signs off.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> approval limits and validation rules change by editing the chain, keeping business policy out of the caller.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Far from dated, Chain of Responsibility is one of the most widely deployed patterns in modern software, usually hiding under the name "pipeline" or "middleware."</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧅 Middleware everywhere</h4><p>Express, Koa, ASP.NET Core, Django, and gRPC interceptors are all chains. If you have written a <code>next()</code> call, you have used the pattern.</p></div>
+        <div class="card"><h4>🛡️ API gateways</h4><p>Gateways and service meshes run requests through ordered filters, auth, rate limiting, routing, that you compose declaratively.</p></div>
+        <div class="card"><h4>⚙️ Functional composition</h4><p>In modern codebases a chain is often just composed functions, each taking the next handler, which is the same idea with less ceremony.</p></div>
+        <div class="card"><h4>🤖 LLM and agent pipelines</h4><p>Guardrail and tool-routing stacks pass a request through validators and handlers until one accepts it, a textbook chain.</p></div>
+        <div class="card"><h4>🧪 Event and stream processing</h4><p>Interceptor chains in Kafka, message brokers, and ETL stages let each stage transform, drop, or forward a record.</p></div>
+        <div class="card"><h4>🔌 Plugin architectures</h4><p>Extensible tools let third parties insert handlers into a request chain without the core knowing they exist.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> whenever a request should flow through an ordered, changeable set of processors, and you want the sender to stay ignorant of who responds, Chain of Responsibility is the pattern. Decide up front whether requests must be handled or may fall through, and the rest follows.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Chain of Responsibility sits among the behavioral and structural patterns. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../command/"><span class="ico">🎬</span><h4>Command</h4><p>Turns a request into an object, exactly what travels down a chain.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../mediator/"><span class="ico">🗼</span><h4>Mediator</h4><p>Centralizes interactions instead of passing them link to link.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>Also a wrapping chain, but stacks behavior rather than routing.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>Broadcasts an event to many listeners at once, not one handler.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Chain of Responsibility · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

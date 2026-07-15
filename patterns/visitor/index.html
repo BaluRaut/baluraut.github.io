@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visitor Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Visitor design pattern: adding new operations to an object structure without changing element classes, double dispatch, the accept mechanism, trade-offs, AST and document-tree examples, sequence diagrams, and a 0-100 flow." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>The Visitor pattern - operations that travel to your objects</h1>
+      <p class="lede">You have a stable tree of objects (an AST, a document, a shape hierarchy) and a growing list of things you want to <em>do</em> with it. Visitor lets you <strong>add new operations without touching the element classes</strong>. It moves each operation into its own visitor object and uses <strong>double dispatch</strong> so the right code runs for the right element type.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Double dispatch</span>
+        <span class="pill">accept / visit</span>
+        <span class="pill">Object structure</span>
+        <span class="pill">Open for new operations</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Visitor pattern?</h2>
+      <p class="muted"><strong>Visitor</strong> represents an operation to be performed on the elements of an object structure. It lets you define a new operation without changing the classes of the elements on which it operates. Instead of scattering a method across every node type, you gather that operation into one <em>visitor</em> class and let each element hand itself back to the visitor through an <code>accept</code> call.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Element</h4>
+          <p>Each node type in the structure exposes one method, <code>accept(visitor)</code>, whose only job is to call the matching <code>visit</code> method back on the visitor.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧳</span> Visitor</h4>
+          <p>An interface with one <code>visit</code> method per concrete element type. Each concrete visitor is one whole operation: a printer, a type checker, an evaluator.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌳</span> Object structure</h4>
+          <p>The collection or tree of elements that can enumerate its nodes and pass a visitor to each one, often via a recursive traversal.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Typical example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Visitor interface</strong></td><td>Declares one <code>visit</code> overload per concrete element</td><td><code>visitNumber</code>, <code>visitAdd</code>, <code>visitMul</code></td></tr>
+            <tr><td><strong>Concrete visitor</strong></td><td>One operation implemented across all element types</td><td>Printer, Evaluator, TypeChecker</td></tr>
+            <tr><td><strong>Element interface</strong></td><td>Declares <code>accept(visitor)</code></td><td><code>Expr.accept(v)</code></td></tr>
+            <tr><td><strong>Concrete element</strong></td><td>Implements <code>accept</code> by calling the right <code>visit</code></td><td><code>Add</code>, <code>Number</code>, <code>Variable</code></td></tr>
+            <tr><td><strong>Object structure</strong></td><td>Holds elements and drives the traversal</td><td>AST root, document tree</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> Visitor turns a method that would live on every node into a standalone object. The element still picks which <code>visit</code> to run (that is its type talking), but the behavior lives entirely in the visitor. Add an operation by writing a new visitor, not by editing every class.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Visitor pattern exists</h2>
+      <p class="muted">When a class hierarchy is stable but the operations over it keep multiplying, putting every operation as a method on every node makes the classes bloat and forces edits across the whole hierarchy for each new feature. Visitor flips the axis: it groups one operation in one place.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>➕ Open to new operations</h4><p>Add a serializer, a validator, or an optimizer by writing one new visitor class. The element hierarchy is never touched, so a stable set of node types stays closed to edits.</p></div>
+        <div class="card"><h4>📚 Cohesion by operation</h4><p>All the logic for pretty-printing an AST lives in one PrintVisitor, not smeared across Add, Sub, Number, and Call. Related code sits together, which is easier to read and test.</p></div>
+        <div class="card"><h4>🎯 Double dispatch, not type checks</h4><p>The right code runs based on both the element type and the visitor type, without long <code>instanceof</code> or <code>switch (node.kind)</code> ladders that the compiler cannot exhaustively check.</p></div>
+        <div class="card"><h4>🧮 Accumulate across a structure</h4><p>A visitor carries state as it walks the tree, so it can total a bill, collect free variables, or build a symbol table in a single traversal.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Visitor explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of a <strong>substitute teacher who visits every classroom</strong>. Each room (element) opens its door and says "come in" (accept); the teacher does the same lesson tailored per grade. Send a new teacher for a new lesson; the classrooms never change.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is an <strong>externalized method with two-step dispatch</strong>. The node calls <code>visitor.visitAdd(this)</code>, so both the node type and the operation type pick the code. Adding <code>ToJsonVisitor</code> needs zero changes to the node classes.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Like a <strong>compliance auditor touring departments</strong>. Each department presents its records (accept); the auditor applies one checklist everywhere. Next quarter a different auditor runs a different checklist over the exact same departments.</p></div>
+        <div class="card"><h4><span class="ico">🏨</span> Everyday version</h4><p>A <strong>hotel housekeeping cart</strong> that stops at each room type. A standard room and a suite each let the cart in and get the service that suits them. Swap the cart (cleaning to restocking) without rebuilding the rooms.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">The trick is <strong>double dispatch</strong>. A single virtual call in most languages dispatches on one type (the receiver). Visitor chains two virtual calls so the running method depends on <em>both</em> the element type and the visitor type.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">1️⃣</span> First dispatch (element)</h4>
+          <p>You call <code>element.accept(visitor)</code>. Virtual dispatch picks the concrete element's <code>accept</code>, so the runtime type of the node is now known inside that method.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">2️⃣</span> Second dispatch (visitor)</h4>
+          <p>Inside <code>accept</code>, the element calls <code>visitor.visitAdd(this)</code>. Overload resolution and virtual dispatch now pick the code for that exact element and that exact visitor.</p>
+        </div>
+      </div>
+
+      <h3>Participants and relationships</h3>
+      <div class="diagram">
+        <div class="cap">Structure - elements accept a visitor, the visitor has one method per element</div>
+        <pre class="mermaid">
+classDiagram
+    class Expr {
+        &lt;&lt;interface&gt;&gt;
+        +accept(v Visitor) R
+    }
+    class Number {
+        +value double
+        +accept(v Visitor) R
+    }
+    class Add {
+        +left Expr
+        +right Expr
+        +accept(v Visitor) R
+    }
+    class Visitor {
+        &lt;&lt;interface&gt;&gt;
+        +visitNumber(n Number) R
+        +visitAdd(a Add) R
+    }
+    class EvalVisitor {
+        +visitNumber(n Number) R
+        +visitAdd(a Add) R
+    }
+    class PrintVisitor {
+        +visitNumber(n Number) R
+        +visitAdd(a Add) R
+    }
+    Expr <|.. Number
+    Expr <|.. Add
+    Visitor <|.. EvalVisitor
+    Visitor <|.. PrintVisitor
+    Number ..> Visitor : accept calls visitNumber
+    Add ..> Visitor : accept calls visitAdd
+        </pre>
+      </div>
+
+      <h3>A realistic AST visitor in Java</h3>
+      <pre><code>// Element hierarchy: a tiny expression AST
+interface Expr {
+    &lt;R&gt; R accept(Visitor&lt;R&gt; v);
+}
+
+record Number(double value) implements Expr {
+    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitNumber(this); }
+}
+
+record Add(Expr left, Expr right) implements Expr {
+    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitAdd(this); }
+}
+
+record Mul(Expr left, Expr right) implements Expr {
+    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitMul(this); }
+}
+
+// Visitor interface: one method per concrete element
+interface Visitor&lt;R&gt; {
+    R visitNumber(Number n);
+    R visitAdd(Add a);
+    R visitMul(Mul m);
+}
+
+// One whole operation = one visitor. Evaluate the tree to a double.
+class EvalVisitor implements Visitor&lt;Double&gt; {
+    public Double visitNumber(Number n) { return n.value(); }
+    public Double visitAdd(Add a) {
+        return a.left().accept(this) + a.right().accept(this);
+    }
+    public Double visitMul(Mul m) {
+        return m.left().accept(this) * m.right().accept(this);
+    }
+}
+
+// A second operation added with ZERO changes to Expr classes.
+class PrintVisitor implements Visitor&lt;String&gt; {
+    public String visitNumber(Number n) { return String.valueOf(n.value()); }
+    public String visitAdd(Add a) {
+        return "(" + a.left().accept(this) + " + " + a.right().accept(this) + ")";
+    }
+    public String visitMul(Mul m) {
+        return "(" + m.left().accept(this) + " * " + m.right().accept(this) + ")";
+    }
+}
+
+// Usage: (1 + 2) * 3
+Expr ast = new Mul(new Add(new Number(1), new Number(2)), new Number(3));
+double result = ast.accept(new EvalVisitor());   // 9.0
+String pretty = ast.accept(new PrintVisitor());  // ((1.0 + 2.0) * 3.0)</code></pre>
+      <p class="muted">Notice that <code>EvalVisitor</code> and <code>PrintVisitor</code> are entirely separate operations, yet neither required editing <code>Number</code>, <code>Add</code>, or <code>Mul</code>. The recursion lives in the visitor via <code>child.accept(this)</code>, so each visitor controls its own traversal and return type.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="eyebrow" style="display:none"></div>
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the double-dispatch mechanic on one node, a full recursive traversal of a small tree, and a document-tree render that alternates visit types.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Double dispatch: two calls select the code</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑 Client
+    participant Node as 🧩 Add element
+    participant Vis as 🧳 EvalVisitor
+
+    Client->>Node: accept(visitor)
+    Note over Node: 1st dispatch picks Add.accept
+    Node->>Vis: visitAdd(this)
+    Note over Vis: 2nd dispatch picks EvalVisitor.visitAdd
+    Vis-->>Node: computed value
+    Node-->>Client: result
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Recursive traversal of (1 + 2) evaluated by a visitor</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Client
+    participant Root as 🧩 Add
+    participant L as 🧩 Number 1
+    participant R as 🧩 Number 2
+    participant V as 🧳 EvalVisitor
+
+    C->>Root: accept(v)
+    Root->>V: visitAdd(this)
+    V->>L: left.accept(v)
+    L->>V: visitNumber(this)
+    V-->>L: 1.0
+    L-->>V: 1.0
+    V->>R: right.accept(v)
+    R->>V: visitNumber(this)
+    V-->>R: 2.0
+    R-->>V: 2.0
+    V-->>Root: 3.0
+    Root-->>C: 3.0
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Rendering a document tree with a visitor</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ Renderer
+    participant Doc as 🌳 Document
+    participant HV as 🧳 HtmlVisitor
+
+    App->>Doc: accept(htmlVisitor)
+    loop for each child node
+        Doc->>HV: child.accept(this)
+        alt node is Heading
+            HV-->>Doc: h2 markup
+        else node is Paragraph
+            HV-->>Doc: p markup
+        else node is Image
+            HV-->>Doc: img markup
+        end
+    end
+    Doc-->>App: full HTML string
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a bare element hierarchy to a running visitor operation, then to a second operation added for free.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Identify the object structure</h4><p>Pin down the node types you will operate on, such as AST expressions or document nodes. Visitor pays off when this set is stable and the operations grow.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Element API</span><h4>Add accept to the element interface</h4><p>Declare <code>accept(visitor)</code> on the base element type so every concrete node promises to hand itself to a visitor.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Visitor API</span><h4>Declare the Visitor interface</h4><p>Write one <code>visit</code> method per concrete element: <code>visitNumber</code>, <code>visitAdd</code>, and so on. This interface is the contract every operation implements.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Wire up</span><h4>Implement accept on each node</h4><p>In every concrete element, <code>accept</code> calls the matching method: <code>return v.visitAdd(this)</code>. This one line per class enables double dispatch.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Operation</span><h4>Write the first concrete visitor</h4><p>Build, for example, <code>EvalVisitor</code> that implements every <code>visit</code> method. All the evaluation logic lives here, in one cohesive class.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Traverse</span><h4>Recurse into children</h4><p>Inside composite visits, call <code>child.accept(this)</code> to descend. The visitor drives the walk and decides order, depth, and short-circuiting.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">State</span><h4>Carry accumulating state</h4><p>Let the visitor hold fields (a total, a symbol table, a StringBuilder) so a single pass gathers results across the whole structure.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Run</span><h4>Kick off from the root</h4><p>Call <code>root.accept(new EvalVisitor())</code>. The first dispatch resolves the node, the second resolves the operation, and the traversal unrolls.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Extend</span><h4>Add a new operation for free</h4><p>Need pretty-printing or JSON export? Write <code>PrintVisitor</code>. The element classes stay untouched, which is the whole point of the pattern.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Compose</span><h4>Combine or chain visitors</h4><p>Run a validating visitor, then an optimizing visitor, then a codegen visitor over the same tree. Each is independent and testable in isolation.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Maintain</span><h4>Manage element changes deliberately</h4><p>Adding a node type means updating every visitor. Accept that cost knowingly; it is the trade you made to keep operations open and cohesive.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Visitor is powerful but easy to misapply. These are the usual traps.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔁 Unstable element set</h4><p>If node types change often, every new type forces edits to every visitor. Visitor is the wrong choice when the hierarchy is volatile and operations are few.</p></div>
+        <div class="card"><h4>🕳️ Breaking encapsulation</h4><p>Visitors need access to element internals, so nodes end up exposing getters or public fields. This can leak implementation details the class would rather hide.</p></div>
+        <div class="card"><h4>🧨 Default catch-all visits</h4><p>A base visitor with a no-op default silently swallows new element types instead of failing loudly. You lose the compiler's help in finding unhandled cases.</p></div>
+        <div class="card"><h4>🌀 Hidden traversal order</h4><p>Mixing traversal logic into each visit method makes order implicit and inconsistent between visitors. Consider a separate traversal strategy or a base walker.</p></div>
+        <div class="card"><h4>🧱 Overkill for simple cases</h4><p>Two node types and one operation do not need accept, a visitor interface, and double dispatch. A plain method or a switch is clearer and shorter.</p></div>
+        <div class="card"><h4>🔗 Cyclic dependencies</h4><p>Elements import the visitor interface and visitors import every element, creating a tight two-way coupling that resists splitting the code into modules.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Visitor makes one axis of change cheap and the other expensive. Know which axis your system actually moves along.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>New operations without editing elements; related logic gathered per operation; double dispatch replaces type-switch ladders; a visitor can accumulate results across a whole traversal.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Adding an element type touches every visitor; often breaks element encapsulation; a lot of boilerplate; two-way coupling between elements and visitors.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>The element hierarchy is stable but operations keep growing; you have an AST, parse tree, document model, or shape hierarchy walked in many ways.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>Node types change often, the operations are few, or a language feature (pattern matching, sealed types) already gives you exhaustive, cheap dispatch.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Moderate. The mechanism is small but indirection and the accept/visit ceremony add cognitive load and files.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Composite (the tree Visitor walks), Iterator (an alternative traversal), Interpreter (Visitor often evaluates its grammar), Strategy (each visitor is a swappable operation).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Visitor when you expect many new operations over a fixed set of types. If you instead expect many new types over a fixed set of operations, keep the methods on the classes; Visitor would fight you on every new node.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three places Visitor earns its keep in production systems.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛠️</span><div><h3>1 · Compiler and interpreter ASTs</h3><div class="role">Pattern: many passes over one node set</div></div></div>
+        <p class="muted">A language front end parses source into an AST, then runs pass after pass over the same nodes.</p>
+        <ul>
+          <li>Separate visitors implement type checking, constant folding, and bytecode generation.</li>
+          <li>The node classes (literals, calls, loops) stay closed while new passes are added freely.</li>
+          <li>Each visitor carries its own state, such as a scope stack or an emitted-instruction buffer.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> New analyses ship as new visitor classes without destabilizing the grammar or the node hierarchy, which is exactly the change pattern a compiler needs.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📄</span><div><h3>2 · Document trees and rendering</h3><div class="role">Pattern: one model, many output formats</div></div></div>
+        <p class="muted">A rich-text or Markdown editor holds documents as a tree of headings, paragraphs, lists, and images.</p>
+        <ul>
+          <li>An HtmlVisitor renders to HTML, a LatexVisitor to LaTeX, a WordCountVisitor to a stat.</li>
+          <li>New export formats are new visitors; the node types never learn about output.</li>
+          <li>Visitors reuse a shared traversal so structure and formatting stay decoupled.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Adding a PDF or plain-text exporter is one self-contained class, so the document model remains a single source of truth across every format.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>3 · Static analysis and linters</h3><div class="role">Pattern: rules over a syntax tree</div></div></div>
+        <p class="muted">A linter walks a code AST to flag issues, and rule sets grow constantly.</p>
+        <ul>
+          <li>Each rule is a visitor that inspects specific node types and reports findings.</li>
+          <li>Rules run independently over the same parsed tree, so failures are isolated.</li>
+          <li>The parser and node model are shared and rarely change once the language is fixed.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Teams add and toggle lint rules without ever editing the parser, keeping a large rule catalog maintainable and easy to test rule by rule.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Language features have reshaped when Visitor is the right tool, but the underlying problem it solves is very much alive.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧵 Pattern matching rivals it</h4><p>Sealed types plus exhaustive <code>switch</code> in Java, Kotlin, and TypeScript-style unions give cheap, compiler-checked dispatch, often replacing hand-written visitors for simple cases.</p></div>
+        <div class="card"><h4>🌲 Still king for big ASTs</h4><p>Compilers, transpilers, and query engines keep using Visitor because passes multiply while the grammar stays fixed, the exact shape Visitor was built for.</p></div>
+        <div class="card"><h4>⚙️ Generated visitors</h4><p>Tools like ANTLR emit visitor and listener base classes from a grammar, so you subclass rather than write the boilerplate by hand.</p></div>
+        <div class="card"><h4>🔀 Listener variants</h4><p>Event-style listeners (enter/exit callbacks) separate traversal from action, a common evolution of Visitor in parsing frameworks and tree walkers.</p></div>
+        <div class="card"><h4>🧬 Functional fold</h4><p>In FP, a fold or catamorphism over an algebraic data type expresses the same idea; Visitor is the object-oriented spelling of that recursion scheme.</p></div>
+        <div class="card"><h4>🧰 Expression-tree tooling</h4><p>ORMs and rule engines walk expression trees with visitors to translate queries, rewrite predicates, and optimize plans at runtime.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Visitor remains the go-to when operations grow over a stable type hierarchy. Where languages offer exhaustive pattern matching, prefer it for small cases; where you have a real AST or document tree traversed many ways, Visitor still pays for its ceremony.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Visitor sits alongside the other patterns that structure and traverse object trees.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>The tree of elements a visitor typically walks.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔁</span><h4>Iterator</h4><p>An alternative way to traverse the same structure.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../interpreter/"><span class="ico">🧮</span><h4>Interpreter</h4><p>Grammars a visitor often evaluates or compiles.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎛️</span><h4>Strategy</h4><p>Each visitor is a swappable, self-contained operation.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Visitor pattern · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

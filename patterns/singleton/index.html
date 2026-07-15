@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Singleton Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Singleton design pattern: guaranteeing one instance with a global access point, lazy vs eager initialization, thread-safe implementations, why it is often an anti-pattern, and dependency injection as the alternative." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Creational Pattern</span>
+      <h1>The Singleton pattern - one instance, one global door</h1>
+      <p class="lede">Singleton guarantees that a class has exactly <strong>one instance</strong> and provides a single, <strong>global access point</strong> to it. It is the simplest creational pattern to describe and the easiest to misuse: get the initialization and threading right, and it is a clean way to model a truly unique resource; reach for it by reflex, and it becomes hidden global state that quietly wrecks your tests.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Single instance</span>
+        <span class="pill">Global access</span>
+        <span class="pill">Lazy vs eager</span>
+        <span class="pill">Thread safety</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is Singleton?</h2>
+      <p class="muted"><strong>Singleton</strong> is a creational design pattern that restricts a class to a single instance and exposes that instance through a global access point, typically a static <code>getInstance()</code> method. The constructor is made private so no other code can call <code>new</code>, and the class itself owns the one and only object it ever hands out.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Private constructor</h4>
+          <p>The constructor is hidden so callers cannot create their own copies. The class alone decides when and whether the instance is built.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Static holder</h4>
+          <p>A private static field stores the single instance. It is the class-level slot that all callers ultimately share.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚪</span> Global access point</h4>
+          <p>A public static <code>getInstance()</code> returns the shared instance, creating it on first use if needed.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Typical form</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Private constructor</strong></td><td>Blocks external instantiation via <code>new</code></td><td><code>private Singleton() {}</code></td></tr>
+            <tr><td><strong>Static instance field</strong></td><td>Holds the one shared object</td><td><code>private static Singleton instance</code></td></tr>
+            <tr><td><strong>Access method</strong></td><td>Returns the instance, building it if absent</td><td><code>public static getInstance()</code></td></tr>
+            <tr><td><strong>Init strategy</strong></td><td>Decides when the instance is created</td><td>Eager, lazy, or holder idiom</td></tr>
+            <tr><td><strong>Synchronization</strong></td><td>Keeps creation safe under threads</td><td>Locking, enum, class-loader</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a Singleton is two responsibilities glued together - the object's real job, and the guarantee that there is only one of it. That second responsibility is a global variable in disguise, which is exactly what makes the pattern both convenient and dangerous.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Singleton exists</h2>
+      <p class="muted">Some resources are genuinely unique: a single connection pool, one in-memory cache, a single hardware device handle. Creating several would be wrong or wasteful, and passing one around everywhere by hand is tedious. Singleton centralizes that "there is exactly one" rule in the class itself.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 Enforces uniqueness</h4><p>When more than one instance would corrupt state or duplicate a scarce resource, the private constructor makes a second copy impossible rather than merely discouraged.</p></div>
+        <div class="card"><h4>🌍 One well-known access point</h4><p>Any code can reach the shared object without threading it through constructors and method parameters, which is convenient for cross-cutting concerns like logging.</p></div>
+        <div class="card"><h4>💤 Controlled, lazy creation</h4><p>The instance can be built on first use rather than at startup, so expensive setup happens only if and when the object is actually needed.</p></div>
+        <div class="card"><h4>📉 Shared, coordinated state</h4><p>Caches, configuration, and counters that everyone must agree on live in one place, so there is a single source of truth instead of drifting copies.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Singleton explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Singleton is the <strong>one student ID card</strong> the registrar issues you. There is exactly one, everyone refers to the same number, and you cannot print yourself a second official copy.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a <strong>module-level constant object</strong> behind a factory method. The first call builds it, every later call gets the very same reference, and <code>new</code> is off the table.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a company's <strong>single official seal</strong>. Any department can stamp a document, but there is one authoritative seal, kept in one place, that everyone shares.</p></div>
+        <div class="card"><h4><span class="ico">🏛️</span> Everyday version</h4><p>A country has <strong>one president at a time</strong>. People refer to "the president" without naming anyone, and the office guarantees there is never two of them at once.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">A Singleton hides its constructor and exposes a static accessor. The interesting decisions are <strong>when</strong> the instance is created (eager vs lazy) and <strong>how</strong> creation stays correct when many threads call the accessor at once.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🌅</span> Eager initialization</h4>
+          <p>The instance is built when the class loads, in a static field. It is inherently thread-safe because the class loader guarantees one-time init, but the object is created even if never used.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌙</span> Lazy initialization</h4>
+          <p>The instance is built on the first <code>getInstance()</code> call. It saves work when unused, but the check-then-create step is a race under concurrency and needs care to stay safe.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - a private constructor plus a static accessor guarding one shared field</div>
+        <pre class="mermaid">
+classDiagram
+    class Singleton {
+        -static Singleton instance
+        -Singleton()
+        +static getInstance() Singleton
+        +doWork() void
+    }
+    class Client {
+        +run() void
+    }
+    Client ..&gt; Singleton : getInstance()
+    Singleton --&gt; Singleton : holds one instance
+        </pre>
+      </div>
+
+      <h3>Thread-safe lazy Singleton in Java</h3>
+      <pre><code>public final class Config {
+
+    // volatile so the half-built instance is never seen by another thread
+    private static volatile Config instance;
+
+    private final Map&lt;String, String&gt; settings;
+
+    private Config() {
+        settings = loadFromDisk();      // expensive, do it once
+    }
+
+    public static Config getInstance() {
+        Config result = instance;        // read the volatile field once
+        if (result == null) {            // first check (no lock, fast path)
+            synchronized (Config.class) {
+                result = instance;
+                if (result == null) {    // second check (inside the lock)
+                    instance = result = new Config();
+                }
+            }
+        }
+        return result;
+    }
+
+    public String get(String key) {
+        return settings.get(key);
+    }
+}</code></pre>
+      <p class="muted">This is <strong>double-checked locking</strong>. The first null check skips the lock once the instance exists, so the common path stays fast; the <code>volatile</code> keyword is what makes it correct, because without it another thread could observe a partially constructed object.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: lazy first-and-later access, a concurrent race resolved by double-checked locking, and dependency injection as the tested alternative.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Lazy creation on first call, cached reuse afterwards</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant A as First caller
+    participant S as Singleton class
+    participant O as Instance
+    participant B as Later caller
+
+    A->>S: getInstance()
+    S->>S: instance is null
+    S->>O: new Singleton()
+    O-->>S: built object
+    S->>S: store in static field
+    S-->>A: return instance
+    B->>S: getInstance()
+    S->>S: instance already set
+    S-->>B: return same instance
+    Note over A,B: both callers share one object
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Two threads race, double-checked locking keeps it single</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T1 as Thread 1
+    participant T2 as Thread 2
+    participant S as Singleton class
+    participant L as Lock
+
+    T1->>S: getInstance()
+    T2->>S: getInstance()
+    S-->>T1: instance null, enter lock path
+    S-->>T2: instance null, enter lock path
+    T1->>L: acquire
+    T2->>L: wait
+    T1->>S: recheck null, create instance
+    T1->>L: release
+    T2->>L: acquire
+    S-->>T2: recheck finds instance, skip create
+    T2->>L: release
+    Note over T1,T2: exactly one object created
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Dependency injection: the container owns the single instance</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as Startup
+    participant C as DI container
+    participant Svc as Service (one)
+    participant U as Consumer
+
+    App->>C: register Service as singleton scope
+    App->>C: resolve Consumer
+    alt Service not yet built
+        C->>Svc: create once
+        Svc-->>C: instance
+    else already built
+        C-->>C: reuse cached instance
+    end
+    C->>U: inject Service via constructor
+    C-->>App: ready Consumer
+    Note over C,U: one instance, but no global static
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 to 100 flow</h2>
+      <p class="muted">From deciding you need one instance to using it safely and testing around it - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Decide</span><h4>Confirm a single instance is required</h4><p>Ask whether more than one object would actually be wrong. If two copies are merely inconvenient, a normal object plus injection is a better fit than a Singleton.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Seal</span><h4>Make the constructor private</h4><p>Hide the constructor so no external code can call <code>new</code>. This is the mechanism that turns "please only make one" into an enforced guarantee.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Store</span><h4>Add a static instance field</h4><p>Declare a private static field to hold the one object. For lazy creation mark it <code>volatile</code> so concurrent reads stay correct.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Expose</span><h4>Write the static accessor</h4><p>Add a public static <code>getInstance()</code> that returns the shared field. This is the single global door every caller uses.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Choose</span><h4>Pick eager or lazy init</h4><p>Build eagerly at class load if the object is cheap and always needed; go lazy if construction is expensive or may never happen.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Protect</span><h4>Make creation thread-safe</h4><p>Guard lazy creation with double-checked locking, or sidestep locks entirely with the holder idiom or an enum. Never leave a bare check-then-create in concurrent code.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Harden</span><h4>Close the back doors</h4><p>Guard against reflection, serialization, and multiple class loaders that can each forge a second instance. An enum Singleton handles all three for free.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Use</span><h4>Call getInstance where needed</h4><p>Consumers ask the class for the instance and invoke its behavior. The first call constructs it; every later call reuses the cached object.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Smell-check</span><h4>Watch for hidden coupling</h4><p>Every direct <code>getInstance()</code> call is an invisible dependency. Count them; a class littered with Singleton lookups is hard to reason about and reuse.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Refactor</span><h4>Prefer injecting the instance</h4><p>Keep "only one" as a container scope or a single wiring in <code>main</code>, but pass it in through constructors so collaborators depend on an interface, not a static call.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Test</span><h4>Swap it in tests</h4><p>Because the dependency is injected, tests hand in a fake or mock instead of the real Singleton. No global state to reset between tests, no order-dependent flakiness.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Singleton is the pattern most likely to be labeled an anti-pattern, and usually for good reason. These are the traps.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Hidden global state</h4><p>A Singleton is a global variable wearing a class costume. Any method can mutate its state from anywhere, so bugs become non-local and behavior depends on invisible call history.</p></div>
+        <div class="card"><h4>🧪 Untestable code</h4><p>Classes that call <code>getInstance()</code> internally cannot be tested in isolation. You cannot substitute a fake, and shared state leaks between test cases causing order-dependent flakiness.</p></div>
+        <div class="card"><h4>🧵 Broken lazy init</h4><p>A naive lazy Singleton with a plain null check races under threads and can create two instances, or hand out a partially constructed object if <code>volatile</code> is missing.</p></div>
+        <div class="card"><h4>🔗 Tight coupling</h4><p>Direct static calls hard-wire callers to a concrete class. Dependencies are no longer visible in the constructor signature, so you cannot see what a class truly needs.</p></div>
+        <div class="card"><h4>🪞 Reflection &amp; serialization leaks</h4><p>Reflection can call a private constructor and deserialization can rebuild an object, both forging a second instance unless you defend against them explicitly.</p></div>
+        <div class="card"><h4>🧲 Singleton overuse</h4><p>Turning every manager, helper, and service into a Singleton "for convenience" creates a web of global objects with unclear lifetimes and startup ordering nightmares.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Singleton buys guaranteed uniqueness and easy access at the cost of testability and hidden coupling. Weigh both sides before reaching for it.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Guarantees one instance, gives a single access point, supports lazy expensive setup, and centralizes shared state in one authoritative place.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Introduces hidden global state, hurts testability and isolation, tightens coupling to a concrete class, and hides real dependencies from constructors.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>A resource is truly unique (a device handle, one connection pool) and the alternative genuinely cannot be a normal injected object.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>You only want convenient access, or the object holds mutable business state. Prefer dependency injection with a single-instance scope instead.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low to state, but subtle to get thread-safe and reflection-safe. The enum and holder idiom hide most of that complexity.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Factory Method and Abstract Factory (often singleton-scoped), Prototype (cloning vs sharing), Facade (a single entry point without enforced uniqueness).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you want "only one," use a DI container's singleton scope and inject it. Reserve the classic static Singleton for the rare cases where uniqueness must be enforced by the language itself, and reach for the enum Singleton when you do.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing Singleton, and its safer variants, in real systems.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>1 · Database connection pool</h3><div class="role">Pattern: one shared, expensive resource</div></div></div>
+        <p class="muted">An application must share a single pool of database connections so it never exhausts the database's connection limit.</p>
+        <ul>
+          <li>The pool is costly to build, so it is created lazily on first use behind a thread-safe accessor.</li>
+          <li>Every request borrows and returns connections from the one pool, keeping total connections bounded.</li>
+          <li>In modern stacks the pool is registered as a container singleton and injected, not fetched statically.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> connections stay within limits and setup happens once, while injection keeps the pool swappable for an in-memory test double.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🪵</span><div><h3>2 · Application logger</h3><div class="role">Pattern: cross-cutting access point</div></div></div>
+        <p class="muted">Code across every layer needs to write to the same logging backend with consistent configuration and buffering.</p>
+        <ul>
+          <li>A single logger instance owns the output sinks, formatters, and async buffer.</li>
+          <li>Classic implementations expose it statically, which is convenient but couples every class to the logger.</li>
+          <li>Frameworks now inject a logger per class, preserving one backend while restoring testable, explicit dependencies.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> consistent, buffered logging everywhere, with injection giving each class a named logger you can capture and assert in tests.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">⚙️</span><div><h3>3 · Runtime configuration &amp; enum registry</h3><div class="role">Pattern: enum Singleton for safe uniqueness</div></div></div>
+        <p class="muted">A service needs one authoritative, immutable configuration object that resists reflection and serialization attacks.</p>
+        <ul>
+          <li>Configuration is modeled as a single-value enum, which the JVM guarantees to instantiate exactly once.</li>
+          <li>The enum form is immune to reflection and deserialization forging a second instance, unlike a plain class.</li>
+          <li>Values are loaded once at class-load time and exposed as read-only accessors.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> a truly unique, tamper-resistant config object with zero locking code, courtesy of the language guaranteeing one instance.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">The need for "exactly one" never went away, but how we achieve it has shifted from static accessors toward container-managed lifetimes.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💉 DI containers won</h4><p>Spring, Guice, and .NET register services in singleton scope and inject them. You get one instance without the static call, and it is trivially replaceable in tests.</p></div>
+        <div class="card"><h4>🏅 Enum Singleton is the gold standard</h4><p>When you truly need a static Singleton in Java, the single-value enum is the recommended form because it is concise and safe against reflection and serialization.</p></div>
+        <div class="card"><h4>🪟 Holder idiom for lazy without locks</h4><p>The initialization-on-demand holder idiom uses a nested static class so the JVM's class-loading guarantees give you lazy, thread-safe init with no synchronization.</p></div>
+        <div class="card"><h4>📦 Module singletons in JS/TS</h4><p>An ES module is evaluated once, so exporting an instance gives a natural singleton without a class or static method - the runtime does the caching.</p></div>
+        <div class="card"><h4>🧊 Immutability defuses the risk</h4><p>Much of the harm comes from mutable global state. A stateless or immutable Singleton (pure config, constants) keeps the convenience with far fewer downsides.</p></div>
+        <div class="card"><h4>🧭 Taught as a cautionary tale</h4><p>Singleton remains the canonical example of a pattern that is easy to reach for and hard to live with, so it is now taught alongside its own anti-pattern critique.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> keep the goal, drop the reflex. When you need one instance, express it as a single wiring in your composition root or a container scope and inject it. Reserve the classic static Singleton, ideally the enum form, for the rare case where the language itself must enforce uniqueness.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Singleton sits among the other creational patterns and their structural cousins. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>Defers instantiation to subclasses; often kept singleton-scoped.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../abstract-factory/"><span class="ico">🧰</span><h4>Abstract Factory</h4><p>Builds families of objects behind one, usually single, factory.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>Cloning objects instead of sharing one global instance.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../facade/"><span class="ico">🚪</span><h4>Facade</h4><p>A single entry point to a subsystem, without enforced uniqueness.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Singleton · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

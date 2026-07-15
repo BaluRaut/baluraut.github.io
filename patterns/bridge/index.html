@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bridge Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Bridge structural design pattern: how it separates an abstraction from its implementation so both can vary independently, avoiding a combinatorial class explosion, with roles, diagrams, real code, and case studies." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>How the Bridge pattern actually works - decoupling what from how</h1>
+      <p class="lede">When one idea can vary along two axes at once, single inheritance forces you to multiply every combination into its own class. The Bridge pattern splits that idea into two hierarchies: an <strong>abstraction</strong> and an <strong>implementation</strong>, connected by a reference. Each side evolves on its own, so you add features by composition instead of exploding your class count.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Abstraction</span>
+        <span class="pill">Implementor</span>
+        <span class="pill">Composition over inheritance</span>
+        <span class="pill">Two axes of change</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Bridge pattern?</h2>
+      <p class="muted"><strong>Bridge</strong> is a structural pattern that decouples an abstraction from its implementation so the two can vary independently. Instead of binding a high-level concept directly to one low-level way of doing things through inheritance, the abstraction holds a <em>reference</em> to an implementation interface. That reference is the bridge: the abstraction delegates the concrete work across it, and either side can be extended without touching the other.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎨</span> Abstraction side</h4>
+          <p>The high-level control layer that clients use. It defines <em>what</em> operations exist and delegates the real work to an implementor it holds a reference to.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Implementor side</h4>
+          <p>The low-level primitive interface. It defines <em>how</em> the raw operations are performed, with concrete implementors for each platform or backend.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌉</span> The bridge</h4>
+          <p>The composition link between the two hierarchies. Swap the implementor at construction time and the same abstraction runs on a different backend.</p>
+        </div>
+      </div>
+
+      <h3>The four participating roles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Shapes example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abstraction</strong></td><td>Defines the high-level interface and holds a reference to an Implementor</td><td><code>Shape</code></td></tr>
+            <tr><td><strong>RefinedAbstraction</strong></td><td>Extends the abstraction with variants, still delegating drawing to the implementor</td><td><code>Circle</code>, <code>Square</code></td></tr>
+            <tr><td><strong>Implementor</strong></td><td>Declares the primitive operations the abstraction relies on</td><td><code>Renderer</code></td></tr>
+            <tr><td><strong>ConcreteImplementor</strong></td><td>Provides a specific realization of those primitives</td><td><code>SvgRenderer</code>, <code>CanvasRenderer</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> Bridge is one concept expressed as <em>two</em> class hierarchies wired together by composition rather than one hierarchy tangled by inheritance. Shapes vary on one axis; rendering backends vary on another. The bridge lets them cross without multiplying.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Bridge pattern exists</h2>
+      <p class="muted">The moment a type needs to vary along two independent dimensions, inheritance betrays you. Model <em>M</em> shapes across <em>N</em> renderers with subclassing and you get M times N classes: <code>SvgCircle</code>, <code>CanvasCircle</code>, <code>SvgSquare</code>, and so on. Bridge turns that product into a sum, M plus N.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💥 Kills the class explosion</h4><p>Two axes combined by inheritance grow multiplicatively. Split them into separate hierarchies joined by a reference and growth becomes additive: add one shape or one renderer, not one per combination.</p></div>
+        <div class="card"><h4>🔌 Swap implementations at runtime</h4><p>Because the abstraction only holds an interface, you can inject a different concrete implementor when constructing the object, or even switch it later, without recompiling the abstraction.</p></div>
+        <div class="card"><h4>🧩 Independent evolution</h4><p>Platform teams extend the implementor hierarchy while feature teams extend the abstraction hierarchy. Neither side breaks the other because they meet only at a stable interface.</p></div>
+        <div class="card"><h4>🙈 Hides platform detail</h4><p>Clients program against the abstraction and never see the concrete backend. The messy, platform-specific code stays sealed behind the implementor interface.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Bridge explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of a <strong>TV and its remote</strong>. The remote is the abstraction, the TV is the implementation. Any remote works with any brand of TV because they agree on a signal, so you can mix and match instead of buying one fused remote-plus-TV unit per brand.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is <strong>a class that holds an interface, not a subclass of it</strong>. Your <code>Shape</code> keeps a <code>Renderer</code> field and calls <code>renderer.drawCircle(...)</code>. Change the field and the same shape draws to SVG, Canvas, or the terminal.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Like a <strong>company and its payment providers</strong>. The billing workflow is one hierarchy; Stripe, PayPal, and bank transfer are another. Finance changes the workflow, integrations swap the provider, and the two teams never step on each other.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>A <strong>wall socket and appliances</strong>. The socket is a fixed interface; a lamp, a charger, and a kettle each plug into it. You do not build a new socket per appliance, you build to the shared plug shape.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Bridge has two cooperating hierarchies. The <strong>abstraction</strong> hierarchy defines the concept clients use; the <strong>implementor</strong> hierarchy defines the primitive operations. The abstraction stores an implementor reference and forwards every low-level call to it.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🎨</span> Abstraction hierarchy</h4>
+          <p><code>Shape</code> is the base abstraction holding a <code>Renderer</code>. <code>Circle</code> and <code>Square</code> are RefinedAbstractions that add shape-specific behavior yet still delegate the actual drawing across the bridge.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Implementor hierarchy</h4>
+          <p><code>Renderer</code> declares primitives like <code>drawCircle</code> and <code>drawLine</code>. <code>SvgRenderer</code> and <code>CanvasRenderer</code> implement them for their respective backends, unaware of any shape.</p>
+        </div>
+      </div>
+
+      <h3>The two hierarchies and the bridge between them</h3>
+      <div class="diagram">
+        <div class="cap">Structure - abstraction holds a reference to implementor; both hierarchies extend independently</div>
+        <pre class="mermaid">
+classDiagram
+    class Shape {
+        #Renderer renderer
+        +draw()
+        +resize(factor)
+    }
+    class Circle {
+        +draw()
+    }
+    class Square {
+        +draw()
+    }
+    class Renderer {
+        <<interface>>
+        +drawCircle(x, y, r)
+        +drawSquare(x, y, s)
+    }
+    class SvgRenderer {
+        +drawCircle(x, y, r)
+        +drawSquare(x, y, s)
+    }
+    class CanvasRenderer {
+        +drawCircle(x, y, r)
+        +drawSquare(x, y, s)
+    }
+    Shape <|-- Circle
+    Shape <|-- Square
+    Renderer <|.. SvgRenderer
+    Renderer <|.. CanvasRenderer
+    Shape o--> Renderer : bridge
+        </pre>
+      </div>
+
+      <h3>A realistic implementation in Java</h3>
+      <pre><code>// Implementor: the "how" primitives, one per rendering backend
+interface Renderer {
+    void drawCircle(double x, double y, double radius);
+    void drawSquare(double x, double y, double side);
+}
+
+// ConcreteImplementor A
+class SvgRenderer implements Renderer {
+    public void drawCircle(double x, double y, double r) {
+        System.out.printf("&lt;circle cx='%.0f' cy='%.0f' r='%.0f'/&gt;%n", x, y, r);
+    }
+    public void drawSquare(double x, double y, double s) {
+        System.out.printf("&lt;rect x='%.0f' y='%.0f' width='%.0f' height='%.0f'/&gt;%n", x, y, s, s);
+    }
+}
+
+// ConcreteImplementor B
+class CanvasRenderer implements Renderer {
+    public void drawCircle(double x, double y, double r) {
+        System.out.printf("ctx.arc(%.0f, %.0f, %.0f, 0, 2*PI)%n", x, y, r);
+    }
+    public void drawSquare(double x, double y, double s) {
+        System.out.printf("ctx.rect(%.0f, %.0f, %.0f, %.0f)%n", x, y, s, s);
+    }
+}
+
+// Abstraction: holds the bridge reference to an implementor
+abstract class Shape {
+    protected final Renderer renderer;   // the bridge
+    protected Shape(Renderer renderer) { this.renderer = renderer; }
+    public abstract void draw();
+}
+
+// RefinedAbstraction: adds shape-specific state, delegates drawing
+class Circle extends Shape {
+    private final double x, y, radius;
+    Circle(Renderer r, double x, double y, double radius) {
+        super(r); this.x = x; this.y = y; this.radius = radius;
+    }
+    public void draw() { renderer.drawCircle(x, y, radius); }
+}
+
+class Square extends Shape {
+    private final double x, y, side;
+    Square(Renderer r, double x, double y, double side) {
+        super(r); this.x = x; this.y = y; this.side = side;
+    }
+    public void draw() { renderer.drawSquare(x, y, side); }
+}
+
+// Client: mix any shape with any renderer, no combinatorial subclasses
+public class Demo {
+    public static void main(String[] args) {
+        Shape svgCircle    = new Circle(new SvgRenderer(), 10, 10, 5);
+        Shape canvasSquare = new Square(new CanvasRenderer(), 0, 0, 8);
+        svgCircle.draw();      // &lt;circle .../&gt;
+        canvasSquare.draw();   // ctx.rect(...)
+    }
+}</code></pre>
+      <p class="muted">Notice there is no <code>SvgCircle</code> or <code>CanvasSquare</code> class. Two shapes plus two renderers give four working combinations from just four classes, and adding a <code>TerminalRenderer</code> adds one class that every existing shape can immediately use.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: wiring the bridge at construction, a draw call crossing the bridge, and swapping the implementor at runtime.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Construction: injecting a concrete implementor into the abstraction</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Circle as 🎨 Circle
+    participant Svg as ⚙️ SvgRenderer
+
+    Client->>Svg: new SvgRenderer()
+    Svg-->>Client: renderer
+    Client->>Circle: new Circle(renderer, x, y, r)
+    Circle->>Circle: store renderer as bridge
+    Circle-->>Client: shape ready
+    Note over Circle,Svg: Abstraction now holds implementor by reference
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Draw: the abstraction delegates the primitive across the bridge</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Circle as 🎨 Circle
+    participant Renderer as ⚙️ Renderer
+
+    Client->>Circle: draw()
+    Circle->>Circle: prepare shape state
+    Circle->>Renderer: drawCircle(x, y, radius)
+    Renderer->>Renderer: emit backend-specific output
+    Renderer-->>Circle: done
+    Circle-->>Client: drawn
+    Note over Circle,Renderer: Abstraction knows what, implementor knows how
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Runtime swap: same abstraction, different concrete implementor</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Shape as 🎨 Shape
+    participant Svg as 🖼️ SvgRenderer
+    participant Canvas as 🕹️ CanvasRenderer
+
+    Client->>Shape: draw() with SvgRenderer
+    Shape->>Svg: drawCircle(...)
+    Svg-->>Shape: SVG markup
+    alt switch backend
+        Client->>Shape: setRenderer(CanvasRenderer)
+        Client->>Shape: draw()
+        Shape->>Canvas: drawCircle(...)
+        Canvas-->>Shape: canvas calls
+    end
+    Shape-->>Client: output on chosen backend
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From spotting the two axes of change to a fully decoupled, extensible design - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Find two axes of change</h4><p>Notice a type varying along two independent dimensions at once, like shape versus rendering backend, or message versus transport channel.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Diagnose</span><h4>See the class explosion coming</h4><p>Sketch what pure inheritance would cost: M times N subclasses. If that product is growing, Bridge is the fix.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Split</span><h4>Separate abstraction from implementation</h4><p>Decide which dimension is the high-level concept (abstraction) and which is the low-level mechanism (implementor).</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Define</span><h4>Declare the Implementor interface</h4><p>Write the primitive operations the abstraction needs, kept small and platform-neutral, such as <code>drawCircle</code> and <code>drawSquare</code>.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Build ConcreteImplementors</h4><p>Provide one class per backend, like <code>SvgRenderer</code> and <code>CanvasRenderer</code>, each realizing the primitives its own way.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Compose</span><h4>Give the Abstraction a reference</h4><p>Add an implementor field to the base abstraction. This reference is the bridge over which all low-level work is delegated.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Refine</span><h4>Add RefinedAbstractions</h4><p>Extend the abstraction with variants like <code>Circle</code> and <code>Square</code> that add state and still delegate drawing through the bridge.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Inject</span><h4>Wire them at construction</h4><p>The client picks a concrete implementor and passes it into the abstraction. Dependency injection keeps the choice external.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Delegate</span><h4>Run operations across the bridge</h4><p>Calling <code>draw()</code> forwards to <code>renderer.drawCircle(...)</code>. The abstraction never knows which backend answers.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>Grow either side alone</h4><p>Add a new shape or a new renderer in isolation. Every existing combination keeps working, and new pairings come for free.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Enjoy additive growth</h4><p>Your design now scales as M plus N instead of M times N, with platform detail hidden and implementations swappable.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Bridge shines when you truly have two axes. Applied without them, it just adds indirection. These are the usual traps.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 Only one axis of change</h4><p>If the implementation never varies, Bridge adds a pointless layer. A single implementor with no siblings means you introduced ceremony for nothing. Wait until the second axis is real.</p></div>
+        <div class="card"><h4>🔀 Confusing it with Adapter</h4><p>Adapter retrofits two existing, incompatible interfaces after the fact. Bridge is designed up front so both hierarchies can evolve. Reaching for Bridge to glue a legacy class is the wrong tool.</p></div>
+        <div class="card"><h4>🧱 Leaky Implementor interface</h4><p>Letting backend-specific concepts bleed into the implementor primitives couples the abstraction to one platform. Keep the interface minimal and truly generic, or the bridge stops being swappable.</p></div>
+        <div class="card"><h4>🪆 Over-engineering early</h4><p>Introducing Bridge before you have two shapes and two renderers is speculative generality. Refactor toward it when the class matrix actually starts to grow, not before.</p></div>
+        <div class="card"><h4>🕳️ God Implementor interface</h4><p>Cramming every possible primitive into one fat implementor forces every concrete backend to implement operations it does not need. Split responsibilities rather than swelling one interface.</p></div>
+        <div class="card"><h4>🔗 Abstraction reaching around the bridge</h4><p>If the abstraction downcasts the implementor or calls backend-specific methods, the decoupling is broken. All communication must go through the declared primitive interface.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Bridge buys flexibility with an extra layer of indirection. Weigh the two axes against the added structure before adopting it.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Turns M times N combinations into M plus N classes, lets abstraction and implementation evolve independently, hides platform detail, and allows swapping implementations at runtime.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Adds indirection and up-front design effort. Overkill when only one dimension varies, and the two-hierarchy structure can be harder to grasp at first.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>A type varies along two independent dimensions, you want to switch or extend implementations without recompiling clients, or you must hide a platform-specific backend behind a stable interface.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>There is only one implementation and no realistic second axis, or you are gluing two pre-existing incompatible interfaces (that is Adapter's job).</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Moderate. Two parallel hierarchies plus a delegation link. More moving parts than plain inheritance, far fewer than an exploded subclass matrix.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Adapter (retrofits interfaces), Strategy (swaps an algorithm), State (swaps behavior by state), Abstract Factory (can build matched implementor sets).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Bridge the moment you catch yourself naming a class after two things at once, like <code>SvgCircle</code> or <code>TcpJsonMessage</code>. That compound name is the class explosion warning you, and the bridge is how you split it back apart.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative places where Bridge tames a two-axis design in production.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖥️</span><div><h3>1 · Cross-platform UI toolkit</h3><div class="role">Pattern: widgets over native rendering backends</div></div></div>
+        <p class="muted">A GUI framework must draw buttons and sliders identically on Windows, macOS, and Linux without a subclass per widget per OS.</p>
+        <ul>
+          <li>Widgets (<code>Button</code>, <code>Slider</code>) form the abstraction hierarchy.</li>
+          <li>A <code>WindowSystem</code> implementor has Win32, Cocoa, and X11 concrete backends.</li>
+          <li>Adding a new widget or a new OS costs one class, not one per combination.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A single widget codebase renders natively on every platform, and porting to a new OS means implementing one interface rather than rewriting every control.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>2 · Database driver layer</h3><div class="role">Pattern: query API over multiple engines</div></div></div>
+        <p class="muted">An application wants one query and transaction API that runs against PostgreSQL, MySQL, and SQLite interchangeably.</p>
+        <ul>
+          <li>The high-level <code>Connection</code> and <code>Query</code> classes are the abstraction.</li>
+          <li>A <code>Driver</code> implementor has one concrete class per database engine.</li>
+          <li>Swapping databases is a config change, not a code rewrite, because the abstraction is engine-agnostic.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Business logic is written once against a stable API, and supporting a new engine means adding a driver that the entire application can immediately use.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔔</span><div><h3>3 · Notification service over channels</h3><div class="role">Pattern: message types over delivery transports</div></div></div>
+        <p class="muted">A platform sends alerts, receipts, and reminders across email, SMS, and push, and must not create a class per message-times-channel pair.</p>
+        <ul>
+          <li><code>Notification</code> subtypes (Alert, Receipt, Reminder) form the abstraction.</li>
+          <li>A <code>Channel</code> implementor abstracts email, SMS, and push sending.</li>
+          <li>Any message can go out over any channel, chosen per user preference at send time.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Product adds new notification types freely while infrastructure adds new channels freely, and the two roadmaps never collide in the same class.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Bridge predates most of today's stacks, yet its core idea, decouple the concept from the mechanism, is more relevant than ever as systems target many backends at once.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>☁️ Cloud provider abstraction</h4><p>Infrastructure code that runs on AWS, GCP, and Azure is Bridge at scale: one resource abstraction over many provider implementors selected at deploy time.</p></div>
+        <div class="card"><h4>💉 Dependency injection everywhere</h4><p>Modern DI containers wire the implementor into the abstraction for you. Bridge is the shape that injection was made to populate.</p></div>
+        <div class="card"><h4>🧪 Testability by design</h4><p>Because the implementor is an interface, you inject a fake or in-memory backend in tests and exercise the abstraction with zero real I/O.</p></div>
+        <div class="card"><h4>🔌 Ports and adapters</h4><p>Hexagonal architecture's ports are implementor interfaces and adapters are concrete implementors. Bridge is the object-level heart of that style.</p></div>
+        <div class="card"><h4>🎨 Rendering and graphics APIs</h4><p>Engines targeting Vulkan, Metal, and DirectX keep scene logic as the abstraction and the graphics API as the swappable implementor.</p></div>
+        <div class="card"><h4>🧩 Plugin ecosystems</h4><p>Editors and tools that load third-party backends rely on a stable implementor contract so new plugins slot in without touching the core.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> whenever a concept has to run on many mechanisms, and both the concepts and the mechanisms keep growing, Bridge is how you keep the design additive instead of combinatorial. It is composition over inheritance, formalized.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Bridge sits among patterns that also trade inheritance for composition. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../adapter/"><span class="ico">🔌</span><h4>Adapter</h4><p>Retrofits two existing incompatible interfaces after the fact.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../abstract-factory/"><span class="ico">🏭</span><h4>Abstract Factory</h4><p>Builds matched families of implementors to bridge against.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">♟️</span><h4>Strategy</h4><p>Swaps an interchangeable algorithm behind one interface.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../state/"><span class="ico">🔄</span><h4>State</h4><p>Swaps object behavior as its internal state changes.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Bridge · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

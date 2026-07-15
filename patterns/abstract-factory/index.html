@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abstract Factory Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Abstract Factory pattern: how it creates families of related objects without naming concrete classes, how it differs from Factory Method, sequence diagrams, a 0-100 flow, case studies, and modern relevance." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Creational Pattern</span>
+      <h1>Abstract Factory - families of objects that belong together</h1>
+      <p class="lede">Some objects only make sense together: a Windows button with a Windows checkbox, a dark-theme card with a dark-theme scrollbar. Abstract Factory hands you one factory per family so you can <strong>create whole sets of related products</strong> without naming a single concrete class, and it guarantees that everything you build comes from the same family.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Product families</span>
+        <span class="pill">Interfaces over classes</span>
+        <span class="pill">Consistency guarantee</span>
+        <span class="pill">Swappable platforms</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is Abstract Factory?</h2>
+      <p class="muted"><strong>Abstract Factory</strong> provides an interface for creating families of related or dependent objects without specifying their concrete classes. Client code talks only to abstract product interfaces (Button, Checkbox) and one abstract factory interface (GUIFactory). At runtime you plug in a single concrete factory (WindowsFactory or MacFactory), and every product it produces is guaranteed to belong to the same family.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🏭</span> The abstract factory</h4>
+          <p>An interface with one create method per product kind: <code>createButton()</code>, <code>createCheckbox()</code>. It names <em>what</em> can be built, never the concrete type.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">👪</span> Product families</h4>
+          <p>Each concrete factory produces one coherent set. A <code>MacFactory</code> only ever returns Mac widgets, so a Mac button never sits next to a Windows checkbox.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Client stays blind</h4>
+          <p>The client is handed a factory and abstract products. It never sees <code>new WindowsButton()</code>, so it works with any family you inject.</p>
+        </div>
+      </div>
+
+      <h3>The core roles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abstract Factory</strong></td><td>Declares creation methods for each abstract product</td><td><code>GUIFactory</code></td></tr>
+            <tr><td><strong>Concrete Factory</strong></td><td>Implements those methods for one family</td><td><code>WindowsFactory</code>, <code>MacFactory</code></td></tr>
+            <tr><td><strong>Abstract Product</strong></td><td>Interface the client depends on</td><td><code>Button</code>, <code>Checkbox</code></td></tr>
+            <tr><td><strong>Concrete Product</strong></td><td>A family-specific implementation</td><td><code>WindowsButton</code>, <code>MacCheckbox</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Uses factory + products through interfaces only</td><td><code>Application</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> Factory Method makes <em>one</em> product through inheritance. Abstract Factory makes a <em>set</em> of related products through composition. You inject one factory and get a matched suite, never a mismatched pair.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Abstract Factory exists</h2>
+      <p class="muted">The moment your code scatters <code>new ConcreteThing()</code> calls across many files, swapping the whole family becomes a search-and-replace nightmare, and nothing stops you from mixing incompatible parts. Abstract Factory centralizes the choice of family into one object.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Guarantees compatibility</h4><p>Because one factory builds the whole set, products always match. You cannot accidentally pair a dark-theme scrollbar with a light-theme panel - the type system won't let a factory return mixed parts.</p></div>
+        <div class="card"><h4>🔀 Swap families in one line</h4><p>Choosing Windows vs Mac, or MySQL vs Postgres, becomes a single decision at startup: pick the concrete factory. The rest of the app never changes.</p></div>
+        <div class="card"><h4>🚪 Decouples client from concretes</h4><p>Client code depends only on interfaces, honoring the Dependency Inversion Principle. Adding a new family does not touch existing client code.</p></div>
+        <div class="card"><h4>🎯 Single Responsibility</h4><p>Object creation lives in factories, not smeared through business logic. Construction rules for a family sit in one place, easy to find and test.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Abstract Factory explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It's like a <strong>themed stationery set</strong>. Pick the "space" set and you get a space notebook, space pen, and space folder that all match. Pick "ocean" and everything switches together. You never end up with an ocean pen in a space folder.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It's a <strong>toolbox interface with interchangeable brands</strong>. Your code calls <code>toolbox.getWrench()</code> and <code>toolbox.getDrill()</code>. Hand it the DeWalt toolbox or the Makita toolbox at startup; the calling code is identical either way.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>furniture catalog by collection</strong>. A hotel orders the "Modern" collection and gets a matching chair, sofa, and table. Switching to "Victorian" reorders the whole coordinated set from one supplier, guaranteeing they look right together.</p></div>
+        <div class="card"><h4><span class="ico">🍔</span> Everyday version</h4><p>A <strong>fast-food combo meal</strong>. Order "combo 2" and the kitchen assembles a specific burger, side, and drink that go together. You choose the combo, not each item, and the crew guarantees the set is consistent.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">You define abstract interfaces for the factory and for each product. Concrete factories implement the factory interface, returning concrete products of a single family. The client receives one factory and builds everything through it.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧱</span> Define the contracts</h4>
+          <p>Write a <code>Button</code> and <code>Checkbox</code> interface, then a <code>GUIFactory</code> interface with a create method for each. These are the only types the client will ever import.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎚️</span> Wire the family at the edge</h4>
+          <p>At startup, detect the OS or config and instantiate the matching concrete factory once. Inject it into the client so the choice of family is made in exactly one spot.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - client depends on interfaces, factories produce whole families</div>
+        <pre class="mermaid">
+classDiagram
+    class GUIFactory {
+        <<interface>>
+        +createButton() Button
+        +createCheckbox() Checkbox
+    }
+    class Button {
+        <<interface>>
+        +render()
+    }
+    class Checkbox {
+        <<interface>>
+        +toggle()
+    }
+    class WindowsFactory {
+        +createButton() Button
+        +createCheckbox() Checkbox
+    }
+    class MacFactory {
+        +createButton() Button
+        +createCheckbox() Checkbox
+    }
+    GUIFactory <|.. WindowsFactory
+    GUIFactory <|.. MacFactory
+    Button <|.. WindowsButton
+    Button <|.. MacButton
+    Checkbox <|.. WindowsCheckbox
+    Checkbox <|.. MacCheckbox
+    WindowsFactory ..> WindowsButton
+    WindowsFactory ..> WindowsCheckbox
+    MacFactory ..> MacButton
+    MacFactory ..> MacCheckbox
+    Client --> GUIFactory
+    Client --> Button
+    Client --> Checkbox
+        </pre>
+      </div>
+
+      <h3>A realistic implementation in Java</h3>
+      <pre><code>// Abstract products - the client depends only on these
+interface Button   { void render(); }
+interface Checkbox { void toggle(); }
+
+// Abstract factory - one create method per product kind
+interface GUIFactory {
+    Button   createButton();
+    Checkbox createCheckbox();
+}
+
+// Family 1: Windows
+class WindowsButton   implements Button   { public void render() { System.out.println("[ Win Button ]"); } }
+class WindowsCheckbox implements Checkbox { public void toggle() { System.out.println("Win check toggled"); } }
+class WindowsFactory  implements GUIFactory {
+    public Button   createButton()   { return new WindowsButton(); }
+    public Checkbox createCheckbox() { return new WindowsCheckbox(); }
+}
+
+// Family 2: macOS
+class MacButton   implements Button   { public void render() { System.out.println("( Mac Button )"); } }
+class MacCheckbox implements Checkbox { public void toggle() { System.out.println("Mac check toggled"); } }
+class MacFactory  implements GUIFactory {
+    public Button   createButton()   { return new MacButton(); }
+    public Checkbox createCheckbox() { return new MacCheckbox(); }
+}
+
+// Client - never mentions a concrete product
+class Application {
+    private final Button   button;
+    private final Checkbox checkbox;
+    Application(GUIFactory factory) {          // family injected once
+        this.button   = factory.createButton();
+        this.checkbox = factory.createCheckbox();
+    }
+    void paint() { button.render(); checkbox.toggle(); }
+}
+
+class Main {
+    public static void main(String[] args) {
+        GUIFactory factory = System.getProperty("os.name").startsWith("Mac")
+                ? new MacFactory()
+                : new WindowsFactory();
+        new Application(factory).paint();      // matched family, guaranteed
+    }
+}</code></pre>
+      <p class="muted">Notice that <code>Application</code> never writes <code>new WindowsButton()</code>. It receives a <code>GUIFactory</code> and gets a coherent set. Choosing the family happens once, in <code>main</code>, so the widgets can never be mismatched.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: selecting the family at startup, building a matched set, and swapping the whole family without touching the client.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Startup: pick one concrete factory for the family</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Main as 🚀 Main
+    participant Env as 🖥️ Runtime env
+    participant App as 📦 Application
+
+    Main->>Env: Which platform am I on
+    Env-->>Main: macOS
+    Main->>Main: Choose MacFactory
+    Main->>App: new Application(macFactory)
+    Note over Main,App: Family chosen once, at the edge
+    App-->>Main: ready
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Build: client asks the factory for a matched set</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 📦 Application
+    participant F as 🏭 MacFactory
+    participant B as 🔘 MacButton
+    participant C as ☑️ MacCheckbox
+
+    App->>F: createButton()
+    F->>B: new MacButton()
+    B-->>F: button
+    F-->>App: Button (Mac)
+    App->>F: createCheckbox()
+    F->>C: new MacCheckbox()
+    C-->>F: checkbox
+    F-->>App: Checkbox (Mac)
+    Note over App,C: Both products from the same family
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Swap: change the family, client code untouched</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Main as 🚀 Main
+    participant App as 📦 Application
+    participant WF as 🪟 WindowsFactory
+
+    Main->>Main: Config says platform = Windows
+    Main->>WF: new WindowsFactory()
+    Main->>App: new Application(windowsFactory)
+    alt same client, new family
+        App->>WF: createButton()
+        WF-->>App: Button (Windows)
+        App->>WF: createCheckbox()
+        WF-->>App: Checkbox (Windows)
+    end
+    Note over Main,WF: No client edits, only the injected factory changed
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a tangle of hardcoded constructors to a clean, swappable family of products - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice related objects</h4><p>You see a group of objects that must vary together: button, checkbox, and menu that all need to match one platform or theme.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Group</span><h4>Map the product families</h4><p>List the product kinds down one axis (Button, Checkbox) and the families across the other (Windows, Mac). The grid defines what you must build.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Abstract</span><h4>Declare product interfaces</h4><p>Write one interface per product kind - <code>Button</code>, <code>Checkbox</code> - capturing only the behavior clients rely on.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Contract</span><h4>Declare the factory interface</h4><p>Create <code>GUIFactory</code> with a create method returning each abstract product. This is the single seam the client depends on.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Build concrete products</h4><p>Implement each product for every family: <code>WindowsButton</code>, <code>MacButton</code>, and so on. Each is family-specific but honors the shared interface.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Assemble</span><h4>Build one factory per family</h4><p>Write <code>WindowsFactory</code> and <code>MacFactory</code>. Each returns only its own family's concrete products, guaranteeing internal consistency.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Inject</span><h4>Pass the factory to the client</h4><p>Refactor the client to accept a <code>GUIFactory</code> in its constructor instead of calling <code>new</code> directly. Now it is family-agnostic.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Select</span><h4>Choose the family at the edge</h4><p>At startup, read the OS, config, or feature flag and instantiate the one matching concrete factory. This is the only place the concrete type appears.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Create</span><h4>Client builds a matched set</h4><p>The client calls <code>createButton()</code> and <code>createCheckbox()</code>. Every returned object comes from the same family, so nothing clashes.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>Add a whole new family</h4><p>Need a Linux look? Add <code>LinuxFactory</code> plus its products. No existing client or factory changes - the open/closed principle in action.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Swap families freely</h4><p>Switching platform or theme is now a one-line change to which factory you construct. The app runs identically, always with a coherent set.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Abstract Factory pays off with stable families and multiple platforms. Reach for it too early and you drown in ceremony.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🥱 Premature abstraction</h4><p>If you only ever have one family, the extra interfaces are pure overhead. A plain constructor is clearer until a second family actually appears.</p></div>
+        <div class="card"><h4>➕ New product = touch everything</h4><p>Adding a product kind means changing the factory interface and every concrete factory. Families are easy to add; products are expensive. Design the product axis carefully up front.</p></div>
+        <div class="card"><h4>🔎 Leaking concrete types</h4><p>If client code downcasts to <code>WindowsButton</code> or checks <code>instanceof</code>, the abstraction is broken and the consistency guarantee is gone.</p></div>
+        <div class="card"><h4>🧨 Class explosion</h4><p>With M product kinds and N families you get M x N concrete classes plus N factories. On large grids this balloons fast and gets hard to navigate.</p></div>
+        <div class="card"><h4>🔀 Confusing it with Factory Method</h4><p>Using inheritance and a subclass per product when you actually need a family of products, or vice versa, leads to awkward, forced hierarchies.</p></div>
+        <div class="card"><h4>🌍 Global factory singleton</h4><p>Reaching for a hidden global factory instead of injecting it hides the dependency, hurts testability, and makes swapping families at runtime awkward.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Abstract Factory buys consistency and swappability at the cost of upfront structure. Weigh it against how many families you truly need.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Guarantees products from one family are used together; decouples client from concrete classes; isolates construction; adding a new family is trivial and closed to existing code.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Many interfaces and classes even for small grids; adding a new <em>product kind</em> ripples through the factory interface and every concrete factory; can feel like heavy ceremony.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>Your system must work with several families of related products (cross-platform UI, multiple DB backends, themes) and you want to enforce that a family is never mixed.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>There is only one family, or products are unrelated and vary independently. A simple factory or plain constructor is lighter and clearer.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Moderate. More moving parts than Factory Method, but each part is small. Cost scales with product kinds (hard to add) more than families (easy to add).</td></tr>
+            <tr><td><strong>Related</strong></td><td>Factory Method (one product via inheritance), Builder (step-by-step assembly), Prototype (clone instead of construct), Bridge (separate abstraction from implementation).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> Choose Abstract Factory when the set of product <em>kinds</em> is stable but the number of <em>families</em> will grow. If instead you keep adding new product kinds, the pattern fights you - reconsider the design.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative places where families of related objects must stay consistent.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖥️</span><div><h3>1 · Cross-platform UI toolkit</h3><div class="role">Pattern: one widget family per operating system</div></div></div>
+        <p class="muted">A desktop app must look native on Windows, macOS, and Linux without branching UI code everywhere.</p>
+        <ul>
+          <li>A <code>GUIFactory</code> exposes <code>createButton</code>, <code>createCheckbox</code>, and <code>createMenu</code>.</li>
+          <li>One concrete factory per OS returns natively styled widgets from that platform.</li>
+          <li>The app detects the OS at startup and injects the matching factory once.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Every screen renders a consistent native look, and adding a new platform means writing one factory plus its widgets, with zero changes to existing screens.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>2 · Pluggable database backends</h3><div class="role">Pattern: a family of DB objects per vendor</div></div></div>
+        <p class="muted">An ORM must support MySQL and PostgreSQL, each needing its own connection, command, and dialect objects that must match.</p>
+        <ul>
+          <li>A <code>DbFactory</code> creates <code>Connection</code>, <code>Command</code>, and <code>QueryBuilder</code> objects.</li>
+          <li><code>MySqlFactory</code> and <code>PostgresFactory</code> return only their vendor's implementations.</li>
+          <li>Config picks the factory, so a Postgres command can never run on a MySQL connection.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Switching database vendors is a config change, and the type system prevents vendor-mismatched objects from ever being combined.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>3 · Theming a design system</h3><div class="role">Pattern: coherent light and dark component sets</div></div></div>
+        <p class="muted">A web component library needs light and dark themes where every element - card, input, tooltip - matches the active theme.</p>
+        <ul>
+          <li>A <code>ThemeFactory</code> produces styled cards, inputs, and tooltips.</li>
+          <li><code>LightThemeFactory</code> and <code>DarkThemeFactory</code> each yield a fully coordinated set.</li>
+          <li>A single toggle swaps the factory, re-rendering the whole UI in one theme.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Themes stay internally consistent with no half-styled screens, and new themes drop in as additional factories without touching component logic.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Abstract Factory is decades old, but the problem it solves - swapping coherent families behind a stable interface - is more common than ever.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💉 Dependency injection</h4><p>Modern DI containers are Abstract Factory at scale: you bind an interface to an implementation set once, and the container wires a consistent family throughout the app.</p></div>
+        <div class="card"><h4>☁️ Cloud provider abstraction</h4><p>Libraries that target AWS, Azure, and GCP expose one factory per cloud so storage, queue, and secrets clients always come from the same provider.</p></div>
+        <div class="card"><h4>🧪 Test doubles</h4><p>Injecting a fake factory lets tests supply a whole family of stub products at once, keeping unit tests isolated from real platform code.</p></div>
+        <div class="card"><h4>🔧 Feature-flagged rollouts</h4><p>Swapping a factory behind a flag ships a new coherent implementation set to some users while everyone else keeps the old family.</p></div>
+        <div class="card"><h4>🌐 Multi-tenant systems</h4><p>Per-tenant factories deliver tenant-specific but internally consistent objects - billing, storage, and policy - selected by tenant at request time.</p></div>
+        <div class="card"><h4>🧱 Functional variants</h4><p>In languages with first-class functions, the factory can shrink to a record of constructor functions, but the family-consistency idea is identical.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Whenever you must swap a matched set of implementations behind one stable seam and guarantee they are never mixed, you are reaching for Abstract Factory - whether you call it that or a DI binding.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Abstract Factory sits among the creational and structural patterns. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>Creates one product via inheritance, not a family.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../builder/"><span class="ico">🧱</span><h4>Builder</h4><p>Assembles one complex object step by step.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>Produces objects by cloning existing ones.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../bridge/"><span class="ico">🌉</span><h4>Bridge</h4><p>Splits abstraction from implementation to vary both.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Abstract Factory · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

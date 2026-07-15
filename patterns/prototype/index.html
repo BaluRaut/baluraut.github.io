@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Prototype creational design pattern: cloning objects, shallow vs deep copy, prototype registries, avoiding expensive initialization, clone() pitfalls, diagrams, a 0-100 flow, and case studies." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Creational Pattern</span>
+      <h1>The Prototype pattern - build new objects by cloning</h1>
+      <p class="lede">Some objects are expensive to build from scratch: they load config, hit a database, or parse a big file just to reach a usable state. The Prototype pattern sidesteps that by <strong>cloning</strong> a fully-formed instance instead of constructing a new one. You keep a ready-made example around, then copy it whenever you need another like it.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">clone()</span>
+        <span class="pill">Shallow vs deep copy</span>
+        <span class="pill">Prototype registry</span>
+        <span class="pill">Copy constructors</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Prototype pattern?</h2>
+      <p class="muted"><strong>Prototype</strong> is a creational pattern that creates new objects by <em>copying</em> an existing instance, the prototype, rather than instantiating a class directly. The object itself knows how to produce a copy of itself, so the code that needs a new object does not need to know its concrete type or how to configure it. You clone a template and tweak the differences.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Clone, don't construct</h4>
+          <p>A <code>clone()</code> method returns a new object that starts life as a copy of an existing one, already populated and configured.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🙈</span> Hides concrete types</h4>
+          <p>Callers hold a prototype interface and clone it. They never call <code>new ConcreteThing()</code>, so they stay decoupled from the class.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗂️</span> Registry of templates</h4>
+          <p>A registry maps keys to pre-built prototypes. Ask it by name and it hands back a fresh clone ready to use.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Typical form</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Prototype interface</strong></td><td>Declares the copy operation clients call</td><td><code>Cloneable</code>, a <code>clone()</code> method, or <code>copy()</code></td></tr>
+            <tr><td><strong>Concrete prototype</strong></td><td>Implements how to copy itself, field by field</td><td>Copy constructor or overridden <code>clone()</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Requests a copy without knowing the concrete class</td><td>Calls <code>prototype.clone()</code></td></tr>
+            <tr><td><strong>Registry</strong></td><td>Stores named prototypes to clone on demand</td><td><code>Map&lt;String, Prototype&gt;</code></td></tr>
+            <tr><td><strong>Copy strategy</strong></td><td>Decides shallow vs deep for each reference field</td><td>Shallow, deep, or mixed per field</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the object is its own factory. Instead of a separate builder telling the system how to assemble a thing, a finished thing tells the system how to reproduce itself. The hard question is never "can I copy it" but "how deep does the copy go".</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Prototype pattern exists</h2>
+      <p class="muted">Direct construction couples you to concrete classes and forces you to redo expensive setup every time. When two objects differ by only a few fields, rebuilding from zero is wasteful and error-prone. Cloning a known-good template is faster and safer.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚡ Skips expensive setup</h4><p>If an object needs a slow init (parsing, network, heavy computation), you pay that cost once for the prototype and then clone cheaply for every subsequent instance.</p></div>
+        <div class="card"><h4>🔌 Decouples from classes</h4><p>Clients clone through an interface, so they add or swap concrete types at runtime without touching a giant <code>switch</code> or a hardcoded <code>new</code>.</p></div>
+        <div class="card"><h4>🎛️ Captures configured state</h4><p>A prototype can be a fully tuned object with dozens of set fields. Cloning it preserves that configuration instead of re-specifying it each time.</p></div>
+        <div class="card"><h4>➕ Reduces subclassing</h4><p>Rather than a factory subclass per variant, you register configured instances. New variants become data, not new classes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Prototype explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is a <strong>photocopier for your notes</strong>. Instead of rewriting a full page of formulas from scratch, you copy the finished page, then scribble your own edits in the margins.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is <strong>Ctrl+C, Ctrl+V for objects</strong>. You have a well-configured instance in memory; cloning it gives a second independent object without re-running the constructor and all its setup.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>document template</strong>. Legal keeps a master contract; each new deal starts as a copy of that master, then you fill in names and dates rather than drafting from a blank page.</p></div>
+        <div class="card"><h4><span class="ico">🍪</span> Everyday version</h4><p>A <strong>cookie cutter</strong> stamps out identical shapes from one master form. Each cookie is separate, but they all inherit the shape of the cutter instantly.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">A prototype exposes a <strong>copy operation</strong>. The client calls it and gets back a new, independent object. The real work is in how that copy handles reference fields: a <strong>shallow copy</strong> shares them, a <strong>deep copy</strong> duplicates them recursively.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🪞</span> Shallow copy</h4>
+          <p>Copies primitives and copies each reference as-is. The clone and original point at the <em>same</em> nested objects. Fast, but mutations bleed across copies.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌊</span> Deep copy</h4>
+          <p>Recursively clones nested objects too, so the copy is fully independent. Safer for mutable state, but slower and trickier with cycles.</p>
+        </div>
+      </div>
+
+      <h3>Structure of the pattern</h3>
+      <div class="diagram">
+        <div class="cap">Prototype interface, concrete prototypes, a registry, and a client that only clones</div>
+        <pre class="mermaid">
+classDiagram
+    class Prototype {
+        <<interface>>
+        +clone() Prototype
+    }
+    class Shape {
+        +int x
+        +int y
+        +Color color
+        +clone() Shape
+    }
+    class Rectangle {
+        +int width
+        +int height
+        +clone() Rectangle
+    }
+    class Circle {
+        +int radius
+        +clone() Circle
+    }
+    class PrototypeRegistry {
+        -Map~String,Prototype~ items
+        +register(key, Prototype)
+        +get(key) Prototype
+    }
+    class Client
+    Prototype <|.. Shape
+    Shape <|-- Rectangle
+    Shape <|-- Circle
+    PrototypeRegistry o-- Prototype
+    Client ..> PrototypeRegistry
+    Client ..> Prototype
+        </pre>
+      </div>
+
+      <h3>A realistic example in Java</h3>
+      <pre><code>public abstract class Shape implements Cloneable {
+    public int x, y;
+    public String color;
+    public List&lt;String&gt; tags = new ArrayList&lt;&gt;();
+
+    protected Shape() { }
+
+    // Copy constructor: the explicit, safe way to copy
+    protected Shape(Shape source) {
+        this.x = source.x;
+        this.y = source.y;
+        this.color = source.color;
+        // DEEP copy the mutable list, do not share the reference
+        this.tags = new ArrayList&lt;&gt;(source.tags);
+    }
+
+    public abstract Shape clone();
+}
+
+public final class Rectangle extends Shape {
+    public int width, height;
+
+    public Rectangle() { }
+
+    public Rectangle(Rectangle source) {
+        super(source);            // copies base fields + deep-copies tags
+        this.width = source.width;
+        this.height = source.height;
+    }
+
+    @Override
+    public Rectangle clone() {
+        return new Rectangle(this);   // returns an independent copy
+    }
+}
+
+// Prototype registry: clone by key, never call new in the client
+public final class ShapeRegistry {
+    private final Map&lt;String, Shape&gt; prototypes = new HashMap&lt;&gt;();
+
+    public void register(String key, Shape prototype) {
+        prototypes.put(key, prototype);
+    }
+
+    public Shape create(String key) {
+        Shape proto = prototypes.get(key);
+        if (proto == null) throw new NoSuchElementException(key);
+        return proto.clone();     // caller gets a fresh, independent object
+    }
+}</code></pre>
+      <p class="muted">Notice the copy constructor rebuilds <code>tags</code> with <code>new ArrayList&lt;&gt;(source.tags)</code> instead of copying the reference. That single line is the difference between a safe deep copy and a shared-mutable-state bug. The registry lets clients say <code>create("wide-blue")</code> without knowing the concrete class or its setup.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a basic clone, cloning through a registry, and shallow vs deep copy behavior when the clone is mutated.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Basic clone: the object copies itself</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Proto as Original Shape
+    participant Copy as Cloned Shape
+
+    Client->>Proto: clone()
+    Proto->>Copy: new Rectangle(this)
+    Note over Proto,Copy: Copy constructor duplicates fields
+    Copy-->>Proto: fresh instance
+    Proto-->>Client: independent copy
+    Client->>Copy: setColor("red")
+    Note over Proto,Copy: Original stays unchanged
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Registry: clone a named prototype on demand</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Reg as ShapeRegistry
+    participant Proto as Stored Prototype
+    participant Copy as New Shape
+
+    Client->>Reg: create("wide-blue")
+    Reg->>Reg: look up prototype by key
+    Reg->>Proto: clone()
+    Proto->>Copy: copy fields (deep for mutables)
+    Copy-->>Proto: fresh instance
+    Proto-->>Reg: independent copy
+    Reg-->>Client: ready-to-use object
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Shallow vs deep: what happens when you mutate a shared field</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Orig as Original
+    participant Clone as Clone
+    participant List as tags List
+
+    Client->>Orig: clone()
+    alt shallow copy
+        Orig->>Clone: copy reference to same List
+        Client->>Clone: tags.add("x")
+        Clone->>List: mutate shared list
+        Note over Orig,Clone: Original also sees "x" (bug)
+    else deep copy
+        Orig->>Clone: new ArrayList(source.tags)
+        Client->>Clone: tags.add("x")
+        Note over Orig,Clone: Original unaffected (safe)
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From deciding to clone to shipping independent, correctly-copied objects, the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot the need</span><h4>Notice expensive or repeated construction</h4><p>You see objects that are costly to build or that differ by only a few fields. Rebuilding each from scratch is wasteful, so a copy-based approach fits.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Define</span><h4>Declare a prototype interface</h4><p>Add a <code>clone()</code> or <code>copy()</code> method to the type hierarchy so every concrete class promises to reproduce itself.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Copy fields</span><h4>Implement the copy operation</h4><p>Prefer a copy constructor that assigns each field explicitly. This is clearer and safer than relying on <code>Object.clone()</code> magic.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Decide depth</span><h4>Choose shallow or deep per field</h4><p>Primitives and immutables can be copied directly. Mutable references (lists, maps, nested objects) usually need a fresh, deep copy.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Deep copy</span><h4>Duplicate mutable references</h4><p>For each mutable field, build a new instance instead of sharing the old reference. Recurse into nested objects that hold their own mutable state.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Guard</span><h4>Handle final fields and cycles</h4><p>Final fields can't be reassigned in <code>clone()</code>; route them through a constructor. Track visited objects to survive cyclic graphs.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Register</span><h4>Build a prototype registry</h4><p>Create and configure a template for each named variant, then store them in a <code>Map</code> keyed by a stable name.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Request</span><h4>Client asks the registry by key</h4><p>Client code calls <code>registry.create("wide-blue")</code> and gets a fresh clone, never touching a concrete constructor.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Customize</span><h4>Tweak the differences</h4><p>The clone starts fully configured. The caller changes only the handful of fields that make this instance unique.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Verify</span><h4>Test isolation between copies</h4><p>Mutate the clone and assert the original is untouched. This catches accidental shallow copies of mutable state early.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Clone in production, cheaply</h4><p>New objects now come from copies of ready-made templates. Adding a variant means registering another prototype, not writing a new class.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most Prototype bugs are copy bugs. The clone looks fine until two objects quietly share the same nested state.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪢 Shared references</h4><p>A shallow copy leaves the clone pointing at the original's mutable fields. Mutating one silently changes the other. This is the number-one Prototype bug.</p></div>
+        <div class="card"><h4>🔒 Final fields</h4><p>You can't reassign <code>final</code> fields inside a <code>clone()</code> method, so a naive override can't deep-copy them. Use a copy constructor that sets them at construction time.</p></div>
+        <div class="card"><h4>🧩 Java's broken Cloneable</h4><p><code>Object.clone()</code> is protected, throws a checked exception, does a shallow copy, and bypasses constructors. Prefer explicit copy constructors or a factory <code>copy()</code> method.</p></div>
+        <div class="card"><h4>🔁 Cyclic object graphs</h4><p>Deep-copying a graph with cycles (A points to B points back to A) can recurse forever. You need an identity map of already-copied objects to break the loop.</p></div>
+        <div class="card"><h4>🌀 Serialization abuse</h4><p>Deep-copying via serialize-then-deserialize is easy but slow, requires everything be serializable, and hides which fields were actually copied. Reserve it for last resort.</p></div>
+        <div class="card"><h4>🎭 Cloning when new is fine</h4><p>If objects are cheap to build and immutable, a plain constructor is clearer. Prototype adds indirection that only pays off for costly setup or many variants.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Prototype trades construction cost and coupling for copy complexity. It shines when building is expensive and objects vary by configuration.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Avoids expensive re-initialization, hides concrete classes, captures configured state, reduces subclass explosion, lets you add variants at runtime as data.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Deep-copying complex or cyclic graphs is hard, shared-reference bugs are subtle, and Java's <code>Cloneable</code> makes the naive path unsafe.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>Construction is costly, objects differ mainly by configuration, you need to decouple clients from concrete types, or you want a runtime registry of templates.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>Objects are cheap to build and immutable, the graph is deeply nested or cyclic, or a simple constructor or Builder reads more clearly.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low structurally, but correctness hinges on getting shallow vs deep right for every mutable field. The mistakes are quiet, not loud.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Factory Method and Abstract Factory (alternative ways to create), Builder (assemble step by step), Memento (snapshot and restore state).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Prototype when "make another one just like this" is common and building from scratch is expensive. Then write a copy constructor, deep-copy every mutable field on purpose, and test that mutating a clone never touches the original.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative places where cloning a prototype beats constructing from scratch.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>1 · Graphics editor shapes and tools</h3><div class="role">Pattern: clone configured objects on the canvas</div></div></div>
+        <p class="muted">A vector editor lets users copy-paste and duplicate shapes that carry style, transforms, and grouping.</p>
+        <ul>
+          <li>Each shape implements <code>clone()</code>, deep-copying its style and child shapes so duplicates are independent.</li>
+          <li>A palette of prototype shapes (styled rectangle, arrow, sticky note) is stored in a registry and cloned on drag.</li>
+          <li>Undo snapshots reuse the same copy logic to capture and restore canvas state.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Duplicating a fully styled shape is instant and safe, and new tools are added by registering a prototype instead of writing a class.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎮</span><div><h3>2 · Game entity spawning</h3><div class="role">Pattern: clone heavyweight templates at runtime</div></div></div>
+        <p class="muted">A game spawns hundreds of enemies whose setup (mesh handles, stats, AI config) is expensive to build.</p>
+        <ul>
+          <li>One fully-loaded "orc" prototype is built once; each spawn clones it rather than re-running heavy init.</li>
+          <li>Mutable per-instance state (position, health, cooldowns) is deep-copied so instances never share it.</li>
+          <li>Designers register new enemy variants as configured prototypes, no engine code changes.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Spawn cost drops to a memory copy, frame spikes disappear, and content teams ship new units as data.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📄</span><div><h3>3 · Document and config templates</h3><div class="role">Pattern: start from a master copy, then edit</div></div></div>
+        <p class="muted">A SaaS app offers templated documents and pipeline configs users clone and customize.</p>
+        <ul>
+          <li>Each template is a fully-populated prototype object stored by key in a registry.</li>
+          <li>Creating a new document clones the template deeply so edits never leak back to the master.</li>
+          <li>Adding a template is a data operation: register a configured instance, no new class.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Users start from a working example instead of a blank page, and the catalog of templates grows without code changes.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Cloning is quietly everywhere in modern code, even when the classic Gang of Four structure is not spelled out.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Immutable + withers</h4><p>Records and value objects favor <code>with</code>-style copy methods that return a new instance with one field changed. That is Prototype thinking without mutation risk.</p></div>
+        <div class="card"><h4>🌐 structuredClone in JS</h4><p>Browsers and Node now ship <code>structuredClone()</code>, a built-in deep copy that handles cycles and many types, making safe deep clones a one-liner.</p></div>
+        <div class="card"><h4>🧬 Prototypal inheritance</h4><p>JavaScript objects literally delegate to a prototype and <code>Object.create()</code> spins new objects from an existing one, the pattern baked into the language.</p></div>
+        <div class="card"><h4>📸 State snapshots</h4><p>Redux-style stores and undo systems clone state so past versions stay intact, pairing Prototype with Memento for time-travel debugging.</p></div>
+        <div class="card"><h4>🧪 Test fixtures</h4><p>Test builders clone a valid base object and tweak one field per case, keeping tests focused on the difference that matters.</p></div>
+        <div class="card"><h4>⚙️ Config profiles</h4><p>Infrastructure and ML tooling clone a base config and override a few keys per environment or experiment, exactly the registry-of-prototypes idea.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Prototype endures because "give me another one like this, but independent" is a constant need. The pattern is less about a <code>Cloneable</code> interface and more about a discipline: copy on purpose, deep where it matters, and never let two objects share mutable state by accident.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Prototype sits among the creational patterns and pairs naturally with these.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>Create objects through a method instead of cloning.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../abstract-factory/"><span class="ico">🧱</span><h4>Abstract Factory</h4><p>Produce families of related objects behind an interface.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../builder/"><span class="ico">🔧</span><h4>Builder</h4><p>Assemble complex objects step by step.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../memento/"><span class="ico">📸</span><h4>Memento</h4><p>Snapshot and restore an object's state.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Prototype · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

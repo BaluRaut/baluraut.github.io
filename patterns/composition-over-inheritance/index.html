@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Composition over Inheritance Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to composition over inheritance: is-a vs has-a, the fragile base class problem, the diamond problem, delegation, mixins and traits, Java and TypeScript examples, and when inheritance is still the right call." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Foundation</span>
+      <h1>Composition over inheritance - build behavior by assembling, not extending</h1>
+      <p class="lede">Inheritance couples a subclass to every detail of its parent, so a change high in the tree ripples down and breaks classes nobody remembers. Composition flips this: instead of <strong>being</strong> a base class, an object <strong>has</strong> collaborators it delegates to. You wire behavior together at runtime, swap pieces freely, and keep each part small and testable.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">is-a vs has-a</span>
+        <span class="pill">Delegation</span>
+        <span class="pill">Mixins &amp; traits</span>
+        <span class="pill">Fragile base class</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is composition over inheritance?</h2>
+      <p class="muted"><strong>Composition over inheritance</strong> is a design guideline that says: prefer to build a type out of smaller objects it <em>holds and delegates to</em> (a has-a relationship) rather than out of a base class it <em>extends</em> (an is-a relationship). Both reuse code, but inheritance reuses by inheriting a whole implementation, while composition reuses by wiring independent pieces together. The guideline exists because deep inheritance trees turn out to be rigid, while assembled objects stay flexible.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Inheritance (is-a)</h4>
+          <p>A subclass extends a base class and inherits its fields and methods. Strong, static coupling: the child depends on the parent's internals and is fixed at compile time.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧩</span> Composition (has-a)</h4>
+          <p>An object holds references to collaborator objects and forwards work to them. Loose coupling through interfaces: pieces can be swapped, even at runtime.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔀</span> Delegation</h4>
+          <p>The mechanism that makes composition work: a method calls the same method on a held collaborator, so the outer object exposes behavior it did not implement itself.</p>
+        </div>
+      </div>
+
+      <h3>The core vocabulary</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Term</th><th>What it means</th><th>Relationship</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>is-a</strong></td><td>A subtype that can stand in for its base type</td><td>Inheritance / subtyping</td></tr>
+            <tr><td><strong>has-a</strong></td><td>An object that owns and uses another object</td><td>Composition / aggregation</td></tr>
+            <tr><td><strong>Delegation</strong></td><td>Forwarding a call to a held collaborator</td><td>Runtime behavior sharing</td></tr>
+            <tr><td><strong>Mixin / trait</strong></td><td>A reusable slice of behavior mixed into a class</td><td>Horizontal reuse</td></tr>
+            <tr><td><strong>Interface</strong></td><td>A contract a collaborator promises to satisfy</td><td>Decoupling seam</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> ask "is X truly a kind of Y, forever?" If yes, inheritance may fit. If X merely <em>uses</em> or <em>can</em> do Y, or the answer changes over time, model it as has-a and delegate. Inheritance is for identity, composition is for capability.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why prefer composition</h2>
+      <p class="muted">Inheritance is the tightest coupling in object-oriented programming: a subclass sees protected members, depends on call order, and inherits everything whether it wants it or not. That is exactly what makes deep hierarchies fragile. Composition trades that rigidity for flexibility.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Escapes the fragile base class</h4><p>When behavior lives in collaborators behind interfaces, editing one does not silently break subclasses. A change is contained to the piece that owns it instead of rippling down a tree.</p></div>
+        <div class="card"><h4>🔧 Flexible at runtime</h4><p>You can swap a collaborator, or stack several, while the program runs. Inheritance is fixed the moment you compile; composition lets configuration and dependency injection decide behavior.</p></div>
+        <div class="card"><h4>🚫 Sidesteps the diamond problem</h4><p>Single inheritance forces awkward hierarchies and multiple inheritance creates ambiguous method resolution. Holding several collaborators gives you many behaviors with zero ambiguity.</p></div>
+        <div class="card"><h4>🧪 Easier to test</h4><p>Each collaborator is small and mockable through its interface. You test a unit in isolation instead of dragging in a five-level base class with hidden state and setup.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Composition over inheritance explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Inheritance is <strong>copying a whole essay</strong> and tweaking a few lines - if the original had a mistake, so does yours. Composition is <strong>citing sources</strong>: you pull in exactly the paragraphs you need and swap a source without rewriting the paper.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Inheritance is <code>extends BaseController</code> and hoping the base does what you expect. Composition is injecting a <code>Logger</code>, a <code>Validator</code>, and a <code>Repository</code> - each an interface you can mock, replace, or reorder without touching the rest.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Inheritance is a rigid <strong>org chart</strong> where everyone reports up a fixed chain. Composition is a <strong>project team</strong> assembled from specialists: you bring in the right people for the job and disband when done.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>A phone with a <strong>soldered-in battery</strong> is inheritance: cheap until something needs to change, then you replace the whole device. A phone with <strong>plug-in accessories</strong> is composition: click in a new charger, case, or lens whenever you like.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">The move is mechanical: take the behavior that used to live in a base class, put it behind an <strong>interface</strong>, implement it in small classes, and have the outer object <strong>hold and delegate</strong> to one of them instead of extending a parent.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧬</span> The inheritance design</h4>
+          <p>A <code>Bird</code> base class defines <code>fly()</code>. Then a penguin arrives that cannot fly, an ostrich that runs, a bird that swims. The hierarchy fractures into special cases and overrides that throw exceptions.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧩</span> The composition design</h4>
+          <p>Define <code>FlyBehavior</code>, <code>SwimBehavior</code> interfaces. A bird <em>has</em> a fly strategy and a swim strategy. A penguin gets <code>NoFly</code> and <code>StrongSwim</code> - no exceptions, no broken contracts.</p>
+        </div>
+      </div>
+
+      <h3>Structure: inheritance tree vs composed object</h3>
+      <div class="diagram">
+        <div class="cap">Structure - a rigid tree on the left, an object holding swappable behaviors on the right</div>
+        <pre class="mermaid">
+classDiagram
+    class Bird {
+        +eat()
+        +fly()
+    }
+    class Duck
+    class Penguin {
+        +fly() throws
+    }
+    Bird &lt;|-- Duck
+    Bird &lt;|-- Penguin
+
+    class Animal {
+        -FlyBehavior fly
+        -SwimBehavior swim
+        +move()
+    }
+    class FlyBehavior {
+        &lt;&lt;interface&gt;&gt;
+        +fly()
+    }
+    class SwimBehavior {
+        &lt;&lt;interface&gt;&gt;
+        +swim()
+    }
+    Animal o-- FlyBehavior
+    Animal o-- SwimBehavior
+    FlyBehavior &lt;|.. WingFly
+    FlyBehavior &lt;|.. NoFly
+    SwimBehavior &lt;|.. StrongSwim
+        </pre>
+      </div>
+
+      <h3>The same problem, two designs in TypeScript</h3>
+      <pre><code>// INHERITANCE: rigid, and Penguin is forced to lie about fly()
+abstract class Bird {
+  eat(): string { return "peck peck"; }
+  fly(): string { return "flap and take off"; }
+}
+class Duck extends Bird {}
+class Penguin extends Bird {
+  // A penguin is-a Bird, but cannot fly -> the contract breaks
+  override fly(): string { throw new Error("penguins can't fly"); }
+}
+
+// COMPOSITION: behavior is injected, so no class ever lies
+interface FlyBehavior { fly(): string; }
+class WingFly  implements FlyBehavior { fly() { return "flap and take off"; } }
+class NoFly    implements FlyBehavior { fly() { return "stays grounded"; } }
+
+class Animal {
+  // has-a, not is-a: the fly behavior is a collaborator
+  constructor(private readonly flyer: FlyBehavior) {}
+  move(): string { return this.flyer.fly(); }   // delegation
+  setFlyer(f: FlyBehavior) { /* swap at runtime */ }
+}
+
+const duck    = new Animal(new WingFly());   // "flap and take off"
+const penguin = new Animal(new NoFly());     // "stays grounded" - honest, no throw
+</code></pre>
+      <p class="muted">Notice that the composed <code>Animal</code> never overrides anything and never throws. Behavior is supplied through the constructor and can be swapped with <code>setFlyer</code> - the exact flexibility a fixed <code>extends</code> relationship cannot offer.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a delegated call at runtime, swapping a collaborator live, and how the diamond ambiguity is avoided by composition.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Delegation: the outer object forwards work to a held collaborator</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 🧩 Animal
+    participant F as 🪶 FlyBehavior
+
+    C->>A: move()
+    Note over A: Animal has no fly logic of its own
+    A->>F: fly()
+    F-->>A: "flap and take off"
+    A-->>C: return result
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Runtime swap: change behavior without touching the class</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 🧩 Animal
+    participant Old as 🪶 WingFly
+    participant New as 🚫 NoFly
+
+    C->>A: move()
+    A->>Old: fly()
+    Old-->>A: "flap and take off"
+    A-->>C: result
+    C->>A: setFlyer(NoFly)
+    Note over A,New: collaborator replaced, no recompile
+    C->>A: move()
+    A->>New: fly()
+    New-->>A: "stays grounded"
+    A-->>C: new result
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Avoiding the diamond: two capabilities, no ambiguity</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant W as 🦆 Waterfowl
+    participant F as 🪶 Flyer
+    participant S as 🏊 Swimmer
+
+    C->>W: travel()
+    alt over land
+        W->>F: fly()
+        F-->>W: airborne
+    else over water
+        W->>S: swim()
+        S-->>W: paddling
+    end
+    Note over W: two held behaviors, resolution is explicit not inherited
+    W-->>C: journey done
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a fragile inheritance tree to a clean composed design - the refactor in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the smell</h4><p>A base class keeps growing, subclasses override methods to throw or no-op, and a small parent change breaks distant children. That is fragile-base-class pain asking for composition.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Question</span><h4>Test the is-a claim</h4><p>Ask whether the subclass truly is a kind of its parent in every context, permanently. If it only uses or can do some of the behavior, it is a has-a in disguise.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Isolate</span><h4>Find the varying behavior</h4><p>Identify the parts that differ across subclasses - the fly, the pay, the render. Those variations are the pieces to pull out of the hierarchy.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Interface</span><h4>Define a contract</h4><p>Create an interface for each varying behavior, for example <code>FlyBehavior</code>. This becomes the decoupling seam the outer object depends on.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Write small strategies</h4><p>Provide concrete classes per variation: <code>WingFly</code>, <code>NoFly</code>, <code>JetFly</code>. Each is tiny, single-purpose, and independently testable.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Hold</span><h4>Add a field, not a parent</h4><p>Give the outer class a field of the interface type instead of extending a base. The object now has-a behavior rather than is-a subclass.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Delegate</span><h4>Forward the call</h4><p>In the outer method, call the collaborator: <code>move()</code> simply invokes <code>flyer.fly()</code>. The class exposes behavior it does not implement itself.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Inject</span><h4>Wire it from outside</h4><p>Pass collaborators through the constructor or a DI container. Now configuration, not a class name, decides behavior.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Swap</span><h4>Change behavior at runtime</h4><p>Expose a setter so a running object can trade one strategy for another. This is the flexibility inheritance can never give you.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Combine</span><h4>Layer with mixins or decorators</h4><p>Stack multiple capabilities by holding several collaborators or wrapping with decorators, gaining rich behavior without a combinatorial class explosion.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Judge</span><h4>Keep inheritance where it fits</h4><p>Retain inheritance for genuine, stable is-a subtyping and template methods. The goal is the right tool, not zero inheritance.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Both inheritance and composition can be misused. These are the traps that show up most in real code.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Deep inheritance hierarchies</h4><p>Five or six levels of <code>extends</code> mean a single method call runs code scattered across the tree. Nobody can reason about it, and any base edit is a landmine. Flatten it with composition.</p></div>
+        <div class="card"><h4>🧱 Fragile base class</h4><p>Changing a base method or its call order silently breaks subclasses that relied on the old behavior. The parent cannot evolve safely because it is coupled to every child.</p></div>
+        <div class="card"><h4>💎 Reaching for the diamond</h4><p>Multiple inheritance where two paths reach the same ancestor creates ambiguous method and state resolution. Languages ban or complicate it for good reason - compose instead.</p></div>
+        <div class="card"><h4>🎭 Inheritance for code reuse only</h4><p>Extending a class just to grab a helper method forces an is-a claim you do not mean. You inherit its whole surface and coupling. Prefer holding it as a collaborator.</p></div>
+        <div class="card"><h4>🧨 Liskov violations</h4><p>Overriding a method to throw or weaken the contract, like <code>Penguin.fly()</code> throwing, breaks substitutability. Callers of the base type get surprises. That is a sign the is-a was wrong.</p></div>
+        <div class="card"><h4>🍝 Delegation boilerplate</h4><p>Composition can drift the other way: dozens of one-line pass-through methods just to forward calls. Use language delegation features, interfaces, or a decorator base to keep it lean.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Composition is a default, not a law. Weigh these before you refactor a hierarchy or reach for a base class.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Loose coupling, runtime flexibility, small testable units, no fragile base class, sidesteps the diamond problem, honors the open-closed principle.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>More classes and interfaces up front, delegation boilerplate, indirection can obscure a simple flow, wiring moves to constructors or a DI container.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>Behavior varies across cases, needs to change at runtime, would create a deep or fragile tree, or the relationship is really has-a or can-do.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>The subtype is a genuine, stable is-a, you need real polymorphic substitutability, or a template-method framework expects you to extend a base class.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low conceptually, moderate in wiring. Trades a few extra types for far easier change later - usually a good bargain past trivial cases.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Strategy, Decorator, Bridge, and Adapter are all composition in action; SOLID's dependency-inversion and open-closed principles motivate it.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for inheritance only when the subtype is a true, permanent is-a that you would substitute for its base without surprise. For everything that merely reuses or varies behavior, compose and delegate. Favor composition by default, allow inheritance by justification.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three places where choosing composition over inheritance changed the outcome.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎮</span><div><h3>1 · Game entities via component systems</h3><div class="role">Pattern: entity-component composition</div></div></div>
+        <p class="muted">Early game engines used deep class trees like <code>Enemy extends Character extends GameObject</code>, then broke when a crate needed physics but not AI.</p>
+        <ul>
+          <li>Behavior split into components: <code>Position</code>, <code>Render</code>, <code>Physics</code>, <code>AI</code>, each held by an entity.</li>
+          <li>A new entity type is a new bag of components, not a new subclass in a rigid tree.</li>
+          <li>Designers mix capabilities at runtime without a programmer editing the hierarchy.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Entity-component-system architecture became the industry norm because composition scaled where inheritance combinatorially exploded.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">☕</span><div><h3>2 · Java I/O streams</h3><div class="role">Pattern: Decorator, composition by wrapping</div></div></div>
+        <p class="muted">Java needed buffering, compression, and encryption over any stream without a class per combination.</p>
+        <ul>
+          <li><code>BufferedInputStream</code> wraps another <code>InputStream</code> and delegates to it.</li>
+          <li>You stack wrappers: buffer around gzip around a file stream, composed at runtime.</li>
+          <li>Adding a capability is a new decorator, not a subclass of every stream type.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A handful of composable decorators cover every combination, avoiding a huge inheritance matrix of stream subclasses.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>3 · Payment and pricing strategies</h3><div class="role">Pattern: Strategy, injected behavior</div></div></div>
+        <p class="muted">A checkout service started with <code>CreditCardOrder extends Order</code> and gained a subclass per payment and discount rule until the tree was unmanageable.</p>
+        <ul>
+          <li><code>PaymentMethod</code> and <code>DiscountPolicy</code> became interfaces the order holds.</li>
+          <li>An order is configured with a payment strategy and a discount strategy at creation.</li>
+          <li>New promotions and providers are new strategy classes, injected without touching <code>Order</code>.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The order class stopped changing, tests mocked each strategy in isolation, and new payment options shipped without regression risk.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Far from dated, composition over inheritance underpins how modern languages, frameworks, and paradigms are designed.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧵 Traits and mixins mainstream</h4><p>Rust traits, Scala traits, and TypeScript mixins let you compose horizontal behavior without a base class, making composition the ergonomic default.</p></div>
+        <div class="card"><h4>🚫 Go and Rust drop inheritance</h4><p>Go has struct embedding and interfaces, Rust has traits, and neither offers class inheritance at all - a deliberate bet on composition.</p></div>
+        <div class="card"><h4>⚛️ React chose composition</h4><p>React explicitly recommends composition over inheritance for reuse, using hooks and child components instead of extending base components.</p></div>
+        <div class="card"><h4>💉 Dependency injection everywhere</h4><p>Spring, Angular, and NestJS wire collaborators through constructors, making has-a design the default way frameworks assemble apps.</p></div>
+        <div class="card"><h4>🧩 Patterns are composition</h4><p>Strategy, Decorator, Bridge, and Adapter, the workhorses of the Gang of Four, are all composition dressed for a specific job.</p></div>
+        <div class="card"><h4>🔬 Testability demands it</h4><p>Modern testing culture rewards small, mockable units behind interfaces, which is exactly what composition produces and inheritance resists.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> inheritance still earns its place for true, stable is-a subtyping and template methods, but composition is the default that keeps systems flexible, testable, and safe to change. Reach for has-a first, and let inheritance prove it belongs.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Composition sits at the center of object-oriented design. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../oop-core/"><span class="ico">🧱</span><h4>OOP core concepts</h4><p>Encapsulation, polymorphism, and the is-a relationship in context.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../solid/"><span class="ico">📐</span><h4>SOLID principles</h4><p>Open-closed and dependency inversion that motivate composing.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator pattern</h4><p>Adding behavior by wrapping and delegating at runtime.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">♟️</span><h4>Strategy pattern</h4><p>Injecting interchangeable behavior instead of subclassing.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to composition over inheritance · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strategy Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Strategy design pattern: defining interchangeable algorithms behind a common interface, selecting one at runtime, composition over conditionals, functional strategies, real Java and TypeScript code, sequence diagrams, and how it differs from State and Template Method." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>The Strategy pattern - swap algorithms without touching the caller</h1>
+      <p class="lede">Some code has to do the same job several ways: pay by card or PayPal, sort by price or rating, compress with zip or gzip. Strategy captures each way as a separate object behind a <strong>common interface</strong>, then lets you <strong>choose one at runtime</strong>. The client keeps working the same, while the behavior it uses becomes a plug-in you can add, replace, or test in isolation.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Common interface</span>
+        <span class="pill">Composition over conditionals</span>
+        <span class="pill">Runtime selection</span>
+        <span class="pill">Lambdas as strategies</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Strategy pattern?</h2>
+      <p class="muted"><strong>Strategy</strong> defines a family of algorithms, encapsulates each one in its own class, and makes them interchangeable behind a shared interface. The object that needs the work (the <em>context</em>) holds a reference to a strategy and delegates to it, so the algorithm can vary independently from the code that uses it. Instead of a growing chain of <code>if/else</code> deciding <em>how</em> to do something, you hand the context an object that already knows how.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Strategy interface</h4>
+          <p>A single method (or small set) that every algorithm implements. This is the contract the context depends on, never the concrete classes.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Concrete strategies</h4>
+          <p>Interchangeable implementations - card payment, gzip compression, price sort. Each is self-contained and testable on its own.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Context</h4>
+          <p>Holds a strategy and delegates to it. It exposes a setter or takes the strategy in its constructor, then never cares which one it has.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>Role</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Strategy interface</strong></td><td>Common contract all algorithms honor</td><td><code>PaymentStrategy.pay(amount)</code></td></tr>
+            <tr><td><strong>Concrete strategy</strong></td><td>One specific algorithm implementation</td><td><code>CreditCardPayment</code>, <code>PayPalPayment</code></td></tr>
+            <tr><td><strong>Context</strong></td><td>Uses a strategy through the interface</td><td><code>Checkout</code> holding a <code>PaymentStrategy</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Picks and injects the concrete strategy</td><td>Wires <code>gzip</code> vs <code>zip</code> at startup</td></tr>
+            <tr><td><strong>Selector</strong></td><td>Maps input to a strategy at runtime</td><td>A registry or factory keyed by user choice</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> Strategy turns a verb into a noun. "How should I sort/pay/compress?" stops being a branch inside one method and becomes an object you can pass around, swap, and unit test. The context asks <em>what</em>, the strategy owns <em>how</em>.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Strategy pattern exists</h2>
+      <p class="muted">The alternative is one method that grows a new <code>if</code> branch every time a variant appears. That method violates the open/closed principle, mixes unrelated logic, and becomes impossible to test in pieces. Strategy pulls each variant out into its own object so behavior can change without editing the caller.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🚫 Kills conditional sprawl</h4><p>Replaces a fat <code>switch</code> on "type" with polymorphism. Adding a variant means adding a class, not editing a branch that every other variant shares.</p></div>
+        <div class="card"><h4>🔓 Open for extension</h4><p>New algorithms plug in without modifying the context or existing strategies. Closed for modification, open for extension - the open/closed principle in practice.</p></div>
+        <div class="card"><h4>🔁 Swappable at runtime</h4><p>Change behavior while the program runs: pick a compression level from config, choose a routing algorithm based on load, switch pricing rules per customer.</p></div>
+        <div class="card"><h4>🧪 Isolated and testable</h4><p>Each strategy is a small unit with one job, so you test algorithms independently and mock them out when testing the context.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Strategy explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is like <strong>choosing a route home</strong>. Walking, bus, or bike all get you there; you pick one based on the weather and time. The destination (the interface) is fixed; the method (the strategy) is interchangeable.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a <strong>function passed as an argument</strong>. Instead of hardcoding how to sort, you hand the sorter a comparator. Same call site, different behavior, decided by whoever supplies the object.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>payment terminal</strong> that accepts card, contactless, or wallet. The cashier runs the same "take payment" step; the customer chooses the method. The till does not need a branch per payment type.</p></div>
+        <div class="card"><h4><span class="ico">🧳</span> Everyday version</h4><p>A <strong>power adapter</strong> for travel. Your laptop plugs in the same way; you swap the wall prong for the country you are in. The device stays identical; only the plug strategy changes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Strategy is built on <strong>composition and delegation</strong>. The context <em>has a</em> strategy rather than <em>being</em> a subclass of one, so the algorithm lives in a separate object the client can inject and replace at will.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔗</span> Composition, not inheritance</h4>
+          <p>The context holds a strategy field and delegates the varying step to it. Behavior is assembled at runtime by wiring objects, not fixed at compile time by a class hierarchy.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> Program to an interface</h4>
+          <p>The context depends only on the strategy interface. Concrete algorithms are invisible to it, which is what makes them swappable and independently testable.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - the context delegates to a strategy interface, implemented by many algorithms</div>
+        <pre class="mermaid">
+classDiagram
+    class Checkout {
+      -PaymentStrategy strategy
+      +setStrategy(PaymentStrategy)
+      +pay(int amount)
+    }
+    class PaymentStrategy {
+      &lt;&lt;interface&gt;&gt;
+      +pay(int amount)
+    }
+    class CreditCardPayment {
+      +pay(int amount)
+    }
+    class PayPalPayment {
+      +pay(int amount)
+    }
+    class CryptoPayment {
+      +pay(int amount)
+    }
+    Checkout o--&gt; PaymentStrategy : delegates
+    PaymentStrategy &lt;|.. CreditCardPayment
+    PaymentStrategy &lt;|.. PayPalPayment
+    PaymentStrategy &lt;|.. CryptoPayment
+        </pre>
+      </div>
+
+      <h3>A realistic example in Java</h3>
+      <pre><code>// 1. The strategy interface - the common contract
+interface PaymentStrategy {
+    void pay(int amountCents);
+}
+
+// 2. Interchangeable concrete strategies
+class CreditCardPayment implements PaymentStrategy {
+    private final String number;
+    CreditCardPayment(String number) { this.number = number; }
+    public void pay(int amountCents) {
+        System.out.printf("Charged %d to card %s%n", amountCents, mask(number));
+    }
+    private String mask(String n) { return "****" + n.substring(n.length() - 4); }
+}
+
+class PayPalPayment implements PaymentStrategy {
+    private final String email;
+    PayPalPayment(String email) { this.email = email; }
+    public void pay(int amountCents) {
+        System.out.printf("Charged %d via PayPal (%s)%n", amountCents, email);
+    }
+}
+
+// 3. The context - delegates, never branches on payment type
+class Checkout {
+    private PaymentStrategy strategy;
+    void setStrategy(PaymentStrategy s) { this.strategy = s; }
+    void checkout(int amountCents) {
+        if (strategy == null) throw new IllegalStateException("No payment method");
+        strategy.pay(amountCents);   // the varying step, delegated
+    }
+}
+
+// 4. The client selects a strategy at runtime
+Checkout checkout = new Checkout();
+checkout.setStrategy(new CreditCardPayment("4242424242424242"));
+checkout.checkout(1999);
+
+checkout.setStrategy(new PayPalPayment("buyer@example.com")); // swap, same call
+checkout.checkout(1999);</code></pre>
+      <p class="muted">Notice the context has <em>no</em> conditional on payment type. Adding <code>CryptoPayment</code> means writing one new class - <code>Checkout</code> never changes. That is composition doing the work a <code>switch</code> statement used to do.</p>
+
+      <h3>Functional strategies with lambdas (TypeScript)</h3>
+      <pre><code>// When a strategy is a single method, it is just a function type.
+type SortStrategy&lt;T&gt; = (a: T, b: T) =&gt; number;
+
+class ProductList {
+  constructor(private items: Product[]) {}
+  sortBy(strategy: SortStrategy&lt;Product&gt;): Product[] {
+    return [...this.items].sort(strategy);
+  }
+}
+
+// Strategies as plain lambdas - no class boilerplate needed
+const byPriceAsc:  SortStrategy&lt;Product&gt; = (a, b) =&gt; a.price - b.price;
+const byRatingDesc: SortStrategy&lt;Product&gt; = (a, b) =&gt; b.rating - a.rating;
+
+const list = new ProductList(catalog);
+list.sortBy(byPriceAsc);    // choose an algorithm at the call site
+list.sortBy(byRatingDesc);  // swap it freely
+
+// A registry makes runtime selection data-driven
+const sorters: Record&lt;string, SortStrategy&lt;Product&gt;&gt; = {
+  price:  byPriceAsc,
+  rating: byRatingDesc,
+};
+list.sortBy(sorters[userChoice] ?? byPriceAsc);</code></pre>
+      <p class="muted">In modern languages a strategy with one method collapses into a lambda. The pattern is identical - interface, interchangeable implementations, runtime selection - but a functional interface (<code>Comparator</code>, <code>Runnable</code>, a function type) removes the class ceremony.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: selecting a strategy, swapping one at runtime, and a functional strategy passed inline.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Client selects a concrete strategy, context delegates to it</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Ctx as 📦 Checkout
+    participant Strat as ⚙️ CreditCardPayment
+
+    Client->>Strat: new CreditCardPayment(number)
+    Client->>Ctx: setStrategy(strategy)
+    Client->>Ctx: checkout(1999)
+    Ctx->>Strat: pay(1999)
+    Strat-->>Ctx: charge complete
+    Ctx-->>Client: order confirmed
+    Note over Ctx,Strat: Context never branches on payment type
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Swapping the strategy at runtime, same context, same call</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Ctx as 📦 Checkout
+    participant CC as 💳 CreditCardPayment
+    participant PP as 🅿️ PayPalPayment
+
+    Client->>Ctx: setStrategy(creditCard)
+    Client->>Ctx: checkout(1999)
+    Ctx->>CC: pay(1999)
+    CC-->>Ctx: ok
+    Client->>Ctx: setStrategy(payPal)
+    Client->>Ctx: checkout(1999)
+    Ctx->>PP: pay(1999)
+    PP-->>Ctx: ok
+    Note over Client,Ctx: Behavior changed without editing Checkout
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Functional strategy selected from a registry and passed inline</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User as 👤 User
+    participant App as 🖥️ ProductList
+    participant Reg as 🗂️ Sorter registry
+    participant Fn as 🔧 Strategy fn
+
+    User->>App: request sort by choice
+    App->>Reg: lookup(choice)
+    alt choice known
+        Reg-->>App: strategy function
+    else unknown
+        Reg-->>App: default strategy
+    end
+    App->>Fn: sort(items, strategy)
+    Fn-->>App: ordered items
+    App-->>User: sorted list
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From spotting a fat conditional to shipping interchangeable, testable algorithms - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the varying behavior</h4><p>You find a method doing one job several ways, branching on a "type" or "mode" flag. That branch is the algorithm family Strategy will extract.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Define</span><h4>Declare the strategy interface</h4><p>Name the single operation the algorithms share, like <code>pay(amount)</code> or <code>compress(data)</code>. Keep it minimal and free of any concrete detail.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Extract</span><h4>Pull each branch into a class</h4><p>Move each arm of the conditional into its own concrete strategy implementing the interface. One algorithm, one class, one responsibility.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Compose</span><h4>Give the context a strategy field</h4><p>Add a field of the interface type plus a constructor or setter. The context now <em>has a</em> strategy instead of hardcoding the algorithm.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Delegate</span><h4>Replace the branch with a call</h4><p>Swap the old <code>switch</code> for <code>strategy.execute(...)</code>. The context stops knowing which algorithm runs; it just delegates.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Inject</span><h4>Wire the strategy from the client</h4><p>The client, factory, or DI container chooses a concrete strategy and passes it in. Selection logic lives at the edge, not inside the context.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Select</span><h4>Map runtime input to a strategy</h4><p>A registry or factory keyed by user choice or config picks the algorithm at runtime, keeping the mapping in one small, obvious place.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Simplify</span><h4>Collapse tiny strategies to lambdas</h4><p>If the interface has one method, express simple strategies as lambdas or function references and drop the class boilerplate.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Test</span><h4>Unit test each algorithm alone</h4><p>Each strategy is isolated, so test it directly. Test the context with a stub strategy to prove it delegates correctly.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>Add variants without edits</h4><p>A new algorithm is a new class or lambda registered in the selector. The context and existing strategies stay untouched - open/closed in action.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Swap behavior in production</h4><p>Change algorithms via config or feature flags with zero redeploy of the context, and roll out new variants safely behind selection logic.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Strategy is simple, which makes it easy to over-apply or wire up badly. Watch for these.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪆 Strategy explosion</h4><p>Creating a class for behavior that never varies, or for a one-off, adds indirection without payoff. Reach for Strategy when there are real, multiple interchangeable algorithms - not just one.</p></div>
+        <div class="card"><h4>🔀 Leaking the choice back in</h4><p>If the context still <code>switch</code>es to decide which strategy to build, you moved the conditional, not removed it. Put selection in a factory or registry, not inside the context.</p></div>
+        <div class="card"><h4>🧷 Fat interface</h4><p>Cramming many unrelated methods into the strategy interface forces every algorithm to implement things it does not need. Keep the contract to the one operation that actually varies.</p></div>
+        <div class="card"><h4>📤 Passing too much context</h4><p>Handing the strategy the entire context object couples them tightly. Pass just the data the algorithm needs as parameters so strategies stay independent and reusable.</p></div>
+        <div class="card"><h4>🌀 Confusing it with State</h4><p>Using Strategy where the object should transition between behaviors on its own leads to awkward external switching. If the behavior change is internal and self-driven, you want State.</p></div>
+        <div class="card"><h4>🧊 Stateful shared strategies</h4><p>Giving a shared strategy instance mutable per-call state causes race conditions when it is reused across threads or requests. Keep strategies stateless or create one per use.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS / TRADE-OFFS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Strategy trades a little indirection for a lot of flexibility. Use it when variants are real and likely to grow.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Removes conditional sprawl, honors open/closed, enables runtime swapping, isolates and simplifies testing of each algorithm.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>More classes and indirection, clients must know the strategies exist to choose one, overkill when behavior never varies.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You have multiple interchangeable ways to do one job, the set is likely to grow, or you need to select behavior at runtime by config or input.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>There is only one algorithm, variants never change, or the behavior transitions are internal and self-driven (that is State).</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low. One interface, N implementations, one delegating field. Lambdas cut it further for single-method strategies.</td></tr>
+            <tr><td><strong>Related</strong></td><td>State (self-driven transitions), Template Method (fixed skeleton, inheritance), Decorator (wrap to add behavior), Factory Method (create the strategy).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you are writing a <code>switch</code> on a "type" to decide <em>how</em> to do something, and that switch keeps gaining cases, reach for Strategy. If the object should decide its own next behavior, reach for State instead.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative uses showing Strategy in production-style code.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment processing at checkout</h3><div class="role">Pattern: interchangeable payment algorithms</div></div></div>
+        <p class="muted">An e-commerce checkout must accept card, PayPal, wallet, and later buy-now-pay-later, without the order flow branching on each.</p>
+        <ul>
+          <li>Each provider implements a <code>PaymentStrategy</code> with a single <code>pay(amount)</code> method.</li>
+          <li>A registry maps the user's selected method to the right strategy at runtime.</li>
+          <li>Adding a new provider is one new class plus a registry entry, with the checkout untouched.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> New payment methods ship without changing or re-testing the checkout flow, and each provider is tested in isolation.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗜️</span><div><h3>2 · Pluggable compression in a storage layer</h3><div class="role">Pattern: algorithm chosen by config or content</div></div></div>
+        <p class="muted">A file service compresses uploads, but the best codec depends on file type and a tunable speed-versus-ratio setting.</p>
+        <ul>
+          <li>A <code>Compressor</code> interface is implemented by gzip, zstd, and a no-op strategy.</li>
+          <li>The chosen strategy comes from configuration, so operators tune it without a redeploy.</li>
+          <li>Benchmarks run each strategy independently since none depend on the storage context.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The team switches codecs per bucket via config and adds zstd with zero changes to the upload pipeline.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔢</span><div><h3>3 · Sorting and ranking in a product catalog</h3><div class="role">Pattern: functional strategies as comparators</div></div></div>
+        <p class="muted">A catalog page lets shoppers sort by price, rating, relevance, or newest, with new orderings added often.</p>
+        <ul>
+          <li>Each ordering is a comparator lambda, no class boilerplate required.</li>
+          <li>A map from the UI choice to a comparator selects the strategy per request.</li>
+          <li>Composite strategies combine comparators (rating then price) by chaining.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Product managers add sort options as small, pure functions, each trivially unit tested, with no risk to the page logic.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Strategy is one of the most enduring patterns because modern languages make it nearly free and dependency injection makes it the default way to vary behavior.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧬 Lambdas made it trivial</h4><p>Functional interfaces and function types let a single-method strategy become a one-line lambda, so the pattern shows up everywhere without the old class overhead.</p></div>
+        <div class="card"><h4>💉 It powers dependency injection</h4><p>Injecting an interface implementation is Strategy by another name. DI containers wire concrete strategies into contexts as a matter of course.</p></div>
+        <div class="card"><h4>🎚️ Behavior behind feature flags</h4><p>Selecting a strategy by flag or config lets teams roll out and A/B test algorithm variants in production without redeploying the caller.</p></div>
+        <div class="card"><h4>🔌 Plugin architectures</h4><p>Extensible systems expose a strategy interface so third parties can drop in new algorithms - payment providers, exporters, validators - safely.</p></div>
+        <div class="card"><h4>⚡ Testable by design</h4><p>Isolated strategies fit unit testing and mocking perfectly, which is why they are favored in codebases that prize fast, focused tests.</p></div>
+        <div class="card"><h4>🧠 Policy objects in ML and pricing</h4><p>Ranking, routing, and pricing "policies" are Strategy objects swapped as models and rules evolve, keeping the surrounding system stable.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Strategy is how you make behavior a first-class, swappable thing. Whenever a piece of logic has several interchangeable implementations, capturing them behind one interface keeps your code open to new variants and closed to breaking the ones that already work.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Strategy sits next to several behavioral and structural patterns. These are the ones people compare it with most.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../state/"><span class="ico">🔄</span><h4>State</h4><p>Same structure, but the object drives its own transitions.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../template-method/"><span class="ico">🧱</span><h4>Template Method</h4><p>Vary steps via inheritance in a fixed skeleton, not composition.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎀</span><h4>Decorator</h4><p>Wrap an object to add behavior instead of replacing it.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>Create the right strategy without hardcoding its class.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Strategy · What · Why · How · Diagrams · Flow · Trade-offs · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

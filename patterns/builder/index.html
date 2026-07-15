@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Builder Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Builder design pattern: constructing complex objects step by step, the fluent builder, the optional Director, solving telescoping constructors, immutable objects, diagrams, a 0-100 flow, case studies, and modern relevance." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Creational Pattern</span>
+      <h1>The Builder pattern - constructing complex objects step by step</h1>
+      <p class="lede">Some objects need many parts assembled in the right order, and a constructor with ten arguments is a trap. The Builder pattern <strong>separates how an object is constructed from what it finally is</strong>: you set fields one call at a time through a small, readable API, then ask for the finished, often immutable product. The optional Director captures a reusable recipe so the same steps can produce different representations.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Fluent API</span>
+        <span class="pill">Director</span>
+        <span class="pill">Immutability</span>
+        <span class="pill">Step by step</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Builder pattern?</h2>
+      <p class="muted"><strong>Builder</strong> is a creational pattern that lets you construct a complex object incrementally rather than in one giant constructor call. You configure the object through a sequence of small steps, then a final <code>build()</code> step hands back the completed product. Because construction logic lives outside the product, the same building process can create different representations, and the product itself can be validated and frozen at the end.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧱</span> Step-by-step assembly</h4>
+          <p>Each part is set with its own named call, so a half-configured object never leaks out. Order and defaults are handled inside the builder.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔗</span> Fluent interface</h4>
+          <p>Each setter returns the builder, so calls chain into one readable expression that reads like a description of the object.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧊</span> Immutable product</h4>
+          <p>All fields are gathered before <code>build()</code> runs, so the final object can be constructed once, validated, and made read-only.</p>
+        </div>
+      </div>
+
+      <h3>The core participants</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Product</strong></td><td>The complex object being assembled, usually immutable</td><td><code>HttpRequest</code>, <code>Pizza</code>, <code>Report</code></td></tr>
+            <tr><td><strong>Builder</strong></td><td>Holds partial state and exposes step methods plus <code>build()</code></td><td><code>HttpRequest.Builder</code></td></tr>
+            <tr><td><strong>Fluent step</strong></td><td>A named setter that returns <code>this</code> so calls chain</td><td><code>.header(k, v)</code></td></tr>
+            <tr><td><strong>build()</strong></td><td>Validates state and returns the finished product</td><td><code>.build()</code></td></tr>
+            <tr><td><strong>Director (optional)</strong></td><td>Encapsulates a reusable construction recipe</td><td><code>buildJsonPost()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a constructor answers "give me everything at once"; a Builder answers "let me describe the object piece by piece, then make it." The pattern trades one hard-to-read constructor call for a small, self-documenting API.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Builder pattern exists</h2>
+      <p class="muted">The pattern was born to kill the <strong>telescoping constructor</strong>: the anti-pattern where a class grows constructor after constructor, each adding one more parameter, until call sites are unreadable walls of positional arguments.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪜 Kills telescoping constructors</h4><p>Instead of <code>new Pizza(12, true, false, true, null, 2)</code>, you name each choice. No more counting commas to guess which boolean is which.</p></div>
+        <div class="card"><h4>📖 Readable at the call site</h4><p>Chained, named steps read like prose. A reviewer sees <code>.size(12).cheese(true)</code> and knows the intent without opening the class.</p></div>
+        <div class="card"><h4>🧊 Enables safe immutability</h4><p>Optional fields are set on the mutable builder, not the product. The product gets every value at once and can be final and thread-safe.</p></div>
+        <div class="card"><h4>♻️ Separates process from result</h4><p>The steps to assemble an object are decoupled from its concrete class, so one recipe can build several variants or output formats.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Builder explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is like <strong>filling out a lab report form</strong>. You complete the fields you need in any order, leave the rest at their defaults, and only when you hand it in does it become a final, graded document you cannot edit.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Think of <strong>chaining query methods</strong>: <code>query().where(x).orderBy(y).limit(10)</code>. Each call refines a plan and returns the plan, and only <code>build()</code> or <code>run()</code> turns it into the real thing.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>It is a <strong>custom order at a sandwich counter</strong>. You call out ingredients one by one; the worker (builder) assembles them in the right order, and you receive one finished sandwich, not a pile of parts.</p></div>
+        <div class="card"><h4><span class="ico">🏠</span> Everyday version</h4><p>Building with <strong>furniture flat-pack instructions</strong>: the instruction sheet (Director) says which panels join in what order, while the same panels (parts) could build a desk or a shelf.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">A Builder holds mutable, partially set state. Step methods mutate that state and return the builder so calls chain. A final <code>build()</code> validates everything and produces one immutable product. An optional <strong>Director</strong> wraps a fixed sequence of steps as a named recipe.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔧</span> The builder collects state</h4>
+          <p>Fields start at defaults. Each fluent step overwrites one field and returns <code>this</code>. Nothing is validated yet, so order does not matter to the caller.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎬</span> The Director drives a recipe</h4>
+          <p>When several products share the same construction sequence, a Director calls the builder steps in a fixed order, so callers reuse the recipe instead of repeating it.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Class structure - Director drives a Builder that assembles the Product</div>
+        <pre class="mermaid">
+classDiagram
+    class HttpRequest {
+        +String method
+        +String url
+        +Map headers
+        +String body
+    }
+    class Builder {
+        -String method
+        -String url
+        -Map headers
+        +method(m) Builder
+        +url(u) Builder
+        +header(k, v) Builder
+        +body(b) Builder
+        +build() HttpRequest
+    }
+    class Director {
+        +jsonPost(url, body) HttpRequest
+    }
+    Director ..> Builder : uses
+    Builder ..> HttpRequest : creates
+    HttpRequest *-- Builder : nested
+        </pre>
+      </div>
+
+      <h3>A realistic fluent builder in Java</h3>
+      <pre><code>public final class HttpRequest {
+    private final String method;
+    private final String url;
+    private final Map&lt;String, String&gt; headers;
+    private final String body;
+
+    // Private: the only way in is through the Builder.
+    private HttpRequest(Builder b) {
+        this.method  = b.method;
+        this.url     = b.url;
+        this.headers = Map.copyOf(b.headers); // defensive, immutable copy
+        this.body    = b.body;
+    }
+
+    public String method()  { return method; }
+    public String url()     { return url; }
+    public Map&lt;String, String&gt; headers() { return headers; }
+
+    public static Builder to(String url) {
+        return new Builder(url);
+    }
+
+    // Static nested Builder holds the mutable, half-built state.
+    public static final class Builder {
+        private String method = "GET";              // sensible default
+        private final String url;                   // required
+        private final Map&lt;String, String&gt; headers = new LinkedHashMap&lt;&gt;();
+        private String body = null;                 // optional
+
+        private Builder(String url) {
+            if (url == null || url.isBlank())
+                throw new IllegalArgumentException("url is required");
+            this.url = url;
+        }
+
+        public Builder method(String m) { this.method = m; return this; }
+        public Builder header(String k, String v) { headers.put(k, v); return this; }
+        public Builder body(String b) { this.body = b; return this; }
+
+        public HttpRequest build() {
+            // Central place to validate cross-field invariants.
+            if (body != null &amp;&amp; method.equals("GET"))
+                throw new IllegalStateException("GET cannot have a body");
+            return new HttpRequest(this);
+        }
+    }
+}
+
+// Call site reads like a description of the request:
+HttpRequest req = HttpRequest.to("https://api.example.com/orders")
+        .method("POST")
+        .header("Content-Type", "application/json")
+        .header("Authorization", "Bearer " + token)
+        .body("{\"item\":\"book\"}")
+        .build();</code></pre>
+      <p class="muted">Notice how the product constructor is <em>private</em> and takes the builder itself. Every field is set before <code>build()</code> validates and freezes the object, so an <code>HttpRequest</code> can never exist in a half-configured or mutable state.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the direct fluent chain, construction driven by a Director, and validation with rejection inside build().</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Direct use: chaining steps then build()</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant B as 🔧 Builder
+    participant P as 📦 Product
+
+    C->>B: to(url)
+    B-->>C: builder
+    C->>B: method(POST)
+    B-->>C: builder
+    C->>B: header(k, v)
+    B-->>C: builder
+    C->>B: build()
+    B->>P: new Product(builder)
+    P-->>B: immutable product
+    B-->>C: finished product
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - With a Director: a reusable recipe drives the steps</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant D as 🎬 Director
+    participant B as 🔧 Builder
+    participant P as 📦 Product
+
+    C->>D: jsonPost(url, body)
+    D->>B: new Builder(url)
+    D->>B: method(POST)
+    D->>B: header(Content-Type, json)
+    D->>B: body(payload)
+    D->>B: build()
+    B->>P: assemble product
+    P-->>B: product
+    B-->>D: product
+    D-->>C: ready-made request
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Validation: build() enforces invariants or rejects</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant B as 🔧 Builder
+    participant P as 📦 Product
+
+    C->>B: method(GET)
+    B-->>C: builder
+    C->>B: body(payload)
+    B-->>C: builder
+    C->>B: build()
+    B->>B: check invariants
+    alt invalid combination
+        B-->>C: throw IllegalState
+    else valid
+        B->>P: new Product(builder)
+        P-->>B: immutable product
+        B-->>C: finished product
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a class with too many constructor parameters to a clean, immutable product assembled through a fluent builder.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Smell</span><h4>Spot the telescoping constructor</h4><p>You notice a class with several overloaded constructors, or one taking many positional and optional parameters. Call sites are unreadable and error-prone.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Product</span><h4>Make the product fields final</h4><p>Decide the product should be immutable. Mark every field <code>final</code> and plan to set them all exactly once, in a private constructor.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Builder</span><h4>Create the nested Builder class</h4><p>Add a static nested <code>Builder</code> that mirrors the product fields as mutable state, seeded with sensible defaults for optional values.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Required</span><h4>Take required fields up front</h4><p>Pass mandatory values into the builder's constructor or a static entry point, so a builder can never start in an invalid state.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Steps</span><h4>Add fluent step methods</h4><p>For each optional field, add a named setter that assigns the value and <code>return this</code>, enabling chained calls.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Privacy</span><h4>Lock down the product constructor</h4><p>Make the product's constructor private and have it accept the builder, so the builder becomes the single, controlled way to create the object.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Validate</span><h4>Enforce invariants in build()</h4><p>In <code>build()</code>, check cross-field rules and required values before constructing. Fail loudly here rather than shipping a broken object.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Freeze</span><h4>Copy and freeze collections</h4><p>Defensively copy mutable inputs (lists, maps) into immutable ones inside the constructor so external references cannot mutate the product later.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Director</span><h4>Extract common recipes (optional)</h4><p>If several call sites repeat the same sequence of steps, wrap them in a Director method so the recipe lives in one place.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Use</span><h4>Build at the call site</h4><p>Callers chain the steps they care about and finish with <code>build()</code>, getting one fully formed, immutable product back.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Evolve</span><h4>Add fields without breaking callers</h4><p>New optional fields become new fluent methods with defaults. Existing call sites keep compiling, so the API grows without churn.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">A Builder pays off for genuinely complex objects. Reach for it too early, or implement it carelessly, and it becomes ceremony.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪶 Builder for trivial objects</h4><p>Wrapping a two-field value type in a builder adds boilerplate for no gain. A plain constructor or a record is clearer when there are few, all-required fields.</p></div>
+        <div class="card"><h4>🕳️ Forgetting to validate</h4><p>If <code>build()</code> skips invariant checks, the builder just relocates the problem. The whole point is one central place to reject invalid combinations.</p></div>
+        <div class="card"><h4>🔓 Leaking mutable references</h4><p>Storing a caller's list or map directly, without a defensive copy, lets outside code mutate a supposedly immutable product after it is built.</p></div>
+        <div class="card"><h4>🔁 Reusing a dirty builder</h4><p>Calling <code>build()</code> twice off one builder and expecting independent objects surprises people if state carries over. Document reuse, or return a fresh builder each time.</p></div>
+        <div class="card"><h4>🧩 No required-field enforcement</h4><p>Making every field an optional fluent step lets callers forget mandatory ones. Take required values in the builder constructor so the compiler helps.</p></div>
+        <div class="card"><h4>🎛️ Overloading the Director</h4><p>Turning the Director into a god-object of dozens of recipe methods recreates the complexity Builder was meant to tame. Keep recipes few and focused.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Builder buys readability and safe immutability at the cost of extra code. Weigh it against simpler options like records, named parameters, or a plain constructor.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Readable, self-documenting call sites; safe construction of immutable objects; central validation; easy to add optional fields without breaking callers.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>More code (a whole nested class); duplicated field declarations; slight indirection; overkill for simple value types.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>An object has many optional or defaulted fields, needs to be immutable, or requires cross-field validation before it exists.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>The object has few, mostly required fields. Prefer a record, a plain constructor, or language-level named parameters.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Moderate. The pattern itself is simple; the cost is the boilerplate, which code generators (Lombok, IDE tooling) can reduce.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Factory Method and Abstract Factory (create objects too), Prototype (clone instead of assemble), Composite (build trees the product may form).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for a Builder when a constructor call would need more than three or four arguments, several optional, and you want the result immutable. Below that threshold, a record or plain constructor is clearer.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three widely used APIs that lean on the Builder pattern in production code.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌐</span><div><h3>1 · OkHttp Request.Builder</h3><div class="role">Pattern: fluent builder for immutable HTTP requests</div></div></div>
+        <p class="muted">The OkHttp client models an HTTP request as an immutable object assembled through a nested builder.</p>
+        <ul>
+          <li>Callers chain <code>.url()</code>, <code>.header()</code>, <code>.post()</code> then <code>.build()</code> to get a frozen <code>Request</code>.</li>
+          <li>Required and optional parts are set in any order, with sensible method defaults.</li>
+          <li>The finished request is immutable and safe to share across threads and retries.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Request setup reads like a description of the call, and the resulting object is thread-safe by construction.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧵</span><div><h3>2 · Java StringBuilder</h3><div class="role">Pattern: incremental assembly of a final value</div></div></div>
+        <p class="muted">StringBuilder is the everyday builder: it accumulates characters step by step, then produces one final String.</p>
+        <ul>
+          <li>Each <code>append()</code> returns the builder, so many appends chain in one expression.</li>
+          <li>The mutable buffer avoids creating a new String on every concatenation.</li>
+          <li><code>toString()</code> is the <code>build()</code> step that yields the immutable result.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Efficient construction of a large immutable string without the cost of repeated allocation.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🐳</span><div><h3>3 · Kubernetes &amp; Docker client builders</h3><div class="role">Pattern: builders for deeply nested config objects</div></div></div>
+        <p class="muted">Fabric8 and similar Kubernetes clients expose fluent builders to construct pod, deployment, and service specs.</p>
+        <ul>
+          <li>Deeply nested specs are assembled with chained, nested builders instead of huge constructors.</li>
+          <li>Defaults fill in the many optional fields a Kubernetes object can carry.</li>
+          <li>The built spec is a validated, serializable object ready to send to the API server.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Complex, deeply structured configuration stays readable and type-safe instead of collapsing into positional argument soup.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Newer language features change how much manual builder code you write, but the pattern's intent stays central to modern APIs.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🗒️ Records and data classes</h4><p>Java records and Kotlin data classes remove boilerplate for simple immutables, shrinking the cases where a hand-written builder is worth it.</p></div>
+        <div class="card"><h4>🏷️ Named &amp; default parameters</h4><p>Kotlin, Python, and C# named arguments cover many builder use cases directly, so builders are reserved for the genuinely complex objects.</p></div>
+        <div class="card"><h4>🤖 Generated builders</h4><p>Lombok's <code>@Builder</code>, IDE generators, and annotation processors emit the boilerplate, keeping the pattern's benefits without the typing.</p></div>
+        <div class="card"><h4>🧪 Test data builders</h4><p>The object-mother and test-data-builder idioms use fluent builders to create readable, tweakable fixtures in unit tests.</p></div>
+        <div class="card"><h4>🔒 Staged (step) builders</h4><p>Type-safe staged builders use interfaces to force required steps in order at compile time, so <code>build()</code> is only reachable once mandatory fields are set.</p></div>
+        <div class="card"><h4>🧵 Fluent DSLs</h4><p>From query builders to UI and infrastructure DSLs, the fluent-builder style underpins the chained, declarative APIs modern frameworks favor.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> the Builder pattern turns unreadable, error-prone construction into a small, safe, self-documenting API and yields immutable objects. Language features automate the boilerplate, but the intent, separating construction from representation, is more relevant than ever.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Builder sits among the creational and structural patterns. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>Defer which concrete class to instantiate to a subclass.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../abstract-factory/"><span class="ico">🧰</span><h4>Abstract Factory</h4><p>Create families of related objects without naming classes.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>Clone a configured instance instead of assembling one.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>Compose objects into trees a builder often assembles.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Builder pattern · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

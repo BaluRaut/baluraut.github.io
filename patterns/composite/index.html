@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Composite Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Composite pattern: composing objects into tree structures, treating leaves and containers uniformly through a shared Component interface, recursion, the safety vs transparency trade-off, and file-system and UI-tree examples." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>How the Composite pattern actually works - trees you treat as one</h1>
+      <p class="lede">Some data is naturally a tree: folders inside folders, panels inside panels, groups inside groups. Composite lets you build those trees out of <strong>leaves</strong> and <strong>containers</strong> that share a single <strong>Component</strong> interface, so client code can call one method on the root and let recursion do the rest. A single file and a folder of a thousand files answer <code>size()</code> the same way.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Component interface</span>
+        <span class="pill">Leaf &amp; Composite</span>
+        <span class="pill">Recursion</span>
+        <span class="pill">Uniform treatment</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Composite pattern?</h2>
+      <p class="muted"><strong>Composite</strong> is a structural pattern that composes objects into tree structures to represent part-whole hierarchies. It lets clients treat individual objects and compositions of objects <em>uniformly</em>: a <strong>Leaf</strong> (a single object) and a <strong>Composite</strong> (a container of children) both implement the same <strong>Component</strong> interface, so the caller never has to ask "is this one thing or many?"</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Component</h4>
+          <p>The shared interface or abstract class. It declares the operations that both leaves and containers must support, such as <code>render()</code> or <code>size()</code>.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🍃</span> Leaf</h4>
+          <p>A single object with no children. It is the end of the tree and implements the operation directly, for its own behavior.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Composite</h4>
+          <p>A container that holds child Components. It implements the operation by delegating to its children and aggregating their results.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Component</strong></td><td>Declares the common operations for all nodes</td><td><code>FileNode</code> interface, <code>Graphic</code> abstract class</td></tr>
+            <tr><td><strong>Leaf</strong></td><td>Handles a request on its own, no delegation</td><td>A file, a single shape, a menu item</td></tr>
+            <tr><td><strong>Composite</strong></td><td>Stores children and forwards requests to them</td><td>A folder, a shape group, a submenu</td></tr>
+            <tr><td><strong>Child management</strong></td><td><code>add</code>, <code>remove</code>, <code>getChild</code> on containers</td><td><code>folder.add(file)</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Operates on the tree through the Component type</td><td><code>root.size()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the whole point is that the client holds a reference to a <em>Component</em>, not a Leaf or a Composite. It calls one method and the tree recursively resolves it. Uniformity at the interface is what removes the branchy "if leaf else container" code from callers.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Composite exists</h2>
+      <p class="muted">Without it, any code that walks a part-whole hierarchy is littered with type checks: "if this is a folder, loop over its contents, otherwise handle the file." That conditional spreads to every operation and every caller. Composite pushes the branching into the objects themselves.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 Kills the type-checking sprawl</h4><p>Clients stop writing <code>instanceof</code> ladders. One polymorphic call replaces "is it a leaf or a container?" logic scattered across the codebase.</p></div>
+        <div class="card"><h4>🌱 Open to new node types</h4><p>Add a new kind of leaf or container and existing client code keeps working, because it only ever talks to the Component interface. This is the Open-Closed Principle in action.</p></div>
+        <div class="card"><h4>🔁 Recursion for free</h4><p>Aggregate operations like total size, render, or serialize express naturally as "ask each child, combine." Depth of the tree becomes irrelevant to the caller.</p></div>
+        <div class="card"><h4>🌳 Models reality directly</h4><p>File systems, DOM trees, org charts, and scene graphs <em>are</em> trees. Composite mirrors that shape in code instead of flattening it into awkward loops.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Composite explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Composite is a <strong>folder of folders</strong>. Right-click a folder and pick "Properties" and it reports the total size of everything inside, however deep it nests. You do not compute it file by file; you ask the top folder and it asks down.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is the <strong>DOM tree</strong>. A text node and a <code>&lt;div&gt;</code> full of children both answer <code>appendChild</code> and <code>textContent</code>. You call one method on the root element and the browser recurses through the subtree.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of an <strong>org chart</strong>. Ask any manager for "total headcount under you" and they sum their reports, each of whom sums theirs. An individual contributor just answers "one." Same question, whole chain, no special cases.</p></div>
+        <div class="card"><h4><span class="ico">📦</span> Everyday version</h4><p>A <strong>box that can hold items or smaller boxes</strong>. To find the total weight for shipping, you weigh the outer box, which means weighing each thing inside, boxes included, all the way down.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">You define a common <strong>Component</strong> type, give it a <strong>Leaf</strong> implementation that does the real work, and a <strong>Composite</strong> implementation that keeps a list of children and delegates to them. Aggregate operations become recursive: a Composite computes its answer by combining the answers of its children.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧱</span> Define the contract</h4>
+          <p>The Component declares the operations every node supports. Leaves implement them directly; Composites implement them by looping over children and folding the results together.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🪆</span> Nest freely</h4>
+          <p>Because a Composite holds Components, and a Composite <em>is</em> a Component, containers can hold containers to any depth. The client keeps calling the same method on the root.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Class structure - Leaf and Composite share the Component interface, Composite holds children</div>
+        <pre class="mermaid">
+classDiagram
+    class FileSystemNode {
+        &lt;&lt;interface&gt;&gt;
+        +getName() String
+        +size() long
+        +print(indent) void
+    }
+    class FileLeaf {
+        -name String
+        -bytes long
+        +size() long
+    }
+    class Directory {
+        -name String
+        -children List~FileSystemNode~
+        +add(node) void
+        +remove(node) void
+        +size() long
+    }
+    FileSystemNode &lt;|.. FileLeaf
+    FileSystemNode &lt;|.. Directory
+    Directory o-- FileSystemNode : children
+        </pre>
+      </div>
+
+      <h3>A realistic implementation in Java</h3>
+      <pre><code>// Component: the shared interface for files and folders
+interface FileSystemNode {
+    String getName();
+    long size();                 // recursive aggregate
+    void print(String indent);
+}
+
+// Leaf: a single file, does the work itself
+final class FileLeaf implements FileSystemNode {
+    private final String name;
+    private final long bytes;
+
+    FileLeaf(String name, long bytes) {
+        this.name = name;
+        this.bytes = bytes;
+    }
+
+    public String getName() { return name; }
+
+    public long size() { return bytes; }   // base case of the recursion
+
+    public void print(String indent) {
+        System.out.println(indent + name + "  (" + bytes + " B)");
+    }
+}
+
+// Composite: a folder that holds children and delegates
+final class Directory implements FileSystemNode {
+    private final String name;
+    private final List&lt;FileSystemNode&gt; children = new ArrayList&lt;&gt;();
+
+    Directory(String name) { this.name = name; }
+
+    Directory add(FileSystemNode node) { children.add(node); return this; }
+    void remove(FileSystemNode node)   { children.remove(node); }
+
+    public String getName() { return name; }
+
+    public long size() {                    // recursive step
+        long total = 0;
+        for (FileSystemNode child : children) {
+            total += child.size();          // ask each child, leaf or folder
+        }
+        return total;
+    }
+
+    public void print(String indent) {
+        System.out.println(indent + name + "/");
+        for (FileSystemNode child : children) {
+            child.print(indent + "  ");     // recurse into the subtree
+        }
+    }
+}
+
+// Client: treats a single file and a whole tree identically
+FileSystemNode root = new Directory("project")
+    .add(new FileLeaf("README.md", 1_200))
+    .add(new Directory("src")
+        .add(new FileLeaf("Main.java", 4_800))
+        .add(new FileLeaf("Util.java", 2_100)));
+
+System.out.println(root.size());   // 8100  -> one call, whole tree
+root.print("");                    // pretty-prints the hierarchy</code></pre>
+      <p class="muted">Notice that the client never checks whether a node is a file or a folder. It calls <code>size()</code> on a <code>FileSystemNode</code> and the <code>Directory</code> recurses while the <code>FileLeaf</code> returns its own bytes. That single polymorphic call, plus recursion inside the container, is the entire pattern.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a recursive size query resolving down a tree, building the tree with child management, and a UI render pass that mixes leaves and containers.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Recursive size(): the call folds down through the subtree</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Root as 📦 Directory project
+    participant Src as 📦 Directory src
+    participant F1 as 🍃 Main.java
+    participant F2 as 🍃 Util.java
+
+    Client->>Root: size()
+    Root->>Src: size()
+    Src->>F1: size()
+    F1-->>Src: 4800
+    Src->>F2: size()
+    F2-->>Src: 2100
+    Src-->>Root: 6900
+    Note over Root,Src: Composite sums child results
+    Root-->>Client: 8100
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Building the tree with add() on containers</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Root as 📦 Directory project
+    participant Src as 📦 Directory src
+    participant Leaf as 🍃 FileLeaf
+
+    Client->>Root: new Directory("project")
+    Client->>Leaf: new FileLeaf("README.md", 1200)
+    Client->>Root: add(README leaf)
+    Root-->>Client: this
+    Client->>Src: new Directory("src")
+    Client->>Src: add(Main.java leaf)
+    Client->>Src: add(Util.java leaf)
+    Client->>Root: add(src directory)
+    Note over Root,Src: A Composite can hold another Composite
+    Root-->>Client: fully built tree
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - UI render pass: a panel renders children, some of which are panels</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant Panel as 📦 Panel root
+    participant Row as 📦 Panel row
+    participant Btn as 🍃 Button
+    participant Lbl as 🍃 Label
+
+    App->>Panel: render(ctx)
+    Panel->>Row: render(ctx)
+    Row->>Btn: render(ctx)
+    Btn-->>Row: drawn
+    Row->>Lbl: render(ctx)
+    Lbl-->>Row: drawn
+    Row-->>Panel: subtree drawn
+    alt panel has more children
+        Panel->>Panel: render remaining children
+    else no more children
+        Panel-->>App: frame complete
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From spotting a part-whole hierarchy to calling one method on the root and letting recursion resolve the whole tree.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Recognize a part-whole tree</h4><p>You have objects that contain other objects of the same kind, and you want to treat one and many the same way. That is the signal to reach for Composite.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Contract</span><h4>Define the Component interface</h4><p>List the operations every node must support, such as <code>size()</code>, <code>render()</code>, or <code>print()</code>. This is the type the client will hold.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Leaf</span><h4>Implement the Leaf</h4><p>Write the single-object class. Its operations do the real work directly and act as the base case of the recursion, returning their own value.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Composite</span><h4>Implement the Composite</h4><p>Give the container a list of child Components. Its operations loop over children, delegating and folding results together.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Manage</span><h4>Add child management</h4><p>Put <code>add</code>, <code>remove</code>, and <code>getChild</code> on the Composite. Decide whether these belong on the Component too - the safety vs transparency choice.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Recurse</span><h4>Wire the recursive step</h4><p>Make each aggregate operation on the Composite call the same operation on its children, so depth is handled automatically without the client knowing.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Build</span><h4>Assemble a tree</h4><p>Create leaves and containers, and use <code>add</code> to nest them. Containers can hold containers, so trees grow to any depth.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Reference</span><h4>Hold the Component type</h4><p>The client keeps a reference typed as the Component, not the concrete Leaf or Composite, so it stays blind to the difference.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Invoke</span><h4>Call one method on the root</h4><p>Trigger the operation on the top node. Polymorphism dispatches to Leaf or Composite behavior at each node without any type checks.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Resolve</span><h4>Let the tree fold up</h4><p>Leaves return their own results; containers combine their children's results and pass them upward until the root has the final answer.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Extend</span><h4>Add node types safely</h4><p>Introduce new leaves or containers later. Because clients only touch the Component interface, existing code keeps working unchanged.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Composite is simple to state and easy to misapply. These are the traps that show up in real trees.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Leaky child methods on leaves</h4><p>Push <code>add</code> and <code>remove</code> onto the Component for transparency, and now a Leaf has to implement them. Throwing <code>UnsupportedOperationException</code> at runtime trades compile-time safety for convenience. Choose deliberately.</p></div>
+        <div class="card"><h4>🔁 Cycles in the tree</h4><p>If a Composite can end up as its own descendant, recursion never terminates. Guard against adding an ancestor as a child, or the first <code>size()</code> call blows the stack.</p></div>
+        <div class="card"><h4>📉 Deep trees overflow the stack</h4><p>Naive recursion on very deep hierarchies can exhaust the call stack. For pathological depth, use an explicit stack or iterative traversal instead of pure recursion.</p></div>
+        <div class="card"><h4>🧨 Forcing a Composite on flat data</h4><p>If there is no genuine part-whole nesting, the interface bloats every object with container methods it does not need. A plain list is simpler than a one-level "tree."</p></div>
+        <div class="card"><h4>🐌 Recomputing aggregates every call</h4><p>Summing a huge subtree on every <code>size()</code> is wasteful when the tree rarely changes. Cache the aggregate and invalidate up the parent chain on mutation, but only if profiling shows it matters.</p></div>
+        <div class="card"><h4>🎭 God Component interface</h4><p>Cramming every operation any node might ever need into the Component makes leaves implement irrelevant methods. Keep the shared interface to what all nodes truly share.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Composite buys uniformity and clean recursion at the cost of a design choice about where child management lives.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Clients treat leaves and containers uniformly, no type checks; recursive operations are natural; new node types drop in without touching callers (Open-Closed).</td></tr>
+            <tr><td><strong>Cons</strong></td><td>The shared interface can be either too broad (leaves get container methods) or too narrow; deep trees risk stack overflow; overkill for flat data.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You have a genuine part-whole hierarchy - files and folders, UI panels, shapes and groups, org charts - and want to run the same operation over any subtree.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>Data is flat or one level deep, leaves and containers behave very differently, or the nesting is incidental rather than structural.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low structurally: three roles and one recursion. The subtlety is entirely in the safety vs transparency decision on child-management methods.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Decorator (same recursive shape, single child), Iterator (traverses the tree), Visitor (adds operations without editing nodes), Builder (assembles complex trees).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Safety vs transparency, the rule of thumb:</strong> put <code>add</code>/<code>remove</code> only on the Composite for <em>safety</em> - the compiler stops you calling them on a leaf, but the client must sometimes downcast. Put them on the Component for <em>transparency</em> - every node looks the same, but leaves must reject those calls at runtime. Prefer safety unless clients genuinely need to treat every node as a potential container.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three places Composite shows up in production-grade systems, each a genuine part-whole tree.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗂️</span><div><h3>1 · File-system tree in a build tool</h3><div class="role">Pattern: leaves are files, composites are directories</div></div></div>
+        <p class="muted">A build tool needs to compute directory sizes, glob for matching files, and walk a project tree for compilation.</p>
+        <ul>
+          <li>A <code>FileNode</code> interface is implemented by <code>File</code> leaves and <code>Directory</code> composites.</li>
+          <li><code>size()</code>, <code>walk()</code>, and <code>match(glob)</code> recurse through directories and terminate at files.</li>
+          <li>Child management (<code>add</code>, <code>remove</code>) lives only on <code>Directory</code>, so the compiler blocks nonsense like adding a child to a file.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> One recursive call on the project root computes totals and traversals for any subtree, with no special-casing of files versus folders in the caller.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖼️</span><div><h3>2 · UI component tree in a widget toolkit</h3><div class="role">Pattern: leaves are widgets, composites are containers</div></div></div>
+        <p class="muted">A GUI toolkit renders and lays out screens made of buttons, labels, and nested panels.</p>
+        <ul>
+          <li>A <code>Component</code> base declares <code>render()</code>, <code>measure()</code>, and <code>hitTest(point)</code>.</li>
+          <li><code>Button</code> and <code>Label</code> are leaves; <code>Panel</code> is a composite that renders its children in order.</li>
+          <li>A render pass calls <code>render()</code> on the root and the whole subtree draws itself recursively.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The layout engine treats a single button and a deeply nested panel identically, so new widget types plug in without changing the render loop.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>3 · Vector graphics editor with grouping</h3><div class="role">Pattern: leaves are shapes, composites are groups</div></div></div>
+        <p class="muted">A drawing app lets users group shapes, transform the group as one, and nest groups arbitrarily.</p>
+        <ul>
+          <li>A <code>Graphic</code> interface exposes <code>draw()</code>, <code>bounds()</code>, and <code>move(dx, dy)</code>.</li>
+          <li><code>Circle</code> and <code>Rect</code> are leaves; <code>Group</code> is a composite that forwards transforms to every child.</li>
+          <li>Selecting a group and dragging it moves the entire subtree because <code>move()</code> recurses.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Grouping and ungrouping cost nothing extra in the operation code, since a group is just another <code>Graphic</code> the tools already know how to handle.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Composite predates most of today's stacks, yet the tree-of-uniform-nodes idea is everywhere in modern software.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🌐 Virtual DOM trees</h4><p>React and similar libraries build trees of elements where a component and a host node are handled uniformly, then reconciled recursively. Composite thinking underlies the whole render model.</p></div>
+        <div class="card"><h4>🧾 Abstract syntax trees</h4><p>Compilers and formatters represent code as nodes where an expression may contain expressions. Traversal and transformation recurse over a shared node interface.</p></div>
+        <div class="card"><h4>🎬 Scene graphs</h4><p>Game engines and 3D tools nest transforms and meshes into a scene graph, propagating world transforms down the tree exactly as Composite prescribes.</p></div>
+        <div class="card"><h4>📄 Document object models</h4><p>HTML, XML, and rich-text documents are Composite trees where text nodes and element nodes share one interface for traversal and editing.</p></div>
+        <div class="card"><h4>🧰 Functional variants</h4><p>In functional languages the same shape appears as recursive algebraic data types with fold operations, the pattern's structural core minus the class hierarchy.</p></div>
+        <div class="card"><h4>🗺️ Config and infra trees</h4><p>Nested configuration, JSON documents, and infrastructure resource graphs are walked with the same uniform, recursive treatment of parts and wholes.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> whenever data is a part-whole hierarchy and you want to run the same operation over any subtree, Composite is the answer. It stays central because trees are central - the pattern is less a trick and more the natural shape of nested data made explicit.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Composite sits among the patterns that build and traverse object structures. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>Same recursive wrapping shape, but one child instead of many.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔗</span><h4>Iterator</h4><p>Walks the nodes of a Composite without exposing its structure.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../visitor/"><span class="ico">🧭</span><h4>Visitor</h4><p>Adds new operations over the tree without editing node classes.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../builder/"><span class="ico">🏗️</span><h4>Builder</h4><p>Assembles complex Composite trees step by step.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Composite · What · Why · How · Diagrams · Flow · Trade-offs · Cases · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

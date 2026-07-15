@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Four Pillars of OOP Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the four pillars of object-oriented programming: encapsulation, inheritance, polymorphism, and abstraction. What they are, how they work, diagrams, a 0-100 flow, pitfalls, trade-offs, and real Java code." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Foundation</span>
+      <h1>The four pillars of OOP - the complete picture</h1>
+      <p class="lede">Object-oriented programming rests on four ideas that work together: <strong>encapsulation</strong> guards state behind a clean interface, <strong>inheritance</strong> models shared behavior, <strong>polymorphism</strong> lets one call take many forms, and <strong>abstraction</strong> hides complexity behind simple contracts. Master how they combine and you design systems that stay flexible as they grow.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Encapsulation</span>
+        <span class="pill">Inheritance</span>
+        <span class="pill">Polymorphism</span>
+        <span class="pill">Abstraction</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What are the four pillars?</h2>
+      <p class="muted">The <strong>four pillars of OOP</strong> are the core principles that turn "code that groups data and functions" into a discipline for managing complexity. Each pillar answers a different question: how do I protect state, how do I reuse behavior, how do I vary behavior, and how do I hide detail? Used together they let you model a domain in objects that are safe to change.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Encapsulation</h4>
+          <p>Bundle data with the methods that operate on it and hide the internals. Callers touch a public interface, never the raw fields, so the object protects its own invariants.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧬</span> Inheritance</h4>
+          <p>Define a type in terms of another, modeling an is-a relationship. A subclass reuses and extends a base class, sharing structure and behavior.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎭</span> Polymorphism</h4>
+          <p>One interface, many implementations. The same call resolves to different behavior at runtime depending on the actual object's type.</p>
+        </div>
+      </div>
+
+      <h3>The four pillars at a glance</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Pillar</th><th>Core idea</th><th>Java mechanism</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Encapsulation</strong></td><td>Hide state, expose behavior, protect invariants</td><td><code>private</code> fields, getters/setters, access modifiers</td></tr>
+            <tr><td><strong>Inheritance</strong></td><td>Reuse and specialize an existing type (is-a)</td><td><code>extends</code>, <code>super</code>, protected members</td></tr>
+            <tr><td><strong>Polymorphism</strong></td><td>Same call, different behavior at runtime</td><td>Method overriding, dynamic dispatch, interfaces</td></tr>
+            <tr><td><strong>Abstraction</strong></td><td>Expose a concept, hide the how</td><td><code>interface</code>, <code>abstract class</code>, abstract methods</td></tr>
+            <tr><td><strong>Combined</strong></td><td>Design flexible, changeable systems</td><td>Program to interfaces, encapsulate variation</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the pillars are not four unrelated tricks. Abstraction decides <em>what</em> a type promises, encapsulation protects <em>how</em> it keeps that promise, inheritance and polymorphism let many types honor the <em>same</em> promise in different ways. They only pay off together.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the pillars exist</h2>
+      <p class="muted">Software changes constantly, and unmanaged complexity is what kills a codebase. The pillars exist to <em>localize</em> change: keep data safe, isolate what varies, and let callers depend on stable contracts rather than volatile detail.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Protect invariants</h4><p>Encapsulation stops outside code from putting an object into an illegal state. A <code>BankAccount</code> can guarantee its balance never goes negative because only its own methods touch the field.</p></div>
+        <div class="card"><h4>♻️ Reuse without copy-paste</h4><p>Inheritance and composition let shared behavior live in one place. Fix a bug in the base type and every specialization benefits, instead of hunting duplicated logic.</p></div>
+        <div class="card"><h4>🔌 Swap implementations freely</h4><p>Polymorphism and abstraction let you add a new payment method or storage backend without touching the code that uses it. New behavior plugs in behind the same interface.</p></div>
+        <div class="card"><h4>🧠 Tame complexity</h4><p>Abstraction hides irrelevant detail so you reason about one layer at a time. You call <code>list.sort()</code> without knowing which algorithm runs underneath.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>The four pillars explained with analogies</h2>
+      <p class="muted">Same four ideas, four ways to picture them, so they click whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of a <strong>vending machine</strong>. Encapsulation is the locked case around the coins and snacks; inheritance is that a snack machine and a drink machine are both vending machines; polymorphism is pressing "buy" and getting whatever that slot holds; abstraction is the button panel that hides all the motors inside.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>An interface like <code>List</code> is the <strong>contract</strong>; <code>ArrayList</code> and <code>LinkedList</code> are implementations. You code against <code>List</code> (abstraction), the classes hide their arrays and nodes (encapsulation), share a parent contract (inheritance), and <code>add()</code> dispatches to the real type at runtime (polymorphism).</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A company org chart. Every <strong>Employee</strong> is a type; a Manager is-a Employee (inheritance). You ask any employee to "report status" and each does it their own way (polymorphism). Their private notes stay private (encapsulation), and you deal with them through a job title, not their inner workings (abstraction).</p></div>
+        <div class="card"><h4><span class="ico">🚗</span> Everyday version</h4><p>Driving a car. The <strong>steering wheel and pedals</strong> are the abstraction; the engine is sealed under the hood (encapsulation); a car is-a vehicle like a truck (inheritance); pressing the accelerator works on any car though each responds differently (polymorphism).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How the pillars work under the hood</h2>
+      <p class="muted">Structurally, the pillars show up as a hierarchy: an <strong>abstraction</strong> at the top (an interface or abstract class), concrete <strong>subclasses</strong> that encapsulate their own state, and callers that invoke them <strong>polymorphically</strong> through the shared type.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📐</span> Contracts and hierarchy</h4>
+          <p>An interface declares <em>what</em> without any <em>how</em>. An abstract class can supply shared code plus abstract holes subclasses must fill. Concrete classes complete the contract and keep their fields private.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Dynamic dispatch</h4>
+          <p>When you call an overridden method through a base reference, the JVM looks up the actual object's method at runtime via its vtable. Overriding is resolved late; overloading is resolved at compile time by argument types.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - an interface and an abstract base, specialized by concrete subclasses</div>
+        <pre class="mermaid">
+classDiagram
+    class Shape {
+        <<interface>>
+        +area() double
+        +name() String
+    }
+    class AbstractShape {
+        <<abstract>>
+        #String label
+        +name() String
+        +area()* double
+    }
+    class Circle {
+        -double radius
+        +area() double
+    }
+    class Rectangle {
+        -double width
+        -double height
+        +area() double
+    }
+    Shape <|.. AbstractShape
+    AbstractShape <|-- Circle
+    AbstractShape <|-- Rectangle
+        </pre>
+      </div>
+
+      <h3>A realistic example in Java</h3>
+      <pre><code>// Abstraction: the contract, no implementation
+interface Shape {
+    double area();
+    String name();
+}
+
+// Inheritance + partial abstraction: shared code, one abstract hole
+abstract class AbstractShape implements Shape {
+    private final String label;          // encapsulated state
+
+    protected AbstractShape(String label) {
+        this.label = label;
+    }
+
+    @Override public String name() {     // reused by every subclass
+        return label;
+    }
+
+    @Override public abstract double area();  // subclasses must fill this
+}
+
+final class Circle extends AbstractShape {
+    private final double radius;         // hidden, validated in constructor
+
+    Circle(double radius) {
+        super("Circle");
+        if (radius <= 0) throw new IllegalArgumentException("radius > 0");
+        this.radius = radius;            // invariant: always positive
+    }
+
+    @Override public double area() {     // overriding = polymorphism
+        return Math.PI * radius * radius;
+    }
+}
+
+final class Rectangle extends AbstractShape {
+    private final double width, height;
+
+    Rectangle(double width, double height) {
+        super("Rectangle");
+        this.width = width;
+        this.height = height;
+    }
+
+    @Override public double area() {
+        return width * height;
+    }
+}
+
+// Polymorphism in action: one loop, many concrete types
+List&lt;Shape&gt; shapes = List.of(new Circle(2), new Rectangle(3, 4));
+for (Shape s : shapes) {
+    // dynamic dispatch picks the right area() at runtime
+    System.out.printf("%s -> %.2f%n", s.name(), s.area());
+}</code></pre>
+      <p class="muted">Notice all four pillars in one snippet: <code>Shape</code> is the abstraction, the <code>radius</code> field is encapsulated behind a validating constructor, <code>Circle extends AbstractShape</code> is inheritance, and the loop calls <code>area()</code> polymorphically without knowing the concrete type.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a polymorphic call resolving at runtime, encapsulation guarding an invariant, and an abstract template method delegating to a subclass.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Dynamic dispatch: one call, resolved to the real type at runtime</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑 Client code
+    participant Ref as 🔗 Shape reference
+    participant VT as 🧭 Method table
+    participant Obj as 🟠 Circle instance
+
+    Client->>Ref: s.area()
+    Ref->>VT: look up area for actual type
+    VT-->>Ref: bind to Circle.area
+    Ref->>Obj: invoke Circle.area()
+    Obj-->>Client: returns pi r squared
+    Note over Ref,Obj: Overriding is resolved late, not by the declared type
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Encapsulation: the object rejects an illegal state change</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Acc as 🏦 BankAccount
+    participant Bal as 🔒 private balance
+
+    Caller->>Acc: withdraw(amount)
+    Acc->>Acc: check amount vs balance
+    alt insufficient funds
+        Acc-->>Caller: throw IllegalState
+        Note over Acc,Bal: Invariant held, balance never goes negative
+    else funds available
+        Acc->>Bal: balance = balance - amount
+        Bal-->>Acc: updated
+        Acc-->>Caller: return new balance
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Abstraction: a template method delegates the varying step to a subclass</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑 Client
+    participant Base as 🧱 AbstractReport
+    participant Sub as 📄 PdfReport
+
+    Client->>Base: render()
+    Base->>Base: writeHeader() shared
+    Base->>Sub: writeBody() abstract hook
+    Sub-->>Base: body content
+    Base->>Base: writeFooter() shared
+    Base-->>Client: finished document
+    Note over Base,Sub: Base fixes the skeleton, subclass fills the hole
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a raw requirement to a polymorphic, well-encapsulated design - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Find the objects</h4><p>Read the domain and name the nouns that own behavior: Account, Order, Shape. Each becomes a candidate class with responsibilities, not just a bag of data.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Abstract</span><h4>Define the contract</h4><p>Write the interface first: the methods callers need, with no implementation. This is the abstraction that hides every future how behind a stable what.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Encapsulate</span><h4>Hide the state</h4><p>Make fields <code>private</code> and expose behavior instead of raw data. Decide what invariants the object must always keep true.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Guard</span><h4>Validate in the constructor</h4><p>Reject illegal arguments up front so an object is never born in a broken state. A constructed object is a valid object.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Reuse</span><h4>Lift shared code to a base</h4><p>If several types share logic, put it in an abstract class with abstract holes for what varies. Prefer this only for a true is-a relationship.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Specialize</span><h4>Implement concrete subclasses</h4><p>Each subclass fills the abstract methods and keeps its own private fields. It honors the contract in its own way.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Override</span><h4>Provide varying behavior</h4><p>Override the base methods with <code>@Override</code> so the compiler checks the signature. This is where polymorphism gets its many forms.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Dispatch</span><h4>Call through the abstraction</h4><p>Client code holds a reference to the interface, not the concrete class. At runtime dynamic dispatch routes each call to the real type.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Substitute</span><h4>Check Liskov safety</h4><p>Any subclass must be usable wherever the base is expected without surprises. If a subclass breaks the base's promises, the hierarchy is wrong.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>Add a new type, touch nothing</h4><p>A new requirement becomes a new class implementing the interface. Existing callers keep working, proving the design is open for extension.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Combine</span><h4>Four pillars, one flexible system</h4><p>Abstraction sets the contract, encapsulation protects it, inheritance shares it, polymorphism varies it. Together they localize change to one place.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">The pillars are easy to misuse. These are the traps that turn OOP into a tangle instead of a tool.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Leaky encapsulation</h4><p>Getters and setters for every field, or returning a mutable internal list, expose state you meant to hide. Callers then depend on internals and invariants quietly break.</p></div>
+        <div class="card"><h4>🏗️ Deep inheritance towers</h4><p>Five-level class hierarchies become fragile: a change in a middle class ripples unpredictably. If you cannot say "X is-a Y" out loud, do not inherit.</p></div>
+        <div class="card"><h4>🧨 Inheriting for reuse only</h4><p>Extending a class just to grab its methods creates an is-a lie. A <code>Stack extends Vector</code> leaks Vector operations that violate stack behavior. Prefer composition.</p></div>
+        <div class="card"><h4>🔀 Overriding vs overloading confusion</h4><p>Same name, different parameters is overloading (compile-time, not polymorphism). Forgetting <code>@Override</code> can silently create an overload that never dispatches.</p></div>
+        <div class="card"><h4>🎪 Anemic domain model</h4><p>Classes that are pure data holders with all logic elsewhere throw away encapsulation. Behavior belongs with the data it protects, not in a distant service.</p></div>
+        <div class="card"><h4>🧩 Over-abstraction</h4><p>An interface with a single implementation, wrapped in factories you will never swap, adds indirection with no payoff. Abstract the variation you actually have.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS / TRADE-OFFS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">The pillars are powerful but not free. Reach for them where variation and change are real, and keep it flat where they are not.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Localizes change, protects invariants, enables reuse, and lets you add behavior by adding types instead of editing callers.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Indirection can obscure control flow, deep hierarchies get fragile, and dynamic dispatch adds a small runtime cost and harder-to-trace stacks.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You have genuine variation behind a common contract, invariants worth protecting, or types that truly share an is-a relationship.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>The problem is a simple script or data transform, there is only one implementation, or you are inheriting purely to reuse code.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low to add one interface and a class; grows fast with hierarchy depth. Favor shallow trees and composition to keep it manageable.</td></tr>
+            <tr><td><strong>Related</strong></td><td>SOLID principles, composition over inheritance, UML relationships, and the Strategy pattern all build directly on these pillars.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> favor composition over inheritance, program to interfaces not implementations, and only inherit for a real is-a. If a pillar is not solving a concrete change or variation problem, you are adding ceremony, not design.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three places the four pillars quietly hold up software you use every day.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗂️</span><div><h3>1 · The Java Collections Framework</h3><div class="role">Pattern: abstraction plus polymorphism at scale</div></div></div>
+        <p class="muted">The standard library exposes <code>List</code>, <code>Set</code>, and <code>Map</code> as interfaces with many implementations behind them.</p>
+        <ul>
+          <li>You code against <code>List</code>, so swapping <code>ArrayList</code> for <code>LinkedList</code> changes nothing for callers.</li>
+          <li>Each class encapsulates its own storage - an array, a node chain, a hash table - fully hidden.</li>
+          <li><code>Collections.sort(list)</code> dispatches polymorphically to whatever list you pass in.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Millions of programs share one stable interface while implementations evolve, because abstraction and polymorphism decouple use from detail.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>2 · A payment gateway integration</h3><div class="role">Pattern: encapsulation plus the Strategy pattern</div></div></div>
+        <p class="muted">A checkout service must support cards, wallets, and bank transfers without branching logic spreading everywhere.</p>
+        <ul>
+          <li>A <code>PaymentMethod</code> interface defines <code>authorize()</code> and <code>capture()</code>; each provider implements it.</li>
+          <li>Provider classes encapsulate their own API keys and retry rules behind the interface.</li>
+          <li>Adding a new provider is a new class, so the order flow never changes.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> New payment types ship without touching checkout, because variation is encapsulated behind one polymorphic contract.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎮</span><div><h3>3 · A game entity hierarchy</h3><div class="role">Pattern: inheritance with a template method</div></div></div>
+        <p class="muted">A game engine has many entities - players, enemies, projectiles - that share an update-and-render loop.</p>
+        <ul>
+          <li>An abstract <code>Entity</code> fixes the tick skeleton and leaves <code>update()</code> and <code>render()</code> abstract.</li>
+          <li>Each subclass overrides only the behavior that differs, reusing the shared loop.</li>
+          <li>The engine iterates a <code>List&lt;Entity&gt;</code> and calls <code>tick()</code> polymorphically on every object.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> One loop drives hundreds of entity types, because inheritance shares the skeleton and polymorphism fills in the specifics.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">The pillars are decades old, but modern languages and styles refine rather than replace them - and often lean harder on the ideas underneath.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Composition over inheritance</h4><p>Modern guidance favors assembling behavior from small parts over deep class trees. The pillar that survives is encapsulation, wired together by composition.</p></div>
+        <div class="card"><h4>🔗 Interfaces as the primary tool</h4><p>Go, Rust traits, and TypeScript push interface-based polymorphism without classical inheritance, showing abstraction is the durable idea.</p></div>
+        <div class="card"><h4>🧾 Records and immutability</h4><p>Java records and data classes make encapsulated, immutable values cheap, so invariants hold by construction and never mutate into a bad state.</p></div>
+        <div class="card"><h4>🎯 Sealed types and pattern matching</h4><p>Sealed hierarchies plus switch patterns give exhaustive, type-safe polymorphism, a modern complement to virtual dispatch.</p></div>
+        <div class="card"><h4>🧩 Functional and OO blend</h4><p>Higher-order functions are polymorphism by another name. Mixing lambdas with objects is now idiomatic, not a contradiction.</p></div>
+        <div class="card"><h4>🏛️ Domain-driven design</h4><p>DDD leans on rich, encapsulated aggregates that protect invariants - the first pillar, elevated to an architectural principle.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> the four pillars are not a style you can outgrow, they are the vocabulary of managing change. Newer tools shift the emphasis toward encapsulation, abstraction, and composition, but the core insight - hide detail, isolate variation, program to contracts - is more relevant than ever.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">The pillars sit at the root of object-oriented design. These build directly on them.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../solid/"><span class="ico">🧯</span><h4>SOLID principles</h4><p>Five rules that keep the pillars from turning rigid.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧱</span><h4>Composition over inheritance</h4><p>When to assemble behavior instead of extending.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../uml-relationships/"><span class="ico">📐</span><h4>UML relationships</h4><p>Drawing is-a, has-a, and depends-on correctly.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎯</span><h4>Strategy pattern</h4><p>Polymorphism and encapsulation applied to varying algorithms.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the four pillars of OOP · What · Why · How · Diagrams · Flow · Trade-offs · Cases · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

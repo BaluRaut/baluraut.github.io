@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Observer Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Observer pattern: the one-to-many dependency, publish/subscribe, push vs pull models, reactive streams, the lapsed-listener leak, sequence diagrams, a 0-100 flow, case studies, and modern relevance." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>The Observer pattern - one change, many reactions</h1>
+      <p class="lede">Observer defines a <strong>one-to-many</strong> dependency between objects: when one object (the subject) changes state, all its dependents (the observers) are notified and updated automatically. It is the backbone of event systems, UI data binding, and reactive streams. You get loose coupling between the thing that changes and the many things that care.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Subject &amp; observers</span>
+        <span class="pill">Publish/subscribe</span>
+        <span class="pill">Push vs pull</span>
+        <span class="pill">Reactive streams</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Observer pattern?</h2>
+      <p class="muted"><strong>Observer</strong> lets an object publish changes without knowing who is listening. A <em>subject</em> keeps a list of <em>observers</em> and, whenever its state changes, walks that list calling an <code>update</code> method on each one. Observers can subscribe and unsubscribe at runtime, so the set of listeners is completely dynamic and the subject stays ignorant of concrete observer types.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📣</span> Subject (publisher)</h4>
+          <p>Holds the state that matters and a registry of observers. Exposes <code>subscribe</code>, <code>unsubscribe</code>, and <code>notify</code>. It never knows the concrete observer classes.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">👂</span> Observer (subscriber)</h4>
+          <p>Implements a common interface, usually one <code>update</code> method. It reacts to a change however it likes, independent of the other observers.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔔</span> Notification</h4>
+          <p>When state changes, the subject iterates its list and calls <code>update</code> on each observer. Data is either pushed in the call or pulled back from the subject.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common form</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Subject</strong></td><td>Owns state and the observer registry</td><td>Concrete class, <code>EventEmitter</code>, <code>Subject</code></td></tr>
+            <tr><td><strong>Observer interface</strong></td><td>Contract the subject calls on change</td><td><code>update()</code>, callback, listener</td></tr>
+            <tr><td><strong>Subscription</strong></td><td>Adds or removes an observer at runtime</td><td><code>subscribe</code> returns an unsubscribe handle</td></tr>
+            <tr><td><strong>Notification</strong></td><td>Broadcasts the change to all observers</td><td>Push payload or pull from subject</td></tr>
+            <tr><td><strong>Event object</strong></td><td>Optional data carried with the change</td><td>Event, message, delta, snapshot</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the subject does not call specific objects, it broadcasts. Observer inverts the direction of knowledge, the many depend on the one, and the one depends on nothing but an interface.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Observer exists</h2>
+      <p class="muted">Without it, the object that changes has to hardcode calls to every object that reacts. Add a new consumer and you edit the producer. Observer breaks that dependency so producers and consumers evolve separately.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔗 Loose coupling</h4><p>The subject depends only on an observer interface, not on concrete listeners. You can add, remove, or swap reactions without touching the code that changes state.</p></div>
+        <div class="card"><h4>📡 Broadcast communication</h4><p>One state change fans out to many interested parties in a single step. New consumers just subscribe; the producer never learns their names.</p></div>
+        <div class="card"><h4>⏱️ Runtime flexibility</h4><p>Observers register and deregister while the program runs. The set of reactions is data, not a fixed call graph baked in at compile time.</p></div>
+        <div class="card"><h4>🎯 Separation of concerns</h4><p>The thing that owns state stays focused on its own job. Logging, UI refresh, caching, and analytics each live in their own observer.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Observer explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is a <strong>class group chat</strong>. When the teacher posts the exam date, everyone subscribed gets the message at once. The teacher does not text each student individually, and students can leave the group anytime.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is <strong><code>addEventListener</code></strong>. A button holds a list of callbacks; on click it calls them all. The button knows nothing about your handlers, and you can remove a listener when the component unmounts.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>company mailing list</strong>. Publish one announcement and every subscriber receives it. People opt in and out freely, and the sender never maintains a per-person address book.</p></div>
+        <div class="card"><h4><span class="ico">📰</span> Everyday version</h4><p>A <strong>newspaper subscription</strong>. The paper prints once and delivers to every current subscriber. Cancel and the deliveries stop; the publisher does not need to know who you are.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Two moving parts: a <strong>subject</strong> that maintains a list of observers and fires notifications, and <strong>observers</strong> that implement a shared interface and react. The only real design choice is how data reaches the observer.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📤</span> Push model</h4>
+          <p>The subject sends the changed data inside the notification, for example <code>update(temperature)</code>. Simple and self-contained, but the subject must guess what every observer needs.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📥</span> Pull model</h4>
+          <p>The subject only signals that something changed; each observer calls back to read exactly the state it wants. More flexible, at the cost of extra round trips and tighter access to the subject.</p>
+        </div>
+      </div>
+
+      <h3>Participants and relationships</h3>
+      <div class="diagram">
+        <div class="cap">Structure - a subject holds many observers behind one interface</div>
+        <pre class="mermaid">
+classDiagram
+    class Subject {
+        +subscribe(o Observer)
+        +unsubscribe(o Observer)
+        +notify()
+    }
+    class Observer {
+        <<interface>>
+        +update(event)
+    }
+    class WeatherStation {
+        -float temperature
+        +setTemperature(t)
+    }
+    class PhoneDisplay {
+        +update(event)
+    }
+    class LogService {
+        +update(event)
+    }
+    Subject <|-- WeatherStation
+    Observer <|.. PhoneDisplay
+    Observer <|.. LogService
+    Subject o--> Observer : notifies many
+</pre>
+      </div>
+
+      <h3>A realistic implementation in TypeScript</h3>
+      <pre><code>type Listener&lt;T&gt; = (event: T) =&gt; void;
+
+class Subject&lt;T&gt; {
+  private listeners = new Set&lt;Listener&lt;T&gt;&gt;();
+
+  // subscribe returns an unsubscribe handle - the modern idiom
+  subscribe(fn: Listener&lt;T&gt;): () =&gt; void {
+    this.listeners.add(fn);
+    return () =&gt; this.listeners.delete(fn);
+  }
+
+  // push model: the changed data travels with the notification
+  notify(event: T): void {
+    // copy first so an observer unsubscribing mid-notify is safe
+    for (const fn of [...this.listeners]) fn(event);
+  }
+}
+
+// --- usage ---
+interface Weather { tempC: number; humidity: number }
+const station = new Subject&lt;Weather&gt;();
+
+const off = station.subscribe(w =&gt; console.log(`Phone: ${w.tempC}C`));
+station.subscribe(w =&gt; console.log(`Log: humidity ${w.humidity}%`));
+
+station.notify({ tempC: 21, humidity: 55 }); // both observers fire
+off();                                        // phone stops listening
+station.notify({ tempC: 22, humidity: 50 }); // only the log fires
+</code></pre>
+      <p class="muted">Returning an unsubscribe function from <code>subscribe</code> is the pattern's most important ergonomic upgrade. It gives every subscriber a matching teardown, which is exactly what prevents the lapsed-listener leak described below.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: subscribing, a push notification to many observers, and the pull model with an unsubscribe that prevents a leak.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Subscribing: observers register with the subject</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant O1 as 📱 Phone display
+    participant O2 as 📝 Log service
+    participant S as 📣 Subject
+
+    O1->>S: subscribe(this)
+    S-->>O1: unsubscribe handle
+    O2->>S: subscribe(this)
+    S-->>O2: unsubscribe handle
+    Note over S: Subject now holds two observers
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Push notify: one change fans out to all observers</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🌡️ Caller
+    participant S as 📣 Subject
+    participant O1 as 📱 Phone display
+    participant O2 as 📝 Log service
+
+    C->>S: setState(temp=22)
+    S->>S: state changed
+    loop for each observer
+        S->>O1: update(event)
+        O1-->>S: rendered
+        S->>O2: update(event)
+        O2-->>S: written
+    end
+    S-->>C: notify complete
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Pull model plus unsubscribe to avoid the lapsed-listener leak</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant S as 📣 Subject
+    participant O as 📱 Observer
+
+    S->>O: update() signal only
+    O->>S: getState()
+    S-->>O: current value
+    Note over O: reads exactly what it needs
+    alt observer is destroyed
+        O->>S: unsubscribe()
+        S->>S: drop reference
+        Note over S,O: observer can be garbage collected
+    else observer forgets to unsubscribe
+        Note over S,O: subject keeps reference forever - leak
+    end
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From defining the contract to a clean teardown - implementing and using Observer in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Contract</span><h4>Define the observer interface</h4><p>Decide the method the subject will call, for example <code>update(event)</code>. This one contract is the only thing the subject ever depends on.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Subject</span><h4>Build the subject registry</h4><p>Give the subject a collection of observers plus <code>subscribe</code>, <code>unsubscribe</code>, and <code>notify</code>. A set avoids duplicate registrations.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Model</span><h4>Choose push or pull</h4><p>Push sends the changed data in the call; pull sends only a signal and lets observers read what they need. Pick based on how varied the observers are.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Observer</span><h4>Implement concrete observers</h4><p>Write classes or callbacks that satisfy the interface. Each reacts independently: refresh a view, write a log, invalidate a cache.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Register</span><h4>Subscribe observers at runtime</h4><p>Observers call <code>subscribe</code> and keep the returned unsubscribe handle. The subject now knows to include them in future notifications.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Change</span><h4>Mutate the subject state</h4><p>Some caller updates the subject. The subject detects the change and prepares to broadcast it to everyone listening.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Notify</span><h4>Broadcast to all observers</h4><p>The subject iterates its list, calling <code>update</code> on each observer. Iterate over a copy so a mid-notify unsubscribe cannot corrupt the loop.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">React</span><h4>Observers handle the event</h4><p>Each observer runs its own logic. Failures should be isolated so one throwing observer does not block the rest of the broadcast.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Order</span><h4>Consider ordering and reentrancy</h4><p>If an observer changes the subject during notify, you can trigger a cascade. Guard against reentrancy and do not assume any notification order.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Unsubscribe</span><h4>Detach when done</h4><p>When an observer is no longer needed, call its unsubscribe handle. This removes the reference and is the single most important step for memory health.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Verify</span><h4>Confirm no leaks remain</h4><p>Check that destroyed observers are gone from the registry. In long-lived subjects, weak references or explicit teardown keep the listener list from growing forever.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Observer is easy to add and easy to abuse. These are the failures that show up in real systems.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Lapsed-listener leak</h4><p>The classic bug: an observer is discarded but never unsubscribed, so the subject keeps a strong reference to it forever. It cannot be garbage collected and its <code>update</code> still runs. Always pair subscribe with unsubscribe, or use weak references.</p></div>
+        <div class="card"><h4>🔁 Notification cascades</h4><p>An observer that mutates the subject during notify can trigger another notify, and another. Uncontrolled reentrancy leads to redundant work, stale intermediate states, or infinite loops.</p></div>
+        <div class="card"><h4>🧨 One observer breaks the broadcast</h4><p>If <code>notify</code> calls observers without isolating errors, a single thrown exception aborts the loop and later observers never fire. Catch per observer or the change silently half-applies.</p></div>
+        <div class="card"><h4>❓ Unpredictable order</h4><p>Code that secretly depends on observers firing in a particular order is fragile. Registration order is an implementation detail, not a contract you should lean on.</p></div>
+        <div class="card"><h4>🌀 Update storms</h4><p>Fine-grained changes each firing a notification can flood observers - hundreds of updates for one logical operation. Batch or debounce, or coalesce changes before broadcasting.</p></div>
+        <div class="card"><h4>🔗 Hidden coupling via the event</h4><p>Overloading events with subject internals recreates the tight coupling you were escaping. Keep payloads small and stable so observers do not reach into subject internals.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Observer buys decoupling and dynamic reactions, but it trades away directness and can obscure control flow.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Loose coupling, runtime subscribe/unsubscribe, one-to-many broadcast, open for new observers without editing the subject.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Indirect control flow that is hard to trace, risk of memory leaks, cascades, and undefined notification order.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>Many objects must react to a state change, the set of listeners varies at runtime, and the producer should not know its consumers.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>There is exactly one, fixed consumer, or when the reactive indirection makes a simple direct call needlessly hard to follow.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low to add, moderate to operate safely - lifecycle management and reentrancy are the real cost, not the initial code.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Publish/subscribe (decoupled via a broker), Mediator (centralizes interaction), Reactive streams (observers with backpressure and operators).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Observer when one changing thing has many, changing listeners. If communication is many-to-many and needs coordination rules, reach for Mediator instead.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three places the Observer pattern quietly runs the show.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖱️</span><div><h3>1 · Browser DOM events</h3><div class="role">Pattern: push-model observers via addEventListener</div></div></div>
+        <p class="muted">Every UI framework and vanilla page relies on DOM elements broadcasting events to registered handlers.</p>
+        <ul>
+          <li>An element is the subject; <code>addEventListener</code> subscribes a callback observer.</li>
+          <li>On an interaction the element pushes an <code>Event</code> object to every handler.</li>
+          <li><code>removeEventListener</code> unsubscribes; forgetting it on a removed node leaks the handler.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Any number of independent handlers respond to the same click, with the element knowing nothing about them.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌊</span><div><h3>2 · Reactive streams (RxJS, Reactor)</h3><div class="role">Pattern: observers with operators and backpressure</div></div></div>
+        <p class="muted">Reactive libraries generalize Observer into composable streams of events over time.</p>
+        <ul>
+          <li>An <code>Observable</code> is the subject; <code>subscribe</code> attaches an observer and returns a <code>Subscription</code>.</li>
+          <li>Operators like <code>map</code>, <code>filter</code>, and <code>debounce</code> transform the notification stream.</li>
+          <li>Unsubscribing tears down the chain, and backpressure controls fast producers.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Complex async event pipelines are built declaratively on the same subscribe-and-notify core.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗂️</span><div><h3>3 · State stores and data binding</h3><div class="role">Pattern: UI observers of a central store</div></div></div>
+        <p class="muted">Redux, MobX, Vue, and signals all notify subscribed views when application state changes.</p>
+        <ul>
+          <li>The store is the subject; components subscribe to slices of state they care about.</li>
+          <li>A dispatched change notifies subscribers, which re-render with the new value.</li>
+          <li>Frameworks auto-unsubscribe on unmount to prevent the lapsed-listener leak.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The UI stays in sync with state automatically, with no manual wiring between the store and each view.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Observer is more central now than when the Gang of Four named it, hidden inside the tools we use every day.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚡ Signals and fine-grained reactivity</h4><p>Signals in Solid, Angular, Vue, and Preact are Observer at the value level - reading a signal subscribes, writing it notifies, with automatic dependency tracking.</p></div>
+        <div class="card"><h4>🌊 Reactive programming everywhere</h4><p>RxJS, Reactor, and Combine turn the pattern into full stream algebras with operators, scheduling, and backpressure for async event flows.</p></div>
+        <div class="card"><h4>📨 Event-driven architectures</h4><p>Kafka, message brokers, and pub/sub systems scale the same publish-and-subscribe idea across services and machines.</p></div>
+        <div class="card"><h4>🧹 Lifecycle-safe subscriptions</h4><p>Framework hooks, <code>AbortController</code>, and effect cleanup make unsubscribe automatic, retiring the lapsed-listener leak by default.</p></div>
+        <div class="card"><h4>🪶 Weak references</h4><p><code>WeakRef</code> and weak listener collections let subjects hold observers without preventing garbage collection, a built-in guard against leaks.</p></div>
+        <div class="card"><h4>🔌 WebSockets and live data</h4><p>Real-time dashboards, collaborative editors, and live feeds are observers reacting to a server that pushes changes as they happen.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Observer is how software reacts to change without hardwiring who reacts to what. From a button click to a distributed event bus, the same subscribe-and-notify core underpins nearly every interactive and reactive system you touch.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Observer lives among the other behavioral patterns. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../mediator/"><span class="ico">🗣️</span><h4>Mediator</h4><p>Centralizes many-to-many interaction instead of broadcasting.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../command/"><span class="ico">🎛️</span><h4>Command</h4><p>Reifies actions that observers often carry or trigger.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../state/"><span class="ico">🚦</span><h4>State</h4><p>State changes are exactly what observers watch for.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔁</span><h4>Iterator</h4><p>Traversing the observer list to notify each one.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Observer · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

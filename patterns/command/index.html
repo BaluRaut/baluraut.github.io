@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Command Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Command design pattern: encapsulating a request as an object with execute() and undo(), Invoker/Command/Receiver roles, undo/redo, queuing, logging, macros, sequence diagrams, a 0-100 flow, case studies, and modern relevance." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>The Command pattern - turning actions into objects</h1>
+      <p class="lede">The Command pattern wraps a request as a standalone object with an <strong>execute()</strong> method, decoupling the thing that triggers an action from the thing that performs it. Because each action is now a first-class object, you can queue it, log it, replay it, batch it into a macro, and above all <strong>undo</strong> it. It is the backbone of every editor, task queue, and transactional UI you have ever used.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">execute() / undo()</span>
+        <span class="pill">Invoker</span>
+        <span class="pill">Receiver</span>
+        <span class="pill">Undo &amp; redo</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Command pattern?</h2>
+      <p class="muted"><strong>Command</strong> is a behavioral design pattern that turns a request into a self-contained object. That object carries everything needed to perform the action later: the receiver to act on, the method to call, and the arguments to pass. The caller no longer says "do this now"; it holds an object and says "run this when you are ready." That small shift is what unlocks undo, queuing, logging, and macros.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📦</span> Request as object</h4>
+          <p>An action becomes a value you can store in a variable, pass around, and put in a list, rather than a method call that runs and vanishes.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">▶️</span> A uniform execute()</h4>
+          <p>Every command exposes the same tiny interface, so the invoker treats "delete text" and "send email" identically without knowing the details.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">↩️</span> Reversible by design</h4>
+          <p>Pair execute() with undo() and each command knows how to reverse itself, giving you history, redo, and transactional rollback for free.</p>
+        </div>
+      </div>
+
+      <h3>The core roles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Command</strong></td><td>Interface declaring execute() and often undo()</td><td><code>interface Command</code></td></tr>
+            <tr><td><strong>Concrete Command</strong></td><td>Binds a receiver to an action plus its arguments</td><td><code>InsertTextCommand</code></td></tr>
+            <tr><td><strong>Receiver</strong></td><td>Knows how to actually perform the work</td><td><code>Document</code>, <code>Light</code></td></tr>
+            <tr><td><strong>Invoker</strong></td><td>Triggers commands and can keep a history stack</td><td><code>Button</code>, <code>CommandStack</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Creates commands and wires them to receivers</td><td>The editor setup code</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the Command pattern separates <em>what to do</em> (the command object) from <em>when and how often to do it</em> (the invoker). Once an action is an object, time and repetition become things you control.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Command pattern exists</h2>
+      <p class="muted">Calling a method directly is fine until you need to defer it, repeat it, record it, or take it back. A raw method call has no memory and no reverse gear. Wrapping the call in an object gives the action an identity you can manage.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>↩️ Undo and redo</h4><p>If each command can reverse itself, a stack of executed commands becomes an undo history and a stack of undone ones becomes redo. This is the single biggest reason the pattern exists.</p></div>
+        <div class="card"><h4>⏳ Queue and schedule</h4><p>Because a command is just data, you can push it onto a queue, run it on a worker thread, retry it, or delay it, all without the caller knowing when it runs.</p></div>
+        <div class="card"><h4>🧾 Log and replay</h4><p>Serialize commands to a log and you can audit every change, replay them to rebuild state, or ship them across a network as an event stream.</p></div>
+        <div class="card"><h4>🔗 Decouple caller from worker</h4><p>A button, a menu item, and a keyboard shortcut can all fire the same command object. The invoker never learns what the receiver is or how it works.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Command explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>A command is a <strong>written homework instruction on an index card</strong>. The teacher (invoker) hands you a stack of cards; each card knows exactly what task to do. You can reorder the stack, redo a card, or tear one up to undo it, without the teacher knowing the details of any task.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a <strong>closure with a name and a reverse</strong>. Instead of <code>doc.insert("hi")</code> running now, you build an object holding the receiver, the args, and an <code>undo()</code>. The invoker calls <code>cmd.execute()</code> and can push it onto a history stack.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>restaurant order ticket</strong>. The waiter (invoker) writes the order and clips it to the rail; the kitchen (receiver) cooks it. The ticket queues, gets logged, and can be voided. The waiter never touches a stove.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>A <strong>remote control</strong> button. Each button holds one command bound to a device. Press it to run the action, and a well-designed remote has an undo or "last channel" that reverses what you just did.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">A command binds a <strong>receiver</strong> plus arguments behind a uniform <strong>execute()</strong>. An <strong>invoker</strong> runs commands and keeps two stacks, one for undo and one for redo, so history becomes a simple push and pop.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧱</span> Building a command</h4>
+          <p>The client constructs a concrete command, capturing the receiver and the arguments it needs. For undo, the command also records the state it will overwrite, so it can restore it later.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗂️</span> Running the history</h4>
+          <p>The invoker calls execute(), pushes the command onto the undo stack, and clears redo. Undo pops the top command and calls undo(); redo pops from the redo stack and re-executes.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - the invoker holds commands, each command drives a receiver</div>
+        <pre class="mermaid">
+classDiagram
+    class Command {
+        &lt;&lt;interface&gt;&gt;
+        +execute()
+        +undo()
+    }
+    class InsertTextCommand {
+        -Document doc
+        -String text
+        -int position
+        +execute()
+        +undo()
+    }
+    class DeleteTextCommand {
+        -Document doc
+        -int from
+        -String removed
+        +execute()
+        +undo()
+    }
+    class Document {
+        +insert(pos, text)
+        +delete(from, len)
+    }
+    class CommandStack {
+        -Deque~Command~ undoStack
+        -Deque~Command~ redoStack
+        +run(cmd)
+        +undo()
+        +redo()
+    }
+    Command &lt;|.. InsertTextCommand
+    Command &lt;|.. DeleteTextCommand
+    InsertTextCommand --&gt; Document : receiver
+    DeleteTextCommand --&gt; Document : receiver
+    CommandStack --&gt; Command : invokes
+        </pre>
+      </div>
+
+      <h3>A realistic text-editor example (Java)</h3>
+      <pre><code>// Command interface: every action is execute + undo
+interface Command {
+    void execute();
+    void undo();
+}
+
+// Receiver: knows how to actually mutate text
+class Document {
+    private final StringBuilder buf = new StringBuilder();
+    void insert(int pos, String text) { buf.insert(pos, text); }
+    void delete(int from, int len)    { buf.delete(from, from + len); }
+    String read(int from, int len)    { return buf.substring(from, from + len); }
+    @Override public String toString() { return buf.toString(); }
+}
+
+// Concrete command: insert, and remember how to reverse it
+class InsertTextCommand implements Command {
+    private final Document doc;
+    private final int pos;
+    private final String text;
+    InsertTextCommand(Document doc, int pos, String text) {
+        this.doc = doc; this.pos = pos; this.text = text;
+    }
+    public void execute() { doc.insert(pos, text); }
+    public void undo()    { doc.delete(pos, text.length()); }
+}
+
+// Concrete command: delete captures what it removed so undo can restore it
+class DeleteTextCommand implements Command {
+    private final Document doc;
+    private final int from, len;
+    private String removed;               // state saved during execute()
+    DeleteTextCommand(Document doc, int from, int len) {
+        this.doc = doc; this.from = from; this.len = len;
+    }
+    public void execute() {
+        removed = doc.read(from, len);    // snapshot before destroying it
+        doc.delete(from, len);
+    }
+    public void undo() { doc.insert(from, removed); }
+}
+
+// Invoker: runs commands and maintains undo/redo history
+class CommandStack {
+    private final Deque&lt;Command&gt; undo = new ArrayDeque&lt;&gt;();
+    private final Deque&lt;Command&gt; redo = new ArrayDeque&lt;&gt;();
+    void run(Command c) { c.execute(); undo.push(c); redo.clear(); }
+    void undo() { if (!undo.isEmpty()) { Command c = undo.pop(); c.undo(); redo.push(c); } }
+    void redo() { if (!redo.isEmpty()) { Command c = redo.pop(); c.execute(); undo.push(c); } }
+}
+
+// Client wiring it together
+Document doc = new Document();
+CommandStack editor = new CommandStack();
+editor.run(new InsertTextCommand(doc, 0, "Hello world"));
+editor.run(new DeleteTextCommand(doc, 5, 6));   // "Hello"
+editor.undo();                                  // back to "Hello world"
+editor.redo();                                  // "Hello" again</code></pre>
+      <p class="muted">Notice that <code>DeleteTextCommand</code> snapshots the removed text during <em>execute()</em>, not in its constructor, because the correct value only exists at run time. That captured state is exactly what makes <em>undo()</em> possible, and it is the detail most naive implementations get wrong.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a basic execute, an undo and redo cycle, and a queued macro of commands running on a worker.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Execute: the invoker runs a command against its receiver</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant I as 🎛️ Invoker
+    participant Cmd as 📦 Command
+    participant R as 🧠 Receiver
+
+    C->>Cmd: new InsertText(doc, pos, text)
+    C->>I: run(command)
+    I->>Cmd: execute()
+    Cmd->>R: insert(pos, text)
+    R-->>Cmd: done
+    Cmd-->>I: ok
+    I->>I: push onto undo stack
+    I-->>C: action applied
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Undo then redo: history stacks in action</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant I as 🎛️ Invoker
+    participant Cmd as 📦 Command
+    participant R as 🧠 Receiver
+
+    U->>I: undo()
+    I->>I: pop from undo stack
+    I->>Cmd: undo()
+    Cmd->>R: reverse the change
+    R-->>Cmd: restored
+    I->>I: push onto redo stack
+    Note over I: redo stack now holds the reversed command
+    U->>I: redo()
+    I->>I: pop from redo stack
+    I->>Cmd: execute()
+    Cmd->>R: re-apply the change
+    R-->>Cmd: done
+    I->>I: push back onto undo stack
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Queue and macro: deferred, batched execution</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant P as 👤 Producer
+    participant Q as 📥 Command queue
+    participant W as ⚙️ Worker
+    participant M as 🧩 Macro command
+    participant R as 🧠 Receiver
+
+    P->>Q: enqueue(macro of 3 commands)
+    W->>Q: poll()
+    Q-->>W: macro command
+    W->>M: execute()
+    loop each sub-command
+        M->>R: run sub-action
+        R-->>M: ok
+    end
+    alt any sub-command fails
+        M->>R: undo applied sub-commands
+        M-->>W: rolled back
+    else all succeed
+        M-->>W: committed
+    end
+    W->>Q: ack / log result
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From defining the interface to shipping full undo, redo, and macros, the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Define</span><h4>Declare the Command interface</h4><p>Start with the smallest contract: <code>execute()</code>, and <code>undo()</code> if reversibility matters. Every action in the system will implement it.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Receiver</span><h4>Identify who does the work</h4><p>Find the objects that already know how to perform the operations, the document, the light, the account. Commands delegate to them; they hold the real logic.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Wrap</span><h4>Create concrete commands</h4><p>For each action, build a class that captures a receiver plus its arguments and calls the receiver inside execute().</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Reverse</span><h4>Make each command undoable</h4><p>Implement undo() so a command reverses its own effect. Snapshot any state you will overwrite <em>during</em> execute(), not before.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Invoker</span><h4>Build the invoker</h4><p>Add a component that receives command objects and calls execute() on them, staying ignorant of what each command actually does.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">History</span><h4>Add the undo stack</h4><p>Every executed command is pushed onto a stack. Undo pops the top and calls its undo(). Now you have single-level and multi-level undo.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Redo</span><h4>Add the redo stack</h4><p>When you undo, move the command to a redo stack. Redo pops it and re-executes. Any fresh command clears redo to keep history linear.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Bind</span><h4>Wire triggers to commands</h4><p>Point buttons, menu items, and shortcuts at the same command objects. The UI fires commands; it never calls receivers directly.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Macro</span><h4>Compose commands into macros</h4><p>A macro command holds a list of commands and runs them in order, undoing them in reverse. One user gesture becomes many atomic steps.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Queue</span><h4>Queue, log, or persist</h4><p>Because commands are objects, enqueue them for a worker, write them to an audit log, or serialize them to replay and rebuild state later.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Robust, reversible actions</h4><p>You now have a system where every action is testable, queueable, loggable, and reversible, all behind one tiny interface.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">The pattern is simple, but undo and state capture are where most implementations quietly break.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📸 Capturing state too early</h4><p>Recording the value to restore in the constructor instead of during execute() means undo restores a stale or wrong value. Snapshot at execution time.</p></div>
+        <div class="card"><h4>🫥 Half-undoable macros</h4><p>A macro that fails midway but does not roll back the steps it already applied leaves state inconsistent. Undo applied sub-commands in reverse on failure.</p></div>
+        <div class="card"><h4>🧨 God commands</h4><p>Cramming real business logic into the command instead of delegating to a receiver turns commands into a dumping ground and defeats the decoupling.</p></div>
+        <div class="card"><h4>♾️ Unbounded history</h4><p>Keeping every command forever grows memory without limit, especially when commands hold large snapshots. Cap the stack or use lighter deltas.</p></div>
+        <div class="card"><h4>🔗 Leaky references in undo</h4><p>Undo that reverses by re-running forward logic, rather than restoring saved state, drifts when other commands ran in between. Reverse from captured data.</p></div>
+        <div class="card"><h4>🏗️ Over-engineering trivial actions</h4><p>Wrapping a single fire-and-forget call that never needs undo, queuing, or logging in a command class adds ceremony with no payoff. Use it where it earns its keep.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Command buys you flexibility around time, repetition, and reversal, at the cost of more classes and indirection.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Decouples invoker from receiver; enables undo/redo, queuing, logging, and macros; each command is easy to test in isolation; satisfies open/closed - add actions without touching the invoker.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Introduces many small classes; adds a layer of indirection; robust undo and state capture require care; can feel heavy for simple actions.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You need undo/redo, want to queue or schedule work, must log or replay actions, need macros, or want one action reachable from many triggers.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>The action is a one-off call that never needs to be deferred, repeated, logged, or reversed. A plain method or lambda is enough.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low to moderate for basic execute; moderate once you add reliable undo, redo, and transactional macros.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Memento (stores the state a command restores), Observer (fires commands on events), Strategy (swaps an algorithm), Chain of Responsibility (routes a request through handlers).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Command the moment an action needs a life beyond "run now" - if you must undo it, queue it, log it, or batch it, wrap it in a command; otherwise call the method directly.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative systems where the Command pattern is the load-bearing structure.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📝</span><div><h3>1 · Text and graphics editor undo history</h3><div class="role">Pattern: reversible edits on a document</div></div></div>
+        <p class="muted">A word processor or design tool needs unlimited undo and redo across every kind of edit, from typing to moving shapes.</p>
+        <ul>
+          <li>Every edit - insert, delete, format, move - is a command with execute() and undo().</li>
+          <li>An undo stack and redo stack turn Ctrl+Z and Ctrl+Y into simple push and pop.</li>
+          <li>Grouped edits become a macro command so one gesture undoes as a single unit.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> users edit fearlessly because any action can be reversed, and the editor code stays uniform since the invoker treats all edits alike.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📥</span><div><h3>2 · Background task queue and job workers</h3><div class="role">Pattern: deferred, retryable, logged execution</div></div></div>
+        <p class="muted">A system needs to run work asynchronously - send emails, process images, sync data - reliably and with an audit trail.</p>
+        <ul>
+          <li>Each job is a serialized command placed on a durable queue for a worker to run.</li>
+          <li>Failed commands are retried or moved to a dead-letter queue without touching callers.</li>
+          <li>The command log doubles as an audit trail and a way to replay work after an outage.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> producers stay fast and decoupled while workers execute, retry, and log commands independently, giving durability and observability for free.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏠</span><div><h3>3 · Smart-home and remote-control automation</h3><div class="role">Pattern: one interface over many devices</div></div></div>
+        <p class="muted">A universal remote or home hub must control lights, blinds, and media from many vendors through a single UI.</p>
+        <ul>
+          <li>Each button or scene holds a command bound to a specific device receiver.</li>
+          <li>A "movie night" scene is a macro command that runs several device commands at once.</li>
+          <li>An undo or "all off" command reverses the last scene using stored prior states.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> the hub adds new devices without changing its UI, since every control is just another command behind the same execute() call.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Command is far from a museum piece; its shape underpins some of the most active ideas in modern software architecture.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 CQRS command handlers</h4><p>Command Query Responsibility Segregation models every write as a command object dispatched to a handler, a direct descendant of this pattern.</p></div>
+        <div class="card"><h4>📜 Event sourcing</h4><p>Storing an append-only log of commands or events lets you rebuild state by replaying history, exactly the log-and-replay use case.</p></div>
+        <div class="card"><h4>⚛️ Redux and reducers</h4><p>Front-end state stores dispatch action objects to reducers; time-travel debugging is undo/redo over a command history in disguise.</p></div>
+        <div class="card"><h4>🌐 Distributed task queues</h4><p>Systems like Celery and Sidekiq serialize commands onto brokers so workers execute, retry, and schedule them across machines.</p></div>
+        <div class="card"><h4>🔄 Sagas and rollbacks</h4><p>Long-running distributed transactions use compensating commands to undo prior steps, the macro rollback idea at cloud scale.</p></div>
+        <div class="card"><h4>🤖 Agent tool calls</h4><p>An LLM agent emitting structured tool invocations that a runtime executes and logs is the Command pattern applied to AI actions.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> the Command pattern is how you give an action an identity so you can control its timing, repetition, and reversal. From editors to event sourcing to agent tool use, that idea only grows more central.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Command sits in a web of behavioral patterns. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../chain-of-responsibility/"><span class="ico">⛓️</span><h4>Chain of Responsibility</h4><p>Route a request through a line of handlers.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../memento/"><span class="ico">💾</span><h4>Memento</h4><p>Capture the state that undo restores.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>Fire commands in response to events.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎯</span><h4>Strategy</h4><p>Swap an interchangeable algorithm at runtime.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Command pattern · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

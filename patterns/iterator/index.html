@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iterator Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Iterator pattern: sequential access without exposing internals, external vs internal iterators, built-in Java and JavaScript support, fail-fast behavior, sequence diagrams, a 0-100 flow, case studies, and modern relevance." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>How the Iterator pattern actually works</h1>
+      <p class="lede">Collections come in many shapes: arrays, linked lists, trees, hash tables. The Iterator pattern gives you <strong>one uniform way to walk them all</strong>, exposing elements <strong>one at a time</strong> without ever revealing how the collection stores them. The traversal logic lives in a separate cursor object, so the collection stays simple and clients stay decoupled from its internals.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Sequential access</span>
+        <span class="pill">External vs internal</span>
+        <span class="pill">Iterable protocol</span>
+        <span class="pill">Fail-fast</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Iterator pattern?</h2>
+      <p class="muted"><strong>Iterator</strong> is a behavioral design pattern that provides a way to access the elements of an aggregate object <em>sequentially</em> without exposing its underlying representation. The traversal state, where you are in the collection, moves out of the collection and into a small dedicated cursor object. That single indirection lets one client loop over a list, a tree, or a stream with identical code.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎯</span> Uniform traversal</h4>
+          <p>Clients ask for a <code>next()</code> element through the same interface no matter what the collection is: array, set, tree, or database cursor.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> Encapsulated internals</h4>
+          <p>The collection never leaks its buckets, nodes, or index math. Callers see elements, not the data structure that holds them.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧭</span> Externalized state</h4>
+          <p>Each iterator holds its own position, so several traversals of the same collection can run at once without stepping on each other.</p>
+        </div>
+      </div>
+
+      <h3>The core roles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Iterator</strong></td><td>Defines the traversal interface: advance and read the current element</td><td><code>hasNext()</code>, <code>next()</code></td></tr>
+            <tr><td><strong>Concrete Iterator</strong></td><td>Tracks the current position and knows how to walk one structure</td><td>List cursor, in-order tree walker</td></tr>
+            <tr><td><strong>Aggregate</strong></td><td>Declares a factory method that hands back an iterator</td><td><code>Iterable.iterator()</code></td></tr>
+            <tr><td><strong>Concrete Aggregate</strong></td><td>The actual collection that creates iterators over itself</td><td><code>ArrayList</code>, custom range</td></tr>
+            <tr><td><strong>Client</strong></td><td>Uses the iterator interface, unaware of the concrete types</td><td>A <code>for-each</code> loop</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the collection is the <em>book</em>, the iterator is the <em>bookmark</em>. The bookmark remembers your page and knows how to turn to the next one, and you can keep several bookmarks in the same book at once.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Iterator pattern exists</h2>
+      <p class="muted">Without it, every collection would need to expose its guts, indexes, node pointers, hash buckets, and every client would hardcode a different loop. Iterator moves traversal behind one interface so structures can change freely and clients stay untouched.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Single traversal interface</h4><p>Write one loop that works over any collection. Swap an <code>ArrayList</code> for a <code>TreeSet</code> and the calling code does not change at all.</p></div>
+        <div class="card"><h4>🛡️ Protects encapsulation</h4><p>Callers never touch internal indices or nodes, so the collection can rebalance a tree or resize an array without breaking anyone.</p></div>
+        <div class="card"><h4>🔀 Multiple concurrent walks</h4><p>Because each iterator carries its own position, you can run nested loops or parallel scans over one collection independently.</p></div>
+        <div class="card"><h4>🌊 Lazy and infinite sequences</h4><p>An iterator can compute elements on demand, so you can model streams, paginated APIs, or infinite ranges without materializing them.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Iterator explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is a <strong>bookmark</strong>. The textbook does not remember where you stopped, the bookmark does. You can lend the book to a friend with their own bookmark, and neither of you loses your place.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is the object a <strong>for-each loop</strong> secretly asks for. <code>for (x of coll)</code> calls <code>coll.iterator()</code> then <code>next()</code> until it is exhausted; you never see the array indices behind it.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>TV remote</strong>. The channel button says "next" and "previous" without you knowing whether channels live on cable, satellite, or streaming underneath.</p></div>
+        <div class="card"><h4><span class="ico">🍽️</span> Everyday version</h4><p>A <strong>ticket dispenser</strong> at the deli counter. Everyone pulls the next number in order, one at a time, and nobody needs to see how the roll of tickets is wound inside the machine.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">The collection exposes a factory method that returns a fresh cursor. The cursor holds a position, answers "is there more?", and hands back the current element while stepping forward. The client only ever talks to that cursor interface.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🚶</span> External iterator</h4>
+          <p>The <strong>client drives</strong> the loop: it calls <code>hasNext()</code> and <code>next()</code> itself. Maximum control, so you can pause, peek, or interleave two iterators. This is Java's <code>Iterator</code> and JavaScript's iterator protocol.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Internal iterator</h4>
+          <p>The <strong>collection drives</strong> the loop and calls a function you pass in for each element, as in <code>forEach</code> or <code>Stream.map</code>. Less boilerplate, but you cannot easily stop early or run two walks in lockstep.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Class structure - the aggregate creates iterators the client walks</div>
+        <pre class="mermaid">
+classDiagram
+    class Iterator~T~ {
+        <<interface>>
+        +hasNext() boolean
+        +next() T
+    }
+    class Iterable~T~ {
+        <<interface>>
+        +iterator() Iterator~T~
+    }
+    class NameRepository {
+        -String[] names
+        +iterator() Iterator~String~
+    }
+    class NameIterator {
+        -int index
+        +hasNext() boolean
+        +next() String
+    }
+    class Client
+    Iterable~T~ <|.. NameRepository
+    Iterator~T~ <|.. NameIterator
+    NameRepository ..> NameIterator : creates
+    Client --> Iterable~T~ : iterator()
+    Client --> Iterator~T~ : hasNext/next
+        </pre>
+      </div>
+
+      <h3>A custom iterator in Java</h3>
+      <pre><code>import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+// Concrete Aggregate: exposes iterators without revealing the array
+public class NameRepository implements Iterable&lt;String&gt; {
+    private final String[] names = { "Ada", "Alan", "Grace", "Linus" };
+
+    @Override
+    public Iterator&lt;String&gt; iterator() {
+        return new NameIterator();       // factory method
+    }
+
+    // Concrete Iterator: an inner class holding the traversal state
+    private class NameIterator implements Iterator&lt;String&gt; {
+        private int index = 0;           // externalized cursor position
+
+        @Override
+        public boolean hasNext() {
+            return index &lt; names.length;
+        }
+
+        @Override
+        public String next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            return names[index++];       // read, then advance
+        }
+    }
+}
+
+// Client: uses the interface, never the array
+class Demo {
+    public static void main(String[] args) {
+        NameRepository repo = new NameRepository();
+        for (String name : repo) {       // for-each calls iterator() + next()
+            System.out.println(name);
+        }
+    }
+}</code></pre>
+      <p class="muted">Because <code>NameRepository</code> implements <code>Iterable</code>, the enhanced <code>for</code> loop works automatically: the compiler expands it into calls to <code>iterator()</code>, <code>hasNext()</code>, and <code>next()</code>. The <code>index</code> lives in the iterator, not the repository, so two loops over the same repo never collide.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: an external traversal, an internal iterator, and fail-fast detection when the collection changes mid-loop.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - External iterator: the client drives hasNext and next</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 📚 Aggregate
+    participant It as 🔖 Iterator
+
+    C->>A: iterator()
+    A-->>C: new Iterator (index 0)
+    loop until exhausted
+        C->>It: hasNext()
+        It-->>C: true
+        C->>It: next()
+        It-->>C: current element
+    end
+    C->>It: hasNext()
+    It-->>C: false
+    Note over C,It: Loop ends, cursor is discarded
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Internal iterator: the collection drives forEach</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 📚 Aggregate
+    participant F as 🧩 Callback
+
+    C->>A: forEach(callback)
+    loop for each element
+        A->>F: apply(element)
+        F-->>A: done
+    end
+    A-->>C: traversal complete
+    Note over A,F: Client passes behavior, collection owns the loop
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Fail-fast: structural change during iteration is detected</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 📚 Collection
+    participant It as 🔖 Iterator
+
+    C->>A: iterator()
+    A-->>C: iterator (expectedModCount = modCount)
+    C->>It: next()
+    It-->>C: element
+    C->>A: add(x) during loop
+    A->>A: modCount++
+    C->>It: next()
+    alt modCount changed
+        It-->>C: throw ConcurrentModificationException
+    else unchanged
+        It-->>C: next element
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an aggregate object to a fully consumed, decoupled traversal, the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Have a collection to traverse</h4><p>You start with some aggregate: an array, a linked list, a tree, or a stream of pages from an API that a client needs to walk element by element.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Interface</span><h4>Define the iterator contract</h4><p>Declare the traversal methods, typically <code>hasNext()</code> and <code>next()</code>, so every walker looks the same to callers regardless of structure.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Aggregate</span><h4>Add a factory method</h4><p>Make the collection implement <code>Iterable</code> with an <code>iterator()</code> method that produces a fresh cursor on demand.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Cursor</span><h4>Write the concrete iterator</h4><p>Implement a small class that holds the current position and knows how to advance through this specific structure.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">State</span><h4>Externalize the position</h4><p>Store the index or node pointer inside the iterator, not the collection, so multiple iterators can coexist without interference.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Create</span><h4>Client requests an iterator</h4><p>The client calls <code>iterator()</code>. It receives a cursor positioned before the first element and knows nothing about the internals.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Check</span><h4>Ask hasNext</h4><p>Before each read the client calls <code>hasNext()</code>. The iterator reports whether any elements remain to be visited.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Advance</span><h4>Call next</h4><p>The client calls <code>next()</code>, which returns the current element and moves the cursor forward by one position.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Guard</span><h4>Detect concurrent modification</h4><p>A fail-fast iterator compares a modification counter; if the collection changed during the loop, it throws instead of returning corrupt data.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Exhaust</span><h4>Reach the end</h4><p><code>hasNext()</code> finally returns false. The loop terminates cleanly and the client stops calling <code>next()</code>.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Reuse</span><h4>Swap collections freely</h4><p>Because the client only touched the iterator interface, you can replace the underlying structure with any other <code>Iterable</code> and the loop still works.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Iteration looks trivial until state, mutation, and laziness collide. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💥 Mutating while iterating</h4><p>Adding or removing elements through the collection during a loop corrupts the cursor. Use the iterator's own <code>remove()</code> or collect changes and apply them afterward.</p></div>
+        <div class="card"><h4>♻️ Reusing an exhausted iterator</h4><p>Most iterators are single-pass. Once <code>hasNext()</code> is false it stays false. Call <code>iterator()</code> again for a fresh walk instead of reusing the spent one.</p></div>
+        <div class="card"><h4>🕳️ Leaking internals anyway</h4><p>Returning the backing array or a live node from <code>next()</code> defeats the point. Hand back values or defensive copies, not references into your structure.</p></div>
+        <div class="card"><h4>🔁 Reinventing built-ins</h4><p>Hand-rolling a cursor when the language already offers <code>Iterable</code>, generators, or streams adds bugs. Implement the standard protocol so <code>for-each</code> just works.</p></div>
+        <div class="card"><h4>🧵 Sharing one iterator across threads</h4><p>Iterators carry mutable position state and are not thread-safe. Give each thread its own, or use a concurrent collection designed for shared traversal.</p></div>
+        <div class="card"><h4>⏳ Forgetting laziness has side effects</h4><p>With generators and streams nothing runs until you pull. If a walk never completes, deferred work never fires and infinite sequences hang without a stop condition.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Iterator is one of the most quietly ubiquitous patterns. Here is where it pays off and where it adds noise.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Uniform traversal, hides internals, supports multiple simultaneous walks, and enables lazy or infinite sequences.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Extra objects and indirection, single-pass semantics can surprise, and a custom iterator is overkill for a plain array loop.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You have a nontrivial or custom structure, need to hide its layout, want lazy evaluation, or must offer several traversal orders.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>A simple indexed loop over an array or list is clearer, or the collection is tiny and its structure is not going to change.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low. Two methods and a position field. The subtlety is in fail-fast checks, laziness, and thread-safety, not the core loop.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Composite (iterate a tree uniformly), Visitor (apply an operation per element), Observer (push vs pull consumption).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if a client needs to walk a collection but should not know how it is stored, expose an iterator. If it is just a flat array you fully control, a plain loop is fine, do not add ceremony you will not use.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative places the Iterator pattern shows up in production code.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📦</span><div><h3>1 · The Java Collections Framework</h3><div class="role">Pattern: fail-fast external iterators over every collection</div></div></div>
+        <p class="muted">Every <code>ArrayList</code>, <code>HashSet</code>, and <code>TreeMap</code> exposes iterators so client code loops identically over all of them.</p>
+        <ul>
+          <li><code>Iterable.iterator()</code> is the factory method the enhanced <code>for</code> loop calls behind the scenes.</li>
+          <li>Iterators keep a <code>modCount</code> check and throw <code>ConcurrentModificationException</code> on unexpected structural change.</li>
+          <li><code>ListIterator</code> extends the idea with backward traversal and safe in-place edits.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> one traversal idiom works across dozens of data structures, and accidental mutation during a loop fails loudly instead of corrupting silently.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌿</span><div><h3>2 · Paginated API and database cursors</h3><div class="role">Pattern: lazy iterator over a remote, unbounded source</div></div></div>
+        <p class="muted">A client needs to process millions of records from a REST endpoint or SQL cursor without loading them all into memory.</p>
+        <ul>
+          <li>Each <code>next()</code> fetches the following page or row only when the consumer asks for it.</li>
+          <li>The iterator hides paging tokens and network retries behind a plain <code>hasNext()</code> loop.</li>
+          <li>Back-pressure is natural: the source is only pulled as fast as the client consumes.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> the client streams huge result sets with constant memory, unaware whether data comes from cache, disk, or a paged HTTP API.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧬</span><div><h3>3 · Tree and graph traversal in compilers</h3><div class="role">Pattern: multiple iteration orders over one structure</div></div></div>
+        <p class="muted">A compiler walks its abstract syntax tree in different orders for different phases: pre-order, post-order, and breadth-first.</p>
+        <ul>
+          <li>Distinct iterator classes encode each traversal strategy over the same node type.</li>
+          <li>Optimization passes pick the order they need without the tree exposing its child pointers.</li>
+          <li>New traversal orders are added as new iterators, leaving existing passes untouched.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> the same AST supports several traversal strategies cleanly, and each compiler phase reads elements in exactly the order it requires.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Far from dated, Iterator is baked into the syntax of nearly every modern language. Today it usually arrives as a built-in protocol rather than hand-written classes.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔤 Language-level protocols</h4><p>Java's <code>Iterable</code>, JavaScript's <code>Symbol.iterator</code>, Python's <code>__iter__</code>, and C#'s <code>IEnumerable</code> all standardize the pattern into <code>for-each</code> syntax.</p></div>
+        <div class="card"><h4>⚙️ Generators as easy iterators</h4><p>A JavaScript <code>function*</code> or Python <code>yield</code> builds a lazy iterator in a few lines, with position state managed by the runtime for you.</p></div>
+        <div class="card"><h4>🌊 Streams and pipelines</h4><p>Java Streams and LINQ layer <code>map</code>, <code>filter</code>, and <code>reduce</code> on top of iteration, turning internal iterators into composable data pipelines.</p></div>
+        <div class="card"><h4>⏩ Async iteration</h4><p><code>AsyncIterator</code> and <code>for await...of</code> extend the protocol to data that arrives over time, like sockets, event streams, and paged fetches.</p></div>
+        <div class="card"><h4>🦀 Zero-cost abstractions</h4><p>Languages like Rust compile iterator chains down to tight loops with no runtime overhead, proving the pattern need not cost performance.</p></div>
+        <div class="card"><h4>🧠 Reactive and pull vs push</h4><p>Reactive streams generalize iteration to pushed events, and understanding the pull-based iterator clarifies where that boundary lies.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> the Iterator pattern won so thoroughly that it disappeared into the language. Every time you write <code>for (const x of items)</code> you are using it, and knowing what happens underneath lets you build custom, lazy, and async traversals with confidence.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Iterator sits in a web of related behavioral and structural patterns. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>Iterate trees of objects with one uniform interface.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../visitor/"><span class="ico">🧭</span><h4>Visitor</h4><p>Apply an operation to each element you iterate over.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>Push-based consumption, the flip side of pull iteration.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../mediator/"><span class="ico">🕸️</span><h4>Mediator</h4><p>Coordinates objects the way an aggregate hands out cursors.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Iterator pattern · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Template Method Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Template Method pattern: defining an algorithm skeleton in a base method while subclasses override steps, hook methods, the Hollywood Principle, sequence diagrams, a 0-100 flow, case studies, and how it differs from Strategy." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>Template Method - fix the algorithm, vary the steps</h1>
+      <p class="lede">Template Method defines the <strong>skeleton of an algorithm</strong> in a single base-class method, then defers specific steps to subclasses. The overall order is locked in one place, while subclasses fill in or override the parts that differ. The base class calls the subclass, not the other way around, which is exactly the Hollywood Principle: do not call us, we will call you.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Algorithm skeleton</span>
+        <span class="pill">Abstract steps</span>
+        <span class="pill">Hook methods</span>
+        <span class="pill">Inversion of control</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is Template Method?</h2>
+      <p class="muted"><strong>Template Method</strong> is a behavioral pattern where a base class defines an algorithm as a fixed sequence of steps in one method, marking some steps as abstract or overridable. Subclasses supply the varying steps without ever touching the sequence itself. The invariant structure lives in the parent; the variation lives in the children.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧱</span> The template method</h4>
+          <p>A concrete method in the base class that calls the steps in a fixed order. It is usually <code>final</code> so subclasses cannot reorder the algorithm.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧩</span> Abstract steps</h4>
+          <p>Operations the base declares but does not implement. Each subclass must provide them, filling the required gaps in the skeleton.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🪝</span> Hook methods</h4>
+          <p>Optional steps with an empty or default body. Subclasses may override them to extend or tweak behavior, but are not forced to.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Typical form</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abstract class</strong></td><td>Holds the algorithm skeleton and shared logic</td><td>Base class or interface with default methods</td></tr>
+            <tr><td><strong>Template method</strong></td><td>Runs the steps in a fixed order</td><td><code>final</code> concrete method</td></tr>
+            <tr><td><strong>Primitive operation</strong></td><td>A required step subclasses must implement</td><td><code>abstract</code> method</td></tr>
+            <tr><td><strong>Hook method</strong></td><td>An optional step with a default no-op</td><td>Non-abstract, overridable method</td></tr>
+            <tr><td><strong>Concrete class</strong></td><td>Supplies the varying steps</td><td>Subclass overriding primitives and hooks</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the parent owns <em>when</em> each step runs; the child owns <em>how</em> a step behaves. You freeze the workflow once and reuse it across every variant, changing only the pieces that actually differ.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Template Method exists</h2>
+      <p class="muted">When several classes share the same overall procedure but differ in a few steps, copy-pasting the procedure into each one duplicates the control flow. Every bug fix or reorder then has to be repeated everywhere. Template Method pulls that shared skeleton into one place.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>♻️ Removes duplication</h4><p>The common sequence lives once in the base class. Subclasses contribute only the differences, so shared control flow is never copy-pasted across variants.</p></div>
+        <div class="card"><h4>🔒 Guards the algorithm</h4><p>Marking the template method <code>final</code> locks the order of steps. Subclasses cannot accidentally skip validation or reorder critical stages.</p></div>
+        <div class="card"><h4>🎯 Focuses subclasses</h4><p>A new variant only implements the abstract steps. Developers see exactly which gaps to fill instead of re-reading the whole workflow.</p></div>
+        <div class="card"><h4>🔄 Inverts control</h4><p>The framework drives the flow and calls into your code at defined points, so extension happens through well-defined hooks rather than rewrites.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Template Method explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is a <strong>fill-in-the-blank worksheet</strong>. The teacher fixes the questions and their order; you only write the answers in the blanks. You cannot rearrange the questions, just complete the gaps.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Think of a <strong>base test class with setUp and tearDown</strong>. The framework runs setUp, then your test, then tearDown, in that order. You override the hooks; the runner owns the sequence.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>It is a <strong>standard operating procedure</strong>. The steps and their order are fixed by policy; each department fills in the details specific to its work without changing the process.</p></div>
+        <div class="card"><h4><span class="ico">☕</span> Everyday version</h4><p>Making a hot drink: <strong>boil water, add the main ingredient, pour, add extras</strong>. Tea and coffee share the recipe skeleton; only the "add ingredient" and optional "add extras" steps differ.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">The base class exposes one public template method and a set of protected steps. Some steps are abstract (must implement), others are hooks (may override). At runtime, dynamic dispatch routes each step call to the concrete subclass.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧭</span> The base class leads</h4>
+          <p>It implements the template method and calls each step by name. Shared, invariant logic sits directly in the base so every subclass inherits it for free.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Subclasses plug in</h4>
+          <p>Each concrete class overrides the abstract steps and any hooks it cares about. It never calls the template method's internals, it only supplies the pieces.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Class structure - the base owns the algorithm, subclasses supply steps</div>
+        <pre class="mermaid">
+classDiagram
+    class AbstractClass {
+        +templateMethod() final
+        #stepOne()* abstract
+        #stepTwo()* abstract
+        #hook() default
+    }
+    class ConcreteA {
+        #stepOne()
+        #stepTwo()
+    }
+    class ConcreteB {
+        #stepOne()
+        #stepTwo()
+        #hook()
+    }
+    AbstractClass &lt;|-- ConcreteA
+    AbstractClass &lt;|-- ConcreteB
+    note for AbstractClass "templateMethod calls stepOne, stepTwo, hook in fixed order"
+        </pre>
+      </div>
+
+      <h3>A realistic example in Java</h3>
+      <pre><code>abstract class DataImporter {
+
+    // The template method: the algorithm skeleton, locked with final.
+    public final void run(String path) {
+        String raw = read(path);          // abstract step
+        List&lt;Record&gt; records = parse(raw); // abstract step
+        if (shouldValidate()) {            // hook controls an optional step
+            validate(records);            // hook step
+        }
+        save(records);                    // shared, invariant step
+        onComplete(records.size());       // hook, empty by default
+    }
+
+    // Required steps: every subclass MUST provide these.
+    protected abstract String read(String path);
+    protected abstract List&lt;Record&gt; parse(String raw);
+
+    // Hook methods: optional, with sensible defaults.
+    protected boolean shouldValidate() { return true; }
+    protected void validate(List&lt;Record&gt; records) { /* default no-op */ }
+    protected void onComplete(int count) { /* subclasses may log here */ }
+
+    // Invariant step shared by all importers.
+    private void save(List&lt;Record&gt; records) {
+        Database.bulkInsert(records);
+    }
+}
+
+class CsvImporter extends DataImporter {
+    protected String read(String path) { return Files.readString(path); }
+    protected List&lt;Record&gt; parse(String raw) { return Csv.toRecords(raw); }
+    protected void onComplete(int count) {
+        System.out.println("Imported " + count + " CSV rows");
+    }
+}
+
+class JsonImporter extends DataImporter {
+    protected String read(String path) { return Http.get(path); }
+    protected List&lt;Record&gt; parse(String raw) { return Json.toRecords(raw); }
+    // Trusted feed, so skip validation via the hook.
+    protected boolean shouldValidate() { return false; }
+}</code></pre>
+      <p class="muted">Notice that <code>run()</code> is <code>final</code>: subclasses cannot change the order of read, parse, validate, save. They only override <em>steps</em>. The base class calls down into the subclass, never the reverse, which is the Hollywood Principle in action: do not call us, we will call you.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the basic dispatch of a template method, a hook controlling an optional step, and the inversion of control that gives the pattern its name.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Basic dispatch: the template method drives the steps</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Base as 🧭 AbstractClass
+    participant Sub as 🔌 ConcreteImporter
+
+    Client->>Base: run(path)
+    Base->>Sub: read(path)
+    Sub-->>Base: raw text
+    Base->>Sub: parse(raw)
+    Sub-->>Base: records
+    Base->>Base: save(records)
+    Base-->>Client: done
+    Note over Base,Sub: Base fixes the order, Sub fills the steps
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Hook methods: an optional step toggled by a subclass</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 👤 Client
+    participant Base as 🧭 AbstractClass
+    participant Sub as 🔌 ConcreteImporter
+
+    Client->>Base: run(path)
+    Base->>Sub: read then parse
+    Sub-->>Base: records
+    Base->>Sub: shouldValidate()
+    alt hook returns true
+        Base->>Sub: validate(records)
+        Sub-->>Base: ok
+    else hook returns false
+        Note over Base,Sub: Optional step skipped
+    end
+    Base->>Base: save(records)
+    Base->>Sub: onComplete(count)
+    Base-->>Client: done
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Inversion of control: the Hollywood Principle</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Fw as 🏗️ Framework base
+    participant App as 🧩 Your subclass
+
+    Note over Fw,App: You do not call the framework loop
+    Fw->>Fw: start template method
+    loop each defined step
+        Fw->>App: call your overridden step
+        App-->>Fw: return result
+    end
+    Fw->>App: call optional hook
+    App-->>Fw: extend or no-op
+    Note over Fw,App: Do not call us, we will call you
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From spotting duplicated procedures to running a clean family of variants - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice a repeated procedure</h4><p>Several classes run the same overall sequence of steps but differ in a few spots. The control flow is being copy-pasted around.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Outline</span><h4>Write the algorithm skeleton</h4><p>List the steps in the exact order they must run. This ordered list becomes the body of the template method.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Classify</span><h4>Sort steps by variability</h4><p>Mark which steps are always the same, which always differ, and which are optional. That split decides concrete, abstract, and hook.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Base</span><h4>Create the abstract class</h4><p>Put the invariant steps in as concrete methods and the shared state on the base so every subclass inherits them.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Template</span><h4>Write the template method</h4><p>Implement the one method that calls each step in order. Make it <code>final</code> so subclasses cannot reorder the algorithm.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Abstract</span><h4>Declare required steps</h4><p>Turn the always-different steps into abstract methods. Subclasses are now forced by the compiler to supply them.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Hook</span><h4>Add optional hooks</h4><p>Give optional steps a default or empty body. Subclasses may override to extend behavior, but nothing breaks if they do not.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Implement</span><h4>Build a concrete subclass</h4><p>Override the abstract steps for one variant. Override only the hooks it actually needs and leave the rest alone.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Extend</span><h4>Add more variants</h4><p>Each new case is another subclass supplying its steps. The skeleton stays untouched, so new variants cost only the differences.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Run</span><h4>Call through the base type</h4><p>Clients invoke the template method on a base-typed reference. Dynamic dispatch routes each step to the right subclass.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Maintain</span><h4>Change the flow in one place</h4><p>Reordering or fixing a shared step happens once in the base and applies to every variant instantly. Duplication is gone.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Template Method leans on inheritance, so its failure modes are the classic inheritance traps.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧨 Fragile base class</h4><p>Editing the skeleton or a shared step can silently break every subclass. Tight coupling through inheritance means changes ripple downward in ways that are hard to see.</p></div>
+        <div class="card"><h4>🪜 Too many abstract steps</h4><p>If almost every step is abstract, the base offers little reuse and subclasses carry all the weight. That is a sign the shared skeleton barely exists.</p></div>
+        <div class="card"><h4>🔓 Forgetting to lock the template</h4><p>Leaving the template method overridable lets a subclass rewrite the algorithm order, defeating the whole point. Mark it <code>final</code>.</p></div>
+        <div class="card"><h4>🕸️ Deep hierarchies</h4><p>Chaining many levels of subclass to reuse partial behavior makes the flow impossible to follow. One level of variation is usually the sweet spot.</p></div>
+        <div class="card"><h4>🎭 Hooks that leak requirements</h4><p>Hooks that must be overridden together, or in a certain combination, hide implicit contracts. Subclasses break subtly when a hidden rule is missed.</p></div>
+        <div class="card"><h4>🔁 Reaching for it when behavior is data</h4><p>If steps vary at runtime per object, inheritance cannot help. Forcing a subclass per combination explodes the class count. Compose instead.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Template Method is the go-to when the algorithm is fixed and only its steps vary. Its main tension is Strategy: inheritance versus composition.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Removes duplicated control flow, locks the algorithm order in one place, gives subclasses clear extension points, and enables inversion of control.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Relies on inheritance, so it couples subclasses to the base, invites fragile-base-class problems, and fixes behavior at compile time.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You have several variants of the same procedure that differ only in a few steps, and the sequence itself should never change.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>The varying behavior must be chosen or swapped at runtime, or you would need many subclasses to cover combinations of steps.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low. One abstract class plus a subclass per variant. The hard part is picking which steps are abstract versus hooks.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Strategy (composition alternative), Factory Method (often a step inside a template), and hooks resemble the Observer callback style.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Template Method when the <em>algorithm</em> is fixed and the <em>steps</em> vary by type. Reach for Strategy when the whole behavior must be swapped at runtime. Template Method inherits, Strategy composes: prefer composition when the axis of change is dynamic.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three places the pattern shows up in code you have almost certainly used.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧪</span><div><h3>1 · JUnit test lifecycle</h3><div class="role">Pattern: framework-owned run order with hooks</div></div></div>
+        <p class="muted">A testing framework must run every test in a consistent lifecycle while letting each test class customize setup and teardown.</p>
+        <ul>
+          <li>The runner owns the fixed sequence: setUp, run the test body, tearDown.</li>
+          <li>Test classes override <code>setUp</code> and <code>tearDown</code> as hooks; overriding is optional.</li>
+          <li>You never call the lifecycle yourself, the framework calls into your class.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> every test shares a reliable, uniform lifecycle while each class customizes only the parts it needs, a textbook Hollywood Principle setup.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📥</span><div><h3>2 · HTTP servlet request handling</h3><div class="role">Pattern: dispatch skeleton with overridable steps</div></div></div>
+        <p class="muted">A web framework needs to route every request through a common pipeline while letting handlers implement just the verb they care about.</p>
+        <ul>
+          <li><code>service()</code> is the template method: it inspects the HTTP verb and dispatches.</li>
+          <li>It calls <code>doGet</code>, <code>doPost</code>, and similar as overridable steps.</li>
+          <li>Your servlet implements only the methods for the verbs it supports.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> shared request dispatch lives once in the base servlet, and each handler contributes only the verb-specific logic without rewriting the pipeline.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🍜</span><div><h3>3 · Build and deployment pipelines</h3><div class="role">Pattern: fixed stages, project-specific steps</div></div></div>
+        <p class="muted">A CI base job defines the canonical stages every project runs, while individual projects plug in their own commands.</p>
+        <ul>
+          <li>The base defines the order: checkout, install, build, test, package, publish.</li>
+          <li>Projects override abstract steps like <code>build</code> and <code>test</code> for their stack.</li>
+          <li>A hook like <code>afterPublish</code> lets some projects notify or tag releases.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> a single, auditable pipeline order applies across every project, and teams change only their own steps instead of forking the whole workflow.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">The pattern predates most frameworks you use, yet its shape keeps reappearing, often expressed without a class hierarchy at all.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🏗️ Frameworks everywhere</h4><p>Every framework that calls your lifecycle methods in a fixed order is a template method. Inversion of control is the pattern generalized to a whole system.</p></div>
+        <div class="card"><h4>🧬 Default interface methods</h4><p>Java default methods and TypeScript abstract classes let a template live on an interface, mixing shared flow with required steps more flexibly than before.</p></div>
+        <div class="card"><h4>🧩 Functional variants</h4><p>Passing step functions into a fixed pipeline function achieves the same skeleton with composition, blurring the line with Strategy.</p></div>
+        <div class="card"><h4>🪝 Hooks as first-class API</h4><p>Modern libraries expose lifecycle hooks (beforeCreate, mounted, onRequest) that are exactly the optional-step idea, made public and documented.</p></div>
+        <div class="card"><h4>⚖️ Composition-first culture</h4><p>As teams favor composition over inheritance, many template methods are refactored into Strategy or higher-order functions, but the skeleton idea survives.</p></div>
+        <div class="card"><h4>🔌 Plugin architectures</h4><p>Plugin systems define fixed extension points and call registered code at set moments, an inversion-of-control descendant of Template Method.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Template Method is how you factor out a shared algorithm and let variants fill the gaps. When the variation is per-type and the flow is fixed, inheritance fits. When the variation is per-instance and dynamic, prefer Strategy and composition. The skeleton idea outlives the mechanism.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Template Method sits next to the patterns it complements and competes with.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../strategy/"><span class="ico">🔀</span><h4>Strategy</h4><p>The composition alternative: swap whole behaviors at runtime.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory Method</h4><p>A creation step often deferred inside a template method.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔁</span><h4>Iterator</h4><p>Another behavioral pattern that hides how a step is done.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📣</span><h4>Observer</h4><p>Callbacks and hooks that invert who calls whom.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Template Method · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

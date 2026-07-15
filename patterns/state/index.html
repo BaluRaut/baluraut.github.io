@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>State Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the State design pattern: what it is, how it replaces sprawling conditionals with state objects, a finite state machine example, sequence diagrams, a 0-100 flow, case studies, and how it differs from Strategy." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>The State pattern - behavior that changes with the object</h1>
+      <p class="lede">Some objects behave completely differently depending on what mode they are in: a draft order is not a shipped order, a paused player is not a playing one. The State pattern lets an object <strong>alter its behavior when its internal state changes</strong> by delegating to interchangeable state objects. Instead of one class riddled with <code>if</code> and <code>switch</code> blocks, each state becomes its own class that knows how to act and when to hand control to the next state.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">State objects</span>
+        <span class="pill">Finite state machine</span>
+        <span class="pill">Transitions</span>
+        <span class="pill">No giant switch</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the State pattern?</h2>
+      <p class="muted"><strong>State</strong> is a behavioral design pattern that lets an object change its behavior when its internal state changes, so that it appears to change its class. The object, called the <em>context</em>, holds a reference to a state object and delegates all state-dependent work to it. Each concrete state is a separate class implementing a shared interface, and a state may switch the context to a different state, driving the transitions of a finite state machine.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📦</span> Context</h4>
+          <p>The object whose behavior varies. It keeps a current-state reference and forwards requests to it, never branching on the state itself.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> State interface</h4>
+          <p>A common contract listing the state-dependent operations. Every concrete state implements it, so the context can treat them uniformly.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎭</span> Concrete states</h4>
+          <p>One class per mode. Each encapsulates the behavior for that mode and decides which state comes next after an event.</p>
+        </div>
+      </div>
+
+      <h3>The core roles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Example (media player)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Context</strong></td><td>Holds the current state and delegates behavior to it</td><td><code>Player</code></td></tr>
+            <tr><td><strong>State</strong></td><td>Interface declaring the state-dependent operations</td><td><code>PlayerState</code></td></tr>
+            <tr><td><strong>Concrete states</strong></td><td>Implement behavior for one mode each</td><td><code>Stopped</code>, <code>Playing</code>, <code>Paused</code></td></tr>
+            <tr><td><strong>Transition</strong></td><td>A state swapping the context to a new state</td><td>Play from <code>Paused</code> to <code>Playing</code></td></tr>
+            <tr><td><strong>Trigger / event</strong></td><td>The input that may cause a transition</td><td><code>play()</code>, <code>pause()</code>, <code>stop()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the State pattern turns a finite state machine into objects. The states are the nodes, the methods on each state are the labeled edges, and the context is just the token that sits on whichever node is current.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the State pattern exists</h2>
+      <p class="muted">Objects that pass through a lifecycle tend to grow a tangle of flags and conditionals. Every method sprouts a <code>switch (status)</code>, and adding one new state means editing every method. The State pattern replaces that with localized, single-responsibility state classes.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧹 Kills the giant switch</h4><p>Behavior for each mode lives in its own class instead of being smeared across dozens of conditionals in every method. Reading one state tells you everything it does.</p></div>
+        <div class="card"><h4>➕ Open to new states</h4><p>Adding a state means writing one new class, not editing every method of the context. This respects the open-closed principle and keeps changes local.</p></div>
+        <div class="card"><h4>🚦 Makes transitions explicit</h4><p>Each state names exactly which states it can move to, so the machine's topology is visible in code rather than hidden inside boolean flags.</p></div>
+        <div class="card"><h4>🛡️ Prevents illegal actions</h4><p>An operation that is invalid in a mode simply does nothing or throws in that state class, so you cannot ship an order that was never paid.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>State explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of the <strong>states of water</strong>. Ice, liquid, and steam are the same H2O, but they behave differently. Add heat and each one transitions to the next. The water is the context; ice, liquid, and steam are the state objects.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a <strong>lookup table of behavior turned into polymorphism</strong>. Instead of <code>switch (status)</code> in every method, you call <code>state.handle()</code> and let the current object decide. Adding a status never touches existing code.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Like a <strong>document approval workflow</strong>: Draft, In Review, Approved, Rejected. Which buttons you can press depends on the stage, and pressing one moves the document to the next stage. Each stage is a state.</p></div>
+        <div class="card"><h4><span class="ico">🚦</span> Everyday version</h4><p>A <strong>traffic light</strong>. Green, yellow, and red each know what they show and what comes next. The light does not check "am I green?" everywhere; each color simply behaves and then hands off to the following one.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">You extract every state-dependent method into a <strong>state interface</strong>, write one <strong>concrete state</strong> class per mode, and have the <strong>context</strong> delegate to whichever state is current. States trigger transitions by asking the context to swap its current state.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧭</span> Delegation, not branching</h4>
+          <p>The context never inspects its own status. It forwards each call to the current state object, which supplies the right behavior for that mode.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> States own transitions</h4>
+          <p>A concrete state decides what happens next. After handling an event it calls back into the context to set the new current state, encoding one edge of the machine.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - the context delegates to a current state, states set the next state</div>
+        <pre class="mermaid">
+classDiagram
+    class Player {
+        -PlayerState state
+        +setState(PlayerState) void
+        +play() void
+        +pause() void
+        +stop() void
+    }
+    class PlayerState {
+        <<interface>>
+        +play(Player) void
+        +pause(Player) void
+        +stop(Player) void
+    }
+    class Stopped {
+        +play(Player) void
+        +pause(Player) void
+        +stop(Player) void
+    }
+    class Playing {
+        +play(Player) void
+        +pause(Player) void
+        +stop(Player) void
+    }
+    class Paused {
+        +play(Player) void
+        +pause(Player) void
+        +stop(Player) void
+    }
+    Player o--> PlayerState : current
+    PlayerState <|.. Stopped
+    PlayerState <|.. Playing
+    PlayerState <|.. Paused
+        </pre>
+      </div>
+
+      <h3>A finite state machine in Java: a media player</h3>
+      <pre><code>// State interface: the state-dependent operations
+interface PlayerState {
+    void play(Player p);
+    void pause(Player p);
+    void stop(Player p);
+}
+
+// Context: delegates every request to the current state
+class Player {
+    private PlayerState state = new Stopped();
+
+    void setState(PlayerState next) { this.state = next; }
+
+    void play()  { state.play(this); }
+    void pause() { state.pause(this); }
+    void stop()  { state.stop(this); }
+}
+
+// Concrete state: nothing is playing yet
+class Stopped implements PlayerState {
+    public void play(Player p) {
+        System.out.println("Starting playback");
+        p.setState(new Playing());        // transition
+    }
+    public void pause(Player p) { /* no-op: cannot pause when stopped */ }
+    public void stop(Player p)  { /* already stopped */ }
+}
+
+// Concrete state: audio is running
+class Playing implements PlayerState {
+    public void play(Player p)  { /* already playing */ }
+    public void pause(Player p) {
+        System.out.println("Pausing");
+        p.setState(new Paused());         // transition
+    }
+    public void stop(Player p) {
+        System.out.println("Stopping");
+        p.setState(new Stopped());        // transition
+    }
+}
+
+// Concrete state: playback is suspended
+class Paused implements PlayerState {
+    public void play(Player p) {
+        System.out.println("Resuming");
+        p.setState(new Playing());        // transition
+    }
+    public void pause(Player p) { /* already paused */ }
+    public void stop(Player p) {
+        System.out.println("Stopping");
+        p.setState(new Stopped());        // transition
+    }
+}</code></pre>
+      <p class="muted">Notice that <code>Player</code> has no <code>if</code> or <code>switch</code> anywhere. Each state answers the same three methods but behaves differently, and each one decides which state the player becomes next. Calling <code>pause()</code> while <code>Stopped</code> is simply a legal no-op, so illegal transitions are handled by construction rather than by scattered guards.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="eyebrow" style="display:none"></div>
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a simple transition, a rejected event that stays put, and a multi-step order lifecycle driving state changes.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - A play event transitions the context from Stopped to Playing</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant P as 📦 Player
+    participant S as 🎭 Stopped
+    participant PL as ▶️ Playing
+
+    C->>P: play()
+    P->>S: play(this)
+    S->>S: start playback
+    S->>P: setState(Playing)
+    P->>PL: becomes current state
+    P-->>C: now playing
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - An illegal event is a safe no-op, so no transition happens</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant P as 📦 Player
+    participant S as 🎭 Stopped
+
+    C->>P: pause()
+    P->>S: pause(this)
+    alt pause valid in this state
+        S->>P: setState(Paused)
+    else not valid when stopped
+        S-->>P: ignore, no transition
+    end
+    P-->>C: still stopped
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - An order walks its lifecycle, each state choosing the next</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant O as 📦 Order
+    participant NP as 🕗 NewPending
+    participant PD as 💳 Paid
+    participant SH as 🚚 Shipped
+
+    U->>O: pay()
+    O->>NP: pay(this)
+    NP->>O: setState(Paid)
+    U->>O: ship()
+    O->>PD: ship(this)
+    PD->>O: setState(Shipped)
+    Note over O,SH: further pay() or cancel() now rejected
+    U->>O: cancel()
+    O->>SH: cancel(this)
+    SH-->>O: reject, shipped is terminal
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a class full of conditionals to a clean finite state machine of objects - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the state smell</h4><p>You see the same <code>switch (status)</code> or chain of booleans repeated across many methods, and every new mode forces you to touch all of them.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Enumerate</span><h4>List the states</h4><p>Write down every distinct mode the object can be in, for example Stopped, Playing, Paused, or New, Paid, Shipped, Cancelled.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Map</span><h4>Draw the transitions</h4><p>For each state, note which events are valid and which state each event leads to. This diagram is the finite state machine you are about to encode.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Extract</span><h4>Define the state interface</h4><p>Collect the state-dependent methods into one interface, each taking the context so a state can request a transition.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Split</span><h4>Create one class per state</h4><p>Move the branch body for each mode into its own concrete state class implementing the interface. One state, one file, one responsibility.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Wire</span><h4>Give the context a current state</h4><p>Add a state field plus a <code>setState</code> method, and have every public method delegate to the current state instead of branching.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Transition</span><h4>Let states set the next state</h4><p>Inside each state's methods, call <code>context.setState(next)</code> to encode each valid edge of the machine.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guard</span><h4>Handle illegal events</h4><p>For events invalid in a state, make the method a no-op or throw a clear error, so bad transitions are impossible rather than merely discouraged.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Initialize</span><h4>Set the starting state</h4><p>Construct the context in its initial state (for example Stopped or New) so it is valid the moment it exists.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Cover every edge</h4><p>Test each event from each state, asserting both the resulting state and that illegal events are rejected. The map from step 20 is your checklist.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Extend without fear</h4><p>Need a new mode like Refunded? Add one class and the edges into and out of it. Existing states stay untouched, and the giant switch never returns.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">The State pattern is powerful but easy to over-apply or wire together badly. Watch for these.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪆 Using it for two states</h4><p>A single boolean flag does not need a class hierarchy. Reach for State when there are several modes and behavior genuinely diverges, not for on and off.</p></div>
+        <div class="card"><h4>🕸️ Transition logic everywhere</h4><p>Scattering <code>setState</code> calls across states with no map makes the machine unreadable. Keep an explicit diagram or table so the topology stays clear.</p></div>
+        <div class="card"><h4>🔓 Leaking context internals</h4><p>Giving states raw access to every field couples them tightly. Expose a focused API on the context so states change only what they should.</p></div>
+        <div class="card"><h4>💾 Losing state on transition</h4><p>Creating a fresh state object each time is fine for behavior, but if data must survive the switch, store it on the context, not on the state.</p></div>
+        <div class="card"><h4>🐘 God states</h4><p>One state that handles many special cases with internal branching just moves the switch inside a class. Split it into distinct states instead.</p></div>
+        <div class="card"><h4>🎭 Confusing it with Strategy</h4><p>If the caller picks the behavior once and it never self-changes, that is Strategy. Using State there adds transition machinery you do not need.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">State trades a handful of small classes for the removal of sprawling conditionals. Here is the honest ledger, including how it differs from Strategy.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Removes large conditional and switch blocks, localizes each mode's behavior, makes transitions explicit, and follows the open-closed and single-responsibility principles.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>More classes and indirection, transition logic spread across states, and overkill when there are only one or two simple modes.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>An object has several distinct modes, behavior differs sharply per mode, and transitions between modes follow rules, that is, a finite state machine.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>There are just a couple of states with trivial differences, or the mode never changes at runtime, where a flag or a Strategy is simpler.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low per state, moderate overall. Each state is tiny, but you must keep the transition map coherent across the whole set.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Strategy shares the same structure but the client chooses the behavior and states never switch themselves. State objects trigger their own transitions. Both descend structurally from the same delegation idea.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for State when your object is really a finite state machine and its methods keep asking "what mode am I in?". If instead the caller just plugs in one interchangeable algorithm that never changes on its own, that is Strategy, not State.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative uses showing the State pattern where lifecycles and modes dominate the design.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · E-commerce order lifecycle</h3><div class="role">Pattern: lifecycle as a finite state machine</div></div></div>
+        <p class="muted">An order moves through New, Paid, Shipped, Delivered, and Cancelled, and each stage allows different actions.</p>
+        <ul>
+          <li>Each status is a state class that permits only its valid actions, so <code>ship()</code> is impossible before payment.</li>
+          <li>Transitions live in the state classes, giving a single, auditable map of the order lifecycle.</li>
+          <li>Adding a Refunded state is one new class plus its edges, with no edits to existing statuses.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Illegal transitions become compile-safe by construction, and the sprawling status switch that once lived in the order service disappears.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎬</span><div><h3>2 · Media player controls</h3><div class="role">Pattern: mode-dependent UI behavior</div></div></div>
+        <p class="muted">A player is Stopped, Playing, or Paused, and the same buttons must do different things in each mode.</p>
+        <ul>
+          <li>Each state defines how play, pause, and stop behave, so the play button resumes when paused but starts when stopped.</li>
+          <li>The UI simply forwards clicks to the current state and never inspects a status flag.</li>
+          <li>Buffering or an Error state slots in as another class without touching the existing controls.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Control logic stays tiny and correct per mode, and new playback states extend the player instead of complicating it.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔌</span><div><h3>3 · TCP connection protocol</h3><div class="role">Pattern: protocol states from a classic reference</div></div></div>
+        <p class="muted">A TCP connection is Established, Listening, or Closed, a textbook example from the original design patterns literature.</p>
+        <ul>
+          <li>Operations like open, close, and acknowledge behave differently depending on the connection state.</li>
+          <li>Each protocol state encapsulates its response and the state it transitions to on each event.</li>
+          <li>The connection object delegates to the current state, keeping protocol handling out of one monster method.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The protocol's rules read directly as a set of state classes, matching the spec closely and easing verification.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Finite state machines are everywhere in modern software, and the State pattern remains the clean object-oriented way to express them.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚛️ UI state machines</h4><p>Front-end tools model components as explicit states and transitions, the same discipline State encodes, taming complex interactive flows.</p></div>
+        <div class="card"><h4>🔄 Workflow engines</h4><p>Order, approval, and onboarding workflows are finite state machines at heart, where each step maps naturally to a state class.</p></div>
+        <div class="card"><h4>🧩 Enum-backed states</h4><p>Modern languages let a state carry data and behavior together, so the pattern can be expressed with sealed types or enums with methods.</p></div>
+        <div class="card"><h4>🕹️ Game and agent logic</h4><p>Characters and agents switch between idle, patrol, chase, and attack modes, a canonical State pattern use in game development.</p></div>
+        <div class="card"><h4>☁️ Distributed sagas</h4><p>Long-running distributed transactions track their progress as states, with compensating transitions when a step fails.</p></div>
+        <div class="card"><h4>🔬 Testable transitions</h4><p>Because each edge is explicit, state machines are easy to model-check and property-test, raising confidence in critical flows.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> whenever an object's behavior depends on a mode that changes over time under rules, you have a finite state machine. The State pattern is how you make that machine explicit, testable, and easy to extend, instead of letting it hide inside ever-growing conditionals.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">State sits among the behavioral and structural patterns that share its delegation idea. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../strategy/"><span class="ico">🎯</span><h4>Strategy</h4><p>Same structure, but the client picks the behavior and states never self-switch.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../observer/"><span class="ico">📡</span><h4>Observer</h4><p>Notify watchers when a state change happens, pairing well with transitions.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../bridge/"><span class="ico">🌉</span><h4>Bridge</h4><p>Delegating to a composed abstraction, the structural cousin of State.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../command/"><span class="ico">🎛️</span><h4>Command</h4><p>Reify events as objects that drive transitions in a state machine.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the State pattern · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

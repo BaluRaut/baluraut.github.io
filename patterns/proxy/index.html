@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proxy Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Proxy design pattern: a surrogate that controls access to another object with the same interface. Covers virtual, remote, protection, caching, and smart-reference proxies, lazy loading, sequence diagrams, a 0-100 flow, case studies, and how it differs from Decorator and Adapter." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>The Proxy pattern - a stand-in that controls access</h1>
+      <p class="lede">A Proxy is a <strong>surrogate</strong> that implements the same interface as a real object and sits in front of it. Callers think they are talking to the real thing, but the proxy quietly decides <strong>when and whether</strong> to forward the call - deferring expensive work, enforcing permissions, caching results, or reaching across a network. Same interface, extra control.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Same interface</span>
+        <span class="pill">Lazy loading</span>
+        <span class="pill">Access control</span>
+        <span class="pill">Caching &amp; remoting</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Proxy pattern?</h2>
+      <p class="muted"><strong>Proxy</strong> provides a placeholder for another object to control access to it. The proxy and the real object (the <em>subject</em>) share one interface, so the proxy is a drop-in substitute. Clients hold a reference to the interface and never learn whether they are wired to the real subject or a stand-in - the proxy intercepts every call and adds behavior before, after, or instead of delegating to the real object.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎭</span> Same interface</h4>
+          <p>Proxy and real subject implement the identical type. The client codes to the interface, so the proxy substitutes transparently with zero client changes.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛡️</span> Controls access</h4>
+          <p>The proxy sits on the path to the subject and gates it: it can defer creation, check permissions, cache, log, or forward across a boundary.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔗</span> Holds the real object</h4>
+          <p>The proxy keeps a reference to the real subject (or the means to create it) and delegates the actual work once it decides the call should proceed.</p>
+        </div>
+      </div>
+
+      <h3>The main kinds of proxy</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Kind</th><th>What it controls</th><th>Typical use</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Virtual / lazy</strong></td><td>When the real object is created</td><td>Defer building an expensive object until first real use</td></tr>
+            <tr><td><strong>Remote</strong></td><td>Where the real object lives</td><td>Local stand-in for an object in another process or machine</td></tr>
+            <tr><td><strong>Protection</strong></td><td>Who may call which methods</td><td>Check roles or permissions before forwarding</td></tr>
+            <tr><td><strong>Caching</strong></td><td>Whether the call repeats work</td><td>Return a stored result instead of recomputing or refetching</td></tr>
+            <tr><td><strong>Smart reference</strong></td><td>Side effects of using the object</td><td>Reference counting, lazy locking, logging, load-on-access</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a proxy does not change <em>what</em> the operation means - only <em>whether, when, and under what conditions</em> it reaches the real object. If you are changing the result's behavior, you probably want Decorator; if you are changing the interface, you want Adapter.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Proxy pattern exists</h2>
+      <p class="muted">Sometimes you cannot or should not let a client touch a real object directly. Creation might be costly, the object might live on another machine, access might need guarding, or repeated calls might be wasteful. A proxy inserts a control point without the client ever knowing.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⏳ Defer expensive work</h4><p>A virtual proxy postpones building heavy objects (large images, DB connections, parsed models) until the moment they are actually used, so startup stays fast and unused resources are never created.</p></div>
+        <div class="card"><h4>🌐 Hide remoteness</h4><p>A remote proxy lets local code call an object in another process or across the network as if it were in memory, encapsulating serialization, transport, and retries behind the same interface.</p></div>
+        <div class="card"><h4>🔐 Enforce access rules</h4><p>A protection proxy checks credentials or roles before delegating, centralizing authorization so the real subject stays focused on its core job.</p></div>
+        <div class="card"><h4>⚡ Avoid repeated work</h4><p>A caching proxy stores results and serves them on repeat calls, cutting latency and load without the client managing any cache itself.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Proxy explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>A proxy is a <strong>teaching assistant</strong> who answers routine questions and only passes the hard ones to the professor. To you it feels like asking the professor, but the TA is filtering and forwarding on their behalf.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a <strong>wrapper that shares the subject's interface</strong>. You call <code>service.load()</code>; the proxy checks a cache, maybe creates the real service lazily, then delegates. Your call site never changes.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of an <strong>executive assistant</strong>. People book time as if reaching the executive, but the assistant screens requests, blocks unauthorized ones, and only lets vetted meetings through to the real person.</p></div>
+        <div class="card"><h4><span class="ico">💳</span> Everyday version</h4><p>A <strong>debit card</strong> stands in for your bank account. You pay with the card, but the network checks your balance and permissions first, then moves the real money behind the scenes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">A proxy implements the <strong>Subject interface</strong> that the real object also implements. It holds a reference to the real object, and each method either delegates straight through or wraps the delegation with control logic: create-on-demand, permission checks, cache lookups, or remote calls.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Shared interface</h4>
+          <p>Client depends only on <code>Subject</code>. Both <code>RealSubject</code> and <code>Proxy</code> implement it, so the proxy is interchangeable with the real object at any call site.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎚️</span> Intercept then delegate</h4>
+          <p>The proxy runs its control logic first, then forwards to the real subject if the call should proceed - possibly creating that subject lazily on the first call.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - client codes to Subject; Proxy guards RealSubject</div>
+        <pre class="mermaid">
+classDiagram
+    class Subject {
+      &lt;&lt;interface&gt;&gt;
+      +request() Result
+    }
+    class RealSubject {
+      +request() Result
+    }
+    class Proxy {
+      -realSubject RealSubject
+      +request() Result
+    }
+    class Client
+    Subject &lt;|.. RealSubject
+    Subject &lt;|.. Proxy
+    Proxy --&gt; RealSubject : delegates
+    Client --&gt; Subject : depends on
+        </pre>
+      </div>
+
+      <h3>A virtual (lazy-loading) proxy in Java</h3>
+      <pre><code>// Shared interface: both real object and proxy implement it
+interface Image {
+    void render();
+}
+
+// RealSubject: construction is expensive (reads bytes from disk)
+class HighResImage implements Image {
+    private final String path;
+    private byte[] pixels;
+
+    HighResImage(String path) {
+        this.path = path;
+        loadFromDisk(); // heavy work happens in the constructor
+    }
+
+    private void loadFromDisk() {
+        System.out.println("Loading " + path + " from disk...");
+        this.pixels = new byte[10_000_000]; // pretend this is costly
+    }
+
+    public void render() {
+        System.out.println("Rendering " + path);
+    }
+}
+
+// Virtual Proxy: same interface, defers creation until first render()
+class LazyImage implements Image {
+    private final String path;
+    private HighResImage real; // created on demand
+
+    LazyImage(String path) {
+        this.path = path; // cheap: no disk I/O yet
+    }
+
+    public void render() {
+        if (real == null) {            // lazy load on first use
+            real = new HighResImage(path);
+        }
+        real.render();                 // delegate to the real subject
+    }
+}
+
+// Client codes to the interface and never knows it holds a proxy
+class Gallery {
+    public static void main(String[] args) {
+        Image img = new LazyImage("photo.raw"); // instant, nothing loaded
+        System.out.println("Gallery ready.");
+        img.render(); // NOW the real image loads, then renders
+        img.render(); // already loaded: just renders
+    }
+}</code></pre>
+      <p class="muted">Notice the proxy adds no new methods - it exposes exactly <code>Image</code>. All it changes is <em>when</em> the heavy <code>HighResImage</code> is built. Swap <code>LazyImage</code> for a <code>ProtectedImage</code> that checks permissions, or a <code>CachedImage</code> that memoizes, and the client stays untouched.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a virtual proxy loading lazily, a caching proxy short-circuiting a repeat call, and a protection proxy gating on permissions.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Virtual proxy: create the real object only on first use</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant P as 🎭 LazyImage proxy
+    participant R as 🖼️ HighResImage
+
+    C->>P: new LazyImage(path)
+    Note over P: cheap, nothing loaded yet
+    C->>P: render()
+    alt real not created
+        P->>R: new HighResImage(path)
+        R-->>P: loaded from disk
+    end
+    P->>R: render()
+    R-->>P: drawn
+    P-->>C: done
+    C->>P: render() again
+    Note over P: real already exists
+    P->>R: render()
+    R-->>P: drawn
+    P-->>C: done
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Caching proxy: serve stored results, refetch only on a miss</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant P as ⚡ Caching proxy
+    participant R as 🗄️ Real service
+
+    C->>P: get(key)
+    alt cache hit
+        P-->>C: cached value
+    else cache miss
+        P->>R: get(key)
+        R-->>P: fresh value
+        P->>P: store in cache
+        P-->>C: fresh value
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Protection proxy: check permissions before delegating</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant P as 🛡️ Protection proxy
+    participant R as 📁 Real subject
+
+    C->>P: delete(record)
+    P->>P: check caller role
+    alt authorized
+        P->>R: delete(record)
+        R-->>P: removed
+        P-->>C: success
+    else denied
+        P-->>C: throw AccessDenied
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From spotting the need to a working, transparent stand-in - implementing and using a proxy in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the access problem</h4><p>Creation is costly, the object is remote, calls need guarding, or results repeat. You need a control point without changing every caller.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Interface</span><h4>Define the shared Subject</h4><p>Extract the interface the real object exposes. Both the real subject and the proxy will implement exactly this type.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Real</span><h4>Implement the RealSubject</h4><p>Write the concrete class that does the actual work, unaware that a proxy will ever sit in front of it.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Proxy</span><h4>Create the Proxy class</h4><p>Make a class that also implements Subject and holds a reference (or the means to create) the real object.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Choose</span><h4>Pick the proxy kind</h4><p>Decide virtual, remote, protection, caching, or smart reference. That choice defines what control logic the proxy adds.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Intercept</span><h4>Add the control logic</h4><p>In each method, run the guard first: lazy-create, check permission, look up the cache, or open the remote channel.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Delegate</span><h4>Forward to the real object</h4><p>When the call should proceed, delegate to the real subject and pass its result back, keeping semantics identical.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Wire</span><h4>Hand the proxy to clients</h4><p>Return the proxy where clients expect a Subject - often from a factory or DI container - so callers never see the concrete type.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Verify</span><h4>Confirm transparency</h4><p>Check clients behave the same with the proxy as with the real object, aside from the intended control effect.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Harden</span><h4>Handle edges</h4><p>Guard concurrent lazy creation, invalidate stale caches, and translate remote failures so the proxy stays reliable under load.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Run in production</h4><p>The client enjoys fast startup, guarded access, or cached speed, with no idea a surrogate is doing the controlling.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Proxies are easy to misuse. These are the usual traps that turn a clean surrogate into a liability.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎭 Confusing it with Decorator</h4><p>If your wrapper adds new behavior to the result rather than controlling access, it is a Decorator. Naming a Decorator a proxy hides its real intent from readers.</p></div>
+        <div class="card"><h4>🧵 Unsafe lazy creation</h4><p>A virtual proxy that lazy-loads without synchronization can build the real object twice under concurrent calls. Guard the creation or use a thread-safe holder.</p></div>
+        <div class="card"><h4>🕰️ Stale caches</h4><p>A caching proxy that never invalidates serves outdated data forever. Without a TTL or invalidation hook, the speed win becomes a correctness bug.</p></div>
+        <div class="card"><h4>🫥 Hidden latency</h4><p>A remote proxy makes a network call look like a local method. Callers assume it is cheap and hammer it in loops, unaware of the round trips and failure modes.</p></div>
+        <div class="card"><h4>🪆 Over-proxying</h4><p>Stacking proxies for every concern adds indirection that is hard to trace and debug. Each layer must earn its place; needless surrogates just obscure the real object.</p></div>
+        <div class="card"><h4>🧬 Interface drift</h4><p>When the real subject gains methods the proxy forgets to forward, the surrogate silently diverges. Keep the proxy in lockstep with the Subject interface.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Proxy buys you a control point at the cost of an extra layer. Weigh it before reaching for it.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Adds access control, laziness, caching, or remoting transparently; the client and real subject stay untouched and unaware.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Extra indirection and a class to maintain; can hide cost or latency and complicate debugging and stack traces.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You need to defer creation, guard access, cache, or represent a remote object behind the same interface as the real one.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>You want to add behavior (use Decorator) or change the interface (use Adapter), or the control adds no real value.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low to moderate. The pattern is simple; the difficulty lives in thread safety, invalidation, and remote error handling.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Decorator (adds behavior), Adapter (changes interface), Facade (simplifies a subsystem), Flyweight (shares fine-grained objects).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Proxy when the wrapper's job is to decide <em>whether, when, or where</em> a call reaches the real object. If the wrapper's job is to change <em>what</em> the call does or <em>how</em> it is shaped, you want Decorator or Adapter instead.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative uses of Proxy in production-grade systems.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌱</span><div><h3>1 · Hibernate lazy-loading proxies</h3><div class="role">Kind: virtual / lazy proxy</div></div></div>
+        <p class="muted">An ORM must not load an entire object graph every time you fetch one row, or a single query would drag in the whole database.</p>
+        <ul>
+          <li>Hibernate returns a runtime-generated proxy for lazy associations instead of the real entity.</li>
+          <li>The real object and its related rows load from the database only when a method is first called.</li>
+          <li>The proxy implements the entity's type, so application code treats it exactly like the real entity.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Queries stay lean, memory is saved, and developers get natural object access without hand-writing fetch logic.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛰️</span><div><h3>2 · gRPC and RMI client stubs</h3><div class="role">Kind: remote proxy</div></div></div>
+        <p class="muted">A service needs to call an object that lives in another process or datacenter, but wants the call to look like an ordinary method invocation.</p>
+        <ul>
+          <li>The generated client stub implements the same service interface as the remote server.</li>
+          <li>Calling a method serializes arguments, sends them over the wire, and deserializes the reply.</li>
+          <li>Transport, retries, and connection handling stay hidden behind that local-looking interface.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Teams call remote services with clean, typed method calls while networking details stay encapsulated in the stub.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛡️</span><div><h3>3 · Spring AOP and security proxies</h3><div class="role">Kind: protection / smart-reference proxy</div></div></div>
+        <p class="muted">An enterprise app must enforce permissions, transactions, and logging without cluttering business logic with cross-cutting concerns.</p>
+        <ul>
+          <li>Spring wraps beans in dynamic proxies that implement the bean's interface.</li>
+          <li>The proxy checks roles, starts transactions, or records metrics before delegating to the real bean.</li>
+          <li>Business methods stay clean; the surrogate applies the policy on every guarded call.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Security and transaction rules are enforced consistently and centrally, while the real objects remain focused on their core work.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Far from dated, the Proxy pattern underpins much of today's infrastructure, from language runtimes to service meshes.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕸️ Service mesh sidecars</h4><p>Sidecar proxies like Envoy sit beside each service, controlling access, retries, and observability transparently - the remote proxy idea at platform scale.</p></div>
+        <div class="card"><h4>🧠 JS runtime Proxy object</h4><p>JavaScript's built-in <code>Proxy</code> intercepts property access and calls at runtime, powering reactive frameworks and validation with the classic surrogate model.</p></div>
+        <div class="card"><h4>⚙️ Dynamic proxies</h4><p>Java's <code>java.lang.reflect.Proxy</code> and CGLIB generate proxies at runtime, the backbone of AOP, mocking libraries, and ORM lazy loading.</p></div>
+        <div class="card"><h4>🚪 API gateways</h4><p>Gateways are protection and caching proxies for whole systems, enforcing auth, rate limits, and response caching in front of backend services.</p></div>
+        <div class="card"><h4>🔒 Lazy and safe initialization</h4><p>Virtual proxies remain the clean way to defer costly construction and manage resource lifecycles in memory-conscious and startup-sensitive apps.</p></div>
+        <div class="card"><h4>🧪 Test doubles</h4><p>Mocking frameworks build proxies that stand in for real collaborators, letting tests control and observe interactions through the same interface.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Proxy stays central because the need to control access to an object - to defer, guard, cache, or reach it remotely - never goes away. Whenever a stand-in must be indistinguishable from the real thing, you are looking at a proxy.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Proxy sits among the structural patterns. These are the ones it is most often confused with or paired with.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>Same interface, but adds behavior instead of controlling access.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../adapter/"><span class="ico">🔌</span><h4>Adapter</h4><p>Converts one interface into another the client expects.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../facade/"><span class="ico">🚪</span><h4>Facade</h4><p>A simple front over a whole subsystem, not a single object.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../flyweight/"><span class="ico">🍃</span><h4>Flyweight</h4><p>Shares many fine-grained objects to save memory.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Proxy · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

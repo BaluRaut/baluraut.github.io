@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOLID Principles Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the SOLID principles of object-oriented design: single responsibility, open/closed, Liskov substitution, interface segregation, and dependency inversion, with concrete violations, fixes, diagrams, and real Java and TypeScript refactors." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Foundation</span>
+      <h1>SOLID principles - design classes that survive change</h1>
+      <p class="lede">SOLID is five design principles that keep object-oriented code flexible and easy to change. Each one attacks a specific way that classes grow rigid, fragile, or tangled. Together they push you toward small responsibilities, stable abstractions, and dependencies that point at interfaces instead of concrete details.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Single responsibility</span>
+        <span class="pill">Open/closed</span>
+        <span class="pill">Substitutability</span>
+        <span class="pill">Dependency inversion</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is SOLID?</h2>
+      <p class="muted"><strong>SOLID</strong> is an acronym for five object-oriented design principles popularized by Robert C. Martin. They are not rules for correctness; they are heuristics for <em>changeability</em>. Code that follows them tends to have small, focused classes that you can extend without editing, and modules that depend on abstractions rather than on each other's internals.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> One reason to change</h4>
+          <p>SRP and ISP split fat classes and interfaces into cohesive pieces, so a change in one concern does not ripple into unrelated code.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Extend, do not edit</h4>
+          <p>OCP asks you to add behavior by plugging in new types, not by rewriting tested code with more if/else branches.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔗</span> Depend on abstractions</h4>
+          <p>LSP and DIP make subtypes honor their contracts and route dependencies through interfaces, so pieces swap freely.</p>
+        </div>
+      </div>
+
+      <h3>The five principles at a glance</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Principle</th><th>What it says</th><th>The smell it kills</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>S - Single Responsibility</strong></td><td>A class should have one reason to change, one owner of its behavior</td><td>God classes that mix persistence, formatting, and business rules</td></tr>
+            <tr><td><strong>O - Open/Closed</strong></td><td>Open for extension, closed for modification</td><td>Growing <code>switch</code> statements you edit for every new case</td></tr>
+            <tr><td><strong>L - Liskov Substitution</strong></td><td>Subtypes must be usable anywhere their base type is expected</td><td>Subclasses that throw, weaken, or break inherited contracts</td></tr>
+            <tr><td><strong>I - Interface Segregation</strong></td><td>Prefer many small interfaces over one fat one</td><td>Clients forced to implement methods they never call</td></tr>
+            <tr><td><strong>D - Dependency Inversion</strong></td><td>Depend on abstractions, not concretions</td><td>High-level policy welded to low-level libraries</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> SOLID is about the direction and shape of dependencies. Make responsibilities small, make contracts trustworthy, and make the arrows point at stable abstractions. Do that and change stays local instead of spreading through the codebase.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why SOLID exists</h2>
+      <p class="muted">Software does not fail because it was written wrong once; it decays because every change is harder than the last. SOLID targets that decay directly, so a codebase stays cheap to modify as it grows.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Change stays local</h4><p>When each class owns one concern, a new requirement touches one place. Ripple edits across unrelated files, the classic sign of rot, mostly disappear.</p></div>
+        <div class="card"><h4>🧪 Testable by design</h4><p>Depending on abstractions lets you inject fakes and mocks. Units test in isolation instead of dragging a database or network into every test.</p></div>
+        <div class="card"><h4>🔧 Safe extension</h4><p>Adding a payment method or export format becomes a new class you plug in, not a risky edit to code that already works in production.</p></div>
+        <div class="card"><h4>🤝 Parallel teamwork</h4><p>Small interfaces and clear contracts mean teams build against a stable boundary, integrating without stepping on each other's implementations.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>SOLID explained with analogies</h2>
+      <p class="muted">Same five ideas, four ways to picture them, so they click whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>SOLID is like a well-organized <strong>ring binder</strong>. Each subject has its own tab (single responsibility), you add new pages without rewriting old ones (open/closed), and any tab you pull out still fits the same rings (substitution).</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Think of a <strong>USB port</strong>. The laptop depends on the USB contract, not on a specific device (dependency inversion). Any compliant device works (Liskov), and the port exposes only what a device needs (interface segregation).</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>It is a company <strong>org chart</strong>. Each role has one clear remit (SRP), you onboard new specialists instead of overloading one person (OCP), and managers depend on job descriptions, not on specific individuals (DIP).</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>Household <strong>wall sockets</strong>. Every appliance that fits the socket just works, the kettle can replace the toaster with no rewiring, and you never call an electrician to add one more lamp.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How the five principles work together</h2>
+      <p class="muted">Each principle handles one axis of change, but they reinforce each other. SRP and ISP decide <strong>where the seams go</strong>; OCP and DIP decide <strong>how you cross them</strong>; LSP guarantees the pieces on either side are actually interchangeable.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧭</span> Seams: SRP and ISP</h4>
+          <p>Split a class by reason-to-change (SRP) and split its interface by the client that uses it (ISP). You end up with small, cohesive units and narrow contracts that no one implements by force.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚪</span> Doors: OCP and DIP</h4>
+          <p>DIP puts an abstraction at the seam so high-level policy never names a concrete detail. OCP then lets you add new implementations behind that abstraction without editing the policy. LSP keeps every implementation honest.</p>
+        </div>
+      </div>
+
+      <h3>The dependency structure</h3>
+      <div class="diagram">
+        <div class="cap">Structure - policy depends on an abstraction, details implement it (DIP + OCP + LSP)</div>
+        <pre class="mermaid">
+classDiagram
+    class OrderService {
+        +checkout(order)
+    }
+    class PaymentGateway {
+        <<interface>>
+        +charge(amount) Receipt
+    }
+    class StripeGateway {
+        +charge(amount) Receipt
+    }
+    class PaypalGateway {
+        +charge(amount) Receipt
+    }
+    OrderService ..> PaymentGateway : depends on
+    PaymentGateway <|.. StripeGateway : implements
+    PaymentGateway <|.. PaypalGateway : implements
+</pre>
+      </div>
+
+      <h3>A dependency-inversion refactor in TypeScript</h3>
+      <pre><code>// BEFORE - high-level policy welded to a concrete detail (violates DIP + OCP)
+class StripeGateway {
+  charge(amount: number) { /* call Stripe */ }
+}
+
+class OrderService {
+  private gateway = new StripeGateway();   // hard dependency
+  checkout(total: number) {
+    this.gateway.charge(total);            // to add PayPal, you must edit this class
+  }
+}
+
+// AFTER - depend on an abstraction; add providers without touching OrderService
+interface PaymentGateway {
+  charge(amount: number): Receipt;
+}
+
+class StripeGateway implements PaymentGateway {
+  charge(amount: number): Receipt { /* call Stripe */ return new Receipt(); }
+}
+
+class PaypalGateway implements PaymentGateway {   // new type, zero edits to policy (OCP)
+  charge(amount: number): Receipt { /* call PayPal */ return new Receipt(); }
+}
+
+class OrderService {
+  constructor(private readonly gateway: PaymentGateway) {}  // injected abstraction (DIP)
+  checkout(total: number): Receipt {
+    return this.gateway.charge(total);   // works with any conforming gateway (LSP)
+  }
+}
+
+// wiring happens at the edge, not inside the policy
+const service = new OrderService(new PaypalGateway());</code></pre>
+      <p class="muted">The high-level <code>OrderService</code> now names only the <code>PaymentGateway</code> abstraction. Adding a provider is a new class (open for extension), the service never changes (closed for modification), and any gateway substitutes cleanly because they all honor the same contract.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: injecting a dependency through an abstraction, extending behavior without editing, and how a Liskov violation breaks a caller.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Dependency inversion: policy talks to an injected abstraction</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Main as 🧩 Composition root
+    participant Svc as 🧠 OrderService
+    participant GW as 🔌 PaymentGateway
+    participant Stripe as 💳 StripeGateway
+
+    Main->>Stripe: new StripeGateway()
+    Main->>Svc: new OrderService(gateway)
+    Note over Main,Svc: Concrete choice made once, at the edge
+    Svc->>GW: charge(total)
+    GW->>Stripe: dispatch to implementation
+    Stripe-->>GW: Receipt
+    GW-->>Svc: Receipt
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Open/closed: add a new provider with no edits to the caller</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 👩‍💻 Developer
+    participant New as 🆕 PaypalGateway
+    participant Main as 🧩 Composition root
+    participant Svc as 🧠 OrderService
+
+    Dev->>New: implements PaymentGateway
+    Note over Dev,New: New behavior lives in a new class
+    Dev->>Main: wire PaypalGateway
+    Main->>Svc: new OrderService(paypal)
+    Svc->>New: charge(total)
+    New-->>Svc: Receipt
+    Note over Svc: OrderService source untouched
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Liskov violation: a subtype breaks the caller's assumption</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ Caller
+    participant Base as 🐦 Bird.fly()
+    participant Ostrich as 🚫 Ostrich
+
+    App->>Base: fly()
+    Note over App,Base: Contract: every Bird can fly()
+    alt substituted with Sparrow
+        Base-->>App: takes flight
+    else substituted with Ostrich
+        App->>Ostrich: fly()
+        Ostrich-->>App: throws UnsupportedOperation
+        Note over App,Ostrich: Substitution breaks - LSP violated
+    end
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a tangled god class to a SOLID design you can extend safely, the whole refactor in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Find the reasons to change</h4><p>Look at a class and list why it might change - new report format, new payment provider, new storage. Multiple reasons means multiple responsibilities hiding inside.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">SRP</span><h4>Split by responsibility</h4><p>Extract each concern into its own class. Persistence, formatting, and business rules become separate collaborators with one owner each.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">ISP</span><h4>Narrow the interfaces</h4><p>Break fat interfaces so each client depends only on the methods it actually calls. No class is forced to stub out methods it will never use.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Abstract</span><h4>Name the abstraction at the seam</h4><p>Where high-level code meets a low-level detail, define an interface that captures only what the policy needs, phrased in the policy's language.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">DIP</span><h4>Invert the dependency</h4><p>Make the high-level class depend on that interface and receive the implementation by injection, so it never news up a concrete detail itself.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Implement</span><h4>Write the concrete providers</h4><p>Each low-level detail implements the abstraction. The Stripe gateway, the file store, the CSV formatter all live behind their contract.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">LSP</span><h4>Honor the contract</h4><p>Ensure every implementation keeps the base type's promises - same preconditions or weaker, same postconditions or stronger, no surprise exceptions.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">OCP</span><h4>Extend without editing</h4><p>Add the next provider or format as a brand new class implementing the abstraction. Tested policy code stays closed to modification.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Wire</span><h4>Compose at the edge</h4><p>Choose concrete types in one composition root - a main method or DI container - so all the concrete decisions sit at the outer boundary.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Inject fakes and verify</h4><p>Unit test the policy against a mock implementation. Because dependencies are abstractions, tests run fast with no database or network.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Evolve</span><h4>Change stays local</h4><p>New requirements land as new small classes. The core policy is stable, the design flexes at its seams, and each principle reinforces the others.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">SOLID misapplied is as damaging as no design at all. These are the usual traps.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🌫️ Abstraction for its own sake</h4><p>Wrapping every class in an interface it will only ever have one implementation of adds indirection with no payoff. Introduce a seam when a second implementation is real or clearly coming.</p></div>
+        <div class="card"><h4>🪓 SRP taken to shards</h4><p>Splitting until every method is its own class scatters cohesive logic across dozens of files. One reason to change means one concern, not one line.</p></div>
+        <div class="card"><h4>🧬 Inheritance where composition fits</h4><p>Forcing an is-a hierarchy to reuse code breeds Liskov violations. Favor composition and small interfaces when behavior, not identity, is what varies.</p></div>
+        <div class="card"><h4>🕳️ Leaky abstractions</h4><p>An interface that exposes SQL fragments or HTTP details drags the concrete implementation back into the policy, quietly undoing dependency inversion.</p></div>
+        <div class="card"><h4>🐦 Contract-breaking subtypes</h4><p>Overriding a method to throw, to tighten a precondition, or to return null violates LSP. The subtype must be usable anywhere the base type is.</p></div>
+        <div class="card"><h4>📚 Fat interfaces by default</h4><p>One giant service interface forces every client and mock to depend on methods they never touch. Segregate by the consumer, not by the implementer.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">SOLID buys flexibility at the cost of indirection. Apply it where change is likely, not everywhere by reflex.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Localized change, isolated testing, safe extension, parallel teamwork, and clear module boundaries that survive years of edits.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>More types and files, extra indirection to follow, and up-front design effort that can slow the first version.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>The code has volatile requirements, multiple implementations of a concept, a long lifespan, or a team that needs stable seams to work in parallel.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>Short-lived scripts, one-off prototypes, or stable code with a single implementation where extra abstraction only adds friction.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low per principle, but the count of interfaces and injected dependencies grows. Manage it with a DI container and clear naming.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Design patterns (strategy, factory), composition over inheritance, dependency injection, and clean/hexagonal architecture.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> introduce an abstraction the moment you have a real second reason to change or a real second implementation, not before. SOLID rewards code that must evolve; it taxes code that never will.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative refactors showing SOLID applied under production pressure.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment provider expansion</h3><div class="role">Principles: DIP + OCP + LSP</div></div></div>
+        <p class="muted">A checkout service hardcoded a single card processor; every new market needed a new provider and edits to the core order flow.</p>
+        <ul>
+          <li>A <code>PaymentGateway</code> interface was defined in the language of the order domain.</li>
+          <li>Stripe, PayPal, and a local wallet each became an implementation injected at startup.</li>
+          <li>The order service stopped changing entirely; new providers shipped as new classes.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Launching a new market became a plug-in task instead of a risky edit to battle-tested checkout code.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>2 · The invoice god class</h3><div class="role">Principles: SRP + ISP</div></div></div>
+        <p class="muted">A single <code>Invoice</code> class calculated totals, rendered PDFs, and persisted to the database, so any format tweak risked the tax math.</p>
+        <ul>
+          <li>Calculation, rendering, and persistence were split into three cohesive collaborators.</li>
+          <li>Narrow interfaces let the renderer depend only on read methods it needed.</li>
+          <li>Changing the PDF layout no longer touched code that computed money.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Formatting changes shipped without regression risk to financial logic, and each concern got focused unit tests.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>3 · Swapping the storage backend</h3><div class="role">Principles: DIP + LSP</div></div></div>
+        <p class="muted">Business logic called a concrete file store directly, making a move to cloud object storage a codebase-wide search-and-replace.</p>
+        <ul>
+          <li>A <code>DocumentStore</code> abstraction captured save, load, and delete in domain terms.</li>
+          <li>Local disk and cloud implementations honored the exact same contract.</li>
+          <li>Tests ran against an in-memory store, cutting suite time dramatically.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The backend migration became a one-line wiring change, and the policy code never knew storage moved to the cloud.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">SOLID predates microservices and functional-leaning codebases, yet its core idea, aim your dependencies at stable abstractions, only grew more important.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Clean &amp; hexagonal architecture</h4><p>Ports-and-adapters is dependency inversion at the system scale: the domain depends on ports, infrastructure implements them at the edge.</p></div>
+        <div class="card"><h4>🧪 Testability everywhere</h4><p>Injected abstractions remain the simplest path to fast, isolated tests, which is why DIP is baked into every modern framework's DI container.</p></div>
+        <div class="card"><h4>🔀 Functional crossover</h4><p>Passing a function is dependency inversion without a named interface; higher-order functions deliver OCP and DIP with less ceremony.</p></div>
+        <div class="card"><h4>🌐 Microservice contracts</h4><p>Service boundaries are interface segregation writ large - narrow, versioned APIs that let teams deploy independently behind stable contracts.</p></div>
+        <div class="card"><h4>🤖 AI-assisted refactoring</h4><p>Tools now flag SRP and DIP violations and suggest extractions, but naming the right abstraction still needs human judgment about change.</p></div>
+        <div class="card"><h4>📦 Plugin ecosystems</h4><p>Every extensible platform, from editors to CI, is open/closed by design: third parties add behavior through a fixed extension contract.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> SOLID is not five rules to obey but one instinct to build - keep responsibilities small and point every dependency at a stable abstraction. Do that and your code bends with new requirements instead of breaking under them.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">SOLID sits at the center of good OOP design. These topics build directly on it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../oop-core/"><span class="ico">🧱</span><h4>OOP core concepts</h4><p>Encapsulation, inheritance, and polymorphism that SOLID builds on.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧩</span><h4>Composition over inheritance</h4><p>The flexible reuse strategy behind LSP and DIP.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🔀</span><h4>Strategy pattern</h4><p>Open/closed in action - swap behavior behind an interface.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../factory-method/"><span class="ico">🏭</span><h4>Factory method</h4><p>Where concrete choices live so policy stays inverted.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to SOLID · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

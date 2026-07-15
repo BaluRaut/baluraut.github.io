@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decorator Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Decorator pattern: attaching responsibilities to an object dynamically by wrapping it, stacking decorators, how it beats subclass explosion, how it differs from Proxy and Inheritance, sequence diagrams, a 0-100 flow, and case studies." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>The Decorator pattern - add behavior by wrapping, not subclassing</h1>
+      <p class="lede">Decorator lets you attach new responsibilities to an object <strong>at runtime</strong> by wrapping it in another object that shares its interface. Because the wrapper implements the same type it wraps, you can <strong>stack</strong> decorators in any order and each one adds one slice of behavior. It is how <code>java.io</code> turns a raw stream into a buffered, compressed, data-typed stream without a single new subclass per combination.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Same interface</span>
+        <span class="pill">Runtime composition</span>
+        <span class="pill">Stackable wrappers</span>
+        <span class="pill">Open/Closed</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Decorator pattern?</h2>
+      <p class="muted"><strong>Decorator</strong> is a structural pattern that lets you attach responsibilities to an individual object dynamically. You wrap the target object inside a decorator object that <em>implements the same interface</em>, forwards calls to the wrapped object, and adds behavior before, after, or around each forwarded call. Because wrapper and wrapped share a type, client code cannot tell the difference and decorators can be layered.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Same interface</h4>
+          <p>The decorator implements the exact interface of the object it wraps, so it is a drop-in substitute anywhere the base type is expected.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎁</span> Wraps a component</h4>
+          <p>It holds a reference to a wrapped component and delegates to it, adding its own behavior around the delegated call.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🥞</span> Stacks in layers</h4>
+          <p>A decorator can wrap another decorator, so responsibilities compose like layers of an onion, each added independently.</p>
+        </div>
+      </div>
+
+      <h3>The four roles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Java I/O example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Component</strong></td><td>The shared interface both real objects and decorators implement</td><td><code>InputStream</code></td></tr>
+            <tr><td><strong>Concrete Component</strong></td><td>The base object that does the real work, wrapped by decorators</td><td><code>FileInputStream</code></td></tr>
+            <tr><td><strong>Base Decorator</strong></td><td>Holds a component reference and forwards every call to it</td><td><code>FilterInputStream</code></td></tr>
+            <tr><td><strong>Concrete Decorator</strong></td><td>Adds behavior around the forwarded call</td><td><code>BufferedInputStream</code>, <code>GZIPInputStream</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Programs to the Component interface, unaware of the wrapping</td><td>Code reading via <code>InputStream</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> Decorator is "wrapping instead of subclassing." Inheritance fixes behavior at compile time for a whole class; a decorator adds behavior to one object at runtime, and you can peel layers on and off by choosing which wrappers to apply.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Decorator exists</h2>
+      <p class="muted">The problem it kills is <strong>subclass explosion</strong>. If you try to model every combination of optional features with inheritance, the number of classes grows combinatorially. Decorator makes each feature one small wrapper you mix freely at runtime.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💥 Kills subclass explosion</h4><p>Three features via inheritance means a class for each combination: Buffered, Compressed, BufferedCompressed, and so on. With decorators you write three wrappers and compose them, so N features cost N classes, not 2 to the N.</p></div>
+        <div class="card"><h4>🔓 Honors Open/Closed</h4><p>You add capabilities without touching the base class or existing decorators. New behavior arrives as a new wrapper, so tested code stays closed to modification but open to extension.</p></div>
+        <div class="card"><h4>🎚️ Per-object, at runtime</h4><p>Two instances of the same class can have different decorators. You decide the stack based on configuration, user input, or request context, not at compile time.</p></div>
+        <div class="card"><h4>🎯 Single responsibility</h4><p>Each decorator does one thing: buffer, compress, encrypt, log. Small focused classes are easier to test and reason about than one class juggling every optional concern.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Decorator explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of <strong>layers of clothing</strong>. A person is still a person whether they add a sweater, then a coat, then a scarf. Each layer adds warmth without changing what a person is, and you add or remove layers as needed.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is <strong><code>new BufferedInputStream(new FileInputStream(f))</code></strong>. Each constructor takes the same interface it returns, so wrapping is just nesting, and every layer still answers to <code>InputStream</code>.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Like a <strong>document going through approval stamps</strong>. The document is unchanged, but each desk wraps it with a stamp, a cover note, or a redaction. Downstream still handles a "document," now with extra handling applied.</p></div>
+        <div class="card"><h4><span class="ico">☕</span> Everyday version</h4><p>A <strong>coffee order</strong>. You start with espresso, then add milk, then add caramel, then add whipped cream. Each add-on wraps the drink and adds to the price and description, but it is still a drink you can hand to the customer.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">A decorator holds a reference to a <strong>component</strong> of the same interface, delegates the core call to it, and adds behavior around that delegation. Stacking works because a decorator's wrapped field can itself be another decorator.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔁</span> Delegate then add</h4>
+          <p>Each method typically calls <code>wrapped.method()</code> and adds work before or after. The wrapped reference is the same type, so the call chain is uniform all the way down.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🥞</span> Order matters</h4>
+          <p>Wrapping compress-then-buffer behaves differently from buffer-then-compress. The outermost decorator runs its "before" work first and its "after" work last, like a stack unwinding.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - decorators and the concrete component share one interface</div>
+        <pre class="mermaid">
+classDiagram
+    class DataSource {
+        <<interface>>
+        +read() String
+        +write(data) void
+    }
+    class FileDataSource {
+        +read() String
+        +write(data) void
+    }
+    class DataSourceDecorator {
+        <<abstract>>
+        #wrappee DataSource
+        +read() String
+        +write(data) void
+    }
+    class EncryptionDecorator {
+        +read() String
+        +write(data) void
+    }
+    class CompressionDecorator {
+        +read() String
+        +write(data) void
+    }
+    DataSource <|.. FileDataSource
+    DataSource <|.. DataSourceDecorator
+    DataSourceDecorator <|-- EncryptionDecorator
+    DataSourceDecorator <|-- CompressionDecorator
+    DataSourceDecorator o--> DataSource : wraps
+        </pre>
+      </div>
+
+      <h3>A realistic example in Java</h3>
+      <pre><code>// Component: the shared interface
+interface DataSource {
+    void writeData(String data);
+    String readData();
+}
+
+// Concrete Component: does the real work
+class FileDataSource implements DataSource {
+    private final String path;
+    FileDataSource(String path) { this.path = path; }
+    public void writeData(String data) { /* write raw bytes to file */ }
+    public String readData()          { /* read raw bytes from file */ return "..."; }
+}
+
+// Base Decorator: implements the interface, forwards to the wrappee
+abstract class DataSourceDecorator implements DataSource {
+    protected final DataSource wrappee;
+    DataSourceDecorator(DataSource source) { this.wrappee = source; }
+    public void writeData(String data) { wrappee.writeData(data); }
+    public String readData()           { return wrappee.readData(); }
+}
+
+// Concrete Decorator: adds behavior around the forwarded call
+class CompressionDecorator extends DataSourceDecorator {
+    CompressionDecorator(DataSource source) { super(source); }
+    public void writeData(String data) { wrappee.writeData(compress(data)); }
+    public String readData()           { return decompress(wrappee.readData()); }
+    private String compress(String s)   { /* deflate */ return s; }
+    private String decompress(String s) { /* inflate */ return s; }
+}
+
+class EncryptionDecorator extends DataSourceDecorator {
+    EncryptionDecorator(DataSource source) { super(source); }
+    public void writeData(String data) { wrappee.writeData(encrypt(data)); }
+    public String readData()           { return decrypt(wrappee.readData()); }
+    private String encrypt(String s) { /* cipher */ return s; }
+    private String decrypt(String s) { /* decipher */ return s; }
+}
+
+// Client: composes the stack at runtime, then uses the base interface
+DataSource source = new EncryptionDecorator(
+                        new CompressionDecorator(
+                            new FileDataSource("out.dat")));
+source.writeData("salary report");   // compresses, then encrypts, then writes
+String plain = source.readData();     // reads, decrypts, then decompresses</code></pre>
+      <p class="muted">The client only ever sees <code>DataSource</code>. Writing runs the stack outer to inner (encrypt wraps compress wraps file); reading unwinds it inner to outer. Add a new concern, say a <code>LoggingDecorator</code>, without editing any existing class.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a single decorator forwarding a call, a stacked write through two decorators, and the canonical Java I/O stream read.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - One decorator: add behavior around a forwarded call</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant D as 🎁 Decorator
+    participant O as 📦 Concrete component
+
+    C->>D: writeData(data)
+    Note over D: pre-processing (compress)
+    D->>O: writeData(transformed)
+    O-->>D: done
+    Note over D: post-processing (if any)
+    D-->>C: done
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Stacked: encryption wraps compression wraps file</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant E as 🔐 Encryption
+    participant Z as 🗜️ Compression
+    participant F as 📄 FileDataSource
+
+    C->>E: writeData(text)
+    E->>E: encrypt(text)
+    E->>Z: writeData(cipher)
+    Z->>Z: compress(cipher)
+    Z->>F: writeData(bytes)
+    F-->>Z: written
+    Z-->>E: ok
+    E-->>C: ok
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Java I/O: reading through a buffered gzip stream</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant B as 🧵 BufferedInputStream
+    participant G as 🗜️ GZIPInputStream
+    participant F as 📄 FileInputStream
+
+    C->>B: read()
+    alt buffer empty
+        B->>G: read(buf)
+        G->>F: read(compressed)
+        F-->>G: raw bytes
+        G->>G: inflate bytes
+        G-->>B: decompressed bytes
+    else buffer has data
+        Note over B: serve from buffer, no downstream call
+    end
+    B-->>C: next byte
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 to 100 flow</h2>
+      <p class="muted">From defining the interface to running a stacked chain in production - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Interface</span><h4>Define the Component</h4><p>Declare the shared interface that both the real object and every decorator will implement, for example <code>DataSource</code> with read and write.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Base</span><h4>Build the Concrete Component</h4><p>Write the class that does the real work, such as <code>FileDataSource</code>. This is what sits at the center and gets wrapped.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Wrapper</span><h4>Create the Base Decorator</h4><p>Make an abstract decorator that implements the interface, holds a <code>wrappee</code> field of the same type, and forwards every call to it unchanged.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Behavior</span><h4>Add a Concrete Decorator</h4><p>Subclass the base decorator and override a method to add work before or after delegating, like compressing on write and decompressing on read.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Behavior</span><h4>Add more decorators</h4><p>Write independent wrappers for other concerns: encryption, logging, buffering. Each stays small and knows nothing about the others.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Compose</span><h4>Wrap at runtime</h4><p>The client nests constructors to build a stack, for example encryption around compression around the file source, choosing the order deliberately.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Call</span><h4>Invoke through the interface</h4><p>The client calls the outermost object using only the <code>DataSource</code> type, unaware of how many layers sit underneath.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Descend</span><h4>Delegate down the stack</h4><p>Each decorator applies its "before" work and forwards to its wrappee, so the call travels outer to inner until it reaches the concrete component.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Ascend</span><h4>Unwind the results</h4><p>The concrete component returns, and each decorator applies its "after" work on the way back up, in reverse order of wrapping.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>Add features without edits</h4><p>A new requirement becomes a new decorator inserted into the stack. Existing classes are never modified, honoring Open/Closed.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Configure stacks per context</h4><p>Different requests or configs assemble different chains from the same building blocks, so behavior varies per object without new classes.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Decorator is powerful but easy to overuse. These are the usual traps.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧅 Too many tiny layers</h4><p>A stack ten wrappers deep is hard to read and debug. A stack trace becomes a wall of forwarding calls. Reach for Decorator when combinations really vary, not for every option.</p></div>
+        <div class="card"><h4>🔀 Order-sensitivity ignored</h4><p>Compress-then-encrypt and encrypt-then-compress give different results, and one may not even work. Treat the order of wrapping as part of the contract, not an accident.</p></div>
+        <div class="card"><h4>🪪 Leaking the concrete type</h4><p>If clients downcast to reach a decorator's extra method, substitutability breaks. Decorators should add behavior through the shared interface, not a wider one clients depend on.</p></div>
+        <div class="card"><h4>🧬 Fat base interface</h4><p>A component interface with many methods forces every decorator to forward all of them. Keep the interface small so wrappers stay thin, or delegation boilerplate takes over.</p></div>
+        <div class="card"><h4>🆔 Identity and equals traps</h4><p>A wrapped object is not <code>==</code> to its wrapper, and <code>equals</code> or hashing may behave unexpectedly across layers. Do not rely on object identity through a decorator chain.</p></div>
+        <div class="card"><h4>🎭 Using it where Strategy fits</h4><p>If you are swapping one algorithm rather than layering several add-ons, Strategy is simpler. Decorator shines only when responsibilities genuinely stack.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Decorator trades a flat class hierarchy for runtime flexibility and a bit of indirection. Here is the balance sheet.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Adds behavior at runtime per object, composes freely, avoids subclass explosion, keeps each concern in a small class, and honors Open/Closed.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Many small objects and deep stacks hurt readability and debugging; order sensitivity is a hidden contract; forwarding boilerplate grows with the interface.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>Responsibilities are optional and combinable, you need to add or remove them per object at runtime, or inheritance would produce a combinatorial class blowup.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>You are swapping a single algorithm (use Strategy), controlling access to one object (use Proxy), or the set of features is fixed and small (plain inheritance is fine).</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low per decorator, but overall cognitive load rises with stack depth. Requires a shared interface and disciplined delegation.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Proxy (same interface, controls access not behavior), Composite (tree of same-interface objects), Adapter (changes interface), Strategy (swaps algorithm).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you catch yourself creating classes named for combinations of features (BufferedCompressedEncrypted...), stop and reach for Decorator. If you only ever need one option at a time, you probably do not need it at all.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three places the Decorator pattern shows up in code you likely already use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📄</span><div><h3>1 · Java I/O streams</h3><div class="role">Pattern: the canonical Decorator hierarchy</div></div></div>
+        <p class="muted">The <code>java.io</code> package is the textbook example. <code>InputStream</code> is the component, <code>FileInputStream</code> the concrete component, <code>FilterInputStream</code> the base decorator, and the rest are concrete decorators.</p>
+        <ul>
+          <li><code>new BufferedInputStream(new GZIPInputStream(new FileInputStream(f)))</code> layers buffering over decompression over raw file reads.</li>
+          <li>Each wrapper is still an <code>InputStream</code>, so any code reading a stream works with any combination.</li>
+          <li>Without it, the JDK would need a class per feature combination, which is exactly the explosion Decorator prevents.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A handful of stream classes compose into hundreds of useful pipelines, all through one <code>InputStream</code> interface.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🌐</span><div><h3>2 · HTTP middleware &amp; filters</h3><div class="role">Pattern: wrapping request handlers</div></div></div>
+        <p class="muted">Web frameworks wrap a request handler in layers: logging, authentication, compression, caching. Each layer shares the handler interface and forwards to the next.</p>
+        <ul>
+          <li>An auth decorator checks a token, then delegates to the wrapped handler only if valid.</li>
+          <li>A gzip decorator delegates first, then compresses the response the inner handler produced.</li>
+          <li>Teams reorder or add middleware without touching the core handler, per route or per app.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Cross-cutting concerns become composable, reorderable wrappers instead of tangled code inside every handler.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">☕</span><div><h3>3 · UI components &amp; notifiers</h3><div class="role">Pattern: layering optional visual or channel add-ons</div></div></div>
+        <p class="muted">A UI toolkit wraps a widget with borders, scrollbars, and shadows; a notifier wraps a base sender with Slack, SMS, and email channels, all through one interface.</p>
+        <ul>
+          <li>A <code>ScrollDecorator</code> wraps any component and paints scrollbars around whatever it renders.</li>
+          <li>A <code>SlackDecorator</code> sends to Slack, then delegates so the wrapped notifier also fires.</li>
+          <li>Users pick which decorations or channels to stack at runtime from configuration.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> One base object plus a few decorators covers every combination users ask for, chosen dynamically.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Decorator is far from a museum piece. It underpins middleware, aspect-oriented concerns, and language features across modern stacks.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧵 Middleware pipelines</h4><p>Express, ASP.NET, gRPC interceptors, and servlet filters are all Decorator: each layer wraps the next handler and adds one concern around the call.</p></div>
+        <div class="card"><h4>🎀 Language decorators</h4><p>Python and TypeScript decorators and Java annotations with proxies apply the same idea, wrapping a function or class with added behavior at definition time.</p></div>
+        <div class="card"><h4>🧷 Functional wrapping</h4><p>Higher-order functions that take a function and return a wrapped one, like memoize or retry, are Decorator expressed without classes.</p></div>
+        <div class="card"><h4>🔭 Observability</h4><p>Tracing and metrics libraries wrap clients and repositories in same-interface decorators so instrumentation stays out of business logic.</p></div>
+        <div class="card"><h4>🛡️ Resilience layers</h4><p>Retry, circuit breaker, rate limit, and cache decorators stack around a service call, each toggled independently per dependency.</p></div>
+        <div class="card"><h4>🧪 Test doubles</h4><p>Spies and recording wrappers decorate a real object to observe calls while still delegating, keeping tests close to production behavior.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Decorator is how you add optional, stackable behavior to one object at runtime without rewriting it or exploding your class hierarchy. Whenever concerns need to combine freely, wrapping beats subclassing.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Decorator sits among the structural and behavioral patterns it is easy to confuse. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>Same-interface objects, but arranged as a tree instead of a chain.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../proxy/"><span class="ico">🛂</span><h4>Proxy</h4><p>Same interface too, but controls access rather than adding behavior.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../adapter/"><span class="ico">🔌</span><h4>Adapter</h4><p>Wraps an object to change its interface, not to extend it.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎯</span><h4>Strategy</h4><p>Swaps one algorithm instead of stacking several add-ons.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Decorator · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

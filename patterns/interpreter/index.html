@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interpreter Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Interpreter design pattern: representing a small grammar as a class hierarchy, building an abstract syntax tree, terminal vs non-terminal expressions, evaluating boolean rules and arithmetic, and when to reach for a real parser instead." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Behavioral Pattern</span>
+      <h1>The Interpreter pattern - turning a tiny language into objects</h1>
+      <p class="lede">Some problems keep re-appearing in a fixed, structured form: filter rules, formulas, search queries, feature flags. The Interpreter pattern says: give that recurring form a <strong>grammar</strong>, model each grammar rule as a <strong>class</strong>, and <strong>evaluate</strong> a sentence by walking the tree of those objects. Every node knows how to interpret itself, so the language becomes a small, composable object graph.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Grammar</span>
+        <span class="pill">Abstract syntax tree</span>
+        <span class="pill">Terminal vs non-terminal</span>
+        <span class="pill">Recursive evaluation</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Interpreter pattern?</h2>
+      <p class="muted"><strong>Interpreter</strong> is a behavioral pattern that, given a language with a simple grammar, defines a representation for that grammar plus an interpreter that uses the representation to evaluate sentences in the language. Each rule of the grammar becomes a class, sentences become trees of those class instances (an <em>abstract syntax tree</em>), and a shared <code>interpret(context)</code> method evaluates the tree recursively.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📐</span> A grammar</h4>
+          <p>A small, stable set of production rules, for example "an expression is a number, or two expressions joined by + or *". Interpreter fits when this grammar changes rarely.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌳</span> A syntax tree</h4>
+          <p>A concrete sentence like <code>3 + 4 * 2</code> becomes a tree of expression objects. The tree shape encodes precedence and structure, not the raw text.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">▶️</span> An interpreter</h4>
+          <p>One polymorphic <code>interpret(context)</code> call on the root walks the whole tree, each node combining the results of its children into a value.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Example (arithmetic)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>AbstractExpression</strong></td><td>Declares the shared <code>interpret(context)</code> contract</td><td><code>Expression</code> interface</td></tr>
+            <tr><td><strong>TerminalExpression</strong></td><td>A leaf, interprets itself with no sub-expressions</td><td><code>Number</code>, <code>Variable</code></td></tr>
+            <tr><td><strong>NonterminalExpression</strong></td><td>A rule composed of other expressions, recurses into them</td><td><code>Add</code>, <code>Multiply</code></td></tr>
+            <tr><td><strong>Context</strong></td><td>Holds global state the interpreter reads or writes</td><td>Variable bindings <code>{x: 5}</code></td></tr>
+            <tr><td><strong>Client</strong></td><td>Builds the tree (often via a parser) and starts evaluation</td><td>Parser plus <code>root.interpret(ctx)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> Interpreter is the Composite pattern with behavior attached. The tree structure is a Composite of expressions, and the added twist is that every node knows how to <em>evaluate</em> itself against a context. Build the tree once, interpret it as often as you like.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Interpreter pattern exists</h2>
+      <p class="muted">When a recurring problem is really a little language, hardcoding an <code>if/else</code> jungle to evaluate it becomes unmaintainable. Interpreter turns that language into first-class objects you can compose, extend, and reason about.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Grammar maps to classes</h4><p>Each production rule becomes one class. The structure of the code mirrors the structure of the language, so the grammar is documented by the type hierarchy itself.</p></div>
+        <div class="card"><h4>➕ Easy to extend rules</h4><p>Adding a new operator or rule is usually adding one new expression class. Existing nodes are untouched because evaluation is polymorphic, not a giant switch.</p></div>
+        <div class="card"><h4>🔁 Evaluate many times cheaply</h4><p>Parse a rule once into a tree, then interpret it against thousands of different contexts. The expensive parsing cost is paid once, not per evaluation.</p></div>
+        <div class="card"><h4>🔓 Users express logic as data</h4><p>Non-programmers can write rules like <code>age &gt; 18 AND country = 'US'</code> and your app turns them into safe, sandboxed trees instead of executing arbitrary code.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Interpreter explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is like <strong>diagramming a sentence</strong> in grammar class. "The cat sat" splits into subject and predicate, which split further. To find the meaning you walk the diagram, combining the small parts into the whole.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Think of a <strong>calculator's expression tree</strong>. <code>3 + 4 * 2</code> parses into a tree where <code>*</code> sits below <code>+</code>. Calling <code>eval()</code> on the root recurses down and bubbles <code>11</code> back up.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>It is a <strong>rules engine</strong>. Business writes eligibility rules in a small DSL, the engine compiles each into a tree of conditions, then runs that tree against every incoming record without a code deploy.</p></div>
+        <div class="card"><h4><span class="ico">🎼</span> Everyday version</h4><p>Reading <strong>sheet music</strong>. Each symbol is a terminal, phrases group symbols, and a piece is a tree of phrases. A musician "interprets" the whole score by processing each part in order.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">There are two moves: define a <strong>class hierarchy</strong> where each grammar rule is an expression, then <strong>evaluate</strong> by calling one polymorphic method on the root of the tree. Terminals stop the recursion, non-terminals drive it.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🌿</span> Terminal expressions</h4>
+          <p>Leaves of the tree with no children: literals like <code>Number(7)</code> or lookups like <code>Variable("x")</code>. They interpret themselves directly, reading from the context if needed.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌲</span> Non-terminal expressions</h4>
+          <p>Rules built from other expressions: <code>Add(left, right)</code>, <code>And(a, b)</code>. They interpret their children first, then combine the results. This recursion is the whole engine.</p>
+        </div>
+      </div>
+
+      <h3>The class hierarchy at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - one interface, terminal leaves, non-terminal composites</div>
+        <pre class="mermaid">
+classDiagram
+    class Expression {
+        <<interface>>
+        +interpret(ctx) int
+    }
+    class NumberExpr {
+        +int value
+        +interpret(ctx) int
+    }
+    class VariableExpr {
+        +String name
+        +interpret(ctx) int
+    }
+    class AddExpr {
+        +Expression left
+        +Expression right
+        +interpret(ctx) int
+    }
+    class MultiplyExpr {
+        +Expression left
+        +Expression right
+        +interpret(ctx) int
+    }
+    Expression <|.. NumberExpr
+    Expression <|.. VariableExpr
+    Expression <|.. AddExpr
+    Expression <|.. MultiplyExpr
+    AddExpr o-- Expression
+    MultiplyExpr o-- Expression
+        </pre>
+      </div>
+
+      <h3>A working arithmetic interpreter in Java</h3>
+      <pre><code>import java.util.Map;
+
+// AbstractExpression: the shared contract
+interface Expression {
+    int interpret(Map&lt;String, Integer&gt; context);
+}
+
+// TerminalExpression: a literal number, a leaf
+class NumberExpr implements Expression {
+    private final int value;
+    NumberExpr(int value) { this.value = value; }
+    public int interpret(Map&lt;String, Integer&gt; ctx) { return value; }
+}
+
+// TerminalExpression: a variable looked up in the context
+class VariableExpr implements Expression {
+    private final String name;
+    VariableExpr(String name) { this.name = name; }
+    public int interpret(Map&lt;String, Integer&gt; ctx) {
+        Integer v = ctx.get(name);
+        if (v == null) throw new IllegalStateException("Unbound: " + name);
+        return v;
+    }
+}
+
+// NonterminalExpression: recurses into its children
+class AddExpr implements Expression {
+    private final Expression left, right;
+    AddExpr(Expression left, Expression right) { this.left = left; this.right = right; }
+    public int interpret(Map&lt;String, Integer&gt; ctx) {
+        return left.interpret(ctx) + right.interpret(ctx);
+    }
+}
+
+class MultiplyExpr implements Expression {
+    private final Expression left, right;
+    MultiplyExpr(Expression left, Expression right) { this.left = left; this.right = right; }
+    public int interpret(Map&lt;String, Integer&gt; ctx) {
+        return left.interpret(ctx) * right.interpret(ctx);
+    }
+}
+
+// Client: build the AST for  x + 4 * 2  and evaluate with x = 3
+class Demo {
+    public static void main(String[] args) {
+        Expression ast = new AddExpr(
+            new VariableExpr("x"),
+            new MultiplyExpr(new NumberExpr(4), new NumberExpr(2))
+        );
+        System.out.println(ast.interpret(Map.of("x", 3))); // prints 11
+    }
+}</code></pre>
+      <p class="muted">Notice the tree already encodes precedence: <code>MultiplyExpr</code> is nested <em>inside</em> <code>AddExpr</code>, so it evaluates first. The pattern separates the concern of <em>structure</em> (building the tree, usually a parser's job) from <em>meaning</em> (each node's <code>interpret</code> method).</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: evaluating an arithmetic tree, short-circuiting a boolean rule, and reusing one parsed tree across many contexts.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Recursive evaluation of x + 4 * 2 with x = 3</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cl as 👤 Client
+    participant Add as ➕ AddExpr
+    participant Var as 🔤 VariableExpr x
+    participant Mul as ✖️ MultiplyExpr
+    participant N4 as 4️⃣ NumberExpr 4
+    participant N2 as 2️⃣ NumberExpr 2
+
+    Cl->>Add: interpret(ctx)
+    Add->>Var: interpret(ctx)
+    Var-->>Add: 3
+    Add->>Mul: interpret(ctx)
+    Mul->>N4: interpret(ctx)
+    N4-->>Mul: 4
+    Mul->>N2: interpret(ctx)
+    N2-->>Mul: 2
+    Mul-->>Add: 8
+    Add-->>Cl: 11
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Boolean rule age &gt; 18 AND country = US with short circuit</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cl as 👤 Rules engine
+    participant And as 🔗 AndExpr
+    participant Gt as 📊 GreaterThan
+    participant Eq as 🟰 Equals
+
+    Cl->>And: interpret(record)
+    And->>Gt: interpret(record)
+    Gt-->>And: true
+    alt left is true, evaluate right
+        And->>Eq: interpret(record)
+        Eq-->>And: false
+        And-->>Cl: false
+    else left is false, skip right
+        And-->>Cl: false (short circuit)
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Parse once, interpret many times</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cl as 👤 Client
+    participant P as 🧰 Parser
+    participant AST as 🌳 Expression tree
+    participant Ctx as 🗂️ Context store
+
+    Cl->>P: parse("price * qty * 1.1")
+    P-->>Cl: root expression
+    loop for each order row
+        Cl->>Ctx: bind price, qty
+        Cl->>AST: interpret(ctx)
+        AST-->>Cl: computed total
+    end
+    Note over Cl,AST: Grammar parsed once, tree reused per row
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a rough grammar on a whiteboard to a running interpreter that evaluates real sentences - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Scope</span><h4>Confirm it is a small language</h4><p>Check the problem really is a stable little grammar - rules, formulas, filters - and not a full programming language. If the grammar is large or volatile, stop and use a parser generator instead.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Grammar</span><h4>Write the production rules</h4><p>Spell out the grammar, for example: expr is number, or variable, or expr + expr, or expr * expr. Each production line will map to one class.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Interface</span><h4>Define AbstractExpression</h4><p>Create the shared contract, a single <code>interpret(context)</code> method every expression will implement. This is the seam that makes the tree polymorphic.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Terminals</span><h4>Build the leaf classes</h4><p>Implement terminal expressions such as <code>Number</code> and <code>Variable</code>. They return a value directly, reading from the context when they need external state.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Non-terminals</span><h4>Build the composite rules</h4><p>Implement non-terminal expressions like <code>Add</code> and <code>Multiply</code> that hold child expressions and combine their interpreted results.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Context</span><h4>Define the context</h4><p>Decide what shared state evaluation needs: variable bindings, the record being tested, or a mutable accumulator. Pass it through every <code>interpret</code> call.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Build tree</span><h4>Construct the AST</h4><p>Assemble expression objects into a tree for a concrete sentence. Do it by hand for tests, or generate it from a parser for real input.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Parse</span><h4>Turn text into the tree</h4><p>Add a small parser that reads user input and emits the AST, respecting precedence. This keeps callers from constructing nodes by hand.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Evaluate</span><h4>Interpret the root</h4><p>Call <code>root.interpret(context)</code>. The recursion walks the tree, terminals return values, non-terminals combine them, and the answer bubbles up.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>Add rules and operations</h4><p>Support a new operator by adding one expression class. If you need many new operations over the same tree, layer a Visitor on top instead of bloating each node.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Harden</span><h4>Validate, cache, and reuse</h4><p>Validate types, guard against unbound variables, cache parsed trees, and reuse them across contexts. The language is now a safe, composable asset.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Interpreter is elegant for tiny languages and a trap for big ones. These are the usual ways it goes wrong.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📈 Grammar that keeps growing</h4><p>Every new rule is a new class. Past a dozen or so rules the hierarchy explodes and becomes unmaintainable. A large or evolving grammar is a signal to switch to a parser generator.</p></div>
+        <div class="card"><h4>🔀 Parsing crammed into nodes</h4><p>Interpreter defines the tree and its evaluation, not how to build it from text. Mixing tokenizing and parsing into the expression classes tangles two very different concerns.</p></div>
+        <div class="card"><h4>🧨 New operation touches every class</h4><p>Adding a second operation like pretty-printing or type-checking forces edits across all node classes. When operations multiply, reach for Visitor rather than fattening each node.</p></div>
+        <div class="card"><h4>🕳️ Deep trees blow the stack</h4><p>Naive recursive interpretation can overflow the call stack on deeply nested input. Guard input depth or evaluate iteratively with an explicit stack.</p></div>
+        <div class="card"><h4>🐌 Reparsing on every call</h4><p>Parsing text to a tree on each evaluation wastes the pattern's biggest win. Parse once, then reuse the AST across many contexts.</p></div>
+        <div class="card"><h4>🎭 Using it as a general language</h4><p>Interpreter is for narrow DSLs, not for building a real programming language. If you need variables, functions, and control flow, you have outgrown the pattern.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Interpreter shines for small, stable grammars evaluated often, and struggles as the language grows. Weigh it against a real parser before committing.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Grammar maps cleanly to classes, easy to add new rules, sentences become reusable trees, logic can be expressed as safe data instead of code.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Class count grows with grammar size, gets unwieldy for complex languages, adding new operations touches every node, recursion can be slow or stack-heavy.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>The grammar is small and stable, sentences recur in a fixed form (filters, formulas, feature flags), and you want to evaluate many inputs against the same rules.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>The grammar is large or evolving, performance is critical, or you need a full language. Reach for ANTLR, a hand-written recursive-descent parser, or a real DSL toolkit.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low to moderate for a handful of rules; rises fast with grammar size. The evaluation logic is simple recursion; the maintenance cost is the class explosion.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Composite (the tree shape), Visitor (add operations without touching nodes), Iterator (traverse the tree), Strategy (swap one node's evaluation).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you can write the whole grammar on a napkin and it will not change much, Interpreter is a joy. The moment it needs precedence tables, error recovery, or dozens of rules, generate a parser and keep Interpreter only for the tiny evaluation core.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing Interpreter in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎯</span><div><h3>1 · Feature-flag and targeting rules</h3><div class="role">Pattern: boolean expression tree over a user record</div></div></div>
+        <p class="muted">A product team lets non-engineers write targeting rules like <code>plan = 'pro' AND (country = 'US' OR beta = true)</code> to roll features out safely.</p>
+        <ul>
+          <li>Each rule is parsed into a tree of <code>And</code>, <code>Or</code>, <code>Equals</code>, and <code>GreaterThan</code> expressions.</li>
+          <li>The context is the current user's attributes, so the same tree evaluates per request.</li>
+          <li>Rules are data in a database, not code, so changes ship without a deploy.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Product managers change targeting themselves, and the engine evaluates millions of records against a small, sandboxed set of expression classes.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧮</span><div><h3>2 · Spreadsheet-style formula engine</h3><div class="role">Pattern: arithmetic AST with cell references</div></div></div>
+        <p class="muted">An analytics tool lets users type formulas such as <code>revenue - cost * 1.2</code> into report fields.</p>
+        <ul>
+          <li>Formulas parse into arithmetic expression trees with number, cell-reference, and operator nodes.</li>
+          <li>Cell references are terminal expressions that read live values from the sheet context.</li>
+          <li>The parsed tree is cached and re-evaluated whenever an input cell changes.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Users get live, recalculating formulas while the engine keeps parsing and evaluation cleanly separated and fast.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔍</span><div><h3>3 · Search and query filters</h3><div class="role">Pattern: DSL compiled to an evaluable tree</div></div></div>
+        <p class="muted">A log platform exposes a query language like <code>level:error AND service:auth NOT env:test</code> for filtering events.</p>
+        <ul>
+          <li>Queries parse into a tree of match, and, or, and not expressions.</li>
+          <li>The same tree either evaluates in memory or translates into an index query.</li>
+          <li>New match kinds like range or regex are added as new expression classes.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Engineers write expressive filters, and the platform interprets each against streaming events with predictable, testable behavior.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">The classic pattern is small, but its shape underpins a surprising amount of modern tooling, from rules engines to compilers.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚙️ Rules and policy engines</h4><p>Feature flags, pricing, fraud, and access policies are all little languages evaluated as trees. Interpreter is the beating heart of most rules engines.</p></div>
+        <div class="card"><h4>🌳 ASTs everywhere</h4><p>Linters, formatters, and codemods all build an abstract syntax tree and walk it. The AST idea Interpreter formalizes is now standard developer infrastructure.</p></div>
+        <div class="card"><h4>🧭 Visitor as the natural partner</h4><p>Real compilers keep the tree from Interpreter but move operations into visitors, so type-checking, optimization, and codegen live outside the nodes.</p></div>
+        <div class="card"><h4>🛡️ Safe user-supplied logic</h4><p>Turning user input into a constrained expression tree, rather than running <code>eval</code>, is a security win. The pattern sandboxes what a rule can do.</p></div>
+        <div class="card"><h4>🔤 Internal DSLs and query builders</h4><p>Fluent query builders and internal DSLs assemble expression trees in code, then interpret or translate them, exactly the Interpreter shape.</p></div>
+        <div class="card"><h4>🚀 Compile, do not just interpret</h4><p>Hot paths increasingly compile the tree to bytecode or native code once, keeping the readable object model but shedding per-node dispatch cost.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Interpreter is best kept small - a tidy way to give a narrow, stable language a class hierarchy and evaluate it. Know its ceiling: when the grammar grows, generate a parser and let Visitor carry the operations, but keep the elegant tree-of-objects core.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Interpreter sits in a web of related patterns. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>The tree structure the syntax tree is built on.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../visitor/"><span class="ico">🧭</span><h4>Visitor</h4><p>Add operations over the tree without editing nodes.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../iterator/"><span class="ico">🔁</span><h4>Iterator</h4><p>Traverse the nodes of the expression tree.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../strategy/"><span class="ico">🎚️</span><h4>Strategy</h4><p>Swap how a single node evaluates itself.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Interpreter pattern · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

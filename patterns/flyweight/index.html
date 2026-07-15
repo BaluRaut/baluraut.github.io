@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flyweight Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Flyweight structural pattern: sharing objects to support very large numbers efficiently, intrinsic vs extrinsic state, the flyweight factory, immutability, sequence diagrams, a 0-100 flow, case studies, and modern relevance." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>How Flyweight makes millions of objects affordable</h1>
+      <p class="lede">Rendering a document with a million characters, or a game with a million particles, blows up memory if each one is a fat object. Flyweight fixes that: it <strong>shares</strong> the parts that repeat (intrinsic state) across all instances and <strong>passes in</strong> the parts that vary (extrinsic state) at call time, so a handful of shared objects can back an almost unlimited number of logical ones.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Intrinsic state</span>
+        <span class="pill">Extrinsic state</span>
+        <span class="pill">Flyweight factory</span>
+        <span class="pill">Immutability</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Flyweight pattern?</h2>
+      <p class="muted"><strong>Flyweight</strong> is a structural pattern that minimizes memory use by sharing as much data as possible between many similar objects. It works by splitting an object's state into two parts: the <em>intrinsic</em> state that is identical across many instances and can be shared, and the <em>extrinsic</em> state that differs per use and is supplied by the caller. A factory hands out shared flyweights so identical intrinsic state is stored exactly once.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Intrinsic state</h4>
+          <p>The context-free, shareable data that repeats across instances (a glyph's font and outline, a tree's mesh and texture). Stored once inside the flyweight and never changed.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📍</span> Extrinsic state</h4>
+          <p>The context-dependent data that varies per instance (a character's screen position, a particle's velocity). Kept outside the flyweight and passed in as arguments.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏭</span> Flyweight factory</h4>
+          <p>A pool that creates and caches flyweights by key. Ask for one that already exists and you get the same shared instance back, so intrinsic state is never duplicated.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Example (text editor)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Flyweight</strong></td><td>Holds intrinsic state and acts on extrinsic state passed in</td><td>A <code>Glyph</code> for the character 'a'</td></tr>
+            <tr><td><strong>Flyweight factory</strong></td><td>Creates and pools flyweights, returning shared instances</td><td><code>GlyphFactory.get('a')</code></td></tr>
+            <tr><td><strong>Intrinsic state</strong></td><td>Shared, immutable data inside the flyweight</td><td>Character code, font, outline</td></tr>
+            <tr><td><strong>Extrinsic state</strong></td><td>Per-use data supplied by the client</td><td>Row, column, color</td></tr>
+            <tr><td><strong>Client / context</strong></td><td>Stores extrinsic state and calls the flyweight</td><td>The document that lays out glyphs</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> Flyweight does not reduce the number of <em>logical</em> objects, it reduces the number of <em>physical</em> ones. A million characters on screen are backed by maybe a hundred shared glyphs plus a cheap array of positions.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Flyweight exists</h2>
+      <p class="muted">When you need very large numbers of objects that are mostly identical, the naive approach stores the same heavy data over and over. Flyweight keeps the RAM footprint flat by storing the shared part once, no matter how many logical objects reference it.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🪶 Slashes memory use</h4><p>Instead of a million fat objects, you hold a few shared flyweights plus tiny per-instance context. Duplicated intrinsic state collapses to a single copy in memory.</p></div>
+        <div class="card"><h4>⚡ Better cache and GC behavior</h4><p>Fewer, smaller allocations mean less pressure on the garbage collector and far better CPU cache locality when iterating over huge collections.</p></div>
+        <div class="card"><h4>♻️ Deduplication by construction</h4><p>The factory guarantees that asking for the same intrinsic key twice yields the exact same object, so equal things are physically shared, not just logically equal.</p></div>
+        <div class="card"><h4>🎯 Makes the impossible feasible</h4><p>Systems that could never hold their objects individually - forest renderers, particle systems, tile maps - become tractable once the repeated bulk is shared.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Flyweight explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of a <strong>rubber stamp</strong>. One carved stamp (the shared intrinsic part) presses the same shape thousands of times; the only thing that changes is <em>where</em> on the page you press it (the extrinsic position). You never carve a new stamp per press.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is like <strong>interned strings or a constant pool</strong>. Every <code>"OK"</code> literal points to one shared object; the variable holding it just carries a reference. Flyweight interns whole objects and feeds them the varying data as parameters.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Picture a <strong>call center script</strong>. One printed script (shared) is read to every customer; the customer's name and account number (per-call context) are filled in on the fly. You do not reprint the script for each caller.</p></div>
+        <div class="card"><h4><span class="ico">♟️</span> Everyday version</h4><p>A <strong>chess set</strong> has one design for a pawn. The board holds eight white pawns not by carving eight unique pawns' worth of design, but by placing the same pawn shape at different squares. The square is the extrinsic state.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Flyweight has two moving parts: a <strong>factory</strong> that pools shared intrinsic objects, and a <strong>client</strong> that keeps the extrinsic state and passes it into shared methods at call time.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔑</span> Identify the split</h4>
+          <p>Separate what repeats (font, outline, texture) from what varies (position, color, velocity). Everything intrinsic goes inside the flyweight and is made immutable; everything extrinsic stays with the client.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗄️</span> Pool and reuse</h4>
+          <p>A factory keyed on the intrinsic state returns a cached flyweight if one exists, or builds and stores a new one. Clients never construct flyweights directly, so sharing is enforced.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Structure - a factory pools shared flyweights, contexts hold extrinsic state</div>
+        <pre class="mermaid">
+classDiagram
+    class GlyphFactory {
+        -pool Map~char, Glyph~
+        +getGlyph(char) Glyph
+    }
+    class Glyph {
+        <<flyweight>>
+        -char intrinsic
+        -font intrinsic
+        +draw(x, y, color)
+    }
+    class Document {
+        -chars CharPosition[]
+        +render()
+    }
+    class CharPosition {
+        +glyph Glyph
+        +x extrinsic
+        +y extrinsic
+        +color extrinsic
+    }
+    GlyphFactory --> Glyph : creates and pools
+    Document --> CharPosition : owns many
+    CharPosition --> Glyph : shares reference
+</pre>
+      </div>
+
+      <h3>A realistic implementation in Java</h3>
+      <pre><code>import java.util.Map;
+import java.util.HashMap;
+
+// Flyweight: stores only intrinsic, shared, immutable state
+final class Glyph {
+    private final char symbol;   // intrinsic
+    private final String font;   // intrinsic (outline lives here too)
+
+    Glyph(char symbol, String font) {
+        this.symbol = symbol;
+        this.font = font;
+    }
+
+    // Extrinsic state (x, y, color) is passed in, never stored
+    void draw(int x, int y, String color) {
+        System.out.printf("'%c' [%s] at (%d,%d) in %s%n",
+                          symbol, font, x, y, color);
+    }
+}
+
+// Factory: pools flyweights so identical intrinsic state is stored once
+final class GlyphFactory {
+    private final Map&lt;String, Glyph&gt; pool = new HashMap&lt;&gt;();
+
+    Glyph getGlyph(char symbol, String font) {
+        String key = symbol + "@" + font;
+        return pool.computeIfAbsent(key, k -&gt; new Glyph(symbol, font));
+    }
+
+    int distinctGlyphs() { return pool.size(); }
+}
+
+// Client holds extrinsic state and reuses shared flyweights
+final class Document {
+    private record Placed(Glyph glyph, int x, int y, String color) {}
+    private final GlyphFactory factory = new GlyphFactory();
+    private final java.util.List&lt;Placed&gt; chars = new java.util.ArrayList&lt;&gt;();
+
+    void type(String text, String font) {
+        int x = 0;
+        for (char c : text.toCharArray()) {
+            Glyph g = factory.getGlyph(c, font); // shared, not new
+            chars.add(new Placed(g, x, 0, "black"));
+            x += 8;
+        }
+    }
+
+    void render() {
+        for (Placed p : chars) p.glyph().draw(p.x(), p.y(), p.color());
+    }
+
+    int distinctGlyphs() { return factory.distinctGlyphs(); }
+}</code></pre>
+      <p class="muted">Typing <code>"mississippi"</code> creates eleven placements but only four distinct <code>Glyph</code> objects (m, i, s, p). The <code>Glyph</code> is <code>final</code> with only <code>final</code> fields, so sharing is safe: no client can mutate the intrinsic state and corrupt it for everyone else.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a factory cache miss that creates a flyweight, a cache hit that shares one, and rendering many contexts against the shared pool.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Cache miss: the factory builds and pools a new flyweight</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Client
+    participant F as 🏭 Factory
+    participant P as 🗄️ Pool
+    participant G as 🧬 Glyph
+
+    C->>F: getGlyph('a', font)
+    F->>P: lookup key "a@font"
+    P-->>F: not found
+    F->>G: new Glyph('a', font)
+    G-->>F: flyweight
+    F->>P: store under key
+    F-->>C: shared Glyph
+    Note over C,G: Intrinsic state stored exactly once
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Cache hit: the same instance is shared, nothing new is built</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Client
+    participant F as 🏭 Factory
+    participant P as 🗄️ Pool
+
+    C->>F: getGlyph('a', font)
+    F->>P: lookup key "a@font"
+    P-->>F: existing Glyph
+    F-->>C: same shared instance
+    Note over C,P: No allocation, memory stays flat
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Render: many contexts feed extrinsic state into shared glyphs</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant D as 📄 Document
+    participant Ctx as 📍 CharPosition
+    participant G as 🧬 Glyph
+    participant S as 🖨️ Screen
+
+    loop for each placed char
+        D->>Ctx: read x, y, color
+        Ctx->>G: draw(x, y, color)
+        G->>S: render outline at position
+        S-->>G: painted
+    end
+    Note over D,S: One glyph serves thousands of positions
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a memory-heavy design to a shared, scalable one - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the scale problem</h4><p>You need thousands or millions of similar objects and profiling shows memory dominated by duplicated data. That is the signal Flyweight is worth it.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Analyze</span><h4>List every field</h4><p>Enumerate the fields of the heavy object. For each, ask: does this repeat across most instances, or does it vary per instance?</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Split</span><h4>Divide intrinsic vs extrinsic</h4><p>Repeating, context-free fields become intrinsic (stay in the flyweight). Varying, context-dependent fields become extrinsic (move out to the client).</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Model</span><h4>Design the flyweight class</h4><p>Create a class holding only intrinsic state. Its methods accept extrinsic state as parameters rather than reading it from fields.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Freeze</span><h4>Make intrinsic state immutable</h4><p>Mark the fields final/readonly and expose no setters. Shared objects must be immutable so one client cannot corrupt them for all the others.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Pool</span><h4>Build the factory</h4><p>Write a factory keyed on the intrinsic state. On request it returns the cached flyweight or creates, stores, and returns a new one.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Gate</span><h4>Route all creation through it</h4><p>Make the flyweight constructor private or package-scoped so clients cannot bypass the pool. Sharing is only guaranteed if the factory is the single door.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Store</span><h4>Hold extrinsic state in the client</h4><p>The client keeps a compact record per logical object: a reference to the shared flyweight plus its own position, color, or other varying data.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Invoke</span><h4>Pass context at call time</h4><p>When acting, the client calls the flyweight method and passes the extrinsic state in, so one shared object behaves differently per context.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Measure</span><h4>Verify the savings</h4><p>Count distinct flyweights versus logical objects and re-profile memory. Confirm the pool size is small and the footprint dropped as expected.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Tune</span><h4>Manage the pool lifecycle</h4><p>Decide when flyweights are evicted or kept for the process lifetime, and whether the factory must be thread-safe under concurrent access.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Flyweight is easy to misapply. These are the traps that turn a memory win into a bug source.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Mutable shared state</h4><p>Putting mutable fields in the flyweight is the cardinal sin. One client changes the "shared" object and silently breaks every other holder. Intrinsic state must be immutable.</p></div>
+        <div class="card"><h4>🎭 Wrong split</h4><p>Marking per-instance data as intrinsic collapses distinct objects into one; marking shared data as extrinsic destroys the savings. Get the intrinsic/extrinsic line right or the pattern fails.</p></div>
+        <div class="card"><h4>🐘 Premature optimization</h4><p>Flyweight adds a factory, an indirection, and a mental tax. If you only have a few hundred objects, the complexity buys nothing. Profile first, then apply.</p></div>
+        <div class="card"><h4>💧 Pool that never shrinks</h4><p>An unbounded factory cache can itself become a memory leak, especially with high-cardinality keys. Bound it or scope it so the pool does not outgrow what it saved.</p></div>
+        <div class="card"><h4>🧵 Ignoring thread safety</h4><p>Two threads hitting the factory on a cache miss can create duplicate flyweights or corrupt the map. Concurrent pools need proper synchronization or a concurrent map.</p></div>
+        <div class="card"><h4>🔁 Extrinsic overhead swamps savings</h4><p>If passing extrinsic state around costs more memory or CPU than it saved, or key computation is expensive, the pattern can be a net loss. Measure both sides.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Flyweight trades a little indirection and design effort for large memory savings. Reach for it only when the numbers justify it.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Dramatically lower memory footprint, less GC pressure, better cache locality, guaranteed deduplication of shared state.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>More complex code, an extra factory and indirection, CPU cost to compute keys and pass extrinsic state, immutability constraints.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You have very large numbers of objects, most of whose state repeats and can be separated into a small set of shared values.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>Object counts are modest, state barely repeats, or intrinsic state must be mutable. The complexity would not pay for itself.</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Moderate. The pattern is simple, but drawing the intrinsic/extrinsic line correctly and keeping shared state immutable takes care.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Singleton (factory is often one), Prototype (cloning vs sharing), Composite (flyweights as shared leaves), Proxy (both indirect access).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> Use Flyweight only when memory is a real constraint and the object's state cleanly splits into a small shared core and a variable context. If either condition fails, a plain object or an object pool is simpler.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three places where Flyweight is the difference between running and running out of memory.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📝</span><div><h3>1 · Text editor glyph rendering</h3><div class="role">Pattern: shared character objects, per-position context</div></div></div>
+        <p class="muted">A document editor must display hundreds of thousands of characters, each needing a font, outline, and metrics.</p>
+        <ul>
+          <li>Each distinct character-and-font pair is a single shared <code>Glyph</code> holding the outline and advance width.</li>
+          <li>The document stores only a lightweight run of positions and styles, referencing shared glyphs.</li>
+          <li>Rendering passes each glyph its row, column, and color as extrinsic state at draw time.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The classic Gang of Four example. A book-length document is backed by a few hundred glyph objects instead of millions, keeping the editor responsive.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎮</span><div><h3>2 · Game particle and foliage systems</h3><div class="role">Pattern: shared mesh and texture, per-instance transform</div></div></div>
+        <p class="muted">A game renders a forest of a million trees or a burst of tens of thousands of particles at 60 frames per second.</p>
+        <ul>
+          <li>The heavy mesh, texture, and material are shared across every tree of the same species.</li>
+          <li>Each instance stores only its position, rotation, scale, and velocity, a few dozen bytes.</li>
+          <li>The renderer instances the shared asset many times, feeding the per-instance transforms to the GPU.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Dense worlds fit in VRAM and stream smoothly, because the megabytes of geometry exist once, not once per object.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">☕</span><div><h3>3 · JVM Integer and String interning</h3><div class="role">Pattern: language-level flyweight caches</div></div></div>
+        <p class="muted">A high-throughput service creates enormous numbers of small boxed values and repeated string literals.</p>
+        <ul>
+          <li>Java caches boxed <code>Integer</code> values from -128 to 127 so <code>valueOf</code> returns shared instances.</li>
+          <li>String literals are interned in a pool, so identical literals across the codebase share one object.</li>
+          <li>Application code gets the memory win for free, without writing any factory itself.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Common small values are allocated once and reused everywhere, cutting allocation churn in hot paths across the entire runtime.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Flyweight predates modern hardware, but its core idea, share the repeated bulk and vary only the context, is more relevant than ever at scale.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕹️ GPU instanced rendering</h4><p>Modern graphics APIs make Flyweight native: one mesh drawn thousands of times with a buffer of per-instance transforms is Flyweight in hardware.</p></div>
+        <div class="card"><h4>🧊 Value types and records</h4><p>Immutable records and value objects make safe, shareable flyweights trivial to declare, since the language enforces the immutability the pattern requires.</p></div>
+        <div class="card"><h4>🌊 Big-data columnar stores</h4><p>Dictionary encoding in columnar formats stores each distinct value once and references it by id, which is Flyweight applied to billions of rows.</p></div>
+        <div class="card"><h4>⚛️ UI virtualization</h4><p>Virtualized lists and immutable component trees reuse shared node descriptions across huge views, keeping only the varying props per item.</p></div>
+        <div class="card"><h4>🔗 String and object interning</h4><p>Runtimes and caches still lean on interning to collapse duplicate values, from JVM strings to symbol tables in interpreters.</p></div>
+        <div class="card"><h4>🧠 Tokenizer and vocab tables</h4><p>ML pipelines share one vocabulary of token objects across every sequence, storing per-sequence data as compact id arrays.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Flyweight is how you make very large numbers of objects affordable: store what repeats once, pass in what varies, and keep the shared part immutable. Whenever scale meets duplication, the pattern earns its keep.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Flyweight sits alongside other structural and creational patterns. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../singleton/"><span class="ico">1️⃣</span><h4>Singleton</h4><p>The flyweight factory is often a single shared instance.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../proxy/"><span class="ico">🛡️</span><h4>Proxy</h4><p>Another structural pattern that indirects access to an object.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite</h4><p>Shared flyweights can serve as the leaf nodes of a tree.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../prototype/"><span class="ico">🧬</span><h4>Prototype</h4><p>Cloning objects versus sharing them, the creational counterpoint.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Flyweight · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

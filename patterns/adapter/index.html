@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adapter Pattern Explained - What, How, Why &amp; Examples</title>
+  <meta name="description" content="A deep, visual guide to the Adapter design pattern: what it is, how it works, object vs class adapters, the two-way adapter, wrapping legacy code, sequence diagrams, a 0-100 flow, case studies, and how it differs from Facade, Decorator, and Proxy." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#metrics">Trade-offs</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structural Pattern</span>
+      <h1>The Adapter pattern - making incompatible interfaces work together</h1>
+      <p class="lede">Your client expects one interface, but the class you have speaks another. The Adapter sits in between and <strong>translates</strong>: it wraps the existing object and exposes the interface the client wants, converting calls and data on the way through. It is how you plug legacy code, third-party libraries, and mismatched APIs into a codebase without rewriting either side.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Target interface</span>
+        <span class="pill">Adaptee</span>
+        <span class="pill">Composition vs inheritance</span>
+        <span class="pill">Interface translation</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Adapter pattern?</h2>
+      <p class="muted"><strong>Adapter</strong> is a structural pattern that converts the interface of a class into another interface that a client expects. The client codes against a <em>Target</em> interface; the <em>Adaptee</em> is the existing class with a useful implementation but the wrong signature. The <em>Adapter</em> implements the Target and holds or extends the Adaptee, forwarding each call and reshaping arguments and results so the two sides fit.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎯</span> Target</h4>
+          <p>The interface the client already depends on. The client never changes; it only ever sees this contract.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Adaptee</h4>
+          <p>The existing or third-party class with the capability you want, but the wrong method names, shapes, or units.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔄</span> Adapter</h4>
+          <p>Implements Target, delegates to Adaptee, and translates between them. The only class that knows both worlds.</p>
+        </div>
+      </div>
+
+      <h3>The moving parts</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Role</th><th>What it does</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Client</strong></td><td>Calls the Target interface, unaware an adapter exists</td><td>Report service calling <code>PaymentGateway</code></td></tr>
+            <tr><td><strong>Target</strong></td><td>Defines the domain interface the client wants</td><td><code>interface PaymentGateway</code></td></tr>
+            <tr><td><strong>Adaptee</strong></td><td>Provides the real behavior with an incompatible API</td><td>Vendor SDK <code>StripeClient</code></td></tr>
+            <tr><td><strong>Adapter</strong></td><td>Bridges the two by translating calls and data</td><td><code>StripePaymentAdapter</code></td></tr>
+            <tr><td><strong>Delegation</strong></td><td>Object adapter holds the Adaptee (composition)</td><td>A field of type <code>StripeClient</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> an Adapter changes an interface without changing behavior. It is a translator, not a new feature. If you are adding responsibilities, you want Decorator; if you are simplifying a subsystem, you want Facade.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the Adapter exists</h2>
+      <p class="muted">Real systems are assembled from parts written by different people at different times. You rarely control both sides of an integration, and rewriting a stable library or a vendor SDK to match your interface is expensive and risky. Adapter lets both sides stay as they are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Reuse without rewriting</h4><p>You keep a proven Adaptee exactly as it is and reuse it through a clean Target, instead of editing code you do not own or trust.</p></div>
+        <div class="card"><h4>🔗 Decouple from vendors</h4><p>The client depends on your Target, not on a third-party API. Swap Stripe for Adyen by writing a new adapter; the client never notices.</p></div>
+        <div class="card"><h4>🧪 Testable seams</h4><p>Because the client talks to an interface, you can substitute a fake adapter in tests and drive edge cases without hitting the real system.</p></div>
+        <div class="card"><h4>🕰️ Tame legacy code</h4><p>Wrap an old module behind a modern interface so new code stays clean while the legacy internals are migrated or retired on their own schedule.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Adapter explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is a <strong>translator in a conversation</strong>. You speak English, the other person speaks Japanese; the translator does not change what either of you means, it just converts the words so you understand each other.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a <strong>wrapper class that implements your interface</strong> and forwards calls to a library with a different signature, mapping its return types and errors into the shapes your code already handles.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>currency exchange desk</strong>. Your wallet holds euros, the shop wants yen; the desk converts one to the other at a known rate so the purchase goes through without either side changing.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>A <strong>travel power adapter</strong>. The wall socket and your laptop plug are both fine; the adapter just reshapes the connection so a device built for one standard works with the other.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">There are two classic forms. An <strong>object adapter</strong> holds the Adaptee as a field and delegates to it (composition). A <strong>class adapter</strong> inherits from both the Target and the Adaptee (inheritance). Object adapters are the default in languages without multiple inheritance; class adapters can override Adaptee behavior but couple you to its class.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Object adapter (composition)</h4>
+          <p>The adapter <em>has-a</em> Adaptee. It can wrap any subclass of the Adaptee and adapt multiple adaptees at once. Flexible and the recommended default.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧬</span> Class adapter (inheritance)</h4>
+          <p>The adapter <em>is-a</em> Adaptee and <em>is-a</em> Target. No delegation object, and it can override protected members, but it binds to one concrete Adaptee and needs multiple inheritance.</p>
+        </div>
+      </div>
+
+      <h3>The structure at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Class diagram - client depends on Target; the object adapter delegates to the Adaptee</div>
+        <pre class="mermaid">
+classDiagram
+    class Client
+    class Target {
+      <<interface>>
+      +charge(amount) Receipt
+    }
+    class Adapter {
+      -adaptee Adaptee
+      +charge(amount) Receipt
+    }
+    class Adaptee {
+      +createCharge(cents, currency) StripeResult
+    }
+    Client --> Target : depends on
+    Target <|.. Adapter : implements
+    Adapter o--> Adaptee : delegates to
+        </pre>
+      </div>
+
+      <h3>An object adapter in Java</h3>
+      <pre><code>// Target: the interface our application already speaks
+public interface PaymentGateway {
+    Receipt charge(Money amount, String customerId);
+}
+
+// Adaptee: a third-party SDK we do not control
+public final class StripeClient {
+    public StripeResult createCharge(long cents, String currency, String customer) {
+        // ... real HTTP call to Stripe ...
+        return new StripeResult("ch_123", "succeeded");
+    }
+}
+
+// Adapter: implements Target, holds the Adaptee (composition), translates both ways
+public final class StripePaymentAdapter implements PaymentGateway {
+    private final StripeClient stripe; // has-a Adaptee
+
+    public StripePaymentAdapter(StripeClient stripe) {
+        this.stripe = stripe;
+    }
+
+    @Override
+    public Receipt charge(Money amount, String customerId) {
+        long cents = amount.toMinorUnits();               // reshape input
+        StripeResult r = stripe.createCharge(cents, amount.currencyCode(), customerId);
+        if (!"succeeded".equals(r.status())) {            // translate errors
+            throw new PaymentFailedException(r.id());
+        }
+        return new Receipt(r.id(), amount);               // reshape output
+    }
+}
+
+// Client stays blissfully unaware of Stripe
+PaymentGateway gateway = new StripePaymentAdapter(new StripeClient());
+Receipt receipt = gateway.charge(Money.usd(49.99), "cus_42");</code></pre>
+      <p class="muted">The client only ever sees <code>PaymentGateway</code>. All the mismatch - dollars to cents, the vendor result shape, the vendor error convention - is absorbed inside the adapter, so swapping providers means writing a new adapter, not touching the client.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a basic object-adapter call, error translation from the Adaptee, and a two-way adapter serving both interfaces.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Object adapter: client calls Target, adapter delegates to Adaptee</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Client
+    participant A as 🔄 Adapter
+    participant S as 🔌 Adaptee (SDK)
+
+    C->>A: charge(Money 49.99, customer)
+    A->>A: convert to minor units (cents)
+    A->>S: createCharge(4999, USD, customer)
+    S-->>A: StripeResult(id, succeeded)
+    A->>A: map result to Receipt
+    A-->>C: Receipt(id, amount)
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Error translation: vendor status becomes a domain exception</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Client
+    participant A as 🔄 Adapter
+    participant S as 🔌 Adaptee (SDK)
+
+    C->>A: charge(Money, customer)
+    A->>S: createCharge(cents, currency, customer)
+    S-->>A: StripeResult(id, declined)
+    alt status not succeeded
+        A->>A: wrap as PaymentFailedException
+        A-->>C: throw PaymentFailedException
+    else status succeeded
+        A-->>C: Receipt(id, amount)
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Two-way adapter: one object satisfies both interfaces</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant NewC as 🆕 New client
+    participant TW as 🔁 Two-way adapter
+    participant OldC as 🕰️ Legacy client
+
+    Note over TW: implements NewApi and LegacyApi
+    NewC->>TW: process(request)
+    TW->>TW: translate to legacy shape
+    TW-->>NewC: modern response
+    OldC->>TW: legacyProcess(record)
+    TW->>TW: translate to modern shape
+    TW-->>OldC: legacy response
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an interface mismatch to a clean, swappable integration - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the mismatch</h4><p>You have a class that does what you need but its interface does not match what your client code expects to call.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Define</span><h4>Write the Target interface</h4><p>Describe the interface your client wants in domain terms - the methods, types, and errors that feel natural to your code.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Identify</span><h4>Pin down the Adaptee</h4><p>Name the existing or third-party class whose behavior you will reuse, and list exactly how its signature differs from the Target.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Choose</span><h4>Object or class adapter</h4><p>Prefer composition: hold the Adaptee as a field. Reach for inheritance only if you must override protected Adaptee behavior.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Make the adapter implement Target</h4><p>Create the adapter class, declare it as implementing the Target, and give it a reference to the Adaptee.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Map input</span><h4>Translate arguments</h4><p>Inside each method, convert the client's arguments into the shape, units, and order the Adaptee requires.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Delegate</span><h4>Call the Adaptee</h4><p>Forward the translated call to the Adaptee and capture its result. This is the one place the two worlds meet.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Map output</span><h4>Translate results and errors</h4><p>Reshape the Adaptee's return value into the Target type and convert its exceptions into your domain errors.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Wire</span><h4>Inject the adapter</h4><p>Construct the adapter with a real Adaptee and hand it to the client as the Target, ideally through dependency injection.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Cover the translation</h4><p>Unit-test the mapping in both directions and the error paths. Substitute a fake Target when testing the client itself.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Swap</span><h4>Reap the payoff</h4><p>When a new vendor or version appears, write another adapter behind the same Target. The client code never changes.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Adapters are simple, which is exactly why they get abused. Watch for these.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 Logic creep</h4><p>An adapter should translate, not decide. When business rules, caching, or retries pile up inside it, you have hidden a service behind an adapter and lost the seam.</p></div>
+        <div class="card"><h4>🪆 Adapter stacking</h4><p>Adapting an adapter that adapts an adapter usually signals the wrong Target. Redesign the interface instead of chaining translators.</p></div>
+        <div class="card"><h4>💧 Leaky abstraction</h4><p>If the Adaptee's exceptions, types, or quirks leak through the Target, the client is still coupled to the vendor and the adapter bought you nothing.</p></div>
+        <div class="card"><h4>🎭 Confusing it with Facade</h4><p>Building a whole simplified subsystem entry point and calling it an adapter blurs intent. Adapter matches an existing interface; Facade invents a simpler one.</p></div>
+        <div class="card"><h4>🧬 Overusing class adapters</h4><p>Inheriting from the Adaptee binds you to one concrete class and its internals. Composition adapts more targets with far less coupling.</p></div>
+        <div class="card"><h4>🔕 Swallowing errors</h4><p>Catching the Adaptee's failures and returning a bland default hides real problems. Translate errors faithfully into meaningful domain exceptions.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS / TRADE-OFFS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">Trade-offs</div>
+      <h2>Trade-offs &amp; when to use</h2>
+      <p class="muted">Adapter is cheap and low-risk, but it is a translation layer, not a cure for a bad interface. Weigh it honestly.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pros</strong></td><td>Reuses existing code as-is, decouples the client from vendors, creates a testable seam, and isolates change to one small class.</td></tr>
+            <tr><td><strong>Cons</strong></td><td>Adds an indirection layer, can leak the Adaptee's quirks if the Target is poorly chosen, and tempts logic creep.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>You need to fit an existing or third-party class to an interface you cannot or do not want to change on either side.</td></tr>
+            <tr><td><strong>Avoid when</strong></td><td>You control both interfaces and can just align them, or the real need is new behavior (Decorator) or a simpler entry point (Facade).</td></tr>
+            <tr><td><strong>Complexity</strong></td><td>Low. Usually one small class per integration, with the object (composition) form as the safe default over class inheritance.</td></tr>
+            <tr><td><strong>Related</strong></td><td>Bridge separates abstraction from implementation up front; Decorator adds behavior; Facade simplifies a subsystem; Proxy controls access.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Adapter when the shapes are right but the signatures are wrong. If you find yourself adding responsibilities rather than translating them, you have outgrown the pattern.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative uses showing the Adapter in production-style code.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment provider abstraction</h3><div class="role">Pattern: vendor-agnostic Target with per-provider adapters</div></div></div>
+        <p class="muted">A checkout service must support several payment vendors without rewriting order logic for each one.</p>
+        <ul>
+          <li>The domain defines one <code>PaymentGateway</code> Target with a clean <code>charge</code> and <code>refund</code>.</li>
+          <li>Each vendor SDK gets its own adapter that maps money, currency, and result types.</li>
+          <li>Adding a new provider is a new adapter class registered in the factory, nothing else.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> the order flow depends only on the Target, so vendors can be added, swapped, or A/B tested without touching business code.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🕰️</span><div><h3>2 · Wrapping a legacy module</h3><div class="role">Pattern: modern interface over old internals</div></div></div>
+        <p class="muted">A decade-old reporting library works fine but exposes an awkward, stateful API the new codebase should not depend on.</p>
+        <ul>
+          <li>A modern <code>ReportSource</code> interface describes what new code actually needs.</li>
+          <li>An adapter wraps the legacy library, hiding its setup calls and global state behind clean methods.</li>
+          <li>The legacy code is migrated behind the adapter over time with zero client changes.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> new features build against a clean interface while the old library is refactored or retired quietly behind the seam.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📚</span><div><h3>3 · The java.util adapter (Arrays.asList)</h3><div class="role">Pattern: adapting arrays to the Collections interface</div></div></div>
+        <p class="muted">Java arrays and the Collections framework are different worlds; code written for <code>List</code> cannot take a raw array.</p>
+        <ul>
+          <li><code>Arrays.asList(arr)</code> returns a <code>List</code> view that adapts the array to the Collections API.</li>
+          <li>Iterators, streams, and any List-consuming method now work over the underlying array.</li>
+          <li>The adapter forwards reads to the array without copying the elements.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> a plain array flows through the entire Collections ecosystem, a standard-library Adapter used by millions of programs.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE / RELEVANCE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Adapter is one of the most quietly ubiquitous patterns. As systems get more distributed and more dependent on external services, translation layers only get more common.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 Hexagonal architecture</h4><p>Ports and adapters is Adapter promoted to an architectural style: the domain defines ports, and adapters connect it to databases, queues, and APIs.</p></div>
+        <div class="card"><h4>🌐 Anti-corruption layers</h4><p>In domain-driven design, an adapter is the anti-corruption layer that keeps another system's model from leaking into your bounded context.</p></div>
+        <div class="card"><h4>🤖 LLM tool and API bridging</h4><p>Agent frameworks wrap heterogeneous APIs behind a uniform tool interface, an adapter per integration so the model calls one consistent shape.</p></div>
+        <div class="card"><h4>🧱 Framework binding</h4><p>ORMs, loggers, and HTTP clients ship adapters so one interface (SLF4J, JPA) fronts many concrete backends chosen at deploy time.</p></div>
+        <div class="card"><h4>🧪 Test doubles</h4><p>Because clients depend on the Target, fake adapters make integration seams trivial to stub, driving fast and deterministic tests.</p></div>
+        <div class="card"><h4>🔁 Incremental migration</h4><p>Strangler-fig migrations lean on adapters to route between old and new implementations while a system is replaced piece by piece.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Adapter is the joint that lets independently built parts fit together. Any time you integrate code you did not write, or shield your core from a shape you do not control, you are reaching for it, often without naming it.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Adapter is easy to confuse with its structural neighbors. These sit right next to it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../bridge/"><span class="ico">🌉</span><h4>Bridge</h4><p>Separates abstraction from implementation by design, not after the fact.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>Keeps the interface but adds behavior, where Adapter changes the interface.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../facade/"><span class="ico">🏛️</span><h4>Facade</h4><p>Invents a simpler front for a subsystem instead of matching one interface.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../proxy/"><span class="ico">🛡️</span><h4>Proxy</h4><p>Same interface as the subject, but controls access rather than translating it.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Adapter pattern · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>
