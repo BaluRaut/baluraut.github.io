@@ -188,6 +188,10 @@ td b{color:var(--cl)}
 @media(max-width:640px){.arrow{transform:rotate(90deg); padding:6px 0; justify-content:center; width:100%}}
 
 td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
+td.num{text-align:right; font-variant-numeric:tabular-nums; font-family:ui-monospace,Menlo,monospace; color:var(--text)}
+thead th.num{text-align:right}
+.leg{display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-size:.8rem; color:var(--dim)}
+.leg b{color:var(--muted)}
 
 /* who uses it */
 .who{display:grid; grid-template-columns:1fr 1fr; gap:16px}
@@ -447,6 +451,45 @@ td.use{color:var(--green)!important} td.dont{color:var(--na-title)!important}
       <div class="na"><b>A fixed pipeline</b><p>No decisions to make → a normal script beats an agent every time.</p></div>
       <div class="na"><b>High volume, latency-sensitive</b><p>Agents are slower and pricier per run — wrong for thousands of requests a minute.</p></div>
       <div class="na"><b>Fully deterministic output</b><p>If you need the same result every time, don't hand it to a reasoning loop.</p></div>
+    </div>
+  </section>
+
+  <!-- COST -->
+  <section class="section">
+    <h3>What it costs</h3>
+    <div class="panel" style="margin-bottom:16px">
+      <p style="margin:0">The Agent SDK bills exactly like the Claude API — you pay per token for the model you
+      choose. An <b>agent costs more than a single call</b> because the loop re-sends the growing context and
+      generates tool calls each turn. Prices below are <b>US dollars per million tokens</b>.</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Model</th><th>Context</th>
+            <th class="num">Input</th><th class="num">Output</th>
+            <th class="num">Cache read</th><th class="num">Cache write</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Claude Fable&nbsp;5 <span style="color:var(--dim)">most capable</span></td><td>1M</td><td class="num">$10.00</td><td class="num">$50.00</td><td class="num">~$1.00</td><td class="num">$12.50</td></tr>
+          <tr><td>Claude Opus&nbsp;4.8 <span style="color:var(--dim)">default</span></td><td>1M</td><td class="num">$5.00</td><td class="num">$25.00</td><td class="num">~$0.50</td><td class="num">$6.25</td></tr>
+          <tr><td>Claude Sonnet&nbsp;5 <span style="color:var(--dim)">balanced</span></td><td>1M</td><td class="num">$3.00</td><td class="num">$15.00</td><td class="num">~$0.30</td><td class="num">$3.75</td></tr>
+          <tr><td>Claude Haiku&nbsp;4.5 <span style="color:var(--dim)">fast &amp; cheap</span></td><td>200K</td><td class="num">$1.00</td><td class="num">$5.00</td><td class="num">~$0.10</td><td class="num">$1.25</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="leg">
+      <span><b>Cache read</b> ≈ 0.1× input — repeat context is ~90% cheaper</span>
+      <span><b>Cache write</b> = 1.25× input (5-min TTL; 2× for 1-hour)</span>
+      <span><b>Batch API</b> = 50% off, async</span>
+      <span>Sonnet 5 intro: <b>$2 / $10</b> through 2026-08-31</span>
+    </div>
+    <div class="panel" style="margin-top:16px; border-left:3px solid var(--amber)">
+      <p style="margin:0"><b>Feel the scale.</b> In this POC, one trivial <i>"create a file and read it back"</i>
+      task on Opus 4.8 cost about <b>$0.17</b> — fine for a PR bot that fires occasionally, wrong for
+      10,000 requests a minute. Levers to cut it: <b>prompt caching</b> for shared context, a
+      <b>cheaper model</b> (Haiku/Sonnet) for simple steps, and the <b>Batch API</b> for non-urgent work.</p>
     </div>
   </section>
 
