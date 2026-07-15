@@ -295,7 +295,8 @@ footer a{color:var(--muted)}
 </div>
 
 <div class="section">
-  <h3>Worked case study</h3>
+  <h3>Worked case studies</h3>
+  <div class="grid">
   <a class="card dr" href="https://baluraut.github.io/dr-case-study/">
     <div class="accent"></div>
     <div class="card-in">
@@ -306,6 +307,63 @@ footer a{color:var(--muted)}
       <span class="open">Open case study <span class="arw">→</span></span>
     </div>
   </a>
+
+  <a class="card ds" href="https://baluraut.github.io/scaling-case-study/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Case Study</span><span class="count">Distributed Systems</span></div>
+      <h2>Scaling Chirp to 1,000,000 req/s</h2>
+      <p class="desc">A social feed from one box to a million requests a second — the bottleneck moving to the stateful database, and the ladder (stateless scale-out, read replicas, cache, sharding, queues) that climbs it.</p>
+      <div class="chips"><span class="chip">Stateless vs stateful</span><span class="chip">Read replicas</span><span class="chip">Caching</span><span class="chip">Sharding</span><span class="chip">Queues &amp; fan-out</span></div>
+      <span class="open">Open case study <span class="arw">&#8594;</span></span>
+    </div>
+  </a>
+
+  <a class="card sec" href="https://baluraut.github.io/security-case-study/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Case Study</span><span class="count">Security · IR</span></div>
+      <h2>Anatomy of a Breach — 400k records via one IDOR</h2>
+      <p class="desc">A healthtech leaks 400,000 patient records through one broken-access-control bug. How the attack worked, the incident-response runbook, and the fixes — with an attack sequence diagram and the access model.</p>
+      <div class="chips"><span class="chip">IDOR / A01</span><span class="chip">Incident response</span><span class="chip">Access control</span><span class="chip">Detection</span><span class="chip">Sequence + ER diagrams</span></div>
+      <span class="open">Open case study <span class="arw">&#8594;</span></span>
+    </div>
+  </a>
+
+  <a class="card rb" href="https://baluraut.github.io/nplus1-case-study/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Case Study</span><span class="count">Rails + Postgres</span></div>
+      <h2>The N+1 that took down Black Friday</h2>
+      <p class="desc">A checkout page melts under 8× load because one hidden N+1 turns each request into 51 queries. Finding it, reading the query plan, the eager-load fix, and a capacity plan so it can't recur.</p>
+      <div class="chips"><span class="chip">N+1</span><span class="chip">EXPLAIN</span><span class="chip">Eager loading</span><span class="chip">Capacity plan</span><span class="chip">Sequence + ER diagrams</span></div>
+      <span class="open">Open case study <span class="arw">&#8594;</span></span>
+    </div>
+  </a>
+
+  <a class="card ai" href="https://baluraut.github.io/ai-agent-case-study/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Case Study</span><span class="count">Agentic AI + MCP</span></div>
+      <h2>Shipping a support agent to production</h2>
+      <p class="desc">A customer-support agent from a dazzling demo to safe production — the agent loop, tools via MCP, guardrails, the lethal-trifecta / prompt-injection defense, evals as the launch gate, and a staged rollout.</p>
+      <div class="chips"><span class="chip">Agent loop</span><span class="chip">MCP tools</span><span class="chip">Guardrails</span><span class="chip">Lethal trifecta</span><span class="chip">Evals + diagrams</span></div>
+      <span class="open">Open case study <span class="arw">&#8594;</span></span>
+    </div>
+  </a>
+
+  <a class="card pg" href="https://baluraut.github.io/recdb-recovery-case-study/">
+    <div class="accent"></div>
+    <div class="card-in">
+      <div class="card-top"><span class="pill">Case Study</span><span class="count">PostgreSQL PITR</span></div>
+      <h2>A bad script wiped 30k recommendations</h2>
+      <p class="desc">A nightly batch job empties the recommendations table, and every replica copies it. The calm, targeted point-in-time restore from backup — lift one table back, no full failover — and how to design the job so it can't happen.</p>
+      <div class="chips"><span class="chip">PITR</span><span class="chip">Targeted restore</span><span class="chip">Replicas ≠ backup</span><span class="chip">Atomic table swap</span><span class="chip">Sequence + ER diagrams</span></div>
+      <span class="open">Open case study <span class="arw">&#8594;</span></span>
+    </div>
+  </a>
+
+  </div>
 </div>
 
 <div class="section">

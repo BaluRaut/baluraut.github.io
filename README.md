@@ -23,9 +23,18 @@ A landing page tying together fourteen battle-tested playbooks — **14 playbook
 | [PostgreSQL Disaster Recovery on AWS](https://baluraut.github.io/postgres-dr-playbook/) | 26 | RPO/RTO, PITR, WAL, pgBackRest, RDS/Aurora, cross-region failover, drills |
 | [System Design &amp; Technical Leadership Playbook](https://baluraut.github.io/system-design-leadership-playbook/) | 30 | Scaling, SLOs, tradeoffs, code review, mentoring, RFCs |
 
-## Worked case study
+## Worked case studies
 
-[**DR for a 2,000-Engineer SaaS on AWS**](https://baluraut.github.io/dr-case-study/) — the PostgreSQL Disaster Recovery playbook applied end to end to a realistic fintech (NimbusPay): RPO/RTO by data tier, tiered Aurora + RDS, an immutable cross-account backup vault, five step-by-step runbooks, and the architecture shown three ways (ASCII topology, entity/ER diagram, and a region-failover sequence diagram).
+Six applied, end-to-end case studies — each puts a playbook (or two) to work on a concrete company, with an ASCII topology, an entity (ER) diagram, and a sequence diagram.
+
+| Case study | Applies | The story |
+| --- | --- | --- |
+| [DR for a 2,000-engineer SaaS on AWS](https://baluraut.github.io/dr-case-study/) | PostgreSQL DR | Tiered Aurora + RDS, immutable cross-account vault, 5 runbooks |
+| [Scaling to 1,000,000 req/s](https://baluraut.github.io/scaling-case-study/) | Distributed Systems, System Design | One box → a million req/s; the bottleneck moves to the DB |
+| [Anatomy of an IDOR breach](https://baluraut.github.io/security-case-study/) | Application Security | 400k records leaked via broken access control; the IR runbook |
+| [The N+1 that took down Black Friday](https://baluraut.github.io/nplus1-case-study/) | Rails, PostgreSQL | A hidden N+1 melts checkout under load; find, fix, capacity-plan |
+| [Shipping a production AI agent](https://baluraut.github.io/ai-agent-case-study/) | Agentic AI, MCP | Support agent from demo to safe production; guardrails + evals |
+| [Corrupted recommendations restored from backup](https://baluraut.github.io/recdb-recovery-case-study/) | PostgreSQL PITR | A bad script wipes 30k rows; a targeted point-in-time restore |
 
 ## Why one library
 
