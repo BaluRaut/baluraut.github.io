@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCP Explained — What, How, Why & the Future</title>
+  <meta name="description" content="A deep, visual guide to the Model Context Protocol (MCP): what it is, how it works, why it matters, sequence diagrams, a 0–100 flow, case studies, and the future." />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-soft: #f6f8fa;
+      --bg-card: #ffffff;
+      --border: #e2e6eb;
+      --text: #1a1f26;
+      --text-soft: #5a6472;
+      --accent: #6b46e5;
+      --accent-2: #0ea5a4;
+      --accent-soft: #efeaff;
+      --code-bg: #0f1524;
+      --code-text: #e6e9f0;
+      --shadow: 0 1px 3px rgba(20,25,35,.06), 0 8px 24px rgba(20,25,35,.06);
+      --radius: 14px;
+      --maxw: 1000px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0c1017;
+        --bg-soft: #11161f;
+        --bg-card: #141a24;
+        --border: #232b38;
+        --text: #e8ecf3;
+        --text-soft: #98a2b3;
+        --accent: #a78bfa;
+        --accent-2: #2dd4bf;
+        --accent-soft: #1e1b34;
+        --code-bg: #0a0e17;
+        --code-text: #e6e9f0;
+        --shadow: 0 1px 3px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.4);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: saturate(180%) blur(12px);
+      background: color-mix(in srgb, var(--bg) 82%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .wrap { display: flex; align-items: center; gap: 18px; height: 58px; }
+    nav .brand { font-weight: 700; letter-spacing: -.02em; font-size: 1.05rem; margin-right: auto; }
+    nav .brand span { color: var(--accent); }
+    nav .links { display: flex; gap: 4px; flex-wrap: wrap; }
+    nav .links a {
+      color: var(--text-soft); font-size: .87rem; padding: 6px 10px;
+      border-radius: 8px; font-weight: 500;
+    }
+    nav .links a:hover { background: var(--bg-soft); color: var(--text); text-decoration: none; }
+    .nav-toggle { display: none; }
+    @media (max-width: 760px) {
+      nav .links { display: none; }
+    }
+
+    /* Hero */
+    header.hero {
+      padding: 72px 0 48px;
+      background:
+        radial-gradient(1200px 400px at 80% -10%, var(--accent-soft), transparent 60%),
+        radial-gradient(800px 300px at 0% 10%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 60%);
+    }
+    .kicker {
+      display: inline-block; font-size: .78rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+      background: var(--accent-soft); padding: 5px 12px; border-radius: 999px;
+    }
+    header.hero h1 {
+      font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.08;
+      letter-spacing: -.03em; margin: 18px 0 14px; font-weight: 800;
+    }
+    header.hero p.lede { font-size: 1.18rem; color: var(--text-soft); max-width: 680px; margin: 0 0 26px; }
+    .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 20px; border-radius: 10px; font-weight: 600; font-size: .95rem;
+    }
+    .btn.primary { background: var(--accent); color: #fff; }
+    .btn.primary:hover { text-decoration: none; filter: brightness(1.06); }
+    .btn.ghost { border: 1px solid var(--border); color: var(--text); background: var(--bg-card); }
+    .btn.ghost:hover { text-decoration: none; border-color: var(--accent); }
+
+    /* Sections */
+    section { padding: 56px 0; border-top: 1px solid var(--border); }
+    section > .wrap > .eyebrow {
+      font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--accent-2); margin-bottom: 8px;
+    }
+    section h2 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); letter-spacing: -.02em; margin: 0 0 8px; font-weight: 800; }
+    section h3 { font-size: 1.25rem; margin: 32px 0 10px; letter-spacing: -.01em; }
+    section p { color: var(--text); }
+    .muted { color: var(--text-soft); }
+
+    /* Cards / grids */
+    .grid { display: grid; gap: 16px; margin-top: 24px; }
+    .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 720px) { .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow);
+    }
+    .card h4 { margin: 0 0 8px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+    .card .ico { font-size: 1.3rem; }
+    .card p { margin: 0; color: var(--text-soft); font-size: .95rem; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; margin-top: 20px; border: 1px solid var(--border); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; font-size: .93rem; min-width: 520px; }
+    th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: var(--bg-soft); font-weight: 700; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-soft); }
+    tr:last-child td { border-bottom: none; }
+    td code { background: var(--bg-soft); padding: 1px 6px; border-radius: 6px; font-size: .85em; }
+
+    /* Code */
+    pre {
+      background: var(--code-bg); color: var(--code-text); padding: 18px 20px;
+      border-radius: 12px; overflow-x: auto; font-size: .86rem; line-height: 1.6;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    code { font-family: "SF Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; }
+    pre code { color: inherit; }
+
+    /* Mermaid */
+    .diagram {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-top: 20px;
+      overflow-x: auto; box-shadow: var(--shadow);
+    }
+    .diagram .cap { font-size: .85rem; color: var(--text-soft); margin-bottom: 10px; font-weight: 600; }
+    .mermaid { display: flex; justify-content: center; min-width: 480px; }
+
+    /* Steps 0-100 */
+    .steps { margin-top: 24px; position: relative; }
+    .step {
+      display: flex; gap: 18px; padding: 6px 0 22px; position: relative;
+    }
+    .step:not(:last-child)::before {
+      content: ""; position: absolute; left: 19px; top: 40px; bottom: -4px;
+      width: 2px; background: var(--border);
+    }
+    .step .num {
+      flex: 0 0 40px; height: 40px; width: 40px; border-radius: 50%;
+      display: grid; place-items: center; font-weight: 800; font-size: .82rem;
+      background: var(--accent-soft); color: var(--accent); border: 1px solid var(--border);
+      z-index: 1;
+    }
+    .step .body h4 { margin: 8px 0 4px; font-size: 1.02rem; }
+    .step .body p { margin: 0; color: var(--text-soft); font-size: .94rem; }
+    .step .body .tag { display: inline-block; font-size: .72rem; font-weight: 700; color: var(--accent-2); text-transform: uppercase; letter-spacing: .05em; }
+
+    /* Case studies */
+    .case {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); margin-top: 20px;
+    }
+    .case .hd { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .case .hd .badge { font-size: 1.6rem; }
+    .case .hd h3 { margin: 0; }
+    .case .role { font-size: .82rem; color: var(--text-soft); font-weight: 600; }
+    .case ul { margin: 12px 0 0; padding-left: 20px; color: var(--text-soft); }
+    .case ul li { margin: 6px 0; }
+    .case .outcome {
+      margin-top: 14px; padding: 12px 16px; border-radius: 10px;
+      background: var(--accent-soft); font-size: .92rem; border-left: 3px solid var(--accent);
+    }
+
+    .callout {
+      margin-top: 20px; padding: 16px 20px; border-radius: 12px;
+      background: var(--bg-soft); border-left: 4px solid var(--accent-2);
+    }
+    .callout strong { color: var(--text); }
+
+    footer {
+      padding: 40px 0 60px; border-top: 1px solid var(--border);
+      color: var(--text-soft); font-size: .88rem; text-align: center;
+    }
+    footer a { color: var(--text-soft); }
+    .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .pill { font-size: .8rem; padding: 4px 12px; border-radius: 999px; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-soft); }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand">MCP<span>·</span>Guide</div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Model Context Protocol</span>
+      <h1>How MCP actually works — the complete picture</h1>
+      <p class="lede">MCP is the "USB-C for AI apps": one open protocol that lets any AI assistant plug into any tool, database, or API without custom glue code. Here's the what, how, why, and where it's going — with sequence diagrams, a full 0→100 runtime flow, and real case studies.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">JSON-RPC 2.0</span>
+        <span class="pill">stdio · HTTP/SSE</span>
+        <span class="pill">Tools · Resources · Prompts</span>
+        <span class="pill">Open standard</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What is MCP?</h2>
+      <p class="muted">The <strong>Model Context Protocol</strong> is an open standard (introduced by Anthropic in late 2024) that defines a universal way for AI applications to connect to external systems. Before MCP, every integration between an AI app and a tool was bespoke: <em>M</em> apps × <em>N</em> tools = M×N custom connectors. MCP turns that into M+N — build a server once, and every MCP-compatible client can use it.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🖥️</span> Host</h4>
+          <p>The user-facing AI app — Claude Code, Claude Desktop, an IDE, or your own agent built on the SDK. It runs the model and orchestrates everything.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Client</h4>
+          <p>A connector living inside the host. One client per server, maintaining a 1:1 stateful session and speaking MCP on the model's behalf.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Server</h4>
+          <p>A separate program exposing capabilities — a filesystem, a database, GitHub, Slack, a private API. It does the real work when asked.</p>
+        </div>
+      </div>
+
+      <h3>The three things a server exposes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Primitive</th><th>What it is</th><th>Controlled by</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Tools</strong></td><td>Callable functions with typed inputs/outputs</td><td>The <strong>model</strong> decides when to call</td><td><code>create_issue()</code>, <code>run_query()</code></td></tr>
+            <tr><td><strong>Resources</strong></td><td>Readable data / context, addressed by URI</td><td>The <strong>app / user</strong> attaches</td><td><code>file:///report.pdf</code>, <code>db://users/42</code></td></tr>
+            <tr><td><strong>Prompts</strong></td><td>Reusable, parameterized prompt templates</td><td>The <strong>user</strong> invokes (slash commands)</td><td><code>/summarize-pr</code>, <code>/plan-sprint</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the LLM never touches your database or API directly. It emits a structured request; the host mediates and approves; the server executes. MCP is the standardized contract in the middle.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why MCP exists</h2>
+      <p class="muted">LLMs are powerful but isolated — trapped behind their training cutoff with no access to your live data or the ability to act. Every team solving this independently produced brittle, one-off integrations. MCP standardizes the connection layer.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Solves the M×N problem</h4><p>Write a server once; every MCP host (Claude, Cursor, Windsurf, custom agents) can use it. No re-integration per app.</p></div>
+        <div class="card"><h4>🔄 Swappable &amp; composable</h4><p>Because tools are discovered at runtime, you can add, remove, or upgrade servers without touching the host. Agents compose many servers.</p></div>
+        <div class="card"><h4>🔐 Clear trust boundaries</h4><p>The host mediates every call and can require user approval. Servers run as isolated processes with scoped permissions and their own auth.</p></div>
+        <div class="card"><h4>🌍 Open &amp; vendor-neutral</h4><p>An open spec with SDKs in Python, TypeScript, Java, C#, Go and more. Not tied to one model or one company.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Every message is <strong>JSON-RPC 2.0</strong>. The client and server exchange requests, responses, and notifications over a <em>transport</em>. Two transports dominate:</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📟</span> stdio (local)</h4>
+          <p>The server is a subprocess; messages flow over stdin/stdout. Fast, no network, ideal for local tools (filesystem, git). Auth is implicit — it runs as you.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌐</span> Streamable HTTP + SSE (remote)</h4>
+          <p>The server is a web service reached over HTTP, with Server-Sent Events for streaming. Serves many clients, and uses OAuth 2.1 for authentication.</p>
+        </div>
+      </div>
+
+      <h3>The connection lifecycle</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — one host, many servers, one client per server</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Host["🖥️  Host  (Claude Code / Desktop)"]
+        LLM["🧠 LLM"]
+        C1["🔌 Client A"]
+        C2["🔌 Client B"]
+        C3["🔌 Client C"]
+        LLM <--> C1
+        LLM <--> C2
+        LLM <--> C3
+    end
+    C1 <-->|stdio| S1["⚙️ Filesystem Server"]
+    C2 <-->|HTTP/SSE| S2["⚙️ GitHub Server"]
+    C3 <-->|HTTP/SSE| S3["⚙️ Postgres Server"]
+    S1 --> D1[("📁 Local files")]
+    S2 --> D2{{"🌐 GitHub API"}}
+    S3 --> D3[("🗄️ Database")]
+        </pre>
+      </div>
+
+      <h3>A minimal config (Claude Code / Desktop)</h3>
+      <pre><code>{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres",
+               "postgresql://localhost/mydb"]
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": { "Authorization": "Bearer ${GITHUB_TOKEN}" }
+    }
+  }
+}</code></pre>
+      <p class="muted">The first is a local <strong>stdio</strong> server spawned as a subprocess; the second is a remote <strong>HTTP</strong> server. Same protocol, different transport.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the initial handshake &amp; discovery, a tool call at runtime, and the OAuth flow for remote servers.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — Initialization &amp; capability discovery (once, at connect)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant H as 🖥️ Host
+    participant C as 🔌 Client
+    participant S as ⚙️ Server
+
+    U->>H: Launch app / add server
+    H->>C: Spin up a client for this server
+    C->>S: initialize (protocol version, capabilities)
+    S-->>C: initialize result (server capabilities, info)
+    C->>S: notifications/initialized
+    Note over C,S: Session is now live
+    C->>S: tools/list
+    S-->>C: [tools + JSON Schemas]
+    C->>S: resources/list
+    S-->>C: [resources]
+    C->>S: prompts/list
+    S-->>C: [prompt templates]
+    C-->>H: Register capabilities
+    H->>H: Inject tool defs into model context
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — A tool call during a conversation (the hot path)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant LLM as 🧠 Model
+    participant H as 🖥️ Host
+    participant C as 🔌 Client
+    participant S as ⚙️ Server
+    participant Ext as 🌐 Data / API
+
+    U->>H: "How many signups last week?"
+    H->>LLM: prompt + available tools
+    LLM-->>H: tool_use: run_query(sql=...)
+    H->>U: Approve calling run_query? (optional)
+    U-->>H: ✔ Approve
+    H->>C: dispatch tool call
+    C->>S: tools/call { name, arguments }
+    S->>Ext: SELECT count(*) FROM signups ...
+    Ext-->>S: rows
+    S-->>C: tools/call result (structured content)
+    C-->>H: result
+    H->>LLM: tool result appended to context
+    LLM-->>H: "You had 1,284 signups last week."
+    H-->>U: Final answer
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — OAuth 2.1 authorization for a remote server</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant C as 🔌 Client
+    participant S as ⚙️ MCP Server
+    participant A as 🔑 Auth Server
+
+    C->>S: tools/call (no / expired token)
+    S-->>C: 401 Unauthorized + WWW-Authenticate
+    C->>A: Discover metadata, register client
+    C->>U: Open browser → consent screen
+    U->>A: Log in &amp; grant scopes
+    A-->>C: Authorization code (redirect)
+    C->>A: Exchange code + PKCE for tokens
+    A-->>C: access_token (+ refresh_token)
+    C->>S: Retry tools/call (Bearer token)
+    S-->>C: 200 OK + result
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">Everything that happens from cold start to a completed, tool-assisted answer — the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Setup</span><h4>Author or install a server</h4><p>Someone writes an MCP server (or you install a published one) that wraps a system — a DB, an API, the filesystem — and declares its tools, resources, and prompts.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Configure</span><h4>Register the server with the host</h4><p>Add it to config: a <code>command</code> for stdio, or a <code>url</code> for HTTP. The host now knows the server exists.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Launch</span><h4>Host starts the client &amp; transport</h4><p>On startup the host spawns one client per server and opens the transport — a subprocess pipe (stdio) or an HTTP connection.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Handshake</span><h4><code>initialize</code> exchange</h4><p>Client and server negotiate protocol version and advertise capabilities, then the client sends <code>notifications/initialized</code>. The session is live.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Discovery</span><h4>List tools, resources, prompts</h4><p>The client calls <code>tools/list</code>, <code>resources/list</code>, <code>prompts/list</code>. The server returns names, descriptions, and JSON Schemas.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Inject</span><h4>Host hands tools to the model</h4><p>The discovered tool definitions are formatted and placed into the model's context so it knows what it can call and with what arguments.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Reason</span><h4>User asks; model decides</h4><p>The user sends a request. The model reasons over it and the available tools, and emits a structured <code>tool_use</code> request if a tool would help.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guard</span><h4>Host intercepts &amp; (maybe) asks approval</h4><p>The host catches the tool call. For sensitive actions it prompts the user to approve. Auth is checked; remote servers may trigger the OAuth flow here.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Execute</span><h4>Server does the real work</h4><p>The client sends <code>tools/call</code>; the server runs the query / hits the API / reads the file and returns structured results (and can stream progress).</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Integrate</span><h4>Result flows back into context</h4><p>The host appends the tool result to the conversation and calls the model again. The model may chain more tool calls — loop back to step 60 as needed.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>Model answers the user</h4><p>With the fresh, real-world data in context, the model produces a grounded final answer. Session stays open for the next turn.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing MCP in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">👩‍💻</span><div><h3>1 · The coding agent (Claude Code + GitHub + Postgres)</h3><div class="role">Pattern: developer productivity</div></div></div>
+        <p class="muted">A developer asks their assistant to "find the flaky test causing CI failures and open a fix PR." The agent composes three MCP servers.</p>
+        <ul>
+          <li><strong>Filesystem server</strong> (stdio) reads the failing test files and source.</li>
+          <li><strong>Postgres server</strong> queries the CI results table to identify which test fails intermittently.</li>
+          <li><strong>GitHub server</strong> (HTTP + OAuth) creates a branch, commits the fix, and opens a PR.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> One natural-language request spans three systems with no custom integration code — each server was installed once and is reused across every project.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏢</span><div><h3>2 · Enterprise knowledge assistant (internal wiki + Jira + Slack)</h3><div class="role">Pattern: retrieval + action over private data</div></div></div>
+        <p class="muted">A support engineer asks: "Summarize open P1 incidents this week and post a digest to #ops." The company runs remote MCP servers behind SSO.</p>
+        <ul>
+          <li><strong>Jira server</strong> exposes <code>search_issues</code> as a tool and issues as resources — the model pulls live P1 tickets.</li>
+          <li><strong>Wiki server</strong> resources supply runbook context for each incident type.</li>
+          <li><strong>Slack server</strong> exposes <code>post_message</code>; the host requires explicit approval before posting.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> OAuth scopes keep each user's access correct; the host's approval gate ensures the "write" action (posting) is human-confirmed. Same protocol, enterprise-grade trust.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>3 · Design-to-code with Figma MCP</h3><div class="role">Pattern: bridging a proprietary app to any agent</div></div></div>
+        <p class="muted">A front-end dev selects a component in Figma and asks the agent to "build this as a React component." Figma ships an MCP server exposing the live design context.</p>
+        <ul>
+          <li>The <strong>Figma server</strong> exposes the selected frame's structure, tokens, and layout as resources/tools.</li>
+          <li>The agent reads exact spacing, colors, and variants — not a screenshot guess.</li>
+          <li>The <strong>filesystem server</strong> writes the generated component into the repo.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A proprietary desktop app becomes usable by <em>any</em> MCP client. Design intent transfers with high fidelity because the model reads structured data, not pixels.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where MCP is heading</h2>
+      <p class="muted">MCP went from a single-vendor spec to a broadly adopted standard remarkably fast. The trajectory points at richer, safer, more autonomous agents.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🌐 A registry &amp; ecosystem</h4><p>Public server registries for discovery and one-click install — an "app store" for agent capabilities, with signing and provenance.</p></div>
+        <div class="card"><h4>🤝 Agent-to-agent composition</h4><p>Servers that are themselves agents, plus emerging agent-to-agent protocols, enabling networks of specialized agents that delegate to each other.</p></div>
+        <div class="card"><h4>🔐 Stronger security &amp; identity</h4><p>Fine-grained scopes, standardized OAuth 2.1, tool-poisoning defenses, and auditability as MCP moves deeper into enterprises.</p></div>
+        <div class="card"><h4>🧠 Elicitation &amp; sampling</h4><p>Servers can ask the user for input mid-task (elicitation) and request model completions from the host (sampling) — richer two-way interaction.</p></div>
+        <div class="card"><h4>📦 Native platform support</h4><p>OS-level and IDE-level MCP hosts, so any app can become an agent surface without bespoke plumbing.</p></div>
+        <div class="card"><h4>⚡ Streaming &amp; long-running work</h4><p>Better support for progress streaming, cancellation, and durable long-running tasks — essential for real autonomous agents.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> just as HTTP standardized the web and USB standardized peripherals, MCP is becoming the standard socket between AI models and the real world. Build a capability once — every agent, present and future, can use it.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p>A visual guide to the Model Context Protocol · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+      <p>Learn more at <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">modelcontextprotocol.io</a> · Spec is open source.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: prefersDark ? 'dark' : 'neutral',
+      securityLevel: 'loose',
+      sequence: { showSequenceNumbers: false, actorMargin: 40, mirrorActors: false },
+      flowchart: { curve: 'basis' }
+    });
+  </script>
+</body>
+</html>
