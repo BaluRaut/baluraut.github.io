@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="Retrieval-Augmented Generation (RAG) चे सखोल, दृश्य मार्गदर्शक: ते काय आहे, कसे चालते, ते महत्त्वाचे का आहे, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Retrieval-Augmented Generation</span>
+      <h1>RAG खरोखर कसे चालते - संपूर्ण चित्र</h1>
+      <p class="lede">LLMs त्यांच्या training cutoff वेळी गोठलेले असतात आणि तुमच्या खाजगी डेटाबद्दल त्यांना काहीच माहीत नसते. RAG हे दुरुस्त करते: ते query वेळी तुमच्या knowledge base मधून संबंधित chunks <strong>retrieve</strong> करते आणि त्यांच्यासह prompt <strong>augment</strong> करते, त्यामुळे मॉडेल अंदाज लावण्याऐवजी खऱ्या, ताज्या आणि उद्धृत केलेल्या स्रोतांमधून उत्तर देते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Embeddings</span>
+        <span class="pill">Vector search</span>
+        <span class="pill">Chunking</span>
+        <span class="pill">Grounding आणि citations</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>RAG म्हणजे काय?</h2>
+      <p class="muted"><strong>Retrieval-Augmented Generation</strong> हा एक पॅटर्न आहे जो language model ला बाहेरील knowledge store शी जोडतो. मॉडेलने training दरम्यान लक्षात ठेवलेल्या गोष्टींवरच अवलंबून राहण्याऐवजी, तुम्ही प्रश्नासाठी सर्वात संबंधित उतारे <em>retrieve</em> करता आणि context म्हणून prompt मध्ये टाकता. मग मॉडेल त्या retrieve केलेल्या पुराव्यावर आधारित उत्तर तयार करते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📥</span> Ingestion (offline)</h4>
+          <p>दस्तऐवज chunks मध्ये विभागले जातात, vectors मध्ये embed केले जातात आणि vector database मध्ये साठवले जातात. हे एकदाच, आधीच केले जाते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔎</span> Retrieval (online)</h4>
+          <p>Query वेळी, प्रश्न embed केला जातो आणि semantic similarity नुसार सर्वात जवळचे chunks आणले जातात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧠</span> Generation (online)</h4>
+          <p>Retrieve केलेले chunks prompt मध्ये जोडले जातात; मॉडेल त्यांचा वापर करून उत्तर देते, आदर्शतः citations सह.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>सामान्य पर्याय</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Chunker</strong></td><td>दस्तऐवजांना retrieve करण्यायोग्य तुकड्यांमध्ये विभागतो</td><td>Fixed-size, recursive, semantic, by-heading</td></tr>
+            <tr><td><strong>Embedding model</strong></td><td>अर्थ पकडणाऱ्या vectors मध्ये मजकूर रूपांतरित करते</td><td><code>text-embedding-3</code>, open models</td></tr>
+            <tr><td><strong>Vector store</strong></td><td>जलद similarity search साठी vectors index करते</td><td>pgvector, Pinecone, Weaviate, FAISS</td></tr>
+            <tr><td><strong>Retriever</strong></td><td>प्रत्येक query साठी top-k संबंधित chunks शोधतो</td><td>Dense, keyword (BM25), hybrid</td></tr>
+            <tr><td><strong>Reranker</strong></td><td>अचूकतेसाठी candidates ना पुन्हा गुण देतो</td><td>Cross-encoders, LLM rerankers</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> RAG मॉडेलला नवीन तथ्ये शिकवत नाही, ते उत्तर देण्याच्या क्षणी योग्य तथ्ये मॉडेलच्या <em>समोर</em> ठेवते. Retrieval ची गुणवत्ता, LLM नव्हे, हीच सहसा RAG सिस्टम यशस्वी किंवा अयशस्वी करते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>RAG का अस्तित्वात आहे</h2>
+      <p class="muted">Fine-tuning ज्ञान weights मध्ये भाजून टाकते, ते संथ, महाग असते आणि तुमचा डेटा बदलताच जुने होते. RAG ज्ञान मॉडेलच्या <em>बाहेर</em> ठेवते, जिथे ते अद्ययावत करणे स्वस्त आणि नियंत्रित करणे सोपे असते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 Hallucination कमी करते</h4><p>उत्तरे retrieve केलेल्या मजकुरात ग्राउंड केल्याने बनवलेली तथ्ये तीव्रपणे कमी होतात आणि पडताळणीसाठी तुम्हाला स्रोत उद्धृत करता येतात.</p></div>
+        <div class="card"><h4>🔄 नेहमी ताजे</h4><p>Knowledge base अद्ययावत करा आणि उत्तरे लगेच बदलतात, retraining ची गरज नाही. एखादा दस्तऐवज जोडा, संपादित करा किंवा हटवा आणि पुढच्या query मध्येच ते प्रतिबिंबित होते.</p></div>
+        <div class="card"><h4>🔐 खाजगी आणि access-controlled</h4><p>तुमचा डेटा कधीही मॉडेलच्या weights मध्ये जात नाही. तुम्ही user permissions नुसार retrieval फिल्टर करू शकता जेणेकरून लोकांना फक्त त्यांना परवानगी असलेलेच दिसेल.</p></div>
+        <div class="card"><h4>💸 Fine-tuning पेक्षा स्वस्त</h4><p>कोणतेही training runs नाहीत. तुम्ही embeddings साठी एकदा पैसे देता आणि प्रत्येक query साठी थोडासा अतिरिक्त context, खर्च आणि श्रमाचा एक अंश.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह RAG चे स्पष्टीकरण</h2>
+      <p class="muted">एकच कल्पना, ती चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>RAG म्हणजे एक <strong>ओपन-बुक परीक्षा</strong>. मॉडेलला सर्व काही पाठ करण्याची गरज नाही; ते आधी संबंधित पाने पाहते, मग समोर पुस्तक उघडे ठेवून उत्तर लिहिते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे एका <strong>function समोर search index</strong> ठेवण्यासारखे आहे. ज्ञान hardcode करण्याऐवजी, तुम्ही store ला महत्त्वाच्या rows साठी query करता, मग त्या मॉडेल कॉलला arguments म्हणून पास करता.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>संशोधन सहाय्यकाची</strong> कल्पना करा जो तुमच्या मीटिंगपूर्वी कॅबिनेटमधून नेमक्या फाइल्स काढतो, जेणेकरून तुमचे briefing अस्पष्ट स्मृतीऐवजी खऱ्या दस्तऐवजांचे उद्धरण देते.</p></div>
+        <div class="card"><h4><span class="ico">🍳</span> दैनंदिन आवृत्ती</h4><p>एक शेफ जो स्वयंपाक करण्यापूर्वी <strong>रेसिपी कार्ड पाहतो</strong>, स्मृतीतून अंदाज लावण्याऐवजी. कौशल्य तेच असते; तथ्ये कार्डवरून येतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतल्या बाजूने ते कसे चालते</h2>
+      <p class="muted">RAG मध्ये दोन pipelines असतात: एक <strong>offline ingestion</strong> pipeline जो index तयार करतो, आणि एक <strong>online query</strong> pipeline जो प्रत्येक request साठी चालतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📦</span> Ingestion pipeline</h4>
+          <p>Load → clean → chunk → embed → vector store मध्ये upsert करा. प्रत्येक chunk सोबत metadata (source, section, permissions, timestamp) जाते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚡</span> Query pipeline</h4>
+          <p>प्रश्न embed करा → top-k search करा → (पर्यायाने) rerank करा → grounded prompt जमवा → generate करा → उत्तर + citations परत करा.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात आर्किटेक्चर</h3>
+      <div class="diagram">
+        <div class="cap">आर्किटेक्चर - ingestion index तयार करते; queries त्यातून वाचतात</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Ingest["📦 Offline ingestion"]
+        D["📄 Documents"] --> CH["✂️ Chunk"]
+        CH --> EM1["🔢 Embed"]
+        EM1 --> VDB[("🗄️ Vector DB")]
+    end
+    subgraph Query["⚡ Online query"]
+        Q["❓ User question"] --> EM2["🔢 Embed query"]
+        EM2 --> SR["🔎 Similarity search"]
+        VDB --> SR
+        SR --> RR["📊 Rerank"]
+        RR --> PR["🧩 Build prompt + context"]
+        PR --> LLM["🧠 LLM"]
+        LLM --> ANS["✅ Grounded answer + citations"]
+    end
+        </pre>
+      </div>
+
+      <h3>Pseudocode मध्ये एक किमान query</h3>
+      <pre><code>q_vec   = embed(question)
+hits    = vector_db.search(q_vec, top_k=20, filter=user_acl)
+top     = rerank(question, hits)[:5]
+context = "\n\n".join(h.text + f"  [source: {h.source}]" for h in top)
+
+answer = llm.generate(
+    system="Answer ONLY from the context. Cite sources. Say 'I don't know' if absent.",
+    user=f"Context:\n{context}\n\nQuestion: {question}"
+)</code></pre>
+      <p class="muted">लक्षात घ्या की system prompt मॉडेलला retrieve केलेल्या context पुरते <em>मर्यादित</em> करतो आणि माहीत नसल्यास टाळण्यास सांगतो, हेच retrieval ला विश्वासार्ह, grounded generation मध्ये बदलते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: offline ingestion, online query path, आणि reranking व abstention सह एक प्रगत प्रवाह.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Ingestion: vector index तयार करणे (offline, एकदाच)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Src as 📄 Source docs
+    participant Pipe as ⚙️ Ingest pipeline
+    participant Emb as 🔢 Embedding model
+    participant VDB as 🗄️ Vector DB
+
+    Src->>Pipe: Load raw files (PDF, HTML, DB)
+    Pipe->>Pipe: Clean & normalize text
+    Pipe->>Pipe: Split into chunks (+ metadata)
+    loop for each chunk
+        Pipe->>Emb: embed(chunk)
+        Emb-->>Pipe: vector[1536]
+    end
+    Pipe->>VDB: upsert(vectors + text + metadata)
+    VDB-->>Pipe: index updated
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Query: retrieval नंतर grounded generation (hot path)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ RAG app
+    participant Emb as 🔢 Embedding model
+    participant VDB as 🗄️ Vector DB
+    participant LLM as 🧠 LLM
+
+    U->>App: Ask a question
+    App->>Emb: embed(question)
+    Emb-->>App: query vector
+    App->>VDB: search(query vector, top_k, filter=ACL)
+    VDB-->>App: top-k chunks + sources
+    App->>App: Assemble prompt (context + question)
+    App->>LLM: generate(grounded prompt)
+    LLM-->>App: answer with citations
+    App-->>U: Answer + linked sources
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - प्रगत: rerank, abstain, आणि fall back</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ RAG app
+    participant VDB as 🗄️ Vector DB
+    participant RR as 📊 Reranker
+    participant LLM as 🧠 LLM
+
+    U->>App: Question
+    App->>VDB: hybrid search (dense + BM25), top_k=20
+    VDB-->>App: 20 candidates
+    App->>RR: rerank(question, candidates)
+    RR-->>App: ordered by relevance
+    alt top score below threshold
+        App-->>U: "I don't have enough information"
+    else relevant context found
+        App->>LLM: generate(top 5 chunks + question)
+        LLM-->>App: grounded answer + citations
+        App-->>U: Answer + sources
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">रिकाम्या knowledge base पासून उद्धृत, grounded उत्तरापर्यंत, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Ingest</span><h4>स्रोत गोळा करा आणि स्वच्छ करा</h4><p>दस्तऐवज गोळा करा - wikis, PDFs, tickets, databases - आणि boilerplate, headers व noise काढून टाका जेणेकरून फक्त उपयुक्त मजकूर उरेल.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Chunk</span><h4>Retrieve करण्यायोग्य तुकड्यांमध्ये विभागा</h4><p>दस्तऐवजांना retrieval साठी योग्य आकाराच्या chunks मध्ये (सहसा 200-800 tokens) थोड्या overlap सह विभागा, आणि source व section सारखे metadata जोडा.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Embed</span><h4>Chunks ना vectors मध्ये बदला</h4><p>प्रत्येक chunk embedding model मधून चालवा जेणेकरून high-dimensional space मध्ये त्याचा अर्थ पकडणारा vector मिळेल.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Index</span><h4>Vector database मध्ये साठवा</h4><p>जलद similarity search साठी ANN index असलेल्या vector store मध्ये vectors आणि त्यांचा मजकूर व metadata upsert करा.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Query</span><h4>वापरकर्ता प्रश्न विचारतो</h4><p>एक request येते. प्रश्न ingestion साठी वापरलेल्याच model ने embed केला जातो जेणेकरून vectors त्याच space मध्ये राहतील.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Retrieve</span><h4>Top-k chunks शोधा</h4><p>वापरकर्त्याच्या access permissions नुसार फिल्टर करून vector store मध्ये nearest neighbors शोधा. Hybrid search keyword matching जोडते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Rerank</span><h4>Relevance तीक्ष्ण करा</h4><p>एक cross-encoder किंवा LLM reranker candidates ना पुन्हा गुण देतो जेणेकरून prompt मध्ये पोहोचण्यापूर्वी सर्वात योग्य उतारे वर येतील.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Gate</span><h4>ठरवा: उत्तर द्या की टाळा</h4><p>जर सर्वोत्तम score खूपच कमी असेल, तर सिस्टम hallucinate करण्याऐवजी "मला माहीत नाही" म्हणते, हे विश्वासाचे एक महत्त्वाचे पाऊल आहे.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Augment</span><h4>Grounded prompt जमवा</h4><p>निवडलेले chunks prompt मध्ये जोडा, फक्त context मधूनच उत्तर देण्याच्या आणि प्रत्येक source उद्धृत करण्याच्या सूचनांसह.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Generate</span><h4>मॉडेल पुराव्यावरून उत्तर देते</h4><p>LLM retrieve केलेल्या context चा वापर करून उत्तर तयार करते, नेमक्या स्रोतांकडे परत निर्देश करणारी citations जोडते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>उत्तर + स्रोत परत करा</h4><p>वापरकर्त्याला clickable citations सह एक grounded, पडताळण्यायोग्य उत्तर मिळते. Feedback आणि logs कालांतराने retrieval सुधारण्यासाठी evals ला पुरवतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतेक RAG सिस्टम मॉडेलवर नव्हे तर retrieval वर अपयशी ठरतात. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>✂️ चुकीचे chunking</h4><p>खूप मोठे chunks उत्तर noise मध्ये गाडतात; खूप लहान असल्यास context गमावतात. वाक्याच्या किंवा table च्या मधोमध विभागल्याने अर्थ नष्ट होतो. आंधळ्या character count नुसार नव्हे तर रचनेनुसार chunk करा.</p></div>
+        <div class="card"><h4>🔀 Embedding मध्ये विसंगती</h4><p>Queries आणि documents वेगवेगळ्या models ने embed करणे, किंवा re-indexing शिवाय model बदलणे, vectors ना विसंगत spaces मध्ये टाकते आणि retrieval कोसळते.</p></div>
+        <div class="card"><h4>📉 Reranking नाही</h4><p>फक्त raw vector similarity वर अवलंबून राहिल्याने बरेचदा "संबंधित पण चुकीचे" chunks समोर येतात. Reranker वगळणे हे प्रशंसनीय-पण-चुकीच्या उत्तरांचे सर्वात सामान्य कारण आहे.</p></div>
+        <div class="card"><h4>📚 Context मध्ये अति-भरणा</h4><p>Prompt मध्ये 30 chunks कोंबल्याने खर्च वाढतो आणि "lost in the middle" ट्रिगर होते, जिथे मॉडेल लांब context च्या मधला भाग दुर्लक्षित करते. विस्तृतपणे retrieve करा, पण थोडेच पाठवा.</p></div>
+        <div class="card"><h4>🎭 Abstention नाही</h4><p>जर सिस्टम कधीच "मला माहीत नाही" म्हणत नसेल, तर कमी-relevance असलेल्या retrievals ला तरीही उत्तर दिले जाते आणि मॉडेल आत्मविश्वासाने hallucinate करते. नेहमी relevance threshold वर gate करा.</p></div>
+        <div class="card"><h4>🕰️ जुना किंवा गळणारा index</h4><p>बदललेले docs पुन्हा embed करायला विसरल्याने जुनी उत्तरे दिली जातात; access filters वगळल्याने डेटा वापरकर्त्यांमध्ये गळतो. Index ही एक जिवंत, permissioned मालमत्ता आहे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजायचे</div>
+      <h2>RAG कसे मोजायचे</h2>
+      <p class="muted">Retrieval आणि generation वेगवेगळे मूल्यांकन करा, जेणेकरून कोणता अर्धा भाग दुरुस्त करायचा हे तुम्हाला कळेल.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते काय सांगते</th><th>चांगले लक्षण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Recall@k</strong></td><td>संबंधित chunk retrieve केलेल्या top-k मध्ये आले का?</td><td>जास्त: उत्तरापर्यंत पोहोचता येते</td></tr>
+            <tr><td><strong>Context precision</strong></td><td>Retrieve केलेल्या chunks पैकी किती अंश खरोखर संबंधित आहेत?</td><td>जास्त: prompt मध्ये कमी noise</td></tr>
+            <tr><td><strong>Faithfulness / groundedness</strong></td><td>उत्तराला retrieve केलेल्या context चा आधार आहे का?</td><td>जास्त: कमी hallucinations</td></tr>
+            <tr><td><strong>Answer relevance</strong></td><td>उत्तर खरोखर प्रश्नाला उत्तर देते का?</td><td>जास्त: विषयाशी सुसंगत प्रतिसाद</td></tr>
+            <tr><td><strong>Citation accuracy</strong></td><td>उद्धृत स्रोत खरोखर दाव्यांना आधार देतात का?</td><td>जास्त: विश्वासार्ह संदर्भ</td></tr>
+            <tr><td><strong>Latency आणि cost / query</strong></td><td>प्रत्येक request साठी end-to-end वेळ आणि token खर्च</td><td>तुमच्या SLA आणि बजेटच्या आत</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकळ नियम:</strong> जर faithfulness कमी पण recall जास्त असेल, तर prompt आणि reranking दुरुस्त करा; जर recall च कमी असेल, तर आधी chunking आणि embeddings दुरुस्त करा. मॉडेलला हात लावण्यापूर्वी दोन्ही मोजा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">RAG production-शैलीच्या वापरात दाखवणारे तीन प्रातिनिधिक पॅटर्न.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎧</span><div><h3>1 · Help center वर customer-support सहाय्यक</h3><div class="role">पॅटर्न: citations सह grounded Q&amp;A</div></div></div>
+        <p class="muted">एका SaaS कंपनीला असा सहाय्यक हवा आहे जो फीचर्स न बनवता तिच्या docs मधून ग्राहकांच्या प्रश्नांची उत्तरे देतो.</p>
+        <ul>
+          <li>Help-center लेख आणि release notes heading नुसार chunk केले जातात आणि दररोज रात्री embed केले जातात.</li>
+          <li>प्रत्येक उत्तराने ज्या लेखातून आले तो उद्धृत करावा; कमी-confidence असलेल्या queries माणसाकडे पाठवल्या जातात.</li>
+          <li>Retrieval product tier नुसार फिल्टर केले जाते जेणेकरून ग्राहकांना फक्त त्यांनी विकत घेतलेल्या गोष्टीचेच docs दिसतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> नित्याच्या tickets चे प्रमाण खूप कमी चुकीच्या उत्तरांसह कमी झाले, कारण प्रत्येक प्रतिसाद grounded असतो आणि खऱ्या doc पर्यंत मागोवा घेता येतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">⚖️</span><div><h3>2 · कायदेशीर आणि contract search</h3><div class="role">पॅटर्न: संवेदनशील दस्तऐवजांवर precision retrieval</div></div></div>
+        <p class="muted">एका कायदेशीर टीमला हजारो contracts वर प्रश्न विचारून paraphrases नव्हे तर नेमकी clauses मिळवायची आहेत.</p>
+        <ul>
+          <li>Hybrid search (semantic + keyword) अर्थ आणि नेमक्या कायदेशीर संज्ञा दोन्ही पकडते.</li>
+          <li>एक cross-encoder reranker नेमकी clause प्रथम रँक होईल याची खात्री करतो.</li>
+          <li>कडक access controls आणि on-prem embeddings गोपनीय डेटा फर्मच्या आत ठेवतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> वकील source contract च्या citations सह काही सेकंदांत governing clauses शोधतात, तर संवेदनशील मजकूर कधीही security boundary सोडत नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏥</span><div><h3>3 · engineers साठी अंतर्गत knowledge base</h3><div class="role">पॅटर्न: अनेक systems वर enterprise search</div></div></div>
+        <p class="muted">एक engineering संस्था wikis, runbooks, Slack आणि code docs एकाच सहाय्यकात एकत्र करते.</p>
+        <ul>
+          <li>Connectors अनेक स्रोतांमधून ingest करतात; metadata मूळ आणि ताजेपणा नोंदवते.</li>
+          <li>बदलावर जुने chunks पुन्हा embed केले जातात जेणेकरून उत्तरे सध्याची स्थिती प्रतिबिंबित करतात.</li>
+          <li>उत्तरे पडताळणीसाठी नेमक्या runbook किंवा thread कडे परत link करतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Engineers पाच tools मध्ये शोधणे थांबवतात; सहाय्यक citation सह योग्य runbook समोर आणतो, ज्यामुळे निराकरणाचा वेळ कमी होतो.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>RAG कुठे जात आहे</h2>
+      <p class="muted">RAG एका retrieve-मग-read पायरीपासून अधिक समृद्ध, अधिक अनुकूल सिस्टममध्ये विकसित होत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🤖 Agentic RAG</h4><p>असे agents जे multi-step retrieval ची योजना करतात - प्रश्न विघटित करणे, पुनरावृत्तीने शोधणे आणि पुरेसा पुरावा कधी मिळाला हे ठरवणे.</p></div>
+        <div class="card"><h4>🕸️ GraphRAG</h4><p>अनेक दस्तऐवजांमधील तथ्ये जोडण्याची आवश्यकता असलेल्या प्रश्नांची उत्तरे देण्यासाठी vector search ला knowledge graphs सोबत जोडणे.</p></div>
+        <div class="card"><h4>📈 Retrieval evals प्रथम-श्रेणीचे</h4><p>Recall, precision आणि faithfulness सतत मोजणे - retrieval गुणवत्तेला सर्वात महत्त्वाचा मापदंड मानणे.</p></div>
+        <div class="card"><h4>🧩 Long-context विरुद्ध RAG</h4><p>मोठे context windows RAG ला संपवणार नाहीत; ते त्याला पूरक ठरतात - RAG कोणत्याही scale वर खर्च, ताजेपणा आणि access नियंत्रित करते.</p></div>
+        <div class="card"><h4>🎛️ Adaptive retrieval</h4><p>अशा सिस्टम ज्या प्रश्नाच्या अडचणीवर आणि confidence वर आधारित retrieve <em>करायचे की नाही</em>, आणि किती, हे ठरवतात.</p></div>
+        <div class="card"><h4>🖼️ Multimodal RAG</h4><p>फक्त मजकुरावरच नव्हे तर images, tables, audio आणि video वर retrieve करणे - प्रत्येक डेटा प्रकारावर grounded उत्तरांसाठी.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> RAG हा असा मार्ग आहे ज्याद्वारे तुम्ही एका सामान्य मॉडेलला तुमचे विशिष्ट, ताजे, permissioned ज्ञान देता - स्वस्तपणे आणि पडताळण्यायोग्यपणे. जसजसे models आणि retrievers सुधारतात, तसतसा हा पॅटर्न खऱ्या AI उत्पादनांसाठी अधिकच केंद्रस्थानी येतो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">RAG संबंधित कौशल्यांच्या जाळ्यात बसतो. हे त्याच्यासोबत नैसर्गिकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../embeddings/"><span class="ico">🧭</span><h4>Embeddings आणि vector DBs</h4><p>Retrieval ला चालना देणारे similarity search.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>Grounded prompt चांगल्या प्रकारे कसा जमवायचा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals आणि LLM-as-judge</h4><p>Faithfulness आणि retrieval गुणवत्ता मोजणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../agentic/"><span class="ico">🕹️</span><h4>Agentic orchestration</h4><p>Agentic RAG जे अनेक टप्प्यांत retrieve करते.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>RAG चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Governance आणि Model Risk समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="AI governance आणि model risk management (MRM) चे सखोल, दृश्य मार्गदर्शक: use-case registries, risk tiering, approval workflows, model cards, सततचे निरीक्षण, EU AI Act, NIST AI RMF, ISO/IEC 42001, sequence diagrams, एक 0-100 प्रवाह, आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">AI Governance आणि Model Risk</span>
+      <h1>AI governance आणि model risk management प्रत्यक्षात कसे चालतात</h1>
+      <p class="lede">तुम्ही पाठवलेले प्रत्येक model जितके संपत्ती असते तितकेच ते जोखीमही असते - ते पक्षपाती असू शकते, drift होऊ शकते, डेटा गळू शकतो किंवा कायदा मोडू शकते. <strong>AI governance</strong> ही अशी operating system आहे जी models ना जबाबदार ठेवते: प्रत्येक use case ची यादी, प्रत्येकासाठी एक <strong>risk tier</strong>, त्या tier ला जुळणारे controls, आणि काहीही production पर्यंत पोहोचण्यापूर्वी स्वतंत्र मान्यता. <strong>Model risk management (MRM)</strong> ही त्याखालील शिस्त आहे - validation, documentation, आणि सततचे निरीक्षण.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Risk tiering</span>
+        <span class="pill">स्वतंत्र validation</span>
+        <span class="pill">Model cards</span>
+        <span class="pill">EU AI Act · NIST · ISO 42001</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>AI governance आणि model risk म्हणजे काय?</h2>
+      <p class="muted"><strong>AI governance</strong> म्हणजे धोरणे, भूमिका आणि प्रक्रियांचा तो संच जो ठरवतो की तुम्ही <em>कोणती</em> AI बनवता, ती <em>कशी</em> मंजूर होते, आणि ती चुकल्यावर <em>कोण</em> जबाबदार असते. <strong>Model risk management</strong> हे त्याचे तांत्रिक केंद्र आहे - Fed च्या <strong>SR 11-7</strong> मार्गदर्शनाने औपचारिक केलेली, model चुकीचे किंवा गैरवापर झालेले outputs तयार करण्याची जोखीम ओळखण्याची, मोजण्याची आणि नियंत्रित करण्याची पद्धत. एकत्रितपणे ते "आम्ही एक model बनवले" याचे रूपांतर "आम्ही हे model एका regulator, एका auditor आणि ज्याच्यावर परिणाम होतो त्या व्यक्तीसमोर समर्थन करू शकतो" यामध्ये करतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🗂️</span> Inventory आणि registry</h4>
+          <p>प्रत्येक AI use case ची यादी करणारा एकच विश्वसनीय स्रोत - मालक, हेतू, डेटा आणि स्थिती. जे तुम्ही पाहू शकत नाही ते तुम्ही govern करू शकत नाही, म्हणून registry प्रथम येते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎚️</span> Risk tiering</h4>
+          <p>प्रत्येक वापर परिणाम आणि शक्यतेनुसार tiers मध्ये वर्गीकृत केला जातो - minimal, limited, high - आणि controls tier ला जुळवले जातात. जिथे हानी असते तिथे कठोर तपासणी जाते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">✍️</span> मान्यता आणि देखरेख</h4>
+          <p>Validation, documentation आणि स्वतंत्र review deployment ला गेट करतात. एक risk committee मान्यता देते, आणि नंतर monitoring model ला प्रामाणिक ठेवते.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>ठराविक artifacts / मालक</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Use-case registry</strong></td><td>प्रत्येक model आणि AI वापर एका inventory मध्ये नोंदवते</td><td>Intake form, registry ID, business owner</td></tr>
+            <tr><td><strong>Risk tiering</strong></td><td>परिणाम × शक्यता याला control tier मध्ये गुण देते</td><td>Risk assessment, tier label (minimal→high)</td></tr>
+            <tr><td><strong>Validation</strong></td><td>स्वतंत्रपणे भक्कमपणा, पक्षपात आणि योग्यता तपासते</td><td>Validation report, challenge tests</td></tr>
+            <tr><td><strong>Documentation</strong></td><td>रचना, डेटा, मर्यादा आणि निर्णय नोंदवते</td><td>Model card, datasheet, risk register</td></tr>
+            <tr><td><strong>Monitoring आणि audit</strong></td><td>Production मध्ये drift, पक्षपात आणि क्षय यावर लक्ष ठेवते</td><td>Dashboards, re-validation, audit trail</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> governance म्हणजे <em>तीन संरक्षण रेषा</em> प्रत्यक्षात - business model बनवते आणि त्याची मालकी घेते (1st line), एक स्वतंत्र risk function त्याला आव्हान देते आणि validate करते (2nd line), आणि internal audit संपूर्ण प्रक्रिया खरोखर पाळली गेली का हे तपासते (3rd line). कर्तव्यांचे विभाजन हाच मुद्दा आहे.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>AI governance का अस्तित्वात आहे</h2>
+      <p class="muted">प्रयोगशाळेत अचूक असणारे model production मध्ये तरीही भेदभाव करणारे, अपारदर्शक किंवा बेकायदेशीर असू शकते. Governance यासाठी अस्तित्वात आहे कारण govern न केलेल्या model ची किंमत - चुकीचा कर्ज नकार, एक regulatory दंड, एक प्रतिष्ठेची आग - त्याला आधी तपासण्याच्या किमतीपेक्षा कितीतरी मोठी असते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚖️ Regulatory compliance</h4><p>EU AI Act, SR 11-7, आणि क्षेत्रीय नियम high-risk AI वर कठोर बंधने लादतात. कोणी विचारणार नाही अशी आशा करण्याऐवजी ती सिद्धपणे पूर्ण करण्याचा मार्ग म्हणजे governance.</p></div>
+        <div class="card"><h4>🛡️ खऱ्या हानी नियंत्रित करते</h4><p>पक्षपात, drift, data leakage, आणि असुरक्षित outputs ज्यांना ते दुखावतात त्यांच्याकडून शोधली जाण्याऐवजी जाणीवपूर्वक व्यवस्थापित केली जातात - मोजली, कमी केली आणि monitored.</p></div>
+        <div class="card"><h4>👁️ जबाबदारी आणि traceability</h4><p>स्पष्ट मालक, नोंदवलेले निर्णय, आणि एक audit trail याचा अर्थ असा की model अपयशी झाले की कोणी, कोणत्या पुराव्यावर मान्यता दिली आणि ते कसे दुरुस्त करायचे हे तुम्हाला माहीत असते.</p></div>
+        <div class="card"><h4>🚀 AI सुरक्षितपणे scale करते</h4><p>Tiered प्रक्रिया low-risk use cases ना वेगाने पुढे जाऊ देते तर महत्त्वाच्या मोजक्यांवर तपासणी केंद्रित करते - governance स्वीकार सक्षम करते, ते फक्त अडवत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह AI governance ची उकल</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Governance म्हणजे <strong>ग्रेडिंग रुब्रिक असलेली देखरेखीखालील परीक्षा</strong>. तुम्ही फक्त उत्तर देऊ शकत नाही; काय गणले जाते याचे नियम असतात, तुम्ही ते पाळले का हे तपासणारा एक पर्यवेक्षक असतो, आणि तुमच्या गुणांची कागदोपत्री नोंद असते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>याला <strong>models साठी code review अधिक CI gates</strong> असे समजा. एक स्वतंत्र reviewer मान्यता देईपर्यंत, checks पास होईपर्यंत, आणि बदल मालकासह नोंदवला जाईपर्यंत काहीही production मध्ये merge होत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>हे एका model भोवतीचे <strong>risk आणि compliance function</strong> आहे: काय अस्तित्वात आहे याची यादी, प्रत्येक बाब किती धोकादायक आहे याचे रेटिंग, त्या रेटिंगला जुळणारे controls, आणि हे सर्व घडले का हे पडताळणारा एक auditor.</p></div>
+        <div class="card"><h4><span class="ico">🏗️</span> रोजच्या जीवनातील आवृत्ती</h4><p><strong>इमारत तपासणी आणि परवाने</strong> यासारखे. एक स्वतंत्र निरीक्षक ती नियमांना पूर्ण करते असे प्रमाणित करेपर्यंत तुम्ही नवीन इमारत वापरू शकत नाही - आणि जितकी जोखीम जास्त, तितक्या जास्त तपासण्या लागतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतून हे कसे चालते</h2>
+      <p class="muted">Governance ला दोन हालचाली असतात: एक <strong>onboarding</strong> मार्ग जो नवीन use case ला intake पासून tiering, validation, आणि मान्यतेपर्यंत नेतो, आणि एक <strong>ongoing</strong> मार्ग जो deployed models ना त्यांच्या संपूर्ण lifecycle मध्ये monitor, re-validate, आणि audit करतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📝</span> Onboarding आणि मान्यता</h4>
+          <p>नोंदणी → जोखमीनुसार tier → documentation सह विकास → स्वतंत्र validation → risk-committee ची मान्यता → deploy. Tier जितका जड, तितका प्रत्येक गेट खोल.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> सततची देखरेख</h4>
+          <p>Drift, पक्षपात आणि कामगिरी monitor करा → नियतकालिक re-validation → internal audit → model card आणि risk register ताजे करा, किंवा rollback आणि निवृत्ती सुरू करा.</p>
+        </div>
+      </div>
+
+      <h3>Governance ची रचना एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">रचना - तीन संरक्षण रेषा एका use case ला intake पासून monitored production पर्यंत मार्गित करतात</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph L1["🏗️ 1st line - Business & dev"]
+        UC["💡 New AI use case"] --> REG["🗂️ Register in inventory"]
+        REG --> TIER["🎚️ Risk tiering"]
+        TIER --> DEV["🔧 Build + document"]
+    end
+    subgraph L2["🔍 2nd line - Independent risk"]
+        VAL["🧪 Validation"]
+        RC["✍️ Risk committee"]
+    end
+    subgraph L3["📋 3rd line - Internal audit"]
+        AUD["🔎 Audit the process"]
+    end
+    DEV --> VAL
+    VAL --> RC
+    RC -->|approved| PROD["🚀 Production"]
+    RC -->|rejected| DEV
+    PROD --> MON["📈 Monitoring"]
+    MON -->|drift or breach| VAL
+    AUD -.-> L1
+    AUD -.-> L2
+        </pre>
+      </div>
+
+      <h3>एक model card + risk-register नोंद (YAML)</h3>
+      <pre><code>model_card:
+  id: MDL-2041
+  name: Retail credit scoring v3
+  owner: credit-risk@bank.example
+  purpose: Approve/decline consumer loan applications
+  risk_tier: high            # minimal | limited | high
+  intended_use: Automated decisioning with human review on declines
+  data:
+    training: 2018-2024 booked loans (de-identified)
+    protected_attributes_excluded: [race, gender, age]
+  performance:
+    auc: 0.87
+    fairness: {metric: demographic_parity_diff, value: 0.03, threshold: 0.05}
+  limitations: Degrades for thin-file applicants; not for SME lending
+
+risk_register:
+  - risk: Disparate impact on protected groups
+    likelihood: medium
+    impact: high
+    control: Quarterly bias test + adverse-action reason codes
+  - risk: Population drift post-deployment
+    likelihood: high
+    impact: medium
+    control: PSI monitoring, re-validation if PSI &gt; 0.2
+
+approval:
+  validated_by: model-validation@bank.example   # independent 2nd line
+  approved_by: model-risk-committee
+  next_revalidation: 2027-01-31</code></pre>
+      <p class="muted">लक्षात घ्या की हे artifact <em>machine-readable आणि auditable</em> आहे: tier, मालक, fairness thresholds, नावाने दिलेले controls, आणि पुढील re-validation ची तारीख हे सर्व एका नोंदीत असतात. हेच एक auditor किंवा EU AI Act conformity assessment पाहायला मागते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: deployment पूर्वीचा approval workflow, एका use case ला हलक्या किंवा जड controls कडे मार्गित करणारे risk-tiering, आणि सततची monitoring-आणि-audit loop.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Approval workflow: submit → validate → स्वतंत्र review → मान्यता → deploy</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 🔧 Developer
+    participant Val as 🧪 Validation
+    participant Rev as 🔍 Independent reviewer
+    participant RC as ✍️ Risk committee
+    participant Prod as 🚀 Production
+
+    Dev->>Val: Submit model + documentation
+    Val->>Val: Test soundness bias performance
+    Val->>Rev: Effective challenge of assumptions
+    Rev-->>Val: Findings and required changes
+    alt validation passed
+        Val->>RC: Validation report + risk rating
+        RC->>RC: Weigh residual risk vs controls
+        RC-->>Dev: Sign-off with conditions
+        Dev->>Prod: Deploy under monitoring
+    else material findings
+        Val-->>Dev: Remediate and resubmit
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Risk tiering: एका use case ला हलक्या विरुद्ध जड controls कडे मार्गित करणे</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Own as 💡 Use-case owner
+    participant Reg as 🗂️ Registry
+    participant Risk as 🎚️ Risk assessor
+    participant Gov as 🏛️ Governance office
+
+    Own->>Reg: Submit intake form
+    Reg->>Risk: Score impact and likelihood
+    Note over Risk: Impact x likelihood grid
+    alt minimal or limited risk
+        Risk-->>Own: Light controls self-attest
+        Own->>Gov: Register and proceed
+    else high risk
+        Risk->>Gov: Route to full MRM
+        Gov-->>Own: Require validation and sign-off
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - सततचे monitoring आणि audit: metrics → drift/bias शोध → re-validate किंवा rollback</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Prod as 🚀 Production model
+    participant Mon as 📈 Monitoring
+    participant Val as 🧪 Validation
+    participant Aud as 📋 Internal audit
+
+    loop every scoring window
+        Prod->>Mon: Emit metrics and predictions
+        Mon->>Mon: Check drift bias decay vs thresholds
+    end
+    alt breach detected
+        Mon->>Val: Trigger re-validation
+        alt cannot remediate
+            Val->>Prod: Roll back or retire
+        else remediated
+            Val-->>Prod: Approve continued use
+        end
+    else within thresholds
+        Mon->>Aud: Periodic report
+        Aud-->>Prod: Confirm controls operating
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका model च्या कल्पनेपासून एका monitored, audited production system पर्यंत - संपूर्ण governance प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">नोंदणी</span><h4>Use case inventory मध्ये नोंदवा</h4><p>प्रत्येक प्रस्तावित AI वापर मालक, हेतू, आणि तो स्पर्श करेल त्या डेटासह registry मध्ये प्रवेश करतो. काहीही नोंदीशिवाय बनवले जात नाही.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Tier</span><h4>जोखीम वर्गीकृत करा</h4><p>Tier नेमण्यासाठी परिणाम आणि शक्यता यांना गुण द्या - minimal, limited, किंवा high - जे त्या वापराला किती validation, documentation, आणि देखरेख लागते हे ठरवते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">व्याप्ती</span><h4>Controls ला tier ला जुळवा</h4><p>High-risk वापरांना पूर्ण MRM मिळते; low-risk वापरांना हलके self-attestation मिळते. Controls हानीच्या प्रमाणात असतात, एकसमान सर्वांना नाही.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">बांधणी</span><h4>Documentation सह विकास करा</h4><p>Team model बनवते तसेच model card, dataset साठी datasheet, आणि ज्ञात failure modes व त्यांच्या उपायांचा risk register नोंदवते.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">चाचणी</span><h4>पक्षपात आणि कामगिरी मोजा</h4><p>पूर्वनिश्चित thresholds विरुद्ध subgroups मध्ये अचूकता, भक्कमपणा आणि fairness मूल्यांकन करा. मर्यादा आणि व्याप्तीबाहेरील वापर स्पष्टपणे नोंदवा.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Validate</span><h4>स्वतंत्र review त्याला आव्हान देते</h4><p>एक वेगळे 2nd-line function परिणामांची पुनरावृत्ती करते आणि effective challenge लावते - SR 11-7 ची मुख्य कल्पना - बांधणाऱ्यांनी चुकवलेल्या गृहितकांची चाचणी करते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">मान्यता</span><h4>Risk committee मान्यता देते</h4><p>Governance controls विरुद्ध residual risk तोलते आणि एकतर अटींसह मान्यता देते, बदल मागते, किंवा नाकारते. निर्णय आणि पुरावा नोंदवला जातो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Deploy</span><h4>Guardrails खाली प्रकाशित करा</h4><p>जिथे आवश्यक तिथे human-in-the-loop, adverse-action स्पष्टीकरणे, आणि पहिल्या दिवसापासून जोडलेल्या kill-switch किंवा rollback योजनांसह model पाठवले जाते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Monitor</span><h4>Drift, पक्षपात आणि क्षय पहा</h4><p>Production metrics dashboards कडे प्रवाहित होतात. Data आणि concept drift, fairness metrics, आणि कामगिरी thresholds विरुद्ध सतत ट्रॅक केली जाते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Re-validate</span><h4>नियतकालिक review आणि audit</h4><p>वेळापत्रकानुसार किंवा एखाद्या breach वर, model re-validate केले जाते आणि internal audit प्रक्रिया रचल्याप्रमाणे चालली का हे तपासते. निष्कर्ष remediation कडे जातात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">निवृत्ती</span><h4>अद्यतन करा किंवा बंद करा</h4><p>दुरुस्तीपलीकडे drift झालेली models rollback किंवा निवृत्त केली जातात; registry, model card, आणि risk register अद्यतनित केले जातात जेणेकरून नोंद खरी राहील.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतेक governance programs हेतूवर नव्हे तर पाठपुराव्यावर अपयशी होतात. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>☑️ Governance म्हणजे एकवेळचा checkbox</h4><p>मान्यतेला एकदा पास करून विसरून जाण्याचा गेट म्हणून वागवणे. जोखीम ही lifecycle गुणधर्म आहे; गेल्या वर्षी मंजूर झालेले model आज non-compliant असू शकते. Governance सततची असते किंवा ती फक्त नाटक असते.</p></div>
+        <div class="card"><h4>🗂️ AI use-case inventory नसणे</h4><p>प्रत्येक model आणि AI वापराच्या एकाच registry शिवाय, shadow AI वाढते. जे तुम्ही पाहूही शकत नाही ते तुम्ही नियंत्रित, tier किंवा समर्थन करू शकत नाही. Inventory प्रथम येते.</p></div>
+        <div class="card"><h4>🎚️ एकसमान controls, risk tiers दुर्लक्षून</h4><p>एका spellchecker आणि एका credit model ला तीच जड प्रक्रिया लावल्याने श्रम वाया जातात आणि स्वीकार थांबतो; दोघांना तोच हलका स्पर्श लावल्याने खरी हानी govern न करता राहते. Controls ला tier ला जुळवा.</p></div>
+        <div class="card"><h4>📄 कधीही अद्यतनित न होणारे documentation</h4><p>Launch वेळी लिहिलेले आणि पुन्हा कधीही न स्पर्श केलेले model card हळूहळू काल्पनिक बनते. Data बदलतो, thresholds बदलतात, मालक निघून जातात. शिळे docs ते वाचणाऱ्या पहिल्याच audit मध्ये अपयशी होतात.</p></div>
+        <div class="card"><h4>📉 Deploy नंतर drift किंवा पक्षपातासाठी monitoring नसणे</h4><p>एकदा validate करून निघून जाणे नंतर येणारा हळू क्षय चुकवते. Drift, concept shift, आणि उदयोन्मुख पक्षपात फक्त production मध्ये दिसतात, म्हणून देखरेख तिथेच सुरू ठेवावी लागते.</p></div>
+        <div class="card"><h4>🧭 अस्पष्ट मालकी, जबाबदार मालक नसणे</h4><p>जेव्हा "सगळे" एका model चे मालक असतात, तेव्हा कोणीच नसते. एका नावाच्या जबाबदार मालकाशिवाय आणि स्वतंत्र आव्हानाशिवाय, निर्णयांना लेखक नसतो आणि अपयशांना दुरुस्त करणारे कोणी नसते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजायचे</div>
+      <h2>Governance कसे मोजायचे</h2>
+      <p class="muted">Coverage आणि पाठपुरावा ट्रॅक करा, जेणेकरून program खरोखर चालतो की फक्त कागदावर अस्तित्वात आहे हे तुम्हाला कळेल.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते तुम्हाला काय सांगते</th><th>चांगले चिन्ह</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>inventory केलेल्या AI use cases चा %</strong></td><td>तुमच्या खऱ्या AI पाऊलखुणेपैकी किती नोंदीत आहे</td><td>जवळपास 100%: थोडे shadow AI</td></tr>
+            <tr><td><strong>risk tier नेमलेल्यांचा %</strong></td><td>inventory केलेले वापर खरोखर वर्गीकृत आहेत का</td><td>जास्त: controls जोखमीला जुळवता येतात</td></tr>
+            <tr><td><strong>deploy पूर्वी मान्यता असलेल्यांचा %</strong></td><td>approval गेट खरोखर लागू केला जातो का</td><td>जास्त: थोडी models review चुकवतात</td></tr>
+            <tr><td><strong>Audit findings बंद होण्याचा दर</strong></td><td>ओळखलेले मुद्दे फक्त नोंदवले न जाता दुरुस्त होतात का</td><td>जास्त आणि वेळेवर: loop बंद होते</td></tr>
+            <tr><td><strong>Drift / bias alerts सोडवले</strong></td><td>Deploy नंतरच्या monitoring वर किती चांगले कार्य होते</td><td>जास्त: संकेत backlog नव्हे तर दुरुस्तीकडे नेतात</td></tr>
+            <tr><td><strong>Time-to-approval</strong></td><td>प्रति use case governance ला किती वेळ लागतो</td><td>low-risk साठी कमी: प्रक्रिया सक्षम करते, अडवत नाही</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर coverage metrics जास्त पण closure आणि resolution दर कमी असतील, तर तुमचा program जोखीम नियंत्रित न करता फक्त नोंदवतो; जर प्रत्येक tier मध्ये time-to-approval जास्त असेल, तर governance प्रमाणबद्ध गेटऐवजी अडथळा बनली आहे. पोहोच आणि पाठपुरावा दोन्ही मोजा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>वास्तविक जगातील case studies</h2>
+      <p class="muted">Governance आणि MRM production-style वापरात दाखवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>1 · ग्राहकाभिमुख credit model साठी एका बँकेचे MRM</h3><div class="role">नमुना: SR 11-7 model risk management</div></div></div>
+        <p class="muted">एक retail बँक एक ML model तैनात करते जे consumer loan applications ना गुण देते - एक high-stakes, नियमित, ग्राहकाभिमुख निर्णय.</p>
+        <ul>
+          <li>Model firm च्या model inventory मध्ये नोंदवले जाते आणि ग्राहकांवरील थेट परिणामामुळे high risk म्हणून tier केले जाते.</li>
+          <li>एक स्वतंत्र validation team effective challenge लावते - परिणामांची पुनरावृत्ती, गृहितकांची stress-testing, आणि fair-lending bias tests चालवते.</li>
+          <li>एक model risk committee मान्यता देते; नकारांसह adverse-action reason codes आणि एक human-review मार्ग असतो, आणि re-validation दरवर्षी नियोजित असते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Model एका समर्थनीय audit trail सह पाठवले जाते - validation report, नोंदवलेले controls, आणि monitoring - जेणेकरून बँक कोणत्याही regulator किंवा तक्रारीला खात्रीऐवजी पुराव्याने उत्तर देऊ शकते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏛️</span><div><h3>2 · एक enterprise AI governance board आणि registry</h3><div class="role">नमुना: मोठ्या प्रमाणावर केंद्रीकृत देखरेख</div></div></div>
+        <p class="muted">एका मोठ्या enterprise मध्ये chatbots पासून forecasting पर्यंत डझनभर teams कोणत्याही सामायिक दृश्यमानता किंवा मानकांशिवाय AI उभी करत आहेत.</p>
+        <ul>
+          <li>एक cross-functional governance board (legal, risk, security, data science) एक intake प्रक्रिया आणि एकच use-case registry उभी करते.</li>
+          <li>प्रत्येक नवीन वापर tier केला जातो; minimal-risk साधने एका checklist विरुद्ध self-attest करतात तर high-risk पूर्ण review कडे escalate होतात.</li>
+          <li>धोरण <strong>NIST AI RMF</strong> आणि <strong>ISO/IEC 42001</strong> ला जोडलेले असते जेणेकरून program मान्यताप्राप्त frameworks ला मॅप होतो आणि प्रमाणित होऊ शकतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Enterprise ला एक अचूक inventory आणि सुसंगत, प्रमाणबद्ध controls मिळतात - कोणीही जबाबदार नसणाऱ्या shadow AI ऐवजी वेगवान, सुरक्षित स्वीकार सक्षम करतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🇪🇺</span><div><h3>3 · एक EU AI Act high-risk deployment</h3><div class="role">नमुना: high-risk AI साठी regulatory conformity</div></div></div>
+        <p class="muted">एक कंपनी भरतीमध्ये वापरली जाणारी एक AI system - EU AI Act अंतर्गत स्पष्टपणे <strong>high-risk</strong> म्हणून वर्गीकृत - EU बाजारात तैनात करते.</p>
+        <ul>
+          <li>System एक conformity assessment मधून जाते: risk management system, data governance, technical documentation, आणि logging हे सर्व अनिवार्य असते.</li>
+          <li>Human oversight, प्रभावित उमेदवारांना पारदर्शकता, आणि robustness/accuracy आवश्यकता रचनेत असतात आणि पुराव्यांसह असतात.</li>
+          <li>Post-market monitoring आणि incident reporting सतत चालते, authorities साठी technical documentation ताजे ठेवले जाते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> System आपली CE-style conformity आणि एक संपूर्ण technical file बाळगते, जेणेकरून ती EU बाजारात कायदेशीरपणे ठेवली जाऊ शकते आणि एका regulator च्या तपासणीला तोंड देऊ शकते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>AI governance कुठे चालली आहे</h2>
+      <p class="muted">Governance नियतकालिक कागदपत्रांपासून ML platform मध्येच अंतर्भूत असलेल्या स्वयंचलित, सतत, आणि प्रमाणित आश्वासनाकडे सरकत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚙️ Governance as code</h4><p>Policy checks, tiering, आणि model-card निर्मिती CI/CD मध्ये जोडलेली, जेणेकरून एखादे model त्याचे controls आणि documentation आपोआप पास होईपर्यंत deploy होऊ शकत नाही.</p></div>
+        <div class="card"><h4>🤖 GenAI आणि agent जोखीम</h4><p>LLMs आणि autonomous agents साठी नवीन tiers आणि controls - hallucination, prompt injection, आणि tool-use जोखीम जी classic MRM ने कधीच विचारात घेतली नाही.</p></div>
+        <div class="card"><h4>📊 सतत आश्वासन</h4><p>Real-time monitoring वार्षिक review ची जागा घेते - drift, पक्षपात, आणि incident संकेत dashboards ला पुरवतात जे regulators आणि auditors मागणीनुसार तपासू शकतात.</p></div>
+        <div class="card"><h4>📜 एकत्र येणारी मानके</h4><p>EU AI Act, NIST AI RMF, आणि ISO/IEC 42001 एका सामायिक control शब्दसंग्रहात संरेखित होत आहेत, ज्यामुळे एक program अनेक नियमांना समाधानी करू शकतो.</p></div>
+        <div class="card"><h4>🏷️ Provenance आणि प्रकटीकरण</h4><p>Content credentials, watermarking, आणि transparency notices मूलभूत बंधने बनतात जेणेकरून लोकांना कळेल की ते AI शी संवाद साधत आहेत.</p></div>
+        <div class="card"><h4>🔗 Third-party आणि supply chain</h4><p>Governance foundation models आणि vendors पर्यंत विस्तारते - तुम्ही न बनवलेल्या AI वर due-diligence, model-card मागण्या, आणि करारात्मक controls.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> AI governance म्हणजे एक संस्था AI तैनात करण्याचा हक्क कसा कमावते - प्रत्येक model समजले, नियंत्रित आणि जबाबदार आहे हे वचन देऊन नव्हे तर सिद्ध करून. जसजसे नियमन कठोर होते आणि agents वाढतात, तसतसे खरे MRM program हे production मधील AI साठी प्रवेशाची किंमत बनत आहे.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Governance संबंधित controls च्या जाळ्यात बसते. हे तिच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../pii/"><span class="ico">🔒</span><h4>PII आणि data protection</h4><p>एक model कोणता डेटा स्पर्श करू शकते आणि तो कसा compliant राहतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🚧</span><h4>Guardrails</h4><p>Model outputs मर्यादेत ठेवणारे runtime controls.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../llm-security/"><span class="ico">🛡️</span><h4>LLM security</h4><p>Govern करण्यासाठी prompt injection, गळती, आणि गैरवापर जोखीम.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals आणि LLM-as-judge</h4><p>Validation आणि monitoring ज्यावर अवलंबून असतात तो पुरावा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>AI governance आणि model risk चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · Case Studies · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

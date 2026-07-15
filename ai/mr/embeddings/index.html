@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embeddings आणि Vector Databases समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="Embeddings आणि vector databases यांचे सखोल, दृश्य मार्गदर्शक: vector म्हणजे काय, similarity metrics, ANN indexes (HNSW, IVF, PQ), hybrid search, sequence diagrams, 0-100 प्रवाह, case studies आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Embeddings आणि Vector Databases</span>
+      <h1>Embeddings आणि vector databases - संपूर्ण चित्र</h1>
+      <p class="lede">Embedding हे मजकूर, प्रतिमा किंवा कोडचे रूपांतर एका <strong>vector</strong> मध्ये करते जो अर्थ पकडतो, त्यामुळे अर्थाने सारख्या असणाऱ्या गोष्टी अवकाशात एकमेकांच्या जवळ येतात. Vector database हे त्या vectors ला <strong>index</strong> करते आणि अब्जावधी वस्तूंमध्येही मिलिसेकंदांत जवळचे शेजारी (nearest neighbors) शोधते. एकत्रितपणे ते semantic search, शिफारसी, deduplication आणि RAG यामागचे इंजिन आहेत.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Embedding models</span>
+        <span class="pill">Similarity metrics</span>
+        <span class="pill">ANN indexes</span>
+        <span class="pill">Hybrid search</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Embeddings म्हणजे काय?</h2>
+      <p class="muted"><strong>Embedding</strong> म्हणजे संख्यांची यादी - एक vector - जो एखाद्या मजकुराच्या तुकड्याचा अर्थ दर्शवतो. Embedding model इनपुटला एका सामायिक high-dimensional अवकाशात मॅप करते जिथे अंतर म्हणजे सारखेपणा दर्शवते: दोन समानार्थी वाक्ये एकमेकांच्या जवळ बसतात, असंबंधित वाक्ये दूर बसतात. <strong>Vector database</strong> हे vectors साठवते आणि "या वस्तूच्या सर्वात जवळ कोणत्या वस्तू आहेत?" या प्रश्नाचे उत्तर approximate nearest neighbor index वापरून वेगाने देते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔢</span> Embed</h4>
+          <p>Model प्रत्येक वस्तूला एका ठराविक लांबीच्या vector मध्ये रूपांतरित करते, उदाहरणार्थ 768 किंवा 1536 floats, जो तिचा अर्थ पकडतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗄️</span> Index</h4>
+          <p>Vectors एका vector database मध्ये ANN index आणि metadata सह साठवले जातात, जलद similarity search साठी तयार.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔎</span> Search</h4>
+          <p>Query त्याच पद्धतीने embed केली जाते; database एका similarity metric नुसार क्रमवारी लावून जवळचे शेजारी परत करते.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>सामान्य पर्याय</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Embedding model</strong></td><td>मजकुराला अर्थ पकडणाऱ्या vector मध्ये मॅप करते</td><td><code>text-embedding-3</code>, <code>bge</code>, <code>e5</code>, CLIP</td></tr>
+            <tr><td><strong>Dimensionality</strong></td><td>Vector ची लांबी; क्षमता आणि खर्च ठरवते</td><td>384, 768, 1024, 1536, 3072</td></tr>
+            <tr><td><strong>Similarity metric</strong></td><td>दोन vectors किती जवळ आहेत याला गुण देते</td><td>Cosine, dot product, Euclidean (L2)</td></tr>
+            <tr><td><strong>ANN index</strong></td><td>सर्व स्कॅन न करता जवळचे शेजारी शोधते</td><td>HNSW, IVF, IVF-PQ, ScaNN</td></tr>
+            <tr><td><strong>Vector store</strong></td><td>Vectors, metadata आणि index टिकवून ठेवते</td><td>pgvector, Pinecone, Weaviate, Qdrant, FAISS</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमान:</strong> embedding model ठरवते की <em>"सारखे" म्हणजे काय</em>; vector database ठरवते की <em>तुम्ही सारख्या गोष्टी किती वेगाने शोधू शकता</em>. Model चुकले तर कोणतेही index तुम्हाला वाचवू शकत नाही; model बरोबर असेल तर index हा केवळ वेग-विरुद्ध-खर्च असा तडजोडीचा प्रश्न राहतो.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Embeddings का महत्त्वाचे आहेत</h2>
+      <p class="muted">Keyword search अक्षरे जुळवते; embeddings अर्थ जुळवतात. हा एकच बदल हाताने ट्यून केलेल्या नियमांशिवाय semantic search, शिफारसी, clustering आणि प्रत्येक RAG प्रणालीचा retrieval अर्धा भाग उघडतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 अर्थ, keywords नव्हे</h4><p>"माझा password कसा रीसेट करू" हे "तुमचे login परत मिळवण्याच्या पायऱ्या" शोधून काढते, अगदी एकही समान शब्द नसतानाही, कारण vectors अर्थाने जवळ आहेत.</p></div>
+        <div class="card"><h4>🌐 सर्व गोष्टींसाठी एकच अवकाश</h4><p>मजकूर, कोड, प्रतिमा आणि ऑडिओ एकच embedding अवकाश सामायिक करू शकतात, त्यामुळे तुम्ही एकाच query ने विविध माध्यमांत आणि भाषांत शोध घेऊ शकता.</p></div>
+        <div class="card"><h4>⚡ मोठ्या प्रमाणात वेगवान</h4><p>ANN indexes लाखो किंवा अब्जावधी vectors वर nearest-neighbor queries एका अंकी मिलिसेकंदांत उत्तर देतात, brute force पेक्षा कितीतरी वेगाने.</p></div>
+        <div class="card"><h4>🧩 पुनर्वापर करता येणारा घटक</h4><p>एकदा embed करा आणि तेच vectors search, deduplication, clustering, शिफारस आणि RAG साठी पुन्हा वापरा - एकच प्रतिनिधित्व अनेक वैशिष्ट्यांना बळ देते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह embeddings चे स्पष्टीकरण</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, त्यामुळे तुम्ही कोणीही असाल तरी ते लगेच समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Embedding म्हणजे <strong>प्रत्येक कल्पनेला निर्देशांकांचा (coordinates) संच देणे</strong>. एकाच विषयाबद्दलच्या कल्पना नकाशावर एकमेकांजवळ बसतात, त्यामुळे "संबंधित नोट्स शोधा" हे "सर्वात जवळचे ठिपके शोधा" असे बनते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>याला <strong>सारखेपणा टिकवणारा hash</strong> समजा. सामान्य hash च्या उलट, जवळपास एकसारखे इनपुट जवळपास एकसारखे vectors तयार करतात, त्यामुळे तुम्ही ते index करू शकता आणि exact match ऐवजी अंतरानुसार query करू शकता.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>ही एक <strong>हुशार फाईलिंग प्रणाली</strong> आहे जिथे कागदपत्रे शीर्षकाऐवजी विषयानुसार मांडली जातात. तुम्ही तिला एक प्रश्न देता आणि ती अचूक शब्दांची गरज न ठेवता थेट योग्य कप्प्यापाशी जाते.</p></div>
+        <div class="card"><h4><span class="ico">🗺️</span> दैनंदिन आवृत्ती</h4><p>एक <strong>ग्रंथालयाचा नकाशा</strong> जिथे सारखी पुस्तके एकमेकांजवळ असतात. एकदा एक चांगले पुस्तक सापडले की संबंधित सर्व काही त्याच रांगेत हाताच्या अंतरावर असते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत ते कसे कार्य करते</h2>
+      <p class="muted">दोन टप्पे आहेत: एक <strong>offline indexing</strong> टप्पा जो तुमचा डेटा embed आणि upsert करतो, आणि एक <strong>online search</strong> टप्पा जो query embed करतो आणि approximate index द्वारे तिचे जवळचे शेजारी शोधतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📦</span> Indexing टप्पा</h4>
+          <p>मजकूर लोड करा, प्रत्येक वस्तूला vector मध्ये embed करा, आणि vector सोबत metadata store मध्ये upsert करा. Database HNSW किंवा IVF सारखी ANN रचना तयार करते जेणेकरून queries सर्व काही स्कॅन करणे टाळतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚡</span> Search टप्पा</h4>
+          <p>Query ला त्याच model ने embed करा, cosine सारखे metric निवडा, आणि top-k जवळच्या vectors साठी index मधून फिरा, हवे असल्यास tenant, भाषा किंवा तारीख यांसारख्या metadata ने फिल्टर करून.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात आर्किटेक्चर</h3>
+      <div class="diagram">
+        <div class="cap">आर्किटेक्चर - indexing ANN रचना तयार करते; queries तिला शोधतात</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Index["📦 Offline indexing"]
+        D["📄 Items"] --> EM1["🔢 Embed"]
+        EM1 --> UP["⬆️ Upsert"]
+        UP --> VDB[("🗄️ Vector DB")]
+        VDB --> ANN["🕸️ ANN index (HNSW / IVF-PQ)"]
+    end
+    subgraph Search["⚡ Online search"]
+        Q["❓ Query"] --> EM2["🔢 Embed query"]
+        EM2 --> MF["🏷️ Metadata filter"]
+        MF --> NN["🔎 ANN nearest neighbors"]
+        ANN --> NN
+        NN --> RES["✅ Top-k results + scores"]
+    end
+        </pre>
+      </div>
+
+      <h3>Python मध्ये किमान index-and-query</h3>
+      <pre><code>from openai import OpenAI
+client = OpenAI()
+
+def embed(texts):
+    r = client.embeddings.create(model="text-embedding-3-small", input=texts)
+    return [d.embedding for d in r.data]
+
+# 1. Embed documents and upsert into the vector store
+docs = ["reset your password", "cancel a subscription", "export invoices"]
+vectors = embed(docs)
+index.upsert([
+    {"id": f"doc-{i}", "values": v, "metadata": {"text": docs[i]}}
+    for i, v in enumerate(vectors)
+])
+
+# 2. Embed the query and search for nearest neighbors
+q_vec = embed(["how do I change my login credentials"])[0]
+hits = index.query(vector=q_vec, top_k=5, metric="cosine",
+                   filter={"lang": "en"})
+for h in hits.matches:
+    print(round(h.score, 3), h.metadata["text"])</code></pre>
+      <p class="muted">दोन्ही documents आणि queries एकाच model ने embed करावे लागतात जेणेकरून त्यांचे vectors एकच अवकाश सामायिक करतात. Metric (इथे cosine) जवळीक ठरवते, आणि metadata filter nearest-neighbor search चालू होण्यापूर्वी candidate संच अरुंद करते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: index तयार करणे, query-time similarity search, आणि reranking सह dense व keyword निकाल एकत्र करणारे hybrid search.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Index तयार करा: docs embed करा मग upsert करा (offline)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Src as 📄 Source items
+    participant Pipe as ⚙️ Index pipeline
+    participant Emb as 🔢 Embedding model
+    participant VDB as 🗄️ Vector DB
+
+    Src->>Pipe: Load items (docs, rows, images)
+    loop for each item
+        Pipe->>Emb: embed(item)
+        Emb-->>Pipe: vector plus metadata
+    end
+    Pipe->>VDB: upsert(vectors + metadata)
+    VDB->>VDB: Build ANN index (HNSW or IVF-PQ)
+    VDB-->>Pipe: index ready
+    Note over Pipe,VDB: Re-embed only items that changed
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Query वेळी: query embed करा, ANN search, शेजारी परत करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 Client
+    participant App as 🖥️ Search app
+    participant Emb as 🔢 Embedding model
+    participant VDB as 🗄️ Vector DB
+
+    U->>App: Send query text
+    App->>Emb: embed(query)
+    Emb-->>App: query vector
+    App->>VDB: search(vector, top_k, filter)
+    VDB->>VDB: Traverse ANN index by cosine
+    VDB-->>App: top-k neighbors + scores
+    App-->>U: Ranked results
+    Note over App,VDB: Higher ef or nprobe means better recall, more latency
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Hybrid search: dense व keyword एकत्र करा, मग rerank करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 Client
+    participant App as 🖥️ Search app
+    participant VDB as 🗄️ Vector DB
+    participant KW as 🔤 Keyword index
+    participant RR as 📊 Reranker
+
+    U->>App: Query
+    par dense path
+        App->>VDB: ANN search (semantic)
+        VDB-->>App: dense candidates
+    and keyword path
+        App->>KW: BM25 search (lexical)
+        KW-->>App: keyword candidates
+    end
+    App->>App: Fuse lists (RRF)
+    alt reranker enabled
+        App->>RR: rerank(query, fused set)
+        RR-->>App: reordered by relevance
+    else score only
+        App->>App: keep fused order
+    end
+    App-->>U: Final ranked results
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">कच्च्या मजकुरापासून जलद, फिल्टर केलेल्या semantic search पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">गोळा करा</span><h4>मजकूर गोळा करा आणि सामान्य करा</h4><p>तुम्हाला शोधण्यायोग्य हव्या असलेल्या वस्तू एकत्र करा - documents, catalog rows, प्रतिमा - आणि त्यांना सुसंगत, embed करता येण्याजोग्या घटकांमध्ये स्वच्छ करा.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Model</span><h4>Embedding model निवडा</h4><p>तुमच्या क्षेत्र, भाषा आणि माध्यमाला बसणारे model निवडा, आणि त्याची dimensionality व खर्च नोंदवा. प्रत्येक वस्तू आणि query हेच model वापरेल.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Embed</span><h4>वस्तूंचे vectors मध्ये रूपांतर करा</h4><p>प्रत्येक वस्तू model मधून चालवा जेणेकरून high-dimensional अवकाशात तिचा अर्थ पकडणारा ठराविक लांबीचा vector मिळेल.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Metric</span><h4>Similarity metric निवडा</h4><p>Cosine, dot product किंवा Euclidean निवडा. Vectors normalize करा जेणेकरून cosine व dot product जुळतील, आणि तुमचे model ज्यासाठी प्रशिक्षित झाले त्या metric शी जुळवा.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Upsert</span><h4>Vectors + metadata साठवा</h4><p>प्रत्येक vector त्याच्या metadata सह (source, tenant, भाषा, timestamp) vector database मध्ये लिहा, नंतरच्या अद्यतनांसाठी स्थिर id ने कीबद्ध करून.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Index</span><h4>ANN रचना तयार करा</h4><p>Database एक approximate index तयार करते - HNSW graph, IVF lists किंवा product quantization - जेणेकरून searches बहुतांश डेटा वगळतात.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Query</span><h4>येणारी query embed करा</h4><p>एक विनंती येते; query ला त्याच model ने embed करा जेणेकरून तिचा vector indexed वस्तूंच्या त्याच अवकाशात राहील.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Filter</span><h4>Metadata अटी लागू करा</h4><p>शेजारी गुणांकित होण्यापूर्वी वापरकर्ता, भाषा किंवा तारीख यांसारख्या गुणधर्मांनी search मर्यादित करा जेणेकरून निकाल परवानग्या आणि प्रासंगिकतेचे पालन करतील.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Search</span><h4>जवळचे शेजारी शोधा</h4><p>Top-k सर्वात जवळच्या vectors साठी ANN index मधून फिरा. उच्च recall साठी थोडी latency देण्यासाठी ef किंवा nprobe ट्यून करा.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">एकत्र करा</span><h4>Dense व keyword मिसळा, rerank करा</h4><p>Semantic आणि keyword हिट्स reciprocal rank fusion ने एकत्र करा, मग अचूकतेसाठी हवे असल्यास cross-encoder ने rerank करा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">सेवा द्या</span><h4>निकाल परत करा आणि ताजे ठेवा</h4><p>App ला क्रमवारी व गुणांकित निकाल पोहोचवा. बदललेल्या वस्तू पुन्हा embed करा, recall व latency वर लक्ष ठेवा, आणि corpus वाढल्यावर shards स्केल करा.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतांश vector-search समस्या database मुळे नव्हे तर embedding टप्प्यापर्यंत किंवा index कॉन्फिगरेशनपर्यंत मागे जातात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔀 Model विसंगती</h4><p>Documents एका model ने आणि queries दुसऱ्या model ने embed करणे, किंवा सर्व काही पुन्हा embed न करता model अपग्रेड करणे, vectors ला विसंगत अवकाशांत ठेवते आणि search गुणवत्ता कोसळते.</p></div>
+        <div class="card"><h4>📐 चुकीचे metric</h4><p>Unnormalized vectors वर dot product वापरल्याने magnitude अर्थावर वर्चस्व गाजवते, आणि index व query दरम्यान metrics मिसळल्याने शांतपणे चुकीच्या क्रमवाऱ्या मिळतात. Model जे metric अपेक्षित करते त्याच्याशी जुळवा.</p></div>
+        <div class="card"><h4>🎚️ अति-ट्यून केलेले ANN</h4><p>ef किंवा nprobe सारखे recall parameters खूप कमी केल्याने latency वाचते पण संबंधित शेजारी गळतात; खूप जास्त केल्याने compute वाया जाते. Shipping पूर्वी exact search विरुद्ध recall मोजा.</p></div>
+        <div class="card"><h4>🏷️ Metadata filters दुर्लक्षित करणे</h4><p>Tenant किंवा परवानगी filters शिवाय search केल्याने वापरकर्त्यांमध्ये डेटा गळतो आणि निकाल असंबंधित वस्तूंनी भरतात. आधी filter करा, मग similarity नुसार क्रम लावा.</p></div>
+        <div class="card"><h4>🕰️ शिळे index</h4><p>बदललेल्या वस्तू पुन्हा embed आणि upsert करायचे विसरल्याने कालबाह्य vectors दिले जातात, त्यामुळे निकाल खऱ्या मजकुरापासून भरकटतात. Index ला जिवंत, versioned मालमत्ता समजा.</p></div>
+        <div class="card"><h4>💸 Dimensionality व खर्चाकडे अंधत्व</h4><p>Default म्हणून सर्वात मोठा vector आकार घेतल्याने storage, memory आणि query खर्च थोड्या गुणवत्ता वाढीसह गुणाकाराने वाढतो. Dimensions योग्य आकाराचे ठेवा आणि corpus मोठा असल्यास quantization वापरा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजायचे</div>
+      <h2>Vector search कसे मोजायचे</h2>
+      <p class="muted">Retrieval गुणवत्ता आणि प्रणालीची कार्यक्षमता वेगवेगळी तपासा, जेणेकरून model, index की hardware दुरुस्त करायचे हे तुम्हाला कळेल.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>ते तुम्हाला काय सांगते</th><th>चांगले लक्षण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Recall@k vs exact</strong></td><td>ANN index किती खरे nearest neighbors परत करते</td><td>उच्च: approximation मुळे थोडे नुकसान</td></tr>
+            <tr><td><strong>Precision / MRR / nDCG</strong></td><td>वरचे निकाल खरोखर संबंधित आणि व्यवस्थित क्रमबद्ध आहेत का</td><td>उच्च: वापरकर्त्यांना योग्य वस्तू आधी दिसतात</td></tr>
+            <tr><td><strong>Query latency (p95)</strong></td><td>खऱ्या load खाली tail प्रतिसाद वेळ</td><td>तुमच्या SLA मध्ये कमी आणि स्थिर</td></tr>
+            <tr><td><strong>Queries per second</strong></td><td>Shard किंवा node टिकवणारा throughput</td><td>शिखर वाहतूक हेडरूमसह पूर्ण करते</td></tr>
+            <tr><td><strong>Memory व storage / vector</strong></td><td>Dimensionality व quantization ने चालवलेला ठसा</td><td>PQ compression नंतर बजेटमध्ये बसते</td></tr>
+            <tr><td><strong>Index build / upsert वेळ</strong></td><td>Index मध्ये वस्तू जोडण्याचा किंवा ताज्या करण्याचा खर्च</td><td>तुमच्या अद्यतन दरासाठी पुरेसे जलद</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> exact search विरुद्ध recall उच्च असूनही वापरकर्ते तक्रार करत असतील, तर समस्या embedding model ची आहे, index ची नव्हे; recall कमी असेल, तर model ला हात लावण्यापूर्वी ef किंवा nprobe वाढवा किंवा index पुन्हा तयार करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>प्रत्यक्ष जगातील उदाहरणे</h2>
+      <p class="muted">Production-शैलीच्या वापरात embeddings आणि vector search दाखवणारी तीन प्रातिनिधिक प्रतिमाने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛍️</span><div><h3>1 · Product catalog वर semantic search</h3><div class="role">प्रतिमान: metadata filters सह अर्थ-आधारित retrieval</div></div></div>
+        <p class="muted">एका e-commerce संघाला हवे आहे की खरेदीदारांनी मोठ्या बहुभाषिक catalog मध्ये अचूक keywords नव्हे तर हेतूनुसार उत्पादने शोधावीत.</p>
+        <ul>
+          <li>Product titles आणि descriptions embed केली जातात आणि HNSW index असलेल्या vector store मध्ये upsert केली जातात.</li>
+          <li>Category, price आणि availability वरील metadata filters nearest-neighbor क्रमवारीपूर्वी search अरुंद करतात.</li>
+          <li>Hybrid search keyword matching जोडते जेणेकरून अचूक brand आणि model नावे तरीही योग्य क्रमांकित होतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> "hiking साठी waterproof jacket" योग्य साहित्य समोर आणते अगदी समान शब्द नसतानाही, शुद्ध keyword search पेक्षा प्रासंगिकता आणि conversion वाढवते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧬</span><div><h3>2 · जवळपास-डुप्लिकेट शोध आणि clustering</h3><div class="role">प्रतिमान: embeddings वर similarity थ्रेशोल्ड</div></div></div>
+        <p class="muted">एका content platform ला मोठ्या प्रमाणात पुन्हा पोस्ट केलेले लेख, spam प्रकार आणि जवळपास-एकसारखी support तिकिटे पकडायची आहेत.</p>
+        <ul>
+          <li>प्रत्येक वस्तू एकदा embed केली जाते; नव्या वस्तू त्यांच्या nearest neighbors साठी index विरुद्ध query केल्या जातात.</li>
+          <li>Cosine-similarity थ्रेशोल्ड जवळपास-डुप्लिकेट्स ध्वजांकित करते, तर clustering एकाच मजकुराचे प्रकार गटबद्ध करते.</li>
+          <li>Product quantization memory कमी ठेवते जेणेकरून अब्जावधी vectors माफक hardware वर शोधण्यायोग्य राहतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> डुप्लिकेट्स आणि spam जवळपास रिअल टाइममध्ये पकडले जातात, आणि तिकिटे आपोआप गटबद्ध होतात, ठिसूळ नियमांशिवाय manual triage कमी करतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📚</span><div><h3>3 · RAG चा कणा म्हणून embeddings</h3><div class="role">प्रतिमान: grounded generation साठी retrieval स्तर</div></div></div>
+        <p class="muted">एक knowledge संघ अंतर्गत docs मधून उत्तर देणारा assistant तयार करतो, आणि embeddings retrieval पायरीला बळ देतात.</p>
+        <ul>
+          <li>Document chunks embed व indexed केले जातात; प्रत्येक query embed केली जाते आणि ANN search ने जुळवली जाते.</li>
+          <li>Access-control metadata filters retrieval करतात जेणेकरून वापरकर्ते फक्त त्यांना वाचण्याची परवानगी असलेले chunks पाहतात.</li>
+          <li>बदललेली docs लिहिताना पुन्हा embed केली जातात, index आणि म्हणून उत्तरे अद्ययावत ठेवतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> LLM खऱ्या, अद्ययावत, परवानगीयुक्त context मधून उत्तर देते, कारण embedding-चालित retriever सातत्याने योग्य chunks समोर आणतो.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>Embeddings कोणत्या दिशेने जात आहेत</h2>
+      <p class="muted">Embedding models आणि vector infrastructure वेगाने प्रगल्भ होत आहेत, search ला स्वस्त, अधिक समृद्ध आणि अधिक जुळवून घेणारे बनवत आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📏 जुळवून घेणारी dimensions</h4><p>Matryoshka-शैलीची embeddings एका model ला असे vectors उत्सर्जित करू देतात जे तुम्ही truncate करू शकता, corpus पुन्हा embed न करता अचूकता विरुद्ध खर्च अशी तडजोड करत.</p></div>
+        <div class="card"><h4>🖼️ Default नेच multimodal</h4><p>सामायिक text, image, audio आणि video अवकाश cross-modal search - text ने query, image परत मिळवा - एक प्रथम-श्रेणी वैशिष्ट्य बनवतात.</p></div>
+        <div class="card"><h4>🗜️ अधिक हुशार quantization</h4><p>Binary आणि product quantization vectors ला परिमाणाच्या पातळ्यांनी लहान करतात तरीही recall उच्च ठेवतात, अब्ज-स्तरीय search परवडणारे बनवतात.</p></div>
+        <div class="card"><h4>🔗 Hybrid मानक म्हणून</h4><p>Rank fusion सह dense अधिक lexical retrieval default बनते, जे semantic recall आणि exact-term precision दोन्ही थेट देते.</p></div>
+        <div class="card"><h4>🧮 Database मध्येच vectors</h4><p>Postgres सारख्या सामान्य-हेतू databases मधील native vector types search infrastructure आणि तुमचा primary store यांतील रेषा अस्पष्ट करतात.</p></div>
+        <div class="card"><h4>🎯 Late-interaction retrieval</h4><p>ColBERT सारखी token-स्तरीय models सूक्ष्म matching ने rerank करतात, जलद ANN recall आणि अचूक प्रासंगिकता यांतील दरी कमी करतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> embeddings अर्थाला भूमितीत रूपांतरित करतात आणि vector databases त्या भूमितीला मोठ्या प्रमाणात शोधण्यायोग्य बनवतात. Models स्वस्त होत जातात आणि indexes हुशार होत जातात तसतसे similarity search जवळपास प्रत्येक AI उत्पादनात एक default घटक बनते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Embeddings संबंधित कौशल्यांच्या जाळ्याच्या केंद्रस्थानी असतात. ही त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../rag/"><span class="ico">📚</span><h4>Retrieval-Augmented Generation</h4><p>जिथे embeddings retrieval पायरीला बळ देतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../fine-tuning/"><span class="ico">🎛️</span><h4>Fine-tuning</h4><p>ज्ञान model बाहेर ठेवण्याला पर्याय.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>मिळवलेल्या शेजाऱ्यांना grounded prompts मध्ये रूपांतरित करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../edge-inference/"><span class="ico">📶</span><h4>Edge inference</h4><p>Embedding आणि search वापरकर्त्याच्या जवळ चालवणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>Embeddings आणि vector databases चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · Case Studies · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

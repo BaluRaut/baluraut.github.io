@@ -9,28 +9,62 @@
   var root = document.documentElement;
   var LS_FONT = 'aiFontScale', LS_THEME = 'aiTheme';
 
+  /* ---------- Detect language from the URL (/ai/mr/... = Marathi) ---------- */
+  var path = location.pathname.replace(/index\.html$/, '');
+  if (path.charAt(path.length - 1) !== '/') path += '/';
+  var onAi = path.indexOf('/ai/') === 0;
+  var isMr = path.indexOf('/ai/mr/') === 0;
+  var T = isMr ? {
+    reading: 'वाचन सेटिंग्ज', size: 'अक्षर आकार', theme: 'रंगसंगती',
+    light: 'उजळ', dark: 'गडद', sepia: 'सेपिया', contrast: 'ठळक', reset: 'रीसेट'
+  } : {
+    reading: 'Reading settings', size: 'Text size', theme: 'Color theme',
+    light: 'Light', dark: 'Dark', sepia: 'Sepia', contrast: 'Contrast', reset: 'Reset'
+  };
+
   /* ---------- Inject reading widget ---------- */
   var fab = document.createElement('div');
   fab.className = 'a11y-fab';
   fab.innerHTML =
-    '<div class="a11y-panel" id="a11yPanel" role="dialog" aria-label="Reading settings">' +
-      '<h5>Text size</h5>' +
+    '<div class="a11y-panel" id="a11yPanel" role="dialog" aria-label="' + T.reading + '">' +
+      '<h5>' + T.size + '</h5>' +
       '<div class="a11y-row">' +
         '<button class="a11y-btn" id="fontMinus" aria-label="Decrease text size">A&minus;</button>' +
         '<span class="a11y-size" id="fontVal">100%</span>' +
         '<button class="a11y-btn" id="fontPlus" aria-label="Increase text size">A+</button>' +
       '</div>' +
-      '<h5>Color theme</h5>' +
+      '<h5>' + T.theme + '</h5>' +
       '<div class="a11y-themes">' +
-        '<button class="a11y-theme" data-set-theme="light"><span class="a11y-swatch" style="background:#ffffff"></span>Light</button>' +
-        '<button class="a11y-theme" data-set-theme="dark"><span class="a11y-swatch" style="background:#141a24"></span>Dark</button>' +
-        '<button class="a11y-theme" data-set-theme="sepia"><span class="a11y-swatch" style="background:#f4ecd8"></span>Sepia</button>' +
-        '<button class="a11y-theme" data-set-theme="contrast"><span class="a11y-swatch" style="background:#000;border-color:#fff"></span>Contrast</button>' +
+        '<button class="a11y-theme" data-set-theme="light"><span class="a11y-swatch" style="background:#ffffff"></span>' + T.light + '</button>' +
+        '<button class="a11y-theme" data-set-theme="dark"><span class="a11y-swatch" style="background:#141a24"></span>' + T.dark + '</button>' +
+        '<button class="a11y-theme" data-set-theme="sepia"><span class="a11y-swatch" style="background:#f4ecd8"></span>' + T.sepia + '</button>' +
+        '<button class="a11y-theme" data-set-theme="contrast"><span class="a11y-swatch" style="background:#000;border-color:#fff"></span>' + T.contrast + '</button>' +
       '</div>' +
-      '<div class="a11y-row" style="margin-bottom:0"><button class="a11y-btn" id="a11yReset">Reset</button></div>' +
+      '<div class="a11y-row" style="margin-bottom:0"><button class="a11y-btn" id="a11yReset">' + T.reset + '</button></div>' +
     '</div>' +
-    '<button class="a11y-toggle" id="a11yToggle" aria-label="Open reading settings" aria-expanded="false" title="Reading settings">Aa</button>';
+    '<button class="a11y-toggle" id="a11yToggle" aria-label="' + T.reading + '" aria-expanded="false" title="' + T.reading + '">Aa</button>';
   document.body.appendChild(fab);
+
+  /* ---------- Inject language switcher (English default / Marathi) into the nav ---------- */
+  if (onAi) {
+    var navWrap = document.querySelector('nav .wrap');
+    if (navWrap) {
+      var enPath = isMr ? path.replace('/ai/mr/', '/ai/') : path;
+      var mrPath = isMr ? path : path.replace('/ai/', '/ai/mr/');
+      var ls = document.createElement('div');
+      ls.className = 'lang-switch';
+      ls.innerHTML =
+        '<button class="lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">🌐 <span>' + (isMr ? 'मराठी' : 'English') + '</span> ▾</button>' +
+        '<div class="lang-menu" id="langMenu">' +
+          '<a href="' + enPath + '"' + (!isMr ? ' class="active"' : '') + '>English</a>' +
+          '<a href="' + mrPath + '"' + (isMr ? ' class="active"' : '') + '>मराठी</a>' +
+        '</div>';
+      navWrap.appendChild(ls);
+      var lb = ls.querySelector('#langBtn'), lm = ls.querySelector('#langMenu');
+      lb.addEventListener('click', function (e) { e.stopPropagation(); var o = lm.classList.toggle('open'); lb.setAttribute('aria-expanded', o ? 'true' : 'false'); });
+      document.addEventListener('click', function (e) { if (!e.target.closest('.lang-switch')) { lm.classList.remove('open'); lb.setAttribute('aria-expanded', 'false'); } });
+    }
+  }
 
   /* ---------- Theme ---------- */
   function markActive(theme) {

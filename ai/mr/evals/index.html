@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evals आणि LLM-as-Judge समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="LLM evals आणि LLM-as-judge यांचे सखोल, दृश्य मार्गदर्शन: eval datasets, deterministic आणि semantic metrics, judge rubrics आणि त्यांचे biases, offline विरुद्ध online evals, CI regression gates, sequence diagrams, 0-100 प्रवाह, case studies आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Evals आणि LLM-as-Judge</span>
+      <h1>LLM app खरोखर कसे मोजायचे - evals आणि judge</h1>
+      <p class="lede">LLM आउटपुट non-deterministic असतात आणि क्वचितच एकच बरोबर उत्तर असते, त्यामुळे तुम्ही ते जुन्या पद्धतीने unit-test करू शकत नाही. <strong>Evals</strong> अंदाजांच्या जागी पुरावा आणतात: काळजीपूर्वक निवडलेले datasets, deterministic आणि semantic scorers, आणि एक <strong>LLM-as-judge</strong> जो मुक्त-स्वरूप मजकुराला rubric विरुद्ध गुण देतो - माणसांविरुद्ध calibrate केलेला आणि CI मध्ये जोडलेला जेणेकरून गुणवत्ता कधीही गुपचूप घसरणार नाही.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Golden datasets</span>
+        <span class="pill">LLM-as-judge</span>
+        <span class="pill">Faithfulness</span>
+        <span class="pill">CI regression gates</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>LLM evals म्हणजे काय?</h2>
+      <p class="muted">एक <strong>eval</strong> म्हणजे LLM system एखादे काम किती चांगल्या प्रकारे करते याचे पुनरावर्ती मापन: ते एका निश्चित dataset वर चालवा, प्रत्येक आउटपुटला एक किंवा अधिक graders नी गुण द्या, आणि तुम्ही कालांतराने मागोवा घेऊ शकाल अशा metrics मध्ये एकत्रित करा. आउटपुट खुल्या स्वरूपाचे असल्याने, गुण देताना अनेकदा <em>deterministic checks</em> (exact match, JSON validity) यांचे <em>semantic</em> आणि <em>LLM-as-judge</em> grading सोबत मिश्रण केले जाते. उद्दिष्ट कोणत्याही test suite प्रमाणेच आहे - regressions पकडणे आणि सुधारणा सिद्ध करणे - पण ज्या मजकुराला एकच बरोबर string नाही त्याला अनुकूल केलेले.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🗂️</span> Dataset (प्रश्न)</h4>
+          <p>काळजीपूर्वक निवडलेले inputs सोबत ऐच्छिक references किंवा अपेक्षित वर्तन - golden examples, नमुना घेतलेली real traffic, आणि हाताने तयार केलेली edge cases.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📏</span> Scorers (graders)</h4>
+          <p>आउटपुटला गुणात रूपांतरित करणारी functions: deterministic नियम, semantic similarity, task-specific metrics, किंवा rubric असलेला LLM judge.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📊</span> Report (निकाल)</h4>
+          <p>प्रत्येक slice नुसार एकत्रित केलेले metrics, baseline शी तुलना केलेले, जेणेकरून तुम्ही pass rate, faithfulness, आणि गुणवत्ता कुठे वर किंवा खाली गेली हे पाहू शकता.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>सामान्य पर्याय</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Eval dataset</strong></td><td>System विरुद्ध चालवण्यासाठी निश्चित inputs (+ references)</td><td>Golden set, नमुना traffic, synthetic edge cases</td></tr>
+            <tr><td><strong>Deterministic scorer</strong></td><td>नियम-आधारित pass/fail, स्वस्त आणि अचूक</td><td>Exact match, regex, <code>JSON.parse</code>, schema valid</td></tr>
+            <tr><td><strong>Semantic scorer</strong></td><td>Reference शी अर्थ-पातळीवरील जवळीक मोजते</td><td>Embedding cosine, BERTScore, ROUGE</td></tr>
+            <tr><td><strong>Task-specific scorer</strong></td><td>कामाशी निगडित metrics (विशेषतः RAG)</td><td>Faithfulness, answer-relevance, context recall</td></tr>
+            <tr><td><strong>LLM-as-judge</strong></td><td>Rubric किंवा reference सह खुल्या-स्वरूप मजकुराला गुण देतो</td><td>Pairwise, reference-free, reference-based</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> एक eval म्हणजे <em>dataset × scorer</em> ही जोडी. Dataset ठरवते तुम्ही <em>काय</em> मोजता; scorer ठरवते <em>कसे</em>. बहुतेक अपयशांचे मूळ कमकुवत dataset किंवा uncalibrated judge मध्ये असते - मॉडेलमध्ये नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Evals का अस्तित्वात आहेत</h2>
+      <p class="muted">जे तुम्ही मोजू शकत नाही ते तुम्ही ship करू शकत नाही. LLM वर्तन प्रत्येक prompt बदलासोबत, model upgrade सोबत, किंवा retrieval बदलासोबत बदलते - आणि ते गुपचूप बदलते. Evals "बरे वाटते" चे रूपांतर एका आकड्यात करतात, आणि कालच्या fix ला उद्याच्या regression होण्यापासून थांबवतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎲 Non-determinism हाताळा</h4><p>तोच prompt प्रत्येक वेळी वेगळा मजकूर देतो. Evals एका dataset वर सरासरी काढतात जेणेकरून तुम्ही distribution मोजता, एकच नशीबवान (किंवा दुर्दैवी) नमुना नाही.</p></div>
+        <div class="card"><h4>🌫️ एकच बरोबर उत्तर नाही</h4><p>अनेक कामांना अनेक स्वीकार्य आउटपुट असतात. Rubric-आधारित judging एकच अचूक string मागण्याऐवजी <em>गुणवत्ता</em> आणि <em>correctness properties</em> ला गुण देते.</p></div>
+        <div class="card"><h4>🛡️ Regressions लवकर पकडा</h4><p>एका case ला मदत करणारा prompt बदल दहा इतरांना बिघडवू शकतो. CI मध्ये evals चालवल्याने regression users पर्यंत पोहोचण्याआधीच अडवली जाते.</p></div>
+        <div class="card"><h4>🚀 आत्मविश्वासाने ship करा</h4><p>एकाच dataset वर candidate आवृत्त्यांची तुलना केल्याने एक prompt, model, किंवा retriever ला दुसऱ्यापेक्षा पुढे नेण्याचे बचावयोग्य कारण मिळते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांसह evals समजून घेणे</h2>
+      <p class="muted">एकच कल्पना, ती चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ते पटकन समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एक eval म्हणजे <strong>answer key आणि rubric सह गुण दिलेली परीक्षा</strong>. तुम्ही एका निबंधाचा न्याय अंतःप्रेरणेने करत नाही; तुम्ही प्रत्येक विद्यार्थ्याला त्याच प्रश्नांविरुद्ध चालवता आणि पूर्ण, प्रामाणिक गुणांसाठी प्रत्येकाला स्पष्ट निकषांविरुद्ध तपासता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे <strong>गद्यासाठी test suite</strong> आहे. Deterministic checks म्हणजे तुमची assertions; LLM-as-judge म्हणजे ज्या मजकुराला एकच बरोबर string नाही त्यासाठी fuzzy matcher. ते CI मध्ये जोडा आणि कोणत्याही तुटलेल्या test प्रमाणे regression build अपयशी करते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>scorecard असलेल्या QA reviewer</strong> चा विचार करा. काही calls केवळ भावनेने तपासण्याऐवजी, reviewer प्रातिनिधिक संच नमुना घेतो आणि प्रत्येकाला त्याच गुणवत्ता मानकाविरुद्ध गुण देतो, जेणेकरून निर्णय पुराव्यावर आधारित असतात, किस्स्यांवर नाही.</p></div>
+        <div class="card"><h4><span class="ico">👨‍🍳</span> रोजच्या जीवनातील आवृत्ती</h4><p>rubric card असलेल्या <strong>पाककला स्पर्धेच्या परीक्षकासारखे</strong>: चव, सादरीकरण, तंत्र. Rubric प्रत्येक पदार्थाला त्याच पद्धतीने गुण देत राहते, त्यामुळे विजेता फक्त शेवटी plate केलेला किंवा सर्वात मोठा भाग वाढणारा नसतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>Evals आतून कसे काम करतात</h2>
+      <p class="muted">Evals दोन परिस्थितींमध्ये चालतात: <strong>offline</strong> काळजीपूर्वक निवडलेल्या dataset विरुद्ध (ship करण्याआधी), आणि <strong>online</strong> नमुना घेतलेल्या production traffic विरुद्ध (ship केल्यानंतर). दोन्ही त्याच scorers ला feed करतात; फक्त inputs चा स्रोत वेगळा असतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧪</span> Offline eval harness</h4>
+          <p>एक निश्चित dataset घ्या, प्रत्येक row वर तपासाधीन system चालवा, प्रत्येक आउटपुटला गुण द्या, आणि एकत्रित metrics ची साठवलेल्या baseline शी तुलना करा. Deterministic, पुनरुत्पादनीय, CI मध्ये gate करण्यायोग्य.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📡</span> Online (production) eval</h4>
+          <p>Live traffic नमुना घ्या, real outputs वर reference-free judges आणि heuristics चालवा, आणि dashboards वर metrics चा मागोवा घ्या. तुमच्या dataset ने कधीही अपेक्षा न केलेली drift आणि edge cases पकडते.</p>
+        </div>
+      </div>
+
+      <h3>Harness ची रचना एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">रचना - एक dataset तपासाधीन system मधून scorers आणि report मध्ये वाहते</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Data["🗂️ Eval dataset"]
+        G["⭐ Golden set"] --> DS[("📚 Cases + refs")]
+        T["📡 Sampled traffic"] --> DS
+        E["🧨 Edge cases"] --> DS
+    end
+    subgraph Run["🧪 Eval harness"]
+        DS --> SUT["🤖 System under test"]
+        SUT --> OUT["📝 Candidate outputs"]
+        OUT --> DET["📏 Deterministic scorers"]
+        OUT --> SEM["🧬 Semantic scorers"]
+        OUT --> JUD["⚖️ LLM-as-judge"]
+        DET --> AGG["📊 Aggregate + slice"]
+        SEM --> AGG
+        JUD --> AGG
+    end
+    AGG --> REP["📈 Report vs baseline"]
+        </pre>
+      </div>
+
+      <h3>Judge rubric prompt (reference-free scoring)</h3>
+      <pre><code>You are a strict grader. Score the ANSWER on each criterion
+from 1-5. Judge only what is written. Do NOT reward length.
+Return JSON only.
+
+Criteria:
+  - faithfulness:  every claim is supported by CONTEXT (no invented facts)
+  - relevance:     the answer addresses the QUESTION directly
+  - completeness:  no essential part of the question is ignored
+
+CONTEXT:  {{context}}
+QUESTION: {{question}}
+ANSWER:   {{answer}}
+
+Respond exactly as:
+{"faithfulness": n, "relevance": n, "completeness": n,
+ "rationale": "one sentence"}</code></pre>
+      <p class="muted">guardrails लक्षात घ्या: एक निश्चित scale, verbosity bias शी लढण्यासाठी "do not reward length", deterministic parsing साठी JSON-only output, आणि scores auditable असावेत यासाठी एक अनिवार्य rationale. एखादा judge तेव्हाच विश्वासार्ह असतो जेव्हा त्याचे scores human labels विरुद्ध <em>calibrated</em> असतात.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एक offline harness run, एक LLM-as-judge जो rubric विरुद्ध एका आउटपुटला गुण देतो, आणि एक CI pipeline जो regression वर deploy अडवतो.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Offline eval run: dataset → system under test → scorer → report</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 👤 Engineer
+    participant Harn as 🧪 Eval harness
+    participant DS as 🗂️ Dataset
+    participant SUT as 🤖 System under test
+    participant Scr as 📏 Scorers
+    participant Rep as 📈 Report
+
+    Dev->>Harn: run eval(suite, baseline)
+    Harn->>DS: load cases + references
+    DS-->>Harn: N test rows
+    loop for each case
+        Harn->>SUT: run(input)
+        SUT-->>Harn: candidate output
+        Harn->>Scr: score(output, reference)
+        Scr-->>Harn: metric values
+    end
+    Harn->>Rep: aggregate + diff vs baseline
+    Rep-->>Dev: pass rate, deltas, failures
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - LLM-as-judge: एका candidate ला rubric आणि reference विरुद्ध गुण द्या</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Harn as 🧪 Harness
+    participant Prompt as 🧩 Rubric builder
+    participant Judge as ⚖️ Judge LLM
+    participant Cal as 🎚️ Calibration
+    participant Store as 🗄️ Results
+
+    Harn->>Prompt: build(question, answer, reference, rubric)
+    Prompt-->>Harn: judge prompt
+    Harn->>Judge: grade(prompt)
+    Judge-->>Harn: scores + rationale (JSON)
+    Note over Harn,Judge: swap A/B order to check position bias
+    Harn->>Cal: compare to human labels
+    alt agreement below threshold
+        Cal-->>Harn: recalibrate rubric
+    else judge trusted
+        Cal-->>Harn: accept scores
+    end
+    Harn->>Store: persist scores + rationale
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - CI gate: PR वर evals चालवा आणि regression वर deploy अडवा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 👤 Developer
+    participant CI as 🔁 CI pipeline
+    participant Harn as 🧪 Eval harness
+    participant Base as 📊 Baseline metrics
+    participant Deploy as 🚀 Deploy
+
+    Dev->>CI: open pull request
+    CI->>Harn: run eval suite on PR build
+    Harn-->>CI: candidate metrics
+    CI->>Base: compare against threshold
+    alt metrics regressed
+        Base-->>CI: fail (delta below gate)
+        CI-->>Dev: block merge + show diff
+    else metrics hold or improve
+        Base-->>CI: pass
+        CI->>Deploy: promote build
+        Deploy-->>Dev: shipped
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">"ते चांगले आहे की नाही याची आम्हाला काहीच कल्पना नाही" पासून प्रत्येक deploy रक्षणारा calibrated judge पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">व्याख्या</span><h4>"चांगले" म्हणजे काय ते ठरवा</h4><p>काम आणि महत्त्वाच्या गुणांची नोंद करा - correctness, faithfulness, tone, safety. अस्पष्ट उद्दिष्टे निरुपयोगी evals निर्माण करतात.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Dataset</span><h4>Golden set तयार करा</h4><p>अपेक्षित उत्तरे किंवा वर्तनांसह प्रातिनिधिक inputs काळजीपूर्वक निवडा. लहानपासून सुरुवात करा (30–100 हाताने-तपासलेली cases) पण ती महत्त्वाची असू द्या.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">समृद्ध करा</span><h4>Real traffic आणि edge cases जोडा</h4><p>वास्तववादी distribution साठी production logs नमुना घ्या, नंतर golden set चुकवते अशा adversarial आणि दुर्मिळ cases हाताने तयार करा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Scorers</span><h4>प्रत्येक case साठी metrics निवडा</h4><p>जिथे exact/JSON उत्तर आहे तिथे deterministic checks वापरा; paraphrase साठी semantic similarity; खुल्या-स्वरूप गुणवत्तेसाठी judge.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Rubric</span><h4>Judge rubric लिहा</h4><p>स्पष्ट निकष आणि scoring scale ठरवा, length rewards ला मनाई करा, आणि auditability साठी JSON सोबत rationale ची मागणी करा.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Calibrate</span><h4>Judge ला माणसांशी जुळवा</h4><p>माणसांना एक slice label करू द्या, नंतर judge–human agreement मोजा. ते correlate होईपर्यंत rubric tune करा; अन्यथा judge खोटे बोलतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Debias</span><h4>ज्ञात biases निष्प्रभ करा</h4><p>Position bias टाळण्यासाठी A/B क्रम बदला, length cap करा किंवा normalize करा, आणि वेगळ्या model family ने judge करून self-preference टाळा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Baseline</span><h4>सध्याची system चालवा आणि नोंदवा</h4><p>प्रत्येक slice साठी baseline metrics मिळवण्यासाठी संपूर्ण suite चालवा. हा गोठवलेला snapshot म्हणजे प्रत्येक भावी बदल ज्याविरुद्ध मोजला जातो तो.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Gate</span><h4>Evals ला CI मध्ये जोडा</h4><p>प्रत्येक PR वर suite चालवा आणि जेव्हा मुख्य metrics baseline threshold खाली येतात तेव्हा build अपयशी करा - एक कठोर regression gate.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Monitor</span><h4>Online production evals जोडा</h4><p>Live outputs नमुना घ्या, reference-free judges आणि heuristics चालवा, आणि offline set पकडू शकत नाही अशी drift पकडण्यासाठी trends dashboard करा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पुनरावृत्ती</span><h4>अपयशे परत feed करा</h4><p>खरी अपयशे dataset मध्ये पुढे न्या, rubrics परिष्कृत करा, आणि पुन्हा baseline करा. Eval suite चे मूल्य प्रत्येक चक्रासोबत वाढत जाते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">बहुतेक eval अपयशे dataset आणि judge मुळे येतात, तपासाधीन मॉडेलमुळे नाही. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔬 लहान, अप्रातिनिधिक संच</h4><p>निवडक दहा cases real traffic ला व्यापत नाहीत. खेळण्यातल्या संचावरील उच्च pass rate काहीच सिद्ध करत नाही; तुम्ही कधीही नमुना न घेतलेली अपयशे तीच users पर्यंत पोहोचतात.</p></div>
+        <div class="card"><h4>🎭 Judge bias</h4><p>Judges गुपचूप पहिल्या पर्यायाला (position), लांब उत्तराला (verbosity), आणि त्यांच्या स्वतःच्या model family च्या outputs ला (self-preference) पसंती देतात. न बदललेले, न normalize केलेले judging ते biases थेट तुमच्या scores मध्ये भाजून टाकते.</p></div>
+        <div class="card"><h4>🎚️ Uncalibrated judge</h4><p>माणसांविरुद्ध कोणीही न तपासलेला judge म्हणजे rationale असलेला random number generator. मोजलेल्या judge-human agreement शिवाय, "4/5" चा काही अर्थ आहे की नाही हे तुम्हाला कळत नाही.</p></div>
+        <div class="card"><h4>🎯 एकाच metric ला गेम करणे</h4><p>एका एकत्रित आकड्याला optimize केल्याने Goodhart's law ला आमंत्रण मिळते: system खरी गुणवत्ता घसरत असतानाही metric जिंकायला शिकते. एक score तो ज्या प्रत्येक slice वर सरासरी काढतो त्यातील regressions लपवतो.</p></div>
+        <div class="card"><h4>💧 Data leakage</h4><p>जेव्हा eval cases prompt, few-shot examples, किंवा fine-tuning data मध्ये गळतात, तेव्हा system ला तिने आधीच पाहिलेल्या उत्तरांवर गुण दिले जातात. Scores गगनाला भिडतात आणि generalization हा एक भ्रम असतो.</p></div>
+        <div class="card"><h4>🕰️ गोठवलेला eval set</h4><p>जो eval कधीही नवीन failure modes शोषून घेत नाही तो हळूहळू वास्तव मोजणे थांबवतो. जर production आश्चर्ये dataset मध्ये परत वाहत नसतील, तर suite कालच्या bugs चे रक्षण करते आणि आजचे चुकवते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजायचे</div>
+      <h2>Eval गुणवत्ता कशी मोजायची</h2>
+      <p class="muted">तुमची eval suite स्वतःच एक अशी system आहे जिला मोजण्याची गरज आहे. हे संकेत तुम्हाला सांगतात की तिच्या निकालांवर विश्वास ठेवायचा की नाही.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>ते तुम्हाला काय सांगते</th><th>चांगले चिन्ह</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Judge-human agreement</strong></td><td>Judge किती जवळून human labels चा मागोवा घेतो (correlation / kappa)</td><td>उच्च: judge scores वर विश्वास ठेवता येतो</td></tr>
+            <tr><td><strong>Failure-mode coverage</strong></td><td>ज्ञात failure प्रकारांपैकी किती वाटा dataset प्रत्यक्ष तपासतो</td><td>उच्च: थोडे blind spots शिल्लक</td></tr>
+            <tr><td><strong>Pass rate / score distribution</strong></td><td>निकालांचा आकार, फक्त सरासरी नाही, slices वर</td><td>निरोगी पसरण, कोणतेही लपलेले cliffs नाहीत</td></tr>
+            <tr><td><strong>Variance across runs</strong></td><td>तोच input चा score runs दरम्यान किती हलतो</td><td>कमी: निकाल स्थिर आणि पुनरुत्पादनीय</td></tr>
+            <tr><td><strong>Regression catch rate</strong></td><td>Release आधी suite अडवते अशा खऱ्या regressions चे प्रमाण</td><td>उच्च: gate खरोखर users चे रक्षण करते</td></tr>
+            <tr><td><strong>Eval cost आणि runtime</strong></td><td>संपूर्ण suite चालवण्यासाठी token खर्च आणि wall-clock वेळ</td><td>प्रत्येक PR वर चालवण्याइतके स्वस्त आणि जलद</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> कोणत्याही score वर विश्वास ठेवण्याआधी judge calibrate करा. जर judge-human agreement कमी असेल, तर आधी rubric दुरुस्त करा; uncalibrated judge वर बांधलेली suite कितीही cases चालवली तरी noise मोजते.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>प्रत्यक्ष जगातील उदाहरणे</h2>
+      <p class="muted">Production-शैलीच्या वापरात evals आणि LLM-as-judge दाखवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔗</span><div><h3>1 · RAG faithfulness आणि groundedness मूल्यांकन</h3><div class="role">Pattern: retrieved context वर reference-free judge</div></div></div>
+        <p class="muted">एक टीम RAG assistant ship करते आणि उत्तरे तथ्ये शोधून काढण्याऐवजी retrieved passages मध्ये grounded राहतात याचा पुरावा हवा असतो.</p>
+        <ul>
+          <li>प्रत्येक उत्तरासाठी, judge प्रत्येक दाव्याची retrieved context विरुद्ध तपासणी करतो आणि <strong>faithfulness</strong> सोबत <strong>answer-relevance</strong> ला गुण देतो.</li>
+          <li>Context recall वेगळे मोजले जाते जेणेकरून hallucination ला retrieval miss समजले जाऊ नये.</li>
+          <li>Judge चे scores releases gate करण्याआधी तो human groundedness labels विरुद्ध calibrate केला जातो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Ungrounded उत्तरे आपोआप पकडली जातात, आणि टीम अपयशांचे कारण अंदाज लावण्याऐवजी retrieval किंवा generation ला देऊ शकते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💬</span><div><h3>2 · Chatbot गुणवत्ता regression suite</h3><div class="role">Pattern: CI gate म्हणून offline suite</div></div></div>
+        <p class="muted">एक support chatbot सतत संपादित केला जातो - नवीन prompts, नवीन tools, नवीन model आवृत्त्या - आणि प्रत्येक बदल आधीचे वर्तन गुपचूप बिघडवण्याचा धोका निर्माण करतो.</p>
+        <ul>
+          <li>भूतकाळातील संभाषणांचा golden set सोबत खणून काढलेली अपयशे प्रत्येक pull request वर चालतात.</li>
+          <li>Deterministic checks रचना आणि refusals पडताळतात; rubric judge helpfulness आणि tone ला गुण देतो.</li>
+          <li>जर कोणतेही मुख्य metric त्याच्या baseline threshold खाली आले तर CI job merge अपयशी करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Regressions merge आधीच अडवली जातात, त्यामुळे एका intent साठी केलेला fix आता production मध्ये दहा इतरांना गुपचूप बिघडवू शकत नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">⚔️</span><div><h3>3 · दोन prompt आवृत्त्यांचे pairwise judge ranking</h3><div class="role">Pattern: bias controls सह A/B तुलना</div></div></div>
+        <p class="muted">एका engineer कडे दोन candidate system prompts आहेत आणि "यापैकी कोणता खरोखर चांगला आहे?" याचे बचावयोग्य उत्तर हवे आहे.</p>
+        <ul>
+          <li>दोन्ही prompts एकाच dataset वर चालतात; judge प्रत्येक case साठी <strong>pairwise</strong> चांगले आउटपुट निवडतो.</li>
+          <li>Position bias रद्द करण्यासाठी प्रत्येक जोडी क्रम बदलून दोनदा judge केली जाते, आणि length normalize केली जाते.</li>
+          <li>Confidence intervals सह win rate promotion ठरवते - मूठभर निवडक chats नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> विजेता prompt सांख्यिकीयदृष्ट्या प्रामाणिक win rate वर निवडला जातो, आणि debiasing पावले judge ला लांब किंवा पहिल्या उत्तराला पसंती देण्यापासून थांबवतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>Evals कुठे जात आहेत</h2>
+      <p class="muted">Evals अधूनमधूनच्या spreadsheets पासून सतत, स्वयंचलित infrastructure कडे सरकत आहेत जी प्रत्येक LLM product च्या केंद्रस्थानी बसते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🤖 Agentic आणि trajectory evals</h4><p>फक्त अंतिम उत्तरे नव्हे तर संपूर्ण tool-using trajectory ला गुण देणे - agent ने योग्य पावले उचलली का, योग्य tools call केले का, आणि चुकांतून सावरले का?</p></div>
+        <div class="card"><h4>🎚️ Auto-calibrated judges</h4><p>Judges जे स्वतःला सतत ताज्या human labels शी जुळवतात, स्वतःचे agreement नोंदवतात जेणेकरून त्यांच्यावर किती विश्वास ठेवायचा हे तुम्हाला नेमके कळते.</p></div>
+        <div class="card"><h4>🧬 Synthetic dataset generation</h4><p>असे मॉडेल जे coverage वाढवण्यासाठी लक्ष्यित edge cases आणि adversarial inputs निर्माण करतात, माणसे हाताने जमवू शकतात त्यापेक्षा खूप पुढे.</p></div>
+        <div class="card"><h4>⚖️ Bias-aware judging by default</h4><p>Position, verbosity, आणि self-preference controls judge frameworks मध्ये भाजून टाकलेले - बदललेले orders, length normalization, cross-family graders.</p></div>
+        <div class="card"><h4>📡 Observability म्हणून online evals</h4><p>Live traffic वर reference-free scoring हे मानक telemetry बनते, drift पुढच्या release ऐवजी ती दिसताच पकडते.</p></div>
+        <div class="card"><h4>🛡️ Safety आणि policy evals</h4><p>Jailbreaks, toxicity, PII leakage, आणि policy compliance साठी समर्पित suites गुणवत्ता metrics सोबत release आवश्यकता म्हणून ship होतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> evals हे LLM युगाचे test suite आहे. Calibrated, debiased scorers सोबत जोडलेला काळजीपूर्वक निवडलेला dataset - CI मध्ये आणि production मध्ये चालवलेला - हेच अप्रत्याशित मॉडेलचे रूपांतर तुम्ही आत्मविश्वासाने ship आणि सुधारू शकता अशा product मध्ये करते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">अन्वेषण सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Evals संबंधित कौशल्यांच्या जाळ्यात बसतात. हे त्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../tracing/"><span class="ico">🔭</span><h4>Tracing आणि observability</h4><p>तुम्ही online नमुना घेता आणि गुण देता ते production traces.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prompt-management/"><span class="ico">🗃️</span><h4>Prompt management</h4><p>तुमचे evals ज्यांची तुलना आणि gate करतात ते prompts version करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails</h4><p>Release वेळी evals पडताळतात ते safety आणि policy checks.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>तुमचा judge ज्याविरुद्ध गुण देतो त्या rubrics कशा लिहायच्या.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>Evals आणि LLM-as-Judge चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · Case Studies · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

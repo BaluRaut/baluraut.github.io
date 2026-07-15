@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fine-tuning, LoRA आणि PEFT समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="fine-tuning, LoRA आणि PEFT यांचे सखोल, दृश्य मार्गदर्शन: ते काय आहे, कसे काम करते, ते का महत्त्वाचे आहे, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि parameter-efficient model adaptation चे भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Fine-tuning · LoRA · PEFT</span>
+      <h1>त्रासाशिवाय fine-tuning - LoRA आणि PEFT समजावून</h1>
+      <p class="lede">एका base model कडे व्यापक कौशल्ये असतात, पण <em>तुमचे</em> वर्तन नसते. Fine-tuning <strong>तुमच्या task डेटावर model ला अद्ययावत करते</strong> जेणेकरून ते एखादी शैली, स्वरूप किंवा क्षमता आपोआप अंगीकारते. आधुनिक <strong>parameter-efficient fine-tuning</strong> (LoRA, QLoRA, adapters) हे संपूर्ण network ऐवजी जोडलेल्या weights च्या अगदी छोट्या संचाला प्रशिक्षित करून हे साध्य करते, त्यामुळे ते स्वस्त, जलद आणि सहज बदलता येण्याजोगे असते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">LoRA आणि QLoRA</span>
+        <span class="pill">Adapters आणि PEFT</span>
+        <span class="pill">SFT डेटा गुणवत्ता</span>
+        <span class="pill">वर्तन विरुद्ध ज्ञान</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Fine-tuning म्हणजे काय?</h2>
+      <p class="muted"><strong>Fine-tuning</strong> हे एका pretrained model चे प्रशिक्षण एका छोट्या, task-विशिष्ट dataset वर पुढे चालू ठेवते जेणेकरून त्याचे weights तुम्हाला हव्या असलेल्या वर्तनाकडे सरकतात. जिथे prompting हे inference च्या वेळी एका गोठलेल्या model ला दिशा देते, तिथे fine-tuning एक नमुना weights मध्येच <em>रुजवते</em>, त्यामुळे model प्रत्येक prompt मध्ये पुन्हा समजावून न देता योग्य सूर, स्वरूप किंवा निर्णय तयार करते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧊</span> Full fine-tuning</h4>
+          <p>प्रत्येक weight अद्ययावत होते. सर्वात शक्तिशाली आणि सर्वात महाग - तुम्हाला संपूर्ण model memory मध्ये, मोठ्या GPUs आणि प्रत्येक task साठी सर्व parameters ची नवी प्रत लागते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🪶</span> PEFT (LoRA, adapters)</h4>
+          <p>Base weights गोठवली जातात; तुम्ही जोडलेल्या parameters च्या छोट्या संचाला प्रशिक्षित करता. बहुतेक tasks साठी तोच परिणाम, पण compute आणि storage चा फक्त एक अंश वापरून.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> ते कधी जिंकते</h4>
+          <p><em>वर्तन</em> शिकवण्यासाठी उत्तम: सातत्यपूर्ण शैली, कठोर output formats, tool-use संकेत, किंवा एक संकुचित classification कौशल्य - नवी माहिती नव्हे.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>सामान्य पर्याय</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Base model</strong></td><td>तुम्ही ज्याचे रूपांतर करता ते pretrained network</td><td>Llama, Mistral, Qwen, लहान SLMs</td></tr>
+            <tr><td><strong>Dataset (SFT)</strong></td><td>लक्ष्य वर्तन शिकवणाऱ्या instruction / response जोड्या</td><td>JSONL, chat-format, preference pairs</td></tr>
+            <tr><td><strong>PEFT पद्धत</strong></td><td>तुम्ही trainable parameters कसे टाकता</td><td>LoRA, QLoRA, adapters, prefix tuning</td></tr>
+            <tr><td><strong>Trainer</strong></td><td>डेटावर optimization loop चालवते</td><td><code>trl</code> SFTTrainer, Axolotl, Unsloth</td></tr>
+            <tr><td><strong>Adapter artifact</strong></td><td>तुम्ही पाठवता आणि serve करता ती छोटी प्रशिक्षित weights</td><td>LoRA weights (काही दहा MB), registry</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> fine-tuning model <em>कसे</em> वागते ते बदलते, ते सध्या <em>काय</em> जाणते ते नव्हे. तुम्हाला नवी किंवा खाजगी माहिती हवी असल्यास RAG वापरा. तुम्हाला विश्वासार्ह शैली, स्वरूप किंवा कौशल्य हवे असल्यास fine-tune करा - आणि PEFT सह तुम्ही फक्त एका गोठलेल्या base वर बसवलेला एक पातळ थर प्रशिक्षित करत असता.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Parameter-efficient fine-tuning का अस्तित्वात आहे</h2>
+      <p class="muted">एका मोठ्या model चे full fine-tuning म्हणजे अब्जावधी parameters अद्ययावत करणे, प्रत्येक task साठी संपूर्ण प्रत साठवणे आणि भरपूर GPU तास जाळणे. PEFT base गोठवून ठेवते आणि नव्या weights चा अगदी छोटा अंश प्रशिक्षित करते, ज्यामुळे संपूर्ण अर्थकारणच बदलते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💸 प्रशिक्षणासाठी खूप स्वस्त</h4><p>LoRA parameters च्या 1% पेक्षाही खूप कमी प्रशिक्षित करते, त्यामुळे ते एकाच GPU वर बसते. QLoRA गोठलेल्या base ला 4-bit मध्ये quantize करते, memory आणखी कमी करते जेणेकरून मोठी models माफक hardware वर fine-tune होतात.</p></div>
+        <div class="card"><h4>📦 छोटे, बदलता येण्याजोगे artifacts</h4><p>एक adapter काही दहा megabytes चा असतो, काही दहा gigabytes चा नव्हे. तुम्ही एक base model ठेवता आणि प्रति ग्राहक, सूर किंवा task अनेक adapters चटकन बदलता.</p></div>
+        <div class="card"><h4>🛡️ Base अबाधित राहतो</h4><p>मूळ weights गोठलेली असल्यामुळे, model त्याच्या सामान्य क्षमता टिकवते आणि सर्व काही अद्ययावत करण्याच्या तुलनेत तुम्ही catastrophic forgetting च्या सर्वात वाईट भागापासून वाचता.</p></div>
+        <div class="card"><h4>⚡ विश्वासार्ह वर्तन, लहान prompts</h4><p>एकदा एखादे स्वरूप किंवा शैली weights मध्ये राहू लागली, की तुम्ही प्रत्येक call वर लांबलचक few-shot prompts साठी पैसे देणे बंद करता - inference वेळी कमी latency आणि token खर्च.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह fine-tuning समजावून</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटकन समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Prompting म्हणजे दर वेळी <strong>परीक्षेच्या पानावर सोडवलेली उदाहरणे देणे</strong>. Fine-tuning म्हणजे <strong>आधीच शेकडो प्रश्न सोडवण्याचा सराव करणे</strong> जेणेकरून पद्धत सवयीची होते आणि तुम्हाला यापुढे समोर उदाहरणांची गरज लागत नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>LoRA म्हणजे <strong>एका shared library वर बसवलेला patch किंवा plugin</strong> यासारखे आहे. तुम्ही संपूर्ण dependency fork करून पुन्हा compile करत नाही; तुम्ही वर्तन बदलणारा एक छोटा diff पाठवता, आणि प्रत्येक deployment साठी वेगळा patch load करू शकता.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>हा <strong>एक अनुभवी कर्मचारी एक छोटा विशेषीकरण अभ्यासक्रम घेत आहे</strong> असे आहे. त्यांना क्षेत्र आधीच माहीत आहे; एक नेमका अभ्यासक्रम तुमची घरगुती शैली आणि प्रक्रिया शिकवतो, जेणेकरून त्यांना प्रत्येक task साठी manual पुन्हा वाचावे लागत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🎸</span> रोजच्या भाषेत</h4><p>एक कुशल संगीतकार <strong>एक setlist त्याची स्नायू-स्मृती होईपर्यंत सराव करतो</strong>. सर्वसाधारण प्रतिभा आधीच होती; सरावाने विशिष्ट गाणी पक्की होतात जेणेकरून सादरीकरण आपोआप होते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतल्या बाजूने ते कसे काम करते</h2>
+      <p class="muted">Fine-tuning चे दोन भाग असतात: एक <strong>offline तयारी आणि प्रशिक्षण</strong> pipeline जी एक adapter तयार करते, आणि एक <strong>inference</strong> मार्ग जिथे तो adapter गोठलेल्या base बरोबर चालून त्याचे वर्तन बदलतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📚</span> डेटा + प्रशिक्षण</h4>
+          <p>स्वच्छ instruction / response जोड्या तयार करा, train आणि eval मध्ये विभागा, मग supervised fine-tuning चालवा. LoRA base गोठवते आणि प्रत्येक target layer साठी दोन छोट्या low-rank matrices शिकते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Inference वेळी adapter</h4>
+          <p>Serving वेळी LoRA weights गोठलेल्या base च्या activations मध्ये जोडली जातात. गणित म्हणजे <code>W + (B·A)·scale</code>, त्यामुळे छोट्या शिकलेल्या matrices मूळ model ला थोडे ढकलतात.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टिक्षेपात architecture</h3>
+      <div class="diagram">
+        <div class="cap">Architecture - डेटा एक छोटा adapter प्रशिक्षित करतो; serving तो गोठलेल्या base वर load करते</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Train["📚 Offline training"]
+        D["📄 SFT dataset"] --> PP["🧹 Clean + format"]
+        PP --> BASE["🧊 Frozen base"]
+        BASE --> LR["🪶 LoRA matrices A,B"]
+        LR --> AD["📦 Adapter artifact"]
+    end
+    subgraph Serve["🔌 Online serving"]
+        REQ["❓ Prompt"] --> RT["🧠 Base + adapter"]
+        AD --> RT
+        RT --> OUT["✅ Tuned response"]
+    end
+        </pre>
+      </div>
+
+      <h3>एक वास्तववादी LoRA / SFT प्रशिक्षण config</h3>
+      <pre><code>from peft import LoraConfig
+from trl import SFTTrainer, SFTConfig
+
+lora = LoraConfig(
+    r=16,                 # rank of the low-rank update
+    lora_alpha=32,        # scaling factor for the adapter
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM",
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+)
+
+args = SFTConfig(
+    output_dir="out/brand-tone-lora",
+    num_train_epochs=3,
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=4,
+    learning_rate=2e-4,          # higher LR is fine for LoRA
+    lr_scheduler_type="cosine",
+    warmup_ratio=0.03,
+    bf16=True,
+    eval_strategy="steps",
+    eval_steps=50,
+)
+
+trainer = SFTTrainer(
+    model="mistralai/Mistral-7B-v0.3",
+    args=args,
+    peft_config=lora,            # freezes base, trains only LoRA
+    train_dataset=train_ds,      # chat-format instruction pairs
+    eval_dataset=eval_ds,
+)
+trainer.train()
+trainer.save_model()             # saves ~tens of MB of adapter weights</code></pre>
+      <p class="muted">लक्षात घ्या की फक्त LoRA matrices gradients वाहून नेतात - 7B base गोठलेला असतो. म्हणूनच जतन केलेला artifact इतका छोटा असतो आणि एकच GPU पुरेसा असतो, तर eval split run दरम्यान overfitting पासून रक्षण करते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: offline प्रशिक्षण pipeline, inference वेळी LoRA adapters, आणि तुम्ही prompting, RAG आणि fine-tuning यांच्यात कसे निवडता.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Training: डेटा तयारीपासून नोंदणीकृत adapter पर्यंत (offline)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Eng as 👩‍🔧 ML engineer
+    participant Data as 🧹 Data pipeline
+    participant Tr as 🏋️ Trainer
+    participant Ev as 🧪 Eval harness
+    participant Reg as 📦 Model registry
+
+    Eng->>Data: Collect instruction and response pairs
+    Data->>Data: Clean, dedupe, split train and eval
+    Data->>Tr: Formatted SFT dataset
+    loop each epoch
+        Tr->>Tr: Update LoRA matrices, base frozen
+    end
+    Tr->>Ev: Candidate adapter
+    Ev-->>Tr: Scores on held out eval
+    alt quality above bar
+        Tr->>Reg: Register versioned adapter
+        Reg-->>Eng: Adapter ready to serve
+    else regressed or overfit
+        Ev-->>Eng: Reject, adjust data and hyperparams
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Inference: गोठलेल्या base weights बरोबर LoRA adapter टाकलेला</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant Srv as 🖥️ Serving runtime
+    participant Base as 🧊 Frozen base weights
+    participant Lora as 🪶 LoRA adapter
+    participant Dec as 🔤 Decoder
+
+    U->>Srv: Prompt
+    Srv->>Base: Forward pass through layers
+    Base->>Lora: Layer activations
+    Lora-->>Base: Add low rank update B times A times scale
+    Note over Base,Lora: Base unchanged, adapter nudges output
+    Base->>Dec: Adjusted logits
+    Dec-->>Srv: Tokens in the tuned style
+    Srv-->>U: Response with learned format
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Decision: prompting, RAG की fine-tuning निवडा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Team as 🧭 Team
+    participant P as ✍️ Prompt engineering
+    participant R as 📚 RAG
+    participant F as 🪶 Fine-tuning
+
+    Team->>P: Try a better prompt and few shot examples
+    alt prompt alone is good enough
+        P-->>Team: Ship it, cheapest option
+    else needs fresh or private facts
+        Team->>R: Add retrieval over knowledge base
+        R-->>Team: Grounded, always current answers
+    else needs consistent behavior, format or style
+        Team->>F: Fine-tune with LoRA on task data
+        F-->>Team: Behavior baked into the weights
+        Note over Team,F: Often combine RAG for facts plus a tuned adapter for style
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका base model आणि एका ध्येयापासून serve केलेल्या, देखरेखीखालील adapter पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">आखणी</span><h4>लक्ष्य वर्तन ठरवा</h4><p>नेमके काय बदलले पाहिजे ते लिहून काढा: एक सूर, एक कठोर JSON स्वरूप, एक classification, एक tool-use संकेत. जर खरोखर माहिती कमी असेल, तर थांबा आणि त्याऐवजी RAG वापरा.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">आधाररेषा</span><h4>आधी prompting पूर्णपणे वापरून पाहा</h4><p>System prompts आणि few-shot उदाहरणे वापरून पाहा. Prompting पुरेसे सातत्यपूर्ण निकाल देऊ शकत नसेल किंवा prompt खूप लांब आणि महाग असेल तेव्हाच fine-tune करा.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">संकलन</span><h4>Instruction डेटा गोळा करा</h4><p>Logs, मानवी लेखक, किंवा एका अधिक सशक्त model कडून प्रातिनिधिक input आणि आदर्श-output जोड्या जमवा. तुम्हाला महत्त्वाच्या असलेल्या edge cases समाविष्ट करा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">निवड</span><h4>स्वच्छ करा आणि format करा</h4><p>Deduplicate करा, चुकीची labels दुरुस्त करा, आणि chat किंवा instruction format मध्ये रूपांतर करा. काहीशे स्वच्छ उदाहरणे हजारो गोंधळलेल्या उदाहरणांपेक्षा सरस असतात.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">विभागणी</span><h4>एक eval set बाजूला ठेवा</h4><p>Model ज्यावर कधीही प्रशिक्षण घेत नाही असा एक प्रातिनिधिक भाग राखून ठेवा, जेणेकरून तुम्ही खरे generalization मोजू शकता आणि overfitting प्रामाणिकपणे पकडू शकता.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">कॉन्फिगर</span><h4>Base आणि PEFT पद्धत निवडा</h4><p>तुमच्या latency आणि गुणवत्तेच्या गरजांनुसार आकाराचा base model निवडा, मग LoRA rank, alpha, target modules आणि learning rate ठरवा. Memory कमी असल्यास QLoRA वापरा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">प्रशिक्षण</span><h4>Fine-tune चालवा</h4><p>Train आणि eval loss पाहत काही epochs चालवा. Base गोठलेला राहतो; फक्त adapter शिकतो. Eval loss पुन्हा वर वळण्यापूर्वी थांबा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">मूल्यांकन</span><h4>आधाररेषेशी तुलना करून गुण द्या</h4><p>Adapter ची base model शी task मापदंडांवर आणि सामान्य क्षमतेवर तुलना करा, जेणेकरून बाकी सर्व बिघडवल्याशिवाय तुम्ही एक सुधारणा झाल्याची खात्री करता.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">रक्षण</span><h4>Forgetting तपासा</h4><p>Catastrophic forgetting शोधण्यासाठी एक व्यापक capability suite चालवा. सामान्य कौशल्ये घटली असल्यास, learning rate कमी करा किंवा सामान्य डेटा मिसळा.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">नोंदणी</span><h4>Version आणि package करा</h4><p>Adapter त्याच्या डेटा snapshot, config आणि eval report सह एका registry मध्ये साठवा जेणेकरून निकाल पुनरुत्पादनीय आणि तपासण्याजोगा राहील.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Serve</span><h4>Deploy करा आणि देखरेख करा</h4><p>Adapter shared base वर load करा, हवे असल्यास एकाच वेळी अनेक adapters serve करा, आणि पुढील डेटा आणि retrain चक्र सुरू करण्यासाठी production मापदंडांवर लक्ष ठेवा.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि टाळण्याजोगे नमुने</h2>
+      <p class="muted">बहुतेक fine-tuning अपयशे optimizer मुळे नव्हे तर डेटा आणि ध्येयामुळे येतात. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📚 ज्ञानासाठी fine-tuning</h4><p>Fine-tuning ने नवी माहिती शिकवण्याचा प्रयत्न संथ, महाग असतो आणि शिळा होतो. माहिती retrieval मध्ये असावी; त्याऐवजी वर्तन, स्वरूप आणि शैलीसाठी fine-tune करा.</p></div>
+        <div class="card"><h4>🗑️ गलिच्छ किंवा तोकडा डेटा</h4><p>गोंधळलेली labels, duplicates आणि विसंगत formatting चुकीचा नमुना शिकवतात. एक छोटा, स्वच्छ, सुसंगत dataset दर वेळी एका मोठ्या गोंधळलेल्या dataset ला मात देतो.</p></div>
+        <div class="card"><h4>🔥 Overfitting</h4><p>खूप जास्त epochs किंवा खूप जास्त learning rate training set पाठ करते. Train loss घटत असताना eval loss वाढणे हे उत्कृष्ट धोक्याचे लक्षण आहे.</p></div>
+        <div class="card"><h4>🧠 Catastrophic forgetting</h4><p>संकुचित task वरील आक्रमक अद्ययावतीकरण सामान्य क्षमतेची झीज करते. Learning rates माफक ठेवा, PEFT ला प्राधान्य द्या, आणि काही सामान्य उदाहरणे मिसळा.</p></div>
+        <div class="card"><h4>🎚️ चुकीच्या LoRA settings</h4><p>Rank खूप कमी असल्यास वर्तन underfit होते; चुकीच्या modules ला लक्ष्य करणे किंवा प्रचंड alpha प्रशिक्षण अस्थिर करते. Rank, alpha आणि target modules विचारपूर्वक tune करा.</p></div>
+        <div class="card"><h4>📏 खरे eval नाही</h4><p>काही निवडक prompts वरून निर्णय घेणे regressions लपवते. एका held-out set आणि एका capability suite शिवाय तुम्ही सुधारणा नशिबापासून वेगळी ओळखू शकत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजायचे</div>
+      <h2>एक fine-tune कसे मोजायचे</h2>
+      <p class="muted">Training आरोग्य आणि downstream गुणवत्ता स्वतंत्रपणे मोजा, जेणेकरून run दुरुस्त करायचा की डेटा हे तुम्हाला कळेल.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते तुम्हाला काय सांगते</th><th>चांगले लक्षण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Eval loss / perplexity</strong></td><td>Adapter held-out डेटावर किती चांगला बसतो</td><td>घटते मग सपाट होते, वर वळत नाही</td></tr>
+            <tr><td><strong>Task success rate</strong></td><td>Output लक्ष्य स्वरूप किंवा label पूर्ण करते का?</td><td>उच्च: वर्तन खरोखर शिकले</td></tr>
+            <tr><td><strong>Base च्या तुलनेत win rate</strong></td><td>Tuned विरुद्ध base outputs ची पसंती (मानव किंवा judge)</td><td>स्पष्टपणे 50 टक्क्यांच्या वर</td></tr>
+            <tr><td><strong>Capability retention</strong></td><td>Tuning नंतरचे सामान्य benchmark गुण</td><td>अपरिवर्तित: catastrophic forgetting नाही</td></tr>
+            <tr><td><strong>Train विरुद्ध eval अंतर</strong></td><td>Training आणि eval loss मधील अंतर</td><td>लहान: overfitting नाही</td></tr>
+            <tr><td><strong>Inference खर्च / latency</strong></td><td>प्रति request adapter चा serving भार</td><td>SLA च्या आत, prompts लहान झाले</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> जर task success उच्च असेल पण सामान्य benchmarks घटले, तर तुम्ही overfit केले किंवा विसरलात - learning rate कमी करा किंवा सामान्य डेटा जोडा. जर eval loss अजिबात घटत नसेल, तर hyperparameters ला हात लावण्यापूर्वी dataset दुरुस्त करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">Production-शैलीच्या वापरात fine-tuning दाखवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎨</span><div><h3>1 · Brand सूर आणि स्वरूप adapter</h3><div class="role">नमुना: weights मध्ये रुजवलेली शैली आणि स्वरूप</div></div></div>
+        <p class="muted">एका marketing संघाला हवे आहे की प्रत्येक तयार झालेला snippet प्रत्येक call वर एका महाकाय शैली prompt शिवाय एका नेमक्या brand आवाज आणि मांडणीशी जुळावा.</p>
+        <ul>
+          <li>काहीशे हाताने मंजूर केलेली उदाहरणे नेमका सूर, रचना आणि निषिद्ध शब्दयोजना टिपतात.</li>
+          <li>एक LoRA adapter हा आवाज model मध्ये प्रशिक्षित करतो जेणेकरून आता लहान prompts on-brand मजकूर तयार करतात.</li>
+          <li>Adapter प्रति brand version केला जातो, त्यामुळे एक base model अनेक घरगुती शैली serve करतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> खूप लहान prompts सह सातत्यपूर्ण on-brand output, token खर्च कमी करून आणि few-shot दृष्टिकोनाला त्रस्त करणारी भरकटण्याची समस्या दूर करून.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏷️</span><div><h3>2 · एका मोठ्या model मधून classifier distill करणे</h3><div class="role">नमुना: एका मोठ्या teacher कडून एक लहान विशेषीकृत model</div></div></div>
+        <p class="muted">एक संघ support tickets label करण्यासाठी एक मोठे model चालवतो, पण मोठ्या प्रमाणावर प्रति call खर्च आणि latency खूप जास्त आहेत.</p>
+        <ul>
+          <li>मोठे model tickets चा एक मोठा batch label करते, एक उच्च-गुणवत्तेचा training set तयार करते.</li>
+          <li>एक लहान base model त्या labels वर fine-tune केले जाते जेणेकरून ते निर्णय स्वस्तात पुनरुत्पादित करते.</li>
+          <li>मूल्यांकन पुष्टी करते की लहान tuned model held-out set वर teacher शी जुळते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> एक संक्षिप्त classifier जो मोठ्या model च्या खर्च आणि latency च्या एका अंशाने चालतो, मूळच्या जवळ अचूकतेसह.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔧</span><div><h3>3 · सातत्यपूर्ण tool-use आणि output स्वरूप</h3><div class="role">नमुना: एका agent साठी विश्वासार्ह structured output</div></div></div>
+        <p class="muted">एका agent ने कठोर JSON tool calls द्यायला हव्यात, पण base model कधीकधी भरकटते, ज्यामुळे downstream parser तुटतो.</p>
+        <ul>
+          <li>योग्य tool calls च्या traces instruction आणि response training जोड्या बनतात.</li>
+          <li>Fine-tuning नेमके schema आणि calling संकेत शिकवते जेणेकरून वैध output हे मूलभूत होते.</li>
+          <li>कोणताही adapter पदोन्नत होण्यापूर्वी एक eval gate schema-वैध दर मोजते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> लहान prompts सह जवळपास परिपूर्ण schema पालन, ज्यामुळे पूर्वी ठिसूळ retry logic ची गरज असणाऱ्या parser अपयशांचे निर्मूलन होते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>Fine-tuning कोणत्या दिशेने जात आहे</h2>
+      <p class="muted">Adaptation एका जड प्रशिक्षण प्रकल्पाकडून जलद, composable, preference-जाणकार tuning कडे सरकत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Multi-adapter serving</h4><p>Runtimes जे एका base वर अनेक LoRA adapters होस्ट करतात आणि प्रत्येक request योग्य adapter कडे पाठवतात, ज्यामुळे प्रति ग्राहक किंवा प्रति task models मोठ्या प्रमाणावर परवडणारी होतात.</p></div>
+        <div class="card"><h4>🎛️ Preference tuning</h4><p>DPO आणि त्याच्या उत्तराधिकाऱ्यांसारख्या हलक्या alignment पद्धती models ला वेगळ्या reward model शिवाय comparison डेटावरून थेट पसंतीच्या वर्तनाकडे tune करतात.</p></div>
+        <div class="card"><h4>🪶 अधिकाधिक स्वस्त PEFT</h4><p>QLoRA च्या पुढील प्रगती आवश्यक memory आणि वेळ कमी करत राहते, ज्यामुळे मोठ्या models चे fine-tuning सामान्य hardware वर येते.</p></div>
+        <div class="card"><h4>🔗 RAG आणि tuning एकत्र</h4><p>जिंकणारा नमुना माहितीसाठी retrieval आणि वर्तनासाठी tuned adapter यांची जोडी करतो, त्यांना एक-किंवा-दुसरे पर्याय म्हणून न मानता.</p></div>
+        <div class="card"><h4>🧬 Adapter composition</h4><p>Adapters विलीन करणे आणि रचणे यावरील संशोधन serve वेळी शिकलेली कौशल्ये मिसळण्याकडे निर्देश करते, modular, composable क्षमतांच्या अधिक जवळ.</p></div>
+        <div class="card"><h4>🤖 स्वयंचलित डेटा निवड</h4><p>Synthetic डेटा निर्मिती आणि स्वयंचलित filtering dataset - खरा अडथळा - बांधणे जलद आणि स्वच्छ ठेवणे सोपे करतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> fine-tuning हे तुम्ही एका सामान्य model ला तुमचे विशिष्ट वर्तन शिकवण्याचे साधन आहे, आणि PEFT ते स्वस्त, जलद आणि बदलता येण्याजोगे करते. जसे adapters लहान होत जातात आणि serving अधिक हुशार होते, तसे tuning हे प्रत्येक गंभीर AI उत्पादनातील एक नित्याचे, composable पाऊल बनते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">अन्वेषण चालू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Fine-tuning संबंधित कौशल्यांच्या जाळ्यात बसते. हे त्याच्याशी नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../rag/"><span class="ico">📚</span><h4>Retrieval-augmented generation</h4><p>माहितीसाठी RAG, वर्तनासाठी fine-tuning वापरा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../embeddings/"><span class="ico">🧭</span><h4>Embeddings आणि vector DBs</h4><p>Similarity नुसार training डेटा निवडा आणि dedupe करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals आणि LLM-as-judge</h4><p>Win rate मोजा आणि regressions पकडा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>आधी वापरून पाहण्याची स्वस्त आधाररेषा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>Fine-tuning चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

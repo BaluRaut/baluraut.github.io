@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tool आणि Function Calling समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="LLMs सोबत tool / function calling चे सखोल, दृश्य मार्गदर्शन: ते काय आहे, tool_use loop कसे चालते, ते का महत्त्वाचे आहे, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Tool / Function-Calling रचना</span>
+      <h1>Tool calling प्रत्यक्षात कसे चालते - संपूर्ण चित्र</h1>
+      <p class="lede">एखादे language model स्वतःहून विमानाचे तिकीट बुक करू शकत नाही, query चालवू शकत नाही, किंवा आजची किंमत वाचू शकत नाही - ते फक्त मजकूर तयार करते. Tool calling ही दरी भरून काढते: तुम्ही तुमची functions <strong>typed schemas</strong> म्हणून वर्णन करता, गरज पडल्यावर model एक <strong>structured call</strong> तयार करते, तुमचे host ते चालवते, आणि <strong>निकाल परत</strong> संभाषणात येतो. हे loop पुन्हा पुन्हा चालवा आणि एक chat model असे agent बनते जे कृती करू शकते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">JSON-Schema params</span>
+        <span class="pill">tool_use / tool_result</span>
+        <span class="pill">Parallel calls</span>
+        <span class="pill">Validation आणि सुरक्षितता</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Tool calling म्हणजे काय?</h2>
+      <p class="muted"><strong>Tool calling</strong> (याला function calling असेही म्हणतात) एखाद्या language model ला तुमच्या नियंत्रणातील code बोलावण्याची मुभा देते. तुम्ही model ला tool <em>definitions</em> ची यादी देता - प्रत्येकाला एक नाव, एक वर्णन, आणि त्याच्या arguments साठी एक JSON-Schema. जेव्हा model ठरवते की एखादे tool उपयोगी ठरेल, तेव्हा ते स्वतः काहीही चालवत नाही; ते tool आणि त्याचे arguments नमूद करणारी एक structured विनंती तयार करते. तुमचे application ते function चालवते आणि निकाल परत सोपवते, आणि model त्या नव्या माहितीसह पुढे चालू ठेवते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📋</span> परिभाषित करा (तुम्ही)</h4>
+          <p>Tools ला नाव + वर्णन + typed parameter schema म्हणून घोषित करा. हा तो करार आहे जो model काय करू शकते हे ठरवण्यासाठी वाचते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛠️</span> ठरवा (model)</h4>
+          <p>संभाषण आणि tools पाहून, model arguments सह एक structured <code>tool_use</code> block तयार करते - किंवा tool ची गरज नसल्यास थेट उत्तर देते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">↩️</span> चालवा आणि परत करा (तुम्ही)</h4>
+          <p>तुमचे host args तपासते, function चालवते, आणि एक <code>tool_result</code> परत पाठवते जेणेकरून model उत्तर पूर्ण करू शकेल.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>टिपा</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Tool definition</strong></td><td>Parameters चे नाव, वर्णन आणि JSON-Schema</td><td>वर्णन हे prompt आहे - ते model ने वाचावे म्हणून लिहा</td></tr>
+            <tr><td><strong>tool_use block</strong></td><td>Model ची structured विनंती: tool नाव + argument object</td><td>त्याच्या निकालाशी जोडण्यासाठी एक अनन्य <code>id</code> धारण करते</td></tr>
+            <tr><td><strong>Host executor</strong></td><td>Args तपासते, function चालवते, त्रुटी पकडते</td><td>तुमची विश्वास सीमा - कधीही आंधळेपणाने चालवू नका</td></tr>
+            <tr><td><strong>tool_result block</strong></td><td>Model ला परत पाठवलेले परतीचे मूल्य (किंवा त्रुटी)</td><td>तोच <code>tool_use_id</code> संदर्भित करते</td></tr>
+            <tr><td><strong>Agent loop</strong></td><td>पूर्ण होईपर्यंत call → execute → return पुन्हा करते</td><td>Model tools ची विनंती करणे थांबवल्यावर संपते</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> model कधीही तुमचा code चालवत नाही - ते फक्त एका structured, schema-आकाराच्या स्वरूपात call साठी <em>विनंती</em> करते. Host नेहमी loop मध्ये असते, आणि नेमके तिथेच तुम्ही validation, permissions आणि सुरक्षितता ठेवता.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Tool calling का अस्तित्वात आहे</h2>
+      <p class="muted">स्वतःच एक model म्हणजे एक बंद पेटी आहे: कोणताही live data नाही, कोणतेही side effects नाहीत, विश्वास ठेवता येईल असे कोणतेही गणित नाही. Tool calling ते एका controller मध्ये बदलते जो <em>कोणती</em> कृती करायची याबद्दल विचार करते, तर तुमचा code प्रत्यक्ष कृती करतो - विश्वासार्हपणे, पडताळणीयोग्य पद्धतीने आणि तुमच्या नियमांच्या आत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🌐 Real-time आणि खाजगी data</h4><p>आजचा साठा, ग्राहकाची नोंद, किंवा live किंमत आणा. Model विचार करते; तुमचे tool त्याने कधीही लक्षात न ठेवलेले ठोस सत्य पुरवते.</p></div>
+        <div class="card"><h4>🎬 खऱ्या कृती करा</h4><p>ईमेल पाठवा, तिकीट उघडा, deployment चालवा. Tools एका model ला गोष्टी फक्त वर्णन करण्याऐवजी त्या प्रत्यक्ष <em>करण्याची</em> मुभा देतात - chat ला agent मध्ये बदलतात.</p></div>
+        <div class="card"><h4>📐 Structured, विश्वासार्ह outputs</h4><p>एक JSON-Schema arguments ना typed, तपासलेल्या आकारांत बसवते, त्यामुळे तुम्हाला अंदाज बांधावा लागणाऱ्या free-text ऐवजी parse करता येण्याजोगी रचना मिळते.</p></div>
+        <div class="card"><h4>🔒 नियंत्रण आणि लेखापरीक्षणक्षमता</h4><p>प्रत्येक कृती तुमच्या executor मधून जाते, जिथे तुम्ही permissions लागू करता, calls ची नोंद ठेवता, आणि कोणतीही धोकादायक गोष्ट पुष्टीकरणामागे बंद करता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह tool calling समजावून सांगितले</h2>
+      <p class="muted">तीच कल्पना, कल्पना करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Tool calling म्हणजे <strong>घरी सोडवायच्या परीक्षेसारखे आहे जिथे तुम्ही calculator वापरू शकता</strong>. विचार तुम्हीच करता, पण गणितासाठी तुम्ही calculator वर नेमके आकडे भरता, बटण दाबता, आणि निकाल तुमच्या उत्तरात परत उतरवता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>हे म्हणजे model एक <strong>typed API</strong> बोलावते. तुम्ही function signatures JSON-Schema म्हणून प्रसिद्ध करता; model एक structured argument object परत करते; तुमचा code खरे function चालवतो आणि मूल्य परत करतो, अगदी एखाद्या RPC सारखे जिथे model हा caller असतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>manager चा विचार करा जो योग्य विनंती फॉर्म भरून काम सोपवतो</strong>. Manager काय करायचे ते ठरवतो आणि तपशील निश्चित करतो, पण एक तज्ज्ञ प्रत्यक्ष ते पार पाडतो आणि निकाल परत कळवतो.</p></div>
+        <div class="card"><h4><span class="ico">🍽️</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>waiter जो structured order स्वयंपाकघरात नेतो</strong>. Waiter स्वयंपाक करत नाही; तुम्हाला जे हवे ते नेमके स्वयंपाकघराला समजेल अशा फॉर्ममध्ये लिहितो, तो सोपवतो, आणि तयार पदार्थ परत आणतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे चालते</h2>
+      <p class="muted">Tool calling हे एका विनंतीऐवजी एक <strong>multi-turn loop</strong> आहे. Host tools अधिक संभाषण पाठवते; model एका उत्तराने किंवा एक किंवा अधिक <code>tool_use</code> blocks ने प्रत्युत्तर देते; host ते चालवते आणि <code>tool_result</code> blocks जोडते; model पूर्ण होईपर्यंत loop पुन्हा चालते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧩</span> करार</h4>
+          <p>प्रत्येक tool म्हणजे <code>name</code> + <code>description</code> + parameters चा JSON-Schema (types, enums, आवश्यक fields). Model हे documentation सारखे वाचते जेणेकरून tool निवडावे आणि त्याचे arguments आकारावेत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> loop</h4>
+          <p>Model एका call ची विनंती करते → host ते तपासते आणि चालवते → host निकाल परत करते → model तो वाचते आणि पुन्हा call करते किंवा उत्तर देते. Parallel calls पसरतात आणि model पुढे जाण्यापूर्वी पुन्हा एकत्र येतात.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात रचना</h3>
+      <div class="diagram">
+        <div class="cap">रचना - model ठरवते, host चालवते, निकाल परत पुरवले जातात</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Client["🖥️ Host application"]
+        U["👤 User message"] --> ORC["🔁 Agent loop"]
+        ORC --> REG["📋 Tool registry + schemas"]
+        VAL["✅ Validate args"] --> EXEC["🛠️ Execute tool"]
+        EXEC --> EXT[("🌐 APIs / DB / systems")]
+    end
+    subgraph Model["🧠 LLM"]
+        REASON["💭 Reason over tools"]
+    end
+    ORC --> REASON
+    REASON -->|"tool_use"| VAL
+    EXEC -->|"tool_result"| ORC
+    ORC -->|"final text"| ANS["✅ Answer to user"]
+        </pre>
+      </div>
+
+      <h3>एक tool schema आणि call loop</h3>
+      <pre><code>// 1) You declare the tool (name + description + JSON-Schema)
+{
+  "name": "get_weather",
+  "description": "Get the current weather for a city. Use when the user asks about weather.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "city":  { "type": "string", "description": "City name, e.g. 'Paris'" },
+      "units": { "type": "string", "enum": ["celsius", "fahrenheit"], "default": "celsius" }
+    },
+    "required": ["city"]
+  }
+}
+
+// 2) The loop the host runs
+messages = [ user("What's the weather in Paris?") ]
+while True:
+    reply = model.generate(messages, tools=[get_weather, ...])
+    if reply.stop_reason != "tool_use":
+        return reply.text                      # model is done
+    for call in reply.tool_calls:              # may be several (parallel)
+        args   = validate(call.input, schema)  # reject bad args early
+        result = registry[call.name](**args)   # actually run it
+        messages.append(tool_result(call.id, result))
+    messages.append(reply)                      # keep the tool_use turn too</code></pre>
+      <p class="muted">प्रत्येक <code>tool_result</code> ला त्याच्या उगमस्थानी असलेल्या <code>tool_use</code> शी जोडणारा <code>id</code> लक्षात घ्या, आणि host - model कधीही नाही - हीच अशी गोष्ट आहे जी arguments तपासते आणि code चालवते. ती सीमा म्हणजे जिथे सुरक्षितता राहते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एकल tool-call ची फेरी, पसरणारे आणि पुन्हा एकत्र येणारे parallel tool calls, आणि अवैध arguments ची validation-आणि-retry loop.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - एकल tool-call ची फेरी (मुख्य loop)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant H as 🖥️ Host app
+    participant M as 🧠 LLM
+    participant T as 🛠️ Tool
+
+    U->>H: Ask a question
+    H->>M: messages + tool definitions
+    M-->>H: tool_use get_weather city=Paris
+    H->>H: Validate arguments against schema
+    H->>T: Execute get_weather(Paris)
+    T-->>H: 22C sunny
+    H->>M: tool_result for that tool_use id
+    M-->>H: Final natural-language answer
+    H-->>U: It is 22C and sunny in Paris
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Parallel tool calls model पुढे जाण्यापूर्वी पसरतात आणि पुन्हा एकत्र येतात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant H as 🖥️ Host app
+    participant M as 🧠 LLM
+    participant W as 🌦️ Weather tool
+    participant F as 💱 FX tool
+
+    H->>M: Compare weather and currency for two cities
+    M-->>H: Two tool_use blocks in one turn
+    Note over H: Dispatch both calls concurrently
+    par Weather lookup
+        H->>W: get_weather(Tokyo)
+        W-->>H: 18C rain
+    and FX lookup
+        H->>F: get_rate(JPY, USD)
+        F-->>H: 0.0064
+    end
+    Note over H: Join both results before replying
+    H->>M: tool_result weather + tool_result fx
+    M-->>H: Combined answer using both results
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - अवैध arguments: तपासा, त्रुटी कळवा, model ला पुन्हा प्रयत्न करू द्या</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant H as 🖥️ Host app
+    participant M as 🧠 LLM
+    participant V as ✅ Validator
+    participant T as 🛠️ Tool
+
+    H->>M: Book a flight for the user
+    M-->>H: tool_use book_flight date=32/13
+    H->>V: Validate args against schema
+    V-->>H: Invalid date and missing passenger
+    alt arguments invalid
+        H->>M: tool_result is_error with reason
+        M-->>H: Corrected tool_use with valid args
+    end
+    H->>V: Re-validate corrected args
+    V-->>H: OK
+    H->>T: Execute book_flight
+    T-->>H: Booking confirmed
+    H->>M: tool_result success
+    M-->>H: Confirmation for the user
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एक tool परिभाषित करण्यापासून ते खऱ्या कृतींतून बांधलेले उत्तर देण्यापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">रचना</span><h4>Tool करार परिभाषित करा</h4><p>प्रत्येक tool ला एक स्पष्ट नाव द्या, model साठी लिहिलेले वर्णन, आणि त्याच्या parameters साठी types, enums आणि आवश्यक fields असलेले JSON-Schema.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">नोंदणी</span><h4>किमान tool संच उघड करा</h4><p>Model ला फक्त या कामाला लागणारी tools द्या. खूप जास्त परस्परव्यापी tools निवडीत गोंधळ घालतात; एक घट्ट, चांगल्या नावांचा संच अचूकता वाढवतो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Prompt</span><h4>Messages + tools पाठवा</h4><p>Host संभाषण अधिक tool definitions पाठवते. Model काय करू शकते हे समजून घेण्यासाठी वर्णने आणि schemas वाचते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">ठरवा</span><h4>Model एक tool निवडते</h4><p>Model विनंतीबद्दल विचार करते आणि एकतर थेट उत्तर देते किंवा arguments सह एक किंवा अधिक structured <code>tool_use</code> blocks तयार करते.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">तपासा</span><h4>Arguments तपासा</h4><p>Host तयार केलेली arguments schema विरुद्ध तपासते - types, ranges, enums, आवश्यक fields - चालवण्यापूर्वी काहीही सदोष असल्यास नाकारते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">अधिकृत करा</span><h4>Permissions आणि सुरक्षितता लागू करा</h4><p>Side-effecting tools साठी, वापरकर्त्याचे अधिकार तपासा, rate limits लावा, आणि विध्वंसक कृती पुष्टीकरण किंवा dry run मागे बंद करा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">चालवा</span><h4>Function चालवा</h4><p>अंतर्निहित API, database, किंवा service बोलवा. Parallel calls एकाच वेळी पसरतात; idempotency keys वापरा जेणेकरून retries कधीही दुहेरी लागू होणार नाहीत.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">हाताळा</span><h4>निकाल किंवा त्रुटी टिपा</h4><p>एक structured निकाल परत करा, किंवा अपयशावर एक स्पष्ट <code>is_error</code> संदेश, जेणेकरून model जुळवून घेऊ शकेल, पुन्हा प्रयत्न करू शकेल, किंवा हरवलेल्या माहितीसाठी वापरकर्त्याला विचारू शकेल.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">परत करा</span><h4>निकाल परत पुरवा</h4><p>प्रत्येक <code>tool_result</code> त्याच्या <code>tool_use</code> id शी जोडून जोडा, अधिक model चे स्वतःचे tool-use turn, जेणेकरून संभाषण सुसंगत राहील.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Loop</span><h4>पुढे चालू ठेवा किंवा संपवा</h4><p>Model निकाल वाचते आणि एकतर अधिक tools ची विनंती करते - loop पुन्हा करते - किंवा एक अंतिम natural-language उत्तर तयार करते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पोहोचवा</span><h4>कृतींवर आधारित उत्तर</h4><p>वापरकर्त्याला खऱ्या data आणि खऱ्या परिणामांतून बांधलेले प्रत्युत्तर मिळते. प्रत्येक call च्या नोंदी काळानुरूप evals आणि guardrail tuning ला पुरवतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">बहुतांश tool-calling अपयश tool च्या रचनेतून येतात, model मधून नाही. हे नेहमीचे गुन्हेगार आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧰 खूप जास्त, परस्परव्यापी tools</h4><p>Model ला डझनभर tools देणे, ज्यांतील अनेक जवळपास सारखीच कामे करतात, निवडीची अचूकता बिघडवते. ते चुकीचे निवडते किंवा घुटमळते. कामापुरता एक लहान, वेगळा संच उघड करा.</p></div>
+        <div class="card"><h4>🏷️ अस्पष्ट नावे आणि वर्णने</h4><p><code>do_thing</code> सारखी नावे आणि एका ओळीची वर्णने model ला कधी आणि कसे call करायचे याचा अंदाज लावायला लावतात. वर्णन हे prompt आहे, ते tool नेमके काय करते आणि कधी वापरायचे हे सांगण्यासाठी लिहा.</p></div>
+        <div class="card"><h4>🚫 न तपासलेली arguments</h4><p>Model ने तयार केलेल्या arguments वर विश्वास ठेवून त्या थेट API ला देणे चुकीच्या तारखा, injection, आणि मर्यादेबाहेरील मूल्यांना आमंत्रण देते. चालवण्यापूर्वी schema विरुद्ध types, enums, आणि ranges तपासा.</p></div>
+        <div class="card"><h4>💥 Non-idempotent side effects</h4><p>पुष्टीकरण किंवा idempotency key नसलेल्या write कृती retry वर दुहेरी शुल्क, दुहेरी बुकिंग, किंवा दुहेरी पाठवणी करतात. विध्वंसक कृती मंजुरीमागे बंद करा आणि त्यांना key द्या जेणेकरून replays सुरक्षित असतील.</p></div>
+        <div class="card"><h4>♻️ error handling नाही / अनंत retry</h4><p>कच्चे stack traces परत करणे, किंवा त्याच अपयशी call वर सदैव loop करणे, tokens जाळते आणि agent अडवते. एक स्पष्ट <code>is_error</code> संदेश परत करा आणि retries ला मर्यादा घाला जेणेकरून model जुळवून घेईल किंवा थांबेल.</p></div>
+        <div class="card"><h4>📜 अवाढव्य JSON schemas</h4><p>खोल nesting, डझनभर वैकल्पिक fields, आणि वर्णने नसलेली विस्तृत schemas model ला गोंधळवतात आणि prompt फुगवतात. Parameter आकार सपाट, किमान, आणि स्पष्टपणे documented ठेवा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजावे</div>
+      <h2>Tool calling कसे मोजावे</h2>
+      <p class="muted">Selection आणि execution वेगवेगळे मोजा, जेणेकरून tool संच दुरुस्त करायचा की tools स्वतः हे तुम्हाला कळेल.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते तुम्हाला काय सांगते</th><th>चांगले चिन्ह</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>योग्य tool-selection दर</strong></td><td>Model कामासाठी किती वेळा योग्य tool निवडते</td><td>उच्च: नावे आणि वर्णने स्पष्ट आहेत</td></tr>
+            <tr><td><strong>Argument validity दर</strong></td><td>ज्या calls ची arguments schema validation पास करतात त्यांचे प्रमाण</td><td>उच्च: schemas model ला चांगले मार्गदर्शन करतात</td></tr>
+            <tr><td><strong>Task completion दर</strong></td><td>Agent सुरुवातीपासून शेवटपर्यंत पूर्ण करणाऱ्या विनंत्यांचा वाटा</td><td>उच्च: loop विश्वासार्हपणे सुटते</td></tr>
+            <tr><td><strong>Tool error / exception दर</strong></td><td>Executions किती वेळा अपयशी होतात किंवा throw करतात</td><td>कमी: मजबूत tools आणि inputs</td></tr>
+            <tr><td><strong>अनावश्यक-call दर</strong></td><td>गरज नसताना केलेले calls, किंवा निरर्थक पुनरावृत्ती</td><td>कमी: model फक्त उपयोगी असताना call करते</td></tr>
+            <tr><td><strong>प्रति call latency</strong></td><td>प्रत्येक tool फेरी turn मध्ये किती वेळ जोडते</td><td>तुमच्या SLA आणि budget च्या आत</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जर selection चुकीचे असेल, तर नावे आणि वर्णने दुरुस्त करा आणि परस्परव्यापी tools छाटा; जर arguments अवैध असतील, तर schema आणि त्याच्या field वर्णने घट्ट करा. Model ला दोष देण्यापूर्वी दोन्ही मोजा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">उत्पादन-शैलीच्या वापरात tool calling दाखवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">✈️</span><div><h3>1 · प्रवास आणि बुकिंग सहाय्यक</h3><div class="role">नमुना: संरक्षित कृतींसह multi-step tool orchestration</div></div></div>
+        <p class="muted">एक प्रवास सहाय्यक सुरुवातीपासून शेवटपर्यंत सहलींची योजना करते - विमाने शोधणे, हॉटेल तपासणे, नंतर बुकिंग - read-only lookups ला खऱ्या, side-effecting खरेदींशी मिसळते.</p>
+        <ul>
+          <li>Read tools (<code>search_flights</code>, <code>get_hotel_availability</code>) मुक्तपणे चालतात आणि पर्यायांची त्वरित तुलना करण्यासाठी अनेकदा parallel मध्ये.</li>
+          <li>Write tool <code>book_flight</code> संरक्षित आहे: त्याला स्पष्ट वापरकर्ता पुष्टीकरण लागते आणि एक idempotency key धारण करते जेणेकरून retry कधीही दुहेरी बुकिंग करत नाही.</li>
+          <li>Typed, मर्यादित params (IATA codes, ISO dates, प्रवासी संख्या) कोणत्याही provider call आधी तपासली जातात, आणि त्रुटी model ला पुन्हा विचारल्या जातात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> सहाय्यक गुंतागुंतीच्या सहलींची योजना करते आणि बुक करते, तर एक कडक host सीमा खरेदी सुरक्षित, पुष्ट, आणि कधीही अपघाताने पुनरावृत्त न होणारी ठेवते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📊</span><div><h3>2 · query tool असलेला data विश्लेषक</h3><div class="role">नमुना: natural language पासून structured, read-only queries</div></div></div>
+        <p class="muted">एक analytics सहाय्यक warehouse वरील एका एकल, घट्ट-मर्यादित query tool द्वारे व्यावसायिक प्रश्नांना SQL मध्ये बदलून उत्तरे देते.</p>
+        <ul>
+          <li><code>run_sql</code> tool एक query string स्वीकारते पण row limits आणि statement timeout असलेल्या read-only replica विरुद्ध चालते.</li>
+          <li>Structured निकाल typed rows म्हणून परत येतात ज्यांचा model सारांश करू शकते, chart करू शकते, किंवा follow-up call ने खोलात जाऊ शकते.</li>
+          <li>सदोष किंवा असुरक्षित queries validation द्वारे नाकारल्या जातात आणि त्रुटी म्हणून परत केल्या जातात, ज्यामुळे model परिष्कृत करून पुन्हा प्रयत्न करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> तांत्रिक नसलेल्या वापरकर्त्यांना अचूक, data-आधारित उत्तरे मिळतात, तर एक मर्यादित tool warehouse ला बेलगाम किंवा विध्वंसक queries पासून सुरक्षित ठेवते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔧</span><div><h3>3 · संरक्षित कृती करणारा DevOps agent</h3><div class="role">नमुना: idempotency आणि मंजुरीसह side-effecting operations</div></div></div>
+        <p class="muted">एक on-call सहाय्यक घटनांची छाननी करते - logs आणि metrics वाचणे, नंतर service scale करणे किंवा deploy परत आणणे यासारखे उपाय अंमलात आणणे.</p>
+        <ul>
+          <li>Diagnostic tools (<code>get_logs</code>, <code>get_metrics</code>) read-only आणि जलद तपासासाठी अनिर्बंध आहेत.</li>
+          <li>Action tools (<code>scale_service</code>, <code>rollback</code>) ना एक मंजुरी टप्पा लागतो आणि ते idempotency keys सह चालतात जेणेकरून replays सुरक्षित असतात.</li>
+          <li>प्रत्येक call actor, arguments, आणि निकालासह पूर्ण audit trail साठी नोंदवले जाते, आणि विध्वंसक कृती आधी dry-run mode ला support करतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> Agent पुराव्यावर कृती करून time-to-recovery कमी करते, तर मंजुरी, idempotency, आणि audit logs प्रत्येक कृती उलट करण्याजोगी आणि जबाबदार ठेवतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>Tool calling कोणत्या दिशेने चालले आहे</h2>
+      <p class="muted">Tool calling एका एकल function invocation पासून agentic systems च्या कण्यात विकसित होत आहे - प्रमाणित, composable, आणि रचनेनेच अधिक सुरक्षित.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 MCP आणि standard tool protocols</h4><p>Model Context Protocol सारखे open standards कोणत्याही model ला कोणत्याही tool server शी जोडू देतात, त्यामुळे integrations वैयक्तिक ऐवजी plug-and-play बनतात.</p></div>
+        <div class="card"><h4>🤝 Multi-agent tool सामायिकरण</h4><p>विशेष agents त्यांची कौशल्ये एकमेकांना tools म्हणून उघड करतात, अशा systems मध्ये रचना करतात जिथे प्रत्येक agent subtask साठी योग्य साथीदाराला बोलावते.</p></div>
+        <div class="card"><h4>🛡️ बारीक permissions</h4><p>Capability scopes, per-tool policies, आणि human-in-the-loop gates side-effecting कृती लेखापरीक्षणयोग्य आणि रचनेनेच सुरक्षित बनवतात.</p></div>
+        <div class="card"><h4>⚡ अधिक हुशार parallelism</h4><p>Models वाढत्या प्रमाणात एकाच वेळी स्वतंत्र calls ची योजना आणि पाठवणी करतात, अनेक systems ना स्पर्श करणाऱ्या कामांची latency कमी करतात.</p></div>
+        <div class="card"><h4>🎯 Tool-use evals first-class म्हणून</h4><p>Selection अचूकता, argument validity, आणि त्रुटींतून सावरणे मोजणे हा agent विश्वासार्हतेवर नियंत्रण ठेवणारा मापदंड बनतो.</p></div>
+        <div class="card"><h4>🧠 स्वतः दुरुस्त करणारे agents</h4><p>Agents जे tool त्रुटी वाचतात, विचार करतात, आणि दुरुस्त केलेल्या arguments सह पुन्हा प्रयत्न करतात - ठिसूळ calls ना मजबूत, लवचिक workflows मध्ये बदलतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> tool calling हा तो मार्ग आहे ज्याद्वारे एक केवळ-मजकूर model अशी system बनते जी live data पाहू शकते आणि खरी कृती करू शकते - तुमच्या validation, permissions, आणि audit च्या अंतर्गत. जसे protocols प्रमाणित होतात आणि agents रचना करतात, तसे उत्तम-रचित tools कोणत्याही AI उत्पादनाचा सर्वात टिकाऊ भाग बनतात.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Tool calling हे संबंधित कौशल्यांच्या जाळ्यात बसते. ही त्याच्यासोबत नैसर्गिकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="/mcp/"><span class="ico">🔌</span><h4>Model Context Protocol</h4><p>Models ला tool servers शी जोडण्यासाठीचे open standard.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../agentic/"><span class="ico">🕹️</span><h4>Agentic orchestration</h4><p>Tool calls ना multi-step स्वायत्त agents मध्ये loop करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../structured-outputs/"><span class="ico">📐</span><h4>Structured outputs</h4><p>Tool arguments ना आकार देणारी schema-मर्यादित generation.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails आणि सुरक्षितता</h4><p>Tools करू शकणाऱ्या कृती तपासणे आणि नियंत्रित करणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत जा</a></p>
+      <p>Tool calling चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

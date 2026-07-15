@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>प्रॉम्प्ट इंजिनिअरिंग समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="प्रॉम्प्ट इंजिनिअरिंगचे सखोल, दृश्य मार्गदर्शन: प्रॉम्प्टची रचना, मूलभूत तंत्रे, सिक्वेन्स डायग्राम, 0-100 प्रवाह, केस स्टडीज आणि प्रॉम्प्टिंग कुठे चालले आहे." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">डायग्राम</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">प्रॉम्प्ट इंजिनिअरिंग</span>
+      <h1>प्रॉम्प्ट इंजिनिअरिंग प्रत्यक्षात कसे काम करते - संपूर्ण चित्र</h1>
+      <p class="lede">प्रॉम्प्ट म्हणजे तुम्ही सोप्या भाषेत लँग्वेज मॉडेलसाठी लिहिलेला प्रोग्राम. प्रॉम्प्ट इंजिनिअरिंग म्हणजे त्या इनपुटची <strong>रचना करण्याची</strong> कला - role, सूचना, context, उदाहरणे आणि format - जेणेकरून मॉडेल तुम्हाला हवे असलेले आउटपुट विश्वासार्हपणे तयार करेल. योग्यरीत्या केल्यास, ते एका सामान्य मॉडेलचे रूपांतर अशा भरवशाच्या घटकात करते ज्यावर तुम्ही प्रॉडक्ट्स तयार करू शकता.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">डायग्रामकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">System role</span>
+        <span class="pill">Few-shot उदाहरणे</span>
+        <span class="pill">Chain-of-thought</span>
+        <span class="pill">आउटपुट फॉरमॅटिंग</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>प्रॉम्प्ट इंजिनिअरिंग म्हणजे काय?</h2>
+      <p class="muted"><strong>प्रॉम्प्ट इंजिनिअरिंग</strong> म्हणजे तुम्ही लँग्वेज मॉडेलला पाठवता तो मजकूर अशा प्रकारे रचण्याची पद्धत, की त्याचे वर्तन अंदाज करता येण्याजोगे, अचूक आणि उपयुक्त होईल. मॉडेलचे आउटपुट पूर्णपणे त्याच्या इनपुटवर अवलंबून असल्याने, शब्दरचना, रचना आणि उदाहरणांमधील लहान बदलही गुणवत्तेत मोठे बदल घडवतात. चांगले प्रॉम्प्टिंग हे हुशार शब्दरचनेपेक्षा मॉडेलला स्पष्ट <em>role</em>, संदिग्धतारहित <em>सूचना</em>, योग्य <em>context</em> आणि नेमका <em>आउटपुट करार</em> देण्याबद्दल अधिक असते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎭</span> Role आणि सूचना</h4>
+          <p>System message व्यक्तिमत्त्व, टोन आणि कडक नियम ठरवते; सूचना कार्य नेमक्या, तपासता येण्याजोग्या शब्दांत सांगतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📎</span> Context आणि उदाहरणे</h4>
+          <p>संबंधित संदर्भ साहित्य आणि काही सोडवलेली उदाहरणे (few-shot) मॉडेलला अनुकरण करण्यासाठीचा नमुना वर्णन करण्याऐवजी दाखवतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📐</span> आउटपुट करार</h4>
+          <p>स्पष्ट format स्पेसिफिकेशन - JSON schema, हेडिंग्ज, लांबीच्या मर्यादा - प्रतिसाद मशीनला वाचता येण्याजोगे आणि सुसंगत बनवते.</p>
+        </div>
+      </div>
+
+      <h3>प्रॉम्प्टची रचना</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>ठराविक स्वरूप</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>System role</strong></td><td>व्यक्तिमत्त्व, व्याप्ती आणि अटळ नियम ठरवते</td><td>"You are a meticulous data extractor…"</td></tr>
+            <tr><td><strong>सूचना</strong></td><td>कार्य आणि यशाचे निकष नेमकेपणाने सांगते</td><td>क्रमांकित पायऱ्या, स्पष्ट मर्यादा</td></tr>
+            <tr><td><strong>Context</strong></td><td>मॉडेलला ज्यावर विचार करायचा ती माहिती पुरवते</td><td>मिळवलेले docs, वापरकर्ता डेटा, डिलिमिटर</td></tr>
+            <tr><td><strong>Few-shot उदाहरणे</strong></td><td>input → output मॅपिंग दाखवते</td><td>2–5 लेबल केलेल्या जोड्या</td></tr>
+            <tr><td><strong>आउटपुट-format स्पेसिफिकेशन</strong></td><td>उत्तराचा नेमका आकार ठरवते</td><td>JSON schema, टेम्प्लेट, लांबीची मर्यादा</td></tr>
+            <tr><td><strong>वापरकर्ता query</strong></td><td>ज्यावर कृती करायची तो प्रत्यक्ष विनंती</td><td>शेवटी ठेवलेली, स्पष्टपणे विभागलेली</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>महत्त्वाचे मानसिक मॉडेल:</strong> प्रॉम्प्ट हे एक स्पेसिफिकेशन आहे, इच्छा नाही. मॉडेल जे मजकूर त्याला कृती करण्यास प्रवृत्त करतो तेच नेमके करते - म्हणून संदिग्धता, परस्परविरोधी सूचना आणि गहाळ format स्पेसिफिकेशन हे <em>तुमचे</em> बग्स आहेत, मॉडेलचे नाहीत. API कराराप्रमाणे इनपुटची रचना करा.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>प्रॉम्प्ट इंजिनिअरिंग का महत्त्वाचे आहे</h2>
+      <p class="muted">Fine-tuning वजने बदलते - मंद, खर्चिक आणि पुनरावृत्ती करण्यास कठीण. प्रॉम्प्टिंग वर्तन <em>तत्काळ</em> बदलते, शून्य प्रशिक्षण खर्चात, आणि गुणवत्तेसाठी तुमच्याकडे असलेला सर्वात वेगवान लीव्हर आहे. मॉडेलची बहुतांश वापरण्याजोगी क्षमता तुम्ही कसे विचारता यावरून उघडली किंवा वाया घालवली जाते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚡ तत्काळ पुनरावृत्ती</h4><p>प्रॉम्प्ट पुन्हा लिहा आणि पुन्हा चालवा - पुन्हा प्रशिक्षण नाही, deploy नाही. तुम्ही एखादे eval अयशस्वी होण्यापासून उत्तीर्ण होण्यापर्यंत काही मिनिटांत जाऊ शकता, दिवसांत नाही.</p></div>
+        <div class="card"><h4>🎯 विश्वासार्हता आणि नियंत्रण</h4><p>रचना, मर्यादा आणि format स्पेसिफिकेशन एका बोलघेवड्या मॉडेलचे रूपांतर API मागे ठेवता येईल अशा पुरेशा निश्चित घटकात करतात.</p></div>
+        <div class="card"><h4>💸 Fine-tuning पेक्षा स्वस्त</h4><p>लेबल केलेले डेटासेट नाहीत, GPU तास नाहीत. चांगल्या रचनेचा प्रॉम्प्ट बऱ्याचदा fine-tune च्या तुलनेत कमी श्रमात तितकाच किंवा अधिक चांगला निकाल देतो.</p></div>
+        <div class="card"><h4>🔍 तर्काची गुणवत्ता वळवते</h4><p>step-by-step तर्क आणि विभाजनासारखी तंत्रे कठीण, अनेक-पायऱ्यांच्या कार्यांवर अचूकता लक्षणीयरीत्या वाढवतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह प्रॉम्प्ट इंजिनिअरिंग समजावले</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती लगेच समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>प्रॉम्प्ट म्हणजे <strong>चांगल्या रीतीने लिहिलेला परीक्षेचा प्रश्न</strong>. संदिग्ध प्रश्नाला भरकटलेले उत्तर मिळते; format स्पष्ट केलेला नेमका प्रश्न ("तुमचे काम दाखवा, मग अंतिम आकडा चौकटीत करा") तुम्ही जे विचारले तेच नेमके देतो.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>प्रॉम्प्ट म्हणजे तुम्ही मॉडेलसाठी लिहिलेली <strong>function signature आणि docstring</strong>. स्पष्ट parameters, स्पष्ट return type (JSON schema) आणि सोडवलेली उदाहरणे आउटपुट अंदाज करता येण्याजोगे आणि parse करता येण्याजोगे बनवतात.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>हे एक <strong>नेमके प्रोजेक्ट ब्रीफ</strong> लिहिण्यासारखे आहे. ध्येय, मर्यादा, deliverable चा format आणि "चांगल्याचा" नमुना सांगा, आणि काम तीन फेऱ्या पुन्हा करण्याची गरज न पडता नेमक्या लक्ष्यावर परत येते.</p></div>
+        <div class="card"><h4><span class="ico">🧑‍🍳</span> रोजच्या जीवनातील आवृत्ती</h4><p>अत्यंत सक्षम पण शब्दशः घेणाऱ्या <strong>नव्या कर्मचाऱ्याला नेमक्या सूचना देण्यासारखे</strong>. ते तुम्ही जे सांगाल तेच नेमके करतील, म्हणून "हे तीन बुलेटमध्ये, jargon शिवाय सारांशित करा" हे "ते चांगले बनवा" पेक्षा सरस ठरते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे काम करते</h2>
+      <p class="muted">प्रॉडक्शन प्रॉम्प्ट विनंतीच्या वेळी स्थिर आणि गतिशील भागांतून <em>एकत्र जोडला</em> जातो, मग एकाच condition केलेल्या इनपुट म्हणून पाठवला जातो. दोन बाबी आहेत: <strong>रचना</strong> (काय जाते, कोणत्या क्रमाने) आणि <strong>तंत्र</strong> (वर्तन वळवण्यासाठी तुम्ही ते कसे मांडता).</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧩</span> रचना</h4>
+          <p>एक टेम्प्लेट system role, मिळवलेला context, few-shot उदाहरणे, format स्पेसिफिकेशन आणि वापरकर्ता query एकत्र करते. क्रम महत्त्वाचा आहे: सूचना आणि query टोकांना नांगर टाकतात, मोठा context मध्ये बसतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛠️</span> तंत्र</h4>
+          <p>Zero-shot विरुद्ध few-shot, chain-of-thought, role prompting, डिलिमिटर, विभाजन, JSON आउटपुट आणि नकारात्मक guardrails ही अशी टूलकिट आहे जी तुम्ही लक्ष्य वर्तन गाठण्यासाठी एकत्र करता.</p>
+        </div>
+      </div>
+
+      <h3>प्रॉम्प्ट-असेंब्ली आर्किटेक्चर</h3>
+      <div class="diagram">
+        <div class="cap">आर्किटेक्चर - स्थिर टेम्प्लेट + गतिशील भाग एकाच condition केलेल्या इनपुटमध्ये एकत्र होतात</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Static["🧱 Static template"]
+        SYS["🎭 System role + rules"]
+        FMT["📐 Output-format spec"]
+        FS["📝 Few-shot examples"]
+    end
+    subgraph Dynamic["🔀 Per-request inputs"]
+        CTX["📎 Retrieved context"]
+        UQ["❓ User query"]
+    end
+    SYS --> ASM["🧩 Assemble prompt"]
+    FMT --> ASM
+    FS --> ASM
+    CTX --> ASM
+    UQ --> ASM
+    ASM --> LLM["🧠 LLM"]
+    LLM --> OUT["✅ Structured output"]
+        </pre>
+      </div>
+
+      <h3>प्रत्यक्षातील रचित प्रॉम्प्ट</h3>
+      <pre><code>SYSTEM:
+You are a support-ticket classifier. Follow the rules exactly.
+Rules:
+- Choose exactly ONE category from the allowed list.
+- Do NOT invent categories. If unsure, use "other".
+- Output ONLY valid JSON matching the schema. No prose.
+
+Allowed categories: ["billing","bug","feature_request","other"]
+
+Examples:
+Ticket: "I was charged twice this month"  -> {"category":"billing","confidence":0.97}
+Ticket: "The app crashes on export"        -> {"category":"bug","confidence":0.95}
+
+Schema: {"category": string, "confidence": number}
+
+USER:
+Ticket: "Can you add dark mode to the mobile app?"</code></pre>
+      <p class="muted">नमुना लक्षात घ्या: एक मर्यादा घालणारे <em>system role</em>, एक स्पष्ट <em>परवानगी असलेला संच</em>, एक <em>नकारात्मक guardrail</em> ("do NOT invent"), मॅपिंग निश्चित करणारी <em>few-shot</em> उदाहरणे, आउटपुट parse करता येण्याजोगे बनवणारी <em>schema</em>, आणि स्पष्ट डिलिमिटरच्या मागे शेवटी ठेवलेली <em>वापरकर्ता query</em>.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - सिक्वेन्स डायग्राम</div>
+      <h2>तपशीलवार सिक्वेन्स डायग्राम</h2>
+      <p class="muted">तीन दृश्ये: प्रॉम्प्ट कसा एकत्र जोडून पाठवला जातो, chain-of-thought विरुद्ध थेट उत्तर, आणि eval-चालित सुधारणा लूप.</p>
+
+      <div class="diagram">
+        <div class="cap">डायग्राम 1 - प्रॉम्प्ट असेंब्ली: system, context, few-shot आणि query एकत्र करणे</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ App
+    participant Tpl as 🧱 Template
+    participant Ctx as 📎 Context source
+    participant LLM as 🧠 LLM
+
+    U->>App: Send query
+    App->>Tpl: Load system role and format spec
+    Tpl-->>App: Base prompt scaffold
+    App->>Ctx: Fetch relevant context
+    Ctx-->>App: Reference passages
+    App->>App: Insert few-shot examples
+    Note over App: Order is role then context then examples then query
+    App->>LLM: Send assembled prompt
+    LLM-->>App: Structured response
+    App-->>U: Parsed answer
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">डायग्राम 2 - कठीण कार्यावर chain-of-thought विरुद्ध थेट उत्तर</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ App
+    participant LLM as 🧠 LLM
+
+    U->>App: Multi-step reasoning question
+    alt Direct answer prompt
+        App->>LLM: Answer immediately
+        LLM-->>App: Single guess, often wrong
+    else Chain-of-thought prompt
+        App->>LLM: Think step by step, then answer
+        loop Reasoning steps
+            LLM->>LLM: Work through each step
+        end
+        LLM-->>App: Reasoning plus final answer
+        App->>App: Strip reasoning, keep answer
+    end
+    App-->>U: Final answer
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">डायग्राम 3 - Eval-चालित सुधारणा: लिहा, चालवा, गुण द्या, पुन्हा तपासा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Eng as 👩‍💻 Engineer
+    participant App as 🖥️ Prompt harness
+    participant Set as 📚 Eval set
+    participant LLM as 🧠 LLM
+    participant Judge as 📊 Scorer
+
+    Eng->>App: Author prompt version
+    App->>Set: Load labeled cases
+    loop For each case
+        App->>LLM: Run prompt on case
+        LLM-->>App: Output
+        App->>Judge: Score vs expected
+        Judge-->>App: Pass or fail
+    end
+    App-->>Eng: Aggregate score
+    alt Score improved
+        Eng->>App: Keep this version
+    else Regressed
+        Eng->>App: Revert and revise
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी-पायरीने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका अस्पष्ट ध्येयापासून प्रॉडक्शनमधील बळकट, मूल्यांकित प्रॉम्प्टपर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">व्याख्या</span><h4>कार्य आणि यशाचे निकष निश्चित करा</h4><p>मॉडेलने नेमके काय करायचे आणि चांगले आउटपुट कसे दिसते ते सांगा. जर तुम्ही यशाचे वर्णन करू शकत नसाल, तर तुम्ही त्यासाठी प्रॉम्प्ट किंवा मूल्यांकन करू शकत नाही.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Role</span><h4>System व्यक्तिमत्त्व आणि नियम ठरवा</h4><p>मॉडेलला एक role आणि अटळ मर्यादा द्या - व्याप्ती, टोन, आणि त्याने काय कधीच करू नये - system message मध्ये.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">सूचना</span><h4>स्पष्ट, नेमक्या सूचना लिहा</h4><p>कार्याचे रूपांतर संदिग्धतारहित पायऱ्यांत करा. "चांगले" किंवा "व्यावसायिक" सारख्या संदिग्ध विशेषणांऐवजी सकारात्मक, तपासता येण्याजोग्या निर्देशांना प्राधान्य द्या.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">रचना</span><h4>डिलिमिटर आणि विभाग जोडा</h4><p>सूचना, context आणि query स्पष्ट खुणांनी (हेडिंग्ज, XML tags, तिहेरी अवतरणचिन्हे) वेगळे करा जेणेकरून मॉडेल त्यांची गल्लत कधीच करणार नाही.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">उदाहरणे</span><h4>Few-shot उदाहरणे द्या</h4><p>अवघड प्रकरणे झाकणाऱ्या 2–5 input → output जोड्या दाखवा. उदाहरणे केवळ वर्णनापेक्षा नमुना अधिक विश्वासार्हपणे शिकवतात.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Format</span><h4>आउटपुट करार निश्चित करा</h4><p>नेमका आकार जाहीर करा - JSON schema, टेम्प्लेट, लांबीच्या मर्यादा - जेणेकरून पुढील कोड प्रतिसाद निश्चितपणे parse करू शकेल.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">तर्क</span><h4>गरज असल्यास step-by-step तर्क जोडा</h4><p>अनेक-पायऱ्यांच्या कार्यांसाठी, मॉडेलला उत्तर देण्यापूर्वी समस्येवर विचार करण्यास सांगा, मग अंतिम उत्तर काढा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guardrail</span><h4>नकारात्मक सूचना आणि fallbacks जोडा</h4><p>काय टाळायचे आणि अनिश्चिततेवर काय करायचे ते सांगा - "if unsure, return null" - hallucination आणि व्याप्तीबाहेरचे आउटपुट टाळण्यासाठी.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">मूल्यांकन</span><h4>Eval संचावर चालवा</h4><p>प्रातिनिधिक प्रकरणांच्या लेबल केलेल्या संचावर प्रॉम्प्ट तपासा आणि आउटपुट स्वयंचलितपणे किंवा LLM judge ने गुणांकित करा.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">पुनरावृत्ती</span><h4>बदल → eval → ठेवा किंवा उलटवा</h4><p>एका वेळी एकच बदल करा, evals पुन्हा चालवा, आणि गुण सुधारले तरच तो ठेवा. एकाच किश्श्यावर कधीही ट्यून करू नका.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">प्रकाशित</span><h4>आवृत्ती, निरीक्षण आणि देखभाल</h4><p>विजयी प्रॉम्प्टला आवृत्ती-नियंत्रित artifact म्हणून निश्चित करा, प्रत्यक्ष आउटपुट लॉग करा, आणि सुधारणा चालू ठेवण्यासाठी अपयशे परत eval संचात पुरवा.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि चुकीचे नमुने</h2>
+      <p class="muted">बहुतांश प्रॉम्प्ट मॉडेलच्या क्षमतेवर नाही तर स्पष्टता आणि रचनेवर अपयशी ठरतात. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🌫️ संदिग्ध सूचना</h4><p>"चांगले," "संक्षिप्त," किंवा "व्यावसायिक" सारख्या संदिग्ध विशेषणांना तपासता येण्याजोगा अर्थ नाही. मॉडेल अंदाज करते, आणि तो अंदाज प्रत्येक रनला भरकटतो. त्यांच्याऐवजी नेमके, तपासता येण्याजोगे निर्देश वापरा.</p></div>
+        <div class="card"><h4>⚔️ परस्परविरोधी नियम</h4><p>मॉडेलला "सविस्तर व्हा" आणि "एका वाक्यात उत्तर द्या" असे सांगणे त्याला मुकाट्याने एक निवडण्यास भाग पाडते. विरोधाभासी मर्यादा कोणीही जाणीवपूर्वक न निवडलेले अनपेक्षित तडजोड निकाल देतात.</p></div>
+        <div class="card"><h4>📦 एकाच प्रॉम्प्टवर अतिभार</h4><p>classification, extraction आणि rewriting एकाच महाकाय प्रॉम्प्टमध्ये कोंबल्याने प्रत्येक कार्याचा दर्जा घसरतो. मॉडेल प्रत्यक्षात यशस्वी करू शकेल अशा केंद्रित पायऱ्या किंवा वेगळ्या कॉल्समध्ये विभागा.</p></div>
+        <div class="card"><h4>📐 आउटपुट-format स्पेसिफिकेशन नाही</h4><p>स्पष्ट schema किंवा टेम्प्लेटशिवाय, मॉडेल मुक्त-स्वरूप गद्य परत करते जे पुढील कोड parse करू शकत नाही. नेमका आकार जाहीर करा आणि तो validate होण्याची मागणी करा.</p></div>
+        <div class="card"><h4>🎰 मूल्यांकनाऐवजी चिमटे काढणे</h4><p>एकाच किश्श्याविरुद्ध सतत शब्द बदलणे एका उदाहरणासाठी सुधारणा करते आणि इतरांवर घसरते. Eval संचाशिवाय तुम्ही आंधळेपणाने ट्यून करत आहात. मोजा, मग बदला.</p></div>
+        <div class="card"><h4>🎭 गळके किंवा पक्षपाती few-shot</h4><p>उत्तर सामायिक करणारी, एका वर्गाकडे झुकणारी, किंवा context क्रमाकडे दुर्लक्ष करणारी उदाहरणे मॉडेलला पक्षपाती बनवतात. "lost in the middle" कडे लक्ष द्या, जिथे context च्या मध्यभागी दडलेला मजकूर दुर्लक्षिला जातो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजायचे</div>
+      <h2>प्रॉम्प्ट गुणवत्ता कशी मोजायची</h2>
+      <p class="muted">प्रॉम्प्ट प्रातिनिधिक eval संचावरील आकड्यांविरुद्धच "चांगला" असतो. हे एकत्र मोजा, वेगवेगळे नाही.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते तुम्हाला काय सांगते</th><th>चांगले चिन्ह</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Eval संचावरील कार्य अचूकता</strong></td><td>लेबल केलेल्या प्रातिनिधिक प्रकरणांवर आउटपुट किती वेळा बरोबर असते</td><td>आवृत्त्यांमध्ये उच्च आणि स्थिर</td></tr>
+            <tr><td><strong>Format-valid दर</strong></td><td>जाहीर केलेल्या schema किंवा टेम्प्लेटविरुद्ध parse होणाऱ्या प्रतिसादांचे प्रमाण</td><td>जवळपास 100%: पुढील कोड कधीच तुटत नाही</td></tr>
+            <tr><td><strong>सूचना-पालन दर</strong></td><td>मॉडेल सांगितलेले नियम आणि मर्यादा किती विश्वासार्हपणे पाळते</td><td>उच्च: स्पेसिफिकेशन प्रत्यक्षात पाळले जाते</td></tr>
+            <tr><td><strong>रन-दरम्यान सुसंगती</strong></td><td>तेच इनपुट पुनरावृत्त कॉल्सवर तेच उत्तर देते का</td><td>उच्च: कमी फरक, अंदाज करता येण्याजोगे वर्तन</td></tr>
+            <tr><td><strong>Token खर्च / latency</strong></td><td>प्रति विनंती prompt + completion tokens आणि पूर्ण वेळ</td><td>तुमच्या बजेट आणि SLA मध्ये</td></tr>
+            <tr><td><strong>नकार / अति-नकार दर</strong></td><td>मॉडेल किती वेळा वैध, व्याप्तीतील विनंत्या चुकीने नाकारते</td><td>कमी: बेजबाबदार न होता उपयुक्त</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जर format-valid दर कमी असेल, तर शब्दरचनेला हात लावण्याआधी schema घट्ट करा आणि उदाहरणे जोडा; जर अचूकता कमी पण format ठीक असेल, तर सूचना आणि few-shot व्याप्ती दुरुस्त करा. नेहमी एकच गोष्ट बदला, मग evals पुन्हा चालवा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>प्रत्यक्ष जगातील केस स्टडीज</h2>
+      <p class="muted">प्रॉडक्शन-शैलीच्या वापरात प्रॉम्प्ट इंजिनिअरिंग दाखवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏷️</span><div><h3>1 · Text-classification पाइपलाइन</h3><div class="role">नमुना: मर्यादित single-label आउटपुट</div></div></div>
+        <p class="muted">एका टीमला हजारो support tickets उच्च, सुसंगत अचूकतेने ठराविक categories मध्ये मार्गस्थ करायचे आहेत.</p>
+        <ul>
+          <li>System role परवानगी असलेला category संच निश्चित करते आणि नवीन labels शोधण्यास मनाई करते.</li>
+          <li>Few-shot उदाहरणे केवळ वर्णन ज्यांना चुकवेल अशी संदिग्ध किनारीची प्रकरणे झाकतात.</li>
+          <li>आउटपुट हे confidence गुणांसह कठोर JSON object आहे, त्यामुळे कमी-confidence प्रकरणे माणसाकडे मार्गस्थ होतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> खूप कमी भरकटीसह स्थिर, parse करता येण्याजोग्या classifications, कारण परवानगी असलेला संच आणि उदाहरणे वर्तन निश्चित करतात आणि evals प्रकाशनाआधी घसरण पकडतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>2 · JSON मध्ये संरचित data extraction</h3><div class="role">नमुना: schema-बंद extraction</div></div></div>
+        <p class="muted">एका finance टीमला अस्ताव्यस्त invoices मधून fields - vendor, रक्कम, तारीख, line items - काढून स्वच्छ schema मध्ये आणायचे आहेत.</p>
+        <ul>
+          <li>प्रॉम्प्ट लक्ष्य JSON schema अंतर्भूत करतो आणि त्याविरुद्ध validate होणाऱ्या आउटपुटची मागणी करतो.</li>
+          <li>नकारात्मक guardrails ("गहाळ fields साठी null परत करा, कधीही अंदाज करू नका") बनावट मूल्ये टाळतात.</li>
+          <li>डिलिमिटर कच्चा document सूचनांपासून वेगळा करतात जेणेकरून लांब इनपुट नियमांमध्ये गळत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> schema validator सह थेट database मध्ये जोडणारी extraction, जी हस्तचलित data-entry कार्याचे रूपांतर स्वयंचलित, तपासता येण्याजोग्या पाइपलाइनमध्ये करते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">✍️</span><div><h3>3 · Brand-voice लेखन सहाय्यक</h3><div class="role">नमुना: persona + शैली मर्यादा</div></div></div>
+        <p class="muted">एका marketing संस्थेला अशी copy हवी आहे जी डझनभर लेखक आणि channels मध्ये नेहमी brand सारखी वाटेल.</p>
+        <ul>
+          <li>तपशीलवार persona आणि style guide system role मध्ये असते - टोन, वाचन पातळी, टाळायचे शब्द.</li>
+          <li>on-brand आणि off-brand copy ची few-shot उदाहरणे लक्ष्य voice ठोसपणे नांगर टाकतात.</li>
+          <li>एक LLM judge draft ला style rubric विरुद्ध गुणांकित करतो जेणेकरून प्रॉम्प्ट प्रत्यक्ष evals विरुद्ध ट्यून करता येईल.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> मोठ्या प्रमाणावर सुसंगत, on-brand drafts, अशा मोजता येण्याजोग्या voice rubric सह जी प्रॉम्प्ट आणि मॉडेल्स विकसित होत असतानाही गुणवत्ता स्थिर ठेवते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>प्रॉम्प्ट इंजिनिअरिंग कुठे चालले आहे</h2>
+      <p class="muted">प्रॉम्प्टिंग हस्तनिर्मित strings पासून एका शिस्तबद्ध, साधनसज्ज इंजिनिअरिंग पद्धतीत परिपक्व होत आहे - मोजलेली, आवृत्ती-नियंत्रित आणि अधिकाधिक स्वयंचलित.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🤖 स्वयंचलित प्रॉम्प्ट ऑप्टिमायझेशन</h4><p>eval संचाविरुद्ध प्रॉम्प्ट शोधणारी आणि पुन्हा लिहिणारी साधने - प्रॉम्प्ट रचनेला हस्तचलित अंदाजाऐवजी एक ऑप्टिमायझेशन समस्या मानणारी.</p></div>
+        <div class="card"><h4>📊 Evals प्रथम-श्रेणीचे</h4><p>प्रॉम्प्ट बदल regression tests ने नियंत्रित आणि लेबल केलेल्या संचांवर गुणांकित, जेणेकरून गुणवत्ता ही तुम्ही आशा करता तो भाव नसून तुम्ही मोजता तो मापदंड होय.</p></div>
+        <div class="card"><h4>🧠 Reasoning मॉडेल्स कला बदलतात</h4><p>अंतर्गत तर्क करणारी मॉडेल्स हस्तचलित chain-of-thought ची गरज कमी करतात, श्रम स्पष्ट स्पेसिफिकेशन आणि पडताळणीकडे वळवतात.</p></div>
+        <div class="card"><h4>🗂️ Context इंजिनिअरिंग</h4><p>"lost in the middle" परिणाम व्यवस्थापित करणे - लांब windows मध्ये context ची क्रमवारी, संकुचन आणि बजेटिंग ही स्वतःची शिस्त बनते.</p></div>
+        <div class="card"><h4>🧰 संरचित आणि tool-जाणकार प्रॉम्प्ट</h4><p>Native JSON modes, function calling आणि tool schemas आउटपुट कराराला केवळ प्रॉम्प्टमधील गद्य नव्हे तर API चा भाग बनवतात.</p></div>
+        <div class="card"><h4>🔁 आवृत्ती-नियंत्रित artifacts म्हणून प्रॉम्प्ट</h4><p>Prompt registries, diffs आणि rollbacks सॉफ्टवेअर-इंजिनिअरिंगची काटेकोरता - version control, review आणि CI - प्रॉम्प्ट स्तरावर आणतात.</p></div>
+      </div>
+      <div class="callout"><strong>निष्कर्ष:</strong> प्रॉम्प्ट इंजिनिअरिंग म्हणजे तुम्ही एका सामान्य मॉडेलचे रूपांतर विश्वासार्ह घटकात कसे करता - स्वस्तात, वेगाने आणि पडताळता येण्याजोगे. मॉडेल्स बळकट होत असताना, ही कला शब्दरचनेच्या युक्त्यांपासून स्पष्ट स्पेसिफिकेशन, मूल्यांकन आणि context व्यवस्थापनाकडे सरकते, पण ती नाहीशी होत नाही - ती अधिक इंजिनिअरिंग शिस्त बनते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध चालू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">प्रॉम्प्ट इंजिनिअरिंग संबंधित कौशल्यांच्या जाळ्यात बसते. हे तिच्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../structured-outputs/"><span class="ico">📐</span><h4>Structured outputs</h4><p>कोड parse करू शकेल यासाठी प्रतिसाद schema ला बांधा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals आणि LLM-as-judge</h4><p>भावनांवर ट्यून करण्याऐवजी प्रॉम्प्ट बदल गुणांकित करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prompt-management/"><span class="ico">🗂️</span><h4>Prompt management</h4><p>प्रॉम्प्ट artifacts म्हणून आवृत्ती, diff आणि roll back करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../rag/"><span class="ico">🔎</span><h4>Retrieval-augmented generation</h4><p>query च्या वेळी प्रॉम्प्टमध्ये योग्य context पुरवा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>प्रॉम्प्ट इंजिनिअरिंगचे दृश्य मार्गदर्शन · काय · का · कसे · डायग्राम · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

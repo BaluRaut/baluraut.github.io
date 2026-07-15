@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edge आणि On-Device इन्फरन्स समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="Edge आणि on-device LLM इन्फरन्ससाठी सखोल, दृश्यात्मक मार्गदर्शक: ते काय आहे, ते कसे काम करते, ते का महत्त्वाचे आहे, मॉडेल कॉम्प्रेशन, रनटाइम, सिक्वेन्स डायग्राम, 0-100 प्रवाह, केस स्टडीज आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">डायग्राम</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Edge / On-Device इन्फरन्स</span>
+      <h1>डिव्हाइसवर LLM चालवणे - संपूर्ण चित्र</h1>
+      <p class="lede">क्लाउड इन्फरन्स शक्तिशाली आहे पण त्याला प्रत्येक token मागे पैसे लागतात, डेटा डिव्हाइसच्या बाहेर जातो, आणि नेटवर्कशिवाय ते बंद पडते. On-device इन्फरन्स हे उलटे करते: एक <strong>compressed</strong> मॉडेल फोन, लॅपटॉप किंवा सेन्सरवर स्थानिक पातळीवर चालते, त्यामुळे उत्तरे <strong>खाजगी, तात्काळ आणि offline</strong> असतात - सर्व्हरपर्यंत फेरी मारावी लागत नाही.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">डायग्रामकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Quantization</span>
+        <span class="pill">llama.cpp आणि GGUF</span>
+        <span class="pill">NPU / GPU</span>
+        <span class="pill">Hybrid edge-cloud</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>On-device इन्फरन्स म्हणजे काय?</h2>
+      <p class="muted"><strong>On-device (edge) इन्फरन्स</strong> म्हणजे मॉडेलचे weights डेटासेंटरमध्ये नव्हे तर अंतिम वापरकर्त्याच्या हार्डवेअरवर - फोन, लॅपटॉप, wearable, कार किंवा औद्योगिक gateway वर - राहतात आणि तिथेच चालतात. Prompt कधीही डिव्हाइस सोडत नाही, आणि कोणताही API कॉल नसतो: स्थानिक स्टोरेजमधून compressed मॉडेल फाइल वाचणारा एक रनटाइम स्थानिक पातळीवर tokens तयार करतो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🗜️</span> Compress करा (offline)</h4>
+          <p>एक मोठे मॉडेल quantization, distillation आणि pruning द्वारे तोपर्यंत लहान केले जाते जोपर्यंत ते डिव्हाइसच्या RAM मध्ये बसते आणि वापरण्यायोग्य वेगाने चालते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> पॅकेज आणि पाठवा (offline)</h4>
+          <p>Compressed weights एका अ‍ॅपमध्ये बंडल केले जातात किंवा पहिल्या launch वर डाउनलोड केले जातात, आणि ते एका विशिष्ट रनटाइम व हार्डवेअर बॅकएंडसाठी लक्ष्य केले जातात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚡</span> स्थानिक पातळीवर infer करा (online)</h4>
+          <p>वापरण्याच्या वेळी on-device रनटाइम मॉडेल लोड करते, CPU/GPU/NPU वर forward pass चालवते, आणि tokens थेट UI कडे stream करते.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>सामान्य पर्याय</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Compression</strong></td><td>Weights लहान करते जेणेकरून ते डिव्हाइसवर बसतील आणि वेगाने चालतील</td><td>Quantization (int8/int4), distillation, pruning</td></tr>
+            <tr><td><strong>मॉडेल फॉरमॅट</strong></td><td>रनटाइमसाठी quantized weights serialize करते</td><td><code>GGUF</code>, ONNX, Core ML <code>.mlpackage</code>, safetensors</td></tr>
+            <tr><td><strong>रनटाइम</strong></td><td>स्थानिक हार्डवेअरवर forward pass चालवते</td><td>llama.cpp, ONNX Runtime, Core ML, MLC, TensorRT</td></tr>
+            <tr><td><strong>हार्डवेअर बॅकएंड</strong></td><td>प्रत्यक्ष matrix गणित करते</td><td>CPU (SIMD), GPU (Metal/Vulkan), NPU/ANE</td></tr>
+            <tr><td><strong>Orchestrator</strong></td><td>स्थानिक की क्लाउड ठरवते, मेमरी आणि KV cache व्यवस्थापित करते</td><td>Router logic, hybrid escalation धोरण</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक मॉडेल:</strong> on-device इन्फरन्स ही गुणवत्तेची समस्या असण्याआधी fit-आणि-वेगाची समस्या आहे. संपूर्ण खेळ म्हणजे मॉडेलला डिव्हाइसच्या RAM मध्ये बसण्याइतके आणि interactive token दर गाठण्याइतके compress करणे - त्याची उत्तरे <em>न</em> बिघडवता - बाकी सर्व त्या तडजोडीतून निघते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>On-device इन्फरन्स का अस्तित्वात आहे</h2>
+      <p class="muted">प्रत्येक token क्लाउड API कडे पाठवणे तोपर्यंत ठीक आहे जोपर्यंत privacy, latency, connectivity किंवा प्रति-request खर्च ही अडचण बनत नाही. मॉडेल डिव्हाइसवर चालवल्याने critical path मधून नेटवर्क निघून जाते - आणि त्यासोबतच समस्यांचा एक संपूर्ण वर्ग.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔐 Privacy मूलतःच</h4><p>संवेदनशील इनपुट - आरोग्य नोंदी, संदेश, camera frames - कधीही डिव्हाइस सोडत नाही, त्यामुळे intercept, log किंवा subpoena करण्यासारखा कोणताही डेटा नसतो. Compliance कमालीचे सोपे होते.</p></div>
+        <div class="card"><h4>⚡ अति-कमी latency</h4><p>नेटवर्क फेरी नसल्याने first-token latency स्थानिक compute ने बांधलेली असते, radio परिस्थितीने नव्हे. कमकुवत connection वरही परस्परसंवाद तात्काळ वाटतो.</p></div>
+        <div class="card"><h4>📴 Offline काम करते</h4><p>विमाने, बोगदे, कारखाने, दुर्गम फील्ड साइट - मॉडेल शून्य connectivity वर चालते. उपलब्धता आता signal किंवा uptime SLA वर अवलंबून नाही.</p></div>
+        <div class="card"><h4>💸 प्रति-token खर्च नाही</h4><p>एकदा पाठवल्यावर, इन्फरन्स margin वर मूलतः मोफत आहे - तुम्ही तुमचे API बजेट नव्हे तर वापरकर्त्याची battery खर्च करता. खर्च वापरासोबत वाढत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले on-device इन्फरन्स</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ते पटकन समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे प्रत्येक उत्तरासाठी मित्राला मेसेज करण्याऐवजी <strong>स्वतःच्या डोक्यात</strong> गणित करण्यासारखे आहे. तुम्ही ज्ञानाची लहान आवृत्ती सोबत बाळगता, त्यामुळे फोन silent वर असतानाही तुम्ही तात्काळ उत्तर देऊ शकता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p><strong>एखादी library स्थानिक बंडल करणे विरुद्ध remote API कॉल करणे</strong> असा विचार करा. Compressed मॉडेल एका dependency प्रमाणे अ‍ॅपमध्ये पाठवले जाते, त्यामुळे <code>generate()</code> हा एक स्थानिक function कॉल असतो - नेटवर्क नाही, key नाही, आणि rate limit नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>प्रत्येक कागद बाहेरील सल्लागाराकडे courier करण्याऐवजी <strong>प्रशिक्षित तज्ज्ञ इमारतीतच</strong> ठेवण्यासारखे. उत्तरे तात्काळ आणि गोपनीय असतात, कारण काहीही ऑफिस सोडून जात नाही.</p></div>
+        <div class="card"><h4><span class="ico">🧮</span> रोजच्या जीवनातील आवृत्ती</h4><p><strong>खिशातील calculator विरुद्ध अकाउंटंटला फोन करणे</strong>. Calculator लहान आणि कमी सक्षम आहे, पण तो तुमच्या हातात आहे, signal शिवाय चालतो, आणि तुम्ही बरोबरीचे चिन्ह दाबताच उत्तर देतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत ते कसे काम करते</h2>
+      <p class="muted">दोन pipelines आहेत: एक <strong>offline build</strong> pipeline जी मॉडेल compress आणि पॅकेज करते, आणि एक <strong>on-device रनटाइम</strong> जी ते weights लोड करते आणि प्रत्येक request मागे स्थानिक पातळीवर tokens तयार करते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🗜️</span> Compression pipeline</h4>
+          <p>पूर्ण-precision checkpoint पासून सुरुवात करा → पर्यायाने लहान student मध्ये distill करा → अनावश्यक weights prune करा → fp16 ला int8/int4 पर्यंत quantize करा → GGUF किंवा Core ML सारख्या रनटाइम फॉरमॅटमध्ये export करा. प्रत्येक टप्पा थोडी गुणवत्ता देऊन खूप आकार आणि वेग मिळवतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> On-device रनटाइम</h4>
+          <p>Quantized weights ला memory-map करा → layers CPU/GPU/NPU कडे पाठवा → वाढत्या KV cache सह forward pass चालवा → पुढील token sample करा → तो UI कडे stream करा. हे सर्व एका ठराविक RAM, thermal आणि battery मर्यादेत.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात आर्किटेक्चर</h3>
+      <div class="diagram">
+        <div class="cap">आर्किटेक्चर - एक offline build weights तयार करते जे डिव्हाइस लोड करून स्थानिक पातळीवर चालवते</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Build["🏭 Offline build"]
+        M["🧠 Full model fp16"] --> DI["🎓 Distill"]
+        DI --> PR["✂️ Prune"]
+        PR --> QZ["🗜️ Quantize int4"]
+        QZ --> PK["📦 Package GGUF"]
+    end
+    subgraph Device["📱 On-device runtime"]
+        PK --> LD["📥 mmap weights"]
+        APP["🖥️ App"] --> RT["⚙️ Local runtime"]
+        LD --> RT
+        RT --> HW["🔋 CPU / GPU / NPU"]
+        HW --> TOK["✅ Streamed tokens"]
+    end
+        </pre>
+      </div>
+
+      <h3>डिव्हाइसवर quantized मॉडेल लोड करणे</h3>
+      <pre><code># Pull a 4-bit GGUF build sized for the device
+# Q4_K_M ≈ 4.4 GB for a 7B model - fits a modern phone/laptop
+from llama_cpp import Llama
+
+llm = Llama(
+    model_path="mistral-7b-instruct.Q4_K_M.gguf",
+    n_ctx=4096,          # KV cache budget - costs RAM
+    n_gpu_layers=-1,     # offload all layers to Metal/GPU if present
+    n_threads=6,         # CPU fallback threads
+)
+
+for chunk in llm("Summarize this note offline:", stream=True):
+    print(chunk["choices"][0]["text"], end="")   # tokens stream locally</code></pre>
+      <p class="muted">लक्षात घ्या की कोणताही API key नाही आणि कोणतीही URL नाही - weights ही एक स्थानिक फाइल आहे, आणि <code>n_gpu_layers</code> व <code>n_ctx</code> ही दोन knobs आहेत जी मॉडेल लक्ष्य हार्डवेअरवर प्रत्यक्ष बसते व वेगाने चालते की नाही हे ठरवतात.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - सिक्वेन्स डायग्राम</div>
+      <h2>तपशीलवार सिक्वेन्स डायग्राम</h2>
+      <p class="muted">तीन दृश्ये: नेटवर्कशिवाय स्थानिक इन्फरन्स request मार्ग, offline build-आणि-deploy pipeline, आणि कठीण queries क्लाउडकडे escalate करणारा hybrid प्रवाह.</p>
+
+      <div class="diagram">
+        <div class="cap">डायग्राम 1 - On-device request: नेटवर्कशिवाय prompt पासून tokens पर्यंत</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 📱 App
+    participant RT as ⚙️ Local runtime
+    participant HW as 🔋 NPU/GPU
+
+    U->>App: Type a prompt
+    App->>RT: run(prompt, params)
+    RT->>RT: Tokenize input
+    RT->>HW: Forward pass on-device
+    HW-->>RT: Logits for next token
+    loop until stop token
+        RT->>RT: Sample next token
+        RT-->>App: Stream token
+        App-->>U: Render text live
+    end
+    Note over U,HW: No network call - fully offline
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">डायग्राम 2 - Build आणि deploy: train, quantize, पॅकेज, डिव्हाइसवर पाठवा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Tr as 🏋️ Training
+    participant Comp as 🗜️ Compressor
+    participant Pkg as 📦 Packager
+    participant Store as 🛰️ App store/CDN
+    participant Dev as 📱 Device
+
+    Tr->>Comp: Full-precision checkpoint
+    Comp->>Comp: Distill and prune
+    Comp->>Comp: Quantize to int4
+    Comp-->>Pkg: Quantized weights
+    Pkg->>Pkg: Export GGUF/Core ML
+    Pkg->>Store: Publish build
+    Dev->>Store: Download on first launch
+    Store-->>Dev: Model file cached locally
+    Note over Comp,Dev: Validate quality after each shrink
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">डायग्राम 3 - Hybrid: स्थानिक सोप्या queries हाताळते, क्लाउड कठीण हाताळते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 📱 App
+    participant Loc as ⚙️ Local model
+    participant Cloud as ☁️ Cloud model
+
+    U->>App: Ask a question
+    App->>Loc: Try on-device first
+    Loc-->>App: Answer plus confidence
+    alt confident and simple
+        App-->>U: Local answer instantly
+    else hard or low confidence
+        App->>Cloud: Escalate query
+        Cloud-->>App: High-quality answer
+        App-->>U: Cloud answer
+    end
+    Note over Loc,Cloud: Most traffic stays local and free
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका भारी क्लाउड checkpoint पासून नेटवर्क बंद असलेल्या फोनवर tokens stream होण्यापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">लक्ष्य</span><h4>डिव्हाइस मर्यादा निवडा</h4><p>प्रथम हार्डवेअर बजेट ठरवा: उपलब्ध RAM, NPU किंवा GPU आहे का, thermal जागा, आणि battery खर्च. पुढील सर्व काही याच्या मापाने ठरते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">निवडा</span><h4>बेस मॉडेल निवडा</h4><p>काम करू शकेल असे सर्वात लहान मॉडेल निवडा - बहुतेकदा 1B–8B parameter मॉडेल, कारण compression नंतर ते काही gigabytes मध्ये बसले पाहिजे.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Distill</span><h4>ज्ञान student कडे हस्तांतरित करा</h4><p>पर्यायाने एका मोठ्या teacher ला लहान student मॉडेलमध्ये distill करा, parameter संख्येच्या अंशातच बहुतांश गुणवत्ता राखून.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Prune</span><h4>अनावश्यक weights काढा</h4><p>कमी प्रभाव असलेले weights किंवा संपूर्ण रचना (heads, channels) काढून टाका जेणेकरून किमान accuracy तोट्यासह आकार व compute कमी होईल.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Quantize</span><h4>Precision कमी करा fp16 → int4</h4><p>Weights fp16 वरून int8 किंवा int4 मध्ये रूपांतरित करा. एक 7B मॉडेल ~14 GB वरून ~4 GB वर येते, ज्यामुळे फोन-स्केल RAM शक्य होते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Export</span><h4>रनटाइम फॉरमॅटमध्ये serialize करा</h4><p>Quantized weights GGUF (llama.cpp), ONNX किंवा Core ML मध्ये लिहा जेणेकरून एक विशिष्ट on-device रनटाइम ते लोड करू शकेल.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">पॅकेज</span><h4>अ‍ॅपमध्ये बंडल करा</h4><p>मॉडेल अ‍ॅपमध्ये पाठवा किंवा पहिल्या launch वर स्थानिक cache मध्ये आणा, आणि ते डिव्हाइसच्या रनटाइम व बॅकएंडशी जुळवा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">लोड</span><h4>डिव्हाइसवर memory-map करा</h4><p>सुरुवातीला रनटाइम weights ला mmap करते आणि context window च्या मापाची KV cache वाटप करते - हा मुख्य रनटाइम RAM खर्च आहे.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Route</span><h4>स्थानिक की क्लाउड ठरवा</h4><p>एक hybrid orchestrator कठीणता व confidence तपासतो: सोप्या queries डिव्हाइसवरच राहतात; कठीण queries क्लाउड मॉडेलकडे escalate होतात.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Infer</span><h4>स्थानिक पातळीवर forward pass चालवा</h4><p>रनटाइम layers NPU/GPU/CPU कडे पाठवते, tokens sample करते, आणि thermals व्यवस्थापित करते जेणेकरून generation च्या मध्येच डिव्हाइस throttle होणार नाही.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Stream</span><h4>UI कडे tokens पोहोचवा</h4><p>Tokens interface कडे real time मध्ये stream होतात, पूर्णपणे offline. Telemetry (opt-in, on-device metrics) पुढील build च्या tuning ला मदत करते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">On-device इन्फरन्स एका घट्ट fit-वेग-गुणवत्ता बजेटवर टिकते किंवा मरते. हे ते बिघडण्याचे नेहमीचे मार्ग आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🗜️ जास्त quantize करणे</h4><p>जागा वाचवण्यासाठी 3-bit किंवा 2-bit पर्यंत ढकलल्याने गुणवत्ता कोसळू शकते - मॉडेल loop मध्ये अडकते, hallucinate करते किंवा instruction पाळणे गमावते. उत्तरे बिघडेपर्यंत आकाराचा पाठलाग केल्याने पाठवण्याचे मूळ कारणच नष्ट होते.</p></div>
+        <div class="card"><h4>🧠 RAM साठी मॉडेल खूप मोठे</h4><p>कसेबसे बसणारे मॉडेल निवडून त्यात मोठी KV cache जोडल्याने खऱ्या डिव्हाइसवर swapping किंवा hard crashes होतात. Weights आणि context सर्वात घट्ट लक्ष्यात बसले पाहिजेत, flagship मध्ये नव्हे.</p></div>
+        <div class="card"><h4>🔥 Thermal throttling आणि battery नाश</h4><p>सतत generation SoC इतके गरम करते की OS clock throttle करते, त्यामुळे tokens रांगत येतात - आणि वापरकर्त्यांना battery वितळताना जाणवते. Thermal आणि power मर्यादेकडे दुर्लक्ष केल्याने एक जलद demo मंद, गरम उत्पादन बनते.</p></div>
+        <div class="card"><h4>⏳ Cold-start / load वेळेकडे दुर्लक्ष</h4><p>पहिल्या वापरात अनेक gigabytes memory-map केल्याने UI काही सेकंद अडकू शकते. Load मोफत मानल्याने weights warm करण्याऐवजी किंवा stream करण्याऐवजी प्रत्येक launch वर गोठलेला splash screen येतो.</p></div>
+        <div class="card"><h4>☁️ क्लाउड fallback नाही</h4><p>एक लहान स्थानिक मॉडेलला अशा queries भेटतील ज्या ते हाताळूच शकत नाही. कठीण prompts साठी escalation मार्ग नसल्यास वापरकर्त्यांना चुकीची किंवा नाकारलेली उत्तरे मिळतात, आणि गुणवत्ता पुनर्प्राप्त करण्याचा कोणताही सुंदर मार्ग नसतो.</p></div>
+        <div class="card"><h4>🧩 विखंडित हार्डवेअर आणि रनटाइम समर्थन</h4><p>एका NPU साठी tune केलेले int4 GGUF दुसऱ्या डिव्हाइसच्या GPU किंवा CPU वर मंद किंवा असमर्थित असू शकते. एक build सर्वत्र चालतो असे गृहीत धरल्याने edge silicon व रनटाइम आवृत्त्यांच्या गोंधळलेल्या वास्तवाकडे दुर्लक्ष होते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजावे</div>
+      <h2>On-device इन्फरन्स कसे मोजावे</h2>
+      <p class="muted">प्रत्यक्ष लक्ष्य हार्डवेअरवर वेग, footprint आणि ऊर्जा ट्रॅक करा, नंतर तुम्ही सोडलेल्या गुणवत्तेशी त्यांची तुलना करा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>तो काय सांगतो</th><th>चांगले चिन्ह</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Tokens / सेकंद</strong></td><td>डिव्हाइसवर सातत्यपूर्ण decode throughput</td><td>वाचनाच्या वेगाइतके किंवा त्याहून जास्त (~15+ tok/s)</td></tr>
+            <tr><td><strong>Time-to-first-token</strong></td><td>Prompt पासून पहिल्या stream झालेल्या token पर्यंतची latency</td><td>कमी: तात्काळ वाटते, एका सेकंदापेक्षा कमी</td></tr>
+            <tr><td><strong>Peak RAM</strong></td><td>रनटाइमला weights आणि KV cache चा footprint</td><td>डिव्हाइसच्या मेमरी बजेटपेक्षा बरेच कमी</td></tr>
+            <tr><td><strong>डिस्कवरील मॉडेल आकार</strong></td><td>Build चा डाउनलोड आणि स्टोरेज खर्च</td><td>पाठवण्या व cache करण्याइतके पुरेसे लहान</td></tr>
+            <tr><td><strong>प्रति query ऊर्जा / battery</strong></td><td>प्रत्येक generation ला वापरलेली power, आणि निर्माण झालेली उष्णता</td><td>कमी: कोणतेही throttling किंवा जाणवणारा नाश नाही</td></tr>
+            <tr><td><strong>पूर्ण-precision च्या तुलनेत गुणवत्ता फरक</strong></td><td>Quantization व pruning मुळे गमावलेली accuracy</td><td>लहान: तुमच्या eval set वर गुणवत्ता टिकते</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> नेहमी प्रत्यक्ष डिव्हाइसवर मोजा, लॅपटॉप emulator वर नव्हे. जर tokens/सेकंद ठीक असेल पण battery व उष्णता वाढत असेल, तर तुम्ही compute-bound आहात आणि तुम्हाला लहान मॉडेल किंवा NPU offload हवे; जर गुणवत्ता तीव्रपणे घसरली असेल, तर इतर काहीही करण्याआधी quantization मागे घ्या.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">production-सदृश वापरात on-device इन्फरन्स दाखवणारे तीन प्रातिनिधिक patterns.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📱</span><div><h3>1 · मोबाइल वैयक्तिक सहाय्यक</h3><div class="role">Pattern: क्लाउड escalation सह hybrid local-first</div></div></div>
+        <p class="muted">एका फोन उत्पादकाला असा सहाय्यक हवा आहे जो प्रत्येक keystroke सर्व्हरवर न पाठवता, airplane mode मध्येही, संदेशांचा सारांश देतो आणि उत्तरे तात्काळ मसुदा करतो.</p>
+        <ul>
+          <li>int4 मध्ये quantized केलेले एक 3B मॉडेल रोजच्या summarize/rewrite कामांसाठी फोनच्या NPU वर चालते.</li>
+          <li>Confidence-gated routing सामान्य requests स्थानिक ठेवते; फक्त खरोखर कठीण queries क्लाउड मॉडेलकडे escalate होतात.</li>
+          <li>RAM संरक्षित करण्यासाठी KV cache मर्यादित केली जाते, आणि SoC गरम झाल्यावर generation मागे घेते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> बहुसंख्य requests साठी तात्काळ, खाजगी सहाय्य, आणि जो लहान अंश खरोखर गरजेचा आहे त्यावरच क्लाउड खर्च होतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏥</span><div><h3>2 · खाजगी on-device आरोग्यसेवा अ‍ॅप</h3><div class="role">Pattern: privacy-गंभीर पूर्णपणे स्थानिक इन्फरन्स</div></div></div>
+        <p class="muted">एका clinical नोंद-घेणाऱ्या अ‍ॅपला रुग्ण संभाषणांचे transcribe व सारांश करावे लागते जिथे नियमन ओळखता येणारा डेटा डिव्हाइसबाहेर पाठवण्यास मनाई करते.</p>
+        <ul>
+          <li>एक distilled, int8-quantized मॉडेल पूर्णपणे tablet वर चालते - protected आरोग्य माहिती कधीही नेटवर्कला स्पर्श करत नाही.</li>
+          <li>Core ML Neural Engine ला लक्ष्य करते जेणेकरून रुग्णांच्या दरम्यान battery न संपवता सारांश जलद तयार होतील.</li>
+          <li>रचनेनुसारच कोणताही क्लाउड fallback अस्तित्वात नाही, त्यामुळे compliance सीमा केवळ आश्वासित नव्हे तर संरचनात्मकदृष्ट्या हमी दिलेल्या असतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Clinicians ना बचावयोग्य privacy स्थितीसह स्वयंचलित नोंदी मिळतात - डेटा भौतिकदृष्ट्या डिव्हाइस सोडू शकत नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛠️</span><div><h3>3 · Offline फील्ड आणि औद्योगिक अ‍ॅप</h3><div class="role">Pattern: शून्य-connectivity edge deployment</div></div></div>
+        <p class="muted">दुर्गम rigs आणि भूमिगत साइट्सवरील तंत्रज्ञांना उपकरण manuals व सुरक्षा प्रक्रियांवरील सहाय्यक हवा असतो जिथे अजिबात signal नसतो.</p>
+        <ul>
+          <li>एक लहान quantized मॉडेल आणि स्थानिक index मजबूत tablet किंवा edge gateway वर पाठवले जाते.</li>
+          <li>Vulkan/GPU बॅकएंड सह llama.cpp सामान्य औद्योगिक हार्डवेअरवर इन्फरन्स वापरण्यायोग्य ठेवते.</li>
+          <li>Builds फक्त डिव्हाइस परत base वर आल्यावरच wire वर अपडेट केले जातात - इन्फरन्स स्वतः कधीही नेटवर्कवर अवलंबून नसते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> कामगारांना फील्डमध्ये खोलवर तात्काळ, आधारभूत मार्गदर्शन मिळते, आणि अशी उपलब्धता जी कोणताही क्लाउड outage किंवा dead zone हिरावून घेऊ शकत नाही.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>On-device इन्फरन्स कुठे चालले आहे</h2>
+      <p class="muted">Silicon, फॉरमॅट्स आणि compression पद्धती परिपक्व होत असताना, edge इन्फरन्स एका शौर्यपूर्ण अभियांत्रिकी पराक्रमातून एका default deployment लक्ष्याकडे सरकत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧮 सर्वत्र समर्पित NPUs</h4><p>फोन, लॅपटॉप, आणि अगदी wearables आता neural accelerators सह येतात, ज्यामुळे battery खर्च कमी ठेवत प्रत्येक पिढीत वापरण्यायोग्य स्थानिक मॉडेल आकार वाढतो.</p></div>
+        <div class="card"><h4>🔬 Sub-4-bit quantization</h4><p>2–3 bit आणि mixed-precision योजना, तसेच quantization-aware training, आश्चर्यकारकपणे कमी गुणवत्ता तोट्यासह मॉडेल आणखी लहान करत आहेत.</p></div>
+        <div class="card"><h4>🧩 अधिक हुशार hybrid routing</h4><p>Orchestrators जे प्रत्येक query मागे स्थानिक कधी पुरेसे चांगले आहे हे शिकतात, on-device वेग आणि क्लाउड गुणवत्ता आपोआप व स्वस्तपणे मिसळतात.</p></div>
+        <div class="card"><h4>📚 On-device retrieval</h4><p>स्थानिक vector indexes edge मॉडेलना वापरकर्त्याच्या स्वतःच्या फाइल्स व इतिहासात उत्तरे आधारभूत करू देतात - खाजगी RAG जे कधीही घरी फोन करत नाही.</p></div>
+        <div class="card"><h4>🔄 On-device personalization</h4><p>हलके स्थानिक fine-tuning आणि LoRA adapters एका पाठवलेल्या मॉडेलला कोणताही डेटा डिव्हाइस न सोडता एका वापरकर्त्यासाठी जुळवून घेऊ देतात.</p></div>
+        <div class="card"><h4>🖼️ Edge वर Multimodal</h4><p>Compressed vision व speech मॉडेल मर्यादित हार्डवेअरवर on-device image, audio, आणि video आकलन - केवळ text नव्हे - आणतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> on-device इन्फरन्स हा AI ला खाजगी, तात्काळ आणि सर्वत्र उपलब्ध करण्याचा मार्ग आहे - खर्च, latency, आणि विश्वासातील प्रचंड फायद्यांसाठी नियंत्रित प्रमाणात मॉडेल गुणवत्तेची तडजोड करून. Silicon आणि compression सुधारत असताना, प्रत्येक workload चा अधिकाधिक भाग edge कडे सरकतो, आणि क्लाउड खऱ्या अर्थाने कठीण प्रकरणांसाठी राखीव ठेवला जातो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">On-device इन्फरन्स संबंधित कौशल्यांच्या जाळ्यात बसते. हे त्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../model-routing/"><span class="ico">🔀</span><h4>Model routing</h4><p>एखादी query स्थानिक राहते की क्लाउडकडे escalate होते हे ठरवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../fine-tuning/"><span class="ico">🎯</span><h4>Fine-tuning</h4><p>लहान मॉडेल डिव्हाइसवर बसवण्यासाठी व personalize करण्यासाठी distill व adapt करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../embeddings/"><span class="ico">🧭</span><h4>Embeddings आणि vector DBs</h4><p>वापरकर्त्याच्या स्वतःच्या फाइल्सवर खाजगी, on-device retrieval चालवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../structured-outputs/"><span class="ico">🧱</span><h4>Structured outputs</h4><p>एका लहान स्थानिक मॉडेलला विश्वासार्ह, parse करण्यायोग्य फॉरमॅट्समध्ये मर्यादित करा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>Edge / On-Device इन्फरन्ससाठी दृश्यात्मक मार्गदर्शक · काय · का · कसे · डायग्राम · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

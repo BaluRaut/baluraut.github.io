@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PII आणि डेटा-बाउंडरी हाताळणी सविस्तर - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="LLM अ‍ॅप्ससाठी PII आणि डेटा-बाउंडरी हाताळणीचे सखोल, दृश्यात्मक मार्गदर्शन: डिटेक्शन, redaction, tokenization, detect→redact→rehydrate पॅटर्न, zero-retention providers, लॉग scrubbing, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">PII आणि डेटा-बाउंडरी हाताळणी</span>
+      <h1>वैयक्तिक डेटा मॉडेलपासून दूर ठेवणे - संपूर्ण चित्र</h1>
+      <p class="lede">LLM अ‍ॅप्स सतत नावे, ईमेल, आरोग्य नोंदी आणि खाते क्रमांक हाताळत असतात - आणि त्यातील बरेचसे काम तुमच्या नियंत्रणाबाहेरील बाह्य provider कडे होते. सुरक्षित प्रणाली वैयक्तिक डेटा <strong>ओळखतात (detect)</strong>, तो trust boundary ओलांडण्यापूर्वी <strong>redact किंवा tokenize</strong> करतात, आणि नंतर उत्तर पुन्हा <strong>rehydrate</strong> करतात, जेणेकरून मॉडेल उपयुक्त काम करते पण कच्चा PII कधीही तुमच्या परिघातून बाहेर पडत नाही.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Detection आणि classification</span>
+        <span class="pill">Tokenization आणि vaults</span>
+        <span class="pill">Zero-retention endpoints</span>
+        <span class="pill">लॉग आणि trace scrubbing</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>PII आणि डेटा-बाउंडरी हाताळणी म्हणजे काय?</h2>
+      <p class="muted"><strong>वैयक्तिकरित्या ओळखता येणारी माहिती (PII)</strong> म्हणजे अशी कोणतीही माहिती जी एखाद्या व्यक्तीला ओळखू शकते - थेट (नाव, ईमेल, SSN) किंवा अप्रत्यक्षपणे (पत्ता अधिक जन्मतारीख). <strong>डेटा बाउंडरी</strong> म्हणजे विश्वासार्ह क्षेत्राभोवतीचा परिघ: तुमचा database, तुमचा VPC, तुमचा on-prem cluster. डेटा-बाउंडरी हाताळणी ही <em>कोणती फील्ड्स कोणता परिघ ओलांडून कोणत्या मॉडेल किंवा provider पर्यंत जाऊ शकतात</em> हे ठरवण्याची - आणि ते ओलांडणे सुरक्षित होईल अशा प्रकारे त्यांचे रूपांतर करण्याची शिस्त आहे.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔍</span> Detect</h4>
+          <p>डेटा हलण्यापूर्वी मजकुरातील PII शोधा - रचनात्मक ओळखकर्त्यांसाठी regex, नावे व पत्त्यांसाठी ML classifiers, आणि स्पष्टता आणण्यासाठी संदर्भ वापरून.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛡️</span> रूपांतर</h4>
+          <p>ओळखलेल्या भागांना redact, mask, tokenize किंवा anonymize करा जेणेकरून boundary सोडणाऱ्या payload मध्ये कोणताही कच्चा वैयक्तिक डेटा राहणार नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Rehydrate</h4>
+          <p>मॉडेलने प्रतिसाद दिल्यानंतर, तुमच्या परिघाच्या आत placeholders च्या जागी खरी मूल्ये परत बसवा, जेणेकरून वापरकर्त्याला संपूर्ण उत्तर दिसते.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य बांधणी घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>सामान्य पर्याय</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Detector</strong></td><td>मजकूर व रचनात्मक फील्ड्समधील PII भाग शोधतो</td><td>Regex, NER models, Presidio, cloud DLP</td></tr>
+            <tr><td><strong>Classifier</strong></td><td>प्रत्येक भागाला entity type आणि संवेदनशीलतेनुसार लेबल लावतो</td><td>PERSON, EMAIL, SSN, MRN, PAN</td></tr>
+            <tr><td><strong>Transformer</strong></td><td>redaction, masking किंवा tokenization लागू करतो</td><td>Mask, hash, format-preserving token</td></tr>
+            <tr><td><strong>Token vault</strong></td><td>उलट करता येण्याजोगे token↔value mappings सुरक्षितपणे साठवतो</td><td>KMS-backed store, HSM, secrets vault</td></tr>
+            <tr><td><strong>Policy engine</strong></td><td>कोणता डेटा कोणता boundary ओलांडू शकतो हे ठरवतो</td><td>Field allow-lists, residency rules, DPAs</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> उद्दिष्ट LLM वापरणे थांबवणे हे नाही - तर provider ला फक्त तोच डेटा दिसेल याची खात्री करणे आहे ज्यावर विश्वास ठेवण्याची गरज नाही. जर कच्चा PII कधीही boundary ओलांडत नसेल, तर provider breach, training leak, किंवा चुकून पडलेली लॉग ओळ तुमच्या वापरकर्त्यांना उघड करू शकत नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>डेटा-बाउंडरी हाताळणी का अस्तित्वात आहे</h2>
+      <p class="muted">hosted मॉडेलला prompt पाठवणे म्हणजे डेटा एका तिसऱ्या पक्षाकडे कॉपी करणे. नियंत्रणांशिवाय, ती कॉपी साठवली जाऊ शकते, लॉग केली जाऊ शकते, training साठी वापरली जाऊ शकते, किंवा चुकीच्या अधिकारक्षेत्रात ठेवली जाऊ शकते. Boundary हाताळणी उपयुक्त signal वाहत ठेवते तर ओळख देणारे तपशील घरीच राहतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚖️ नियामक अनुपालन</h4><p>GDPR, HIPAA, CCPA आणि क्षेत्रनिहाय नियम कायदेशीर आधार, डेटा minimization आणि वैयक्तिक डेटा कुठे जातो यावर नियंत्रण मागतात. Redaction आणि DPAs हे ते पूर्ण करण्याचे मार्ग आहेत.</p></div>
+        <div class="card"><h4>🔐 नुकसानाची व्याप्ती घटवते</h4><p>जर मॉडेल कधीही कच्चा PII पाहत नसेल, तर provider ची घटना किंवा गळती झालेला prompt फक्त अर्थहीन tokens उघड करतो - खऱ्या ओळखी नाही.</p></div>
+        <div class="card"><h4>🌍 डेटा residency</h4><p>काही डेटा कायदेशीररित्या एखादा प्रदेश सोडू शकत नाही. Boundary policy अशा फील्ड्सना in-region किंवा on-prem मॉडेलकडे वळवते, किंवा egress पूर्वी त्या पूर्णपणे काढून टाकते.</p></div>
+        <div class="card"><h4>🚫 कोणतेही छुपे training नाही</h4><p>Zero-retention, no-training endpoints आणि स्वाक्षरी केलेले करार हे सुनिश्चित करतात की तुमच्या वापरकर्त्यांचा डेटा भविष्यातील मॉडेल आवृत्तीत सामावला जाणार नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांसह डेटा-बाउंडरी हाताळणी समजावली</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे असे आहे जसे गट प्रकल्पासाठी फोटोकॉपी करण्यापूर्वी <strong>फॉर्मवरील तुमचा पत्ता काळा करून टाकणे</strong>. कॉपीमध्ये अजूनही तुमची उत्तरे दिसतात, पण तुम्हाला ओळखणारे भाग कधीही तुमच्या हातातून जात नाहीत.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>याचा विचार असा करा की <strong>एक proxy जो बाहेर जाणाऱ्या कॉलपूर्वी secrets ना placeholders ने बदलतो</strong>, आणि परत येताना ते पुन्हा बदलतो. बाह्य service tokens सोबत काम करते; खरी मूल्ये तुमच्या boundary मागेच राहतात.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>जसे एक <strong>नोंदी लिपिक जो बाहेरील सल्लागाराला redact केलेली केस फाइल पाठवतो</strong>. सल्लागार त्याला पाहण्याची परवानगी असलेल्या तथ्यांवर विचार करतो, तर ओळख देणारी पाने कार्यालयात कुलूपबंद राहतात.</p></div>
+        <div class="card"><h4><span class="ico">🖊️</span> रोजच्या जीवनातील रूप</h4><p>काउंटरवरून एखादे दस्तऐवज देण्यापूर्वी त्यावर <strong>काळ्या मार्करने खूण करणे</strong>: वाचणाऱ्याला सार कळते, पण खासगी ओळी झाकल्या गेल्याने तो त्या वाचू किंवा ठेवू शकत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे कार्य करते</h2>
+      <p class="muted">दोन बाबी एकत्र चालतात: एक <strong>डेटा-रूपांतरण</strong> मार्ग जो बाहेर जाताना PII scrub करतो आणि परत येताना पुनर्संचयित करतो, आणि provider agreements, retention settings व लॉग स्वच्छतेचा एक <strong>governance</strong> स्तर जो boundary प्रामाणिक ठेवतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">✂️</span> रूपांतरण मार्ग</h4>
+          <p>Detect → classify → tokenize (vault द्वारे उलट करता येण्याजोगे) किंवा anonymize (उलट न करता येणारे) → scrub केलेला prompt मॉडेलला पाठवा → प्रतिसादातील placeholders पुन्हा खऱ्या मूल्यांशी जोडा.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📋</span> Governance स्तर</h4>
+          <p>Zero-retention / no-training endpoints, data-processing agreements, residency routing, आणि trace scrubbing जेणेकरून PII कधीही लॉग, observability किंवा backups मध्ये पडत नाही.</p>
+        </div>
+      </div>
+
+      <h3>आर्किटेक्चर एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">आर्किटेक्चर - PII परिघाच्या आतच काढून टाकला जातो; फक्त tokens provider पर्यंत जातात</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Trust["🏠 Trust perimeter"]
+        IN["📝 Raw input"] --> DET["🔍 Detect PII"]
+        DET --> CLS["🏷️ Classify + policy"]
+        CLS --> TOK["🎭 Tokenize / redact"]
+        TOK --> VLT[("🔐 Token vault")]
+        REH["🔁 Rehydrate"] --> OUT["✅ Final answer"]
+        VLT --> REH
+    end
+    subgraph Provider["☁️ External provider"]
+        LLM["🧠 LLM (zero-retention)"]
+    end
+    TOK -->|scrubbed prompt| LLM
+    LLM -->|tokenized answer| REH
+        </pre>
+      </div>
+
+      <h3>Detection आणि tokenization pseudocode मध्ये</h3>
+      <pre><code>spans = detect(text)          # regex + NER + context rules
+mapping = {}
+scrubbed = text
+for s in spans:               # e.g. EMAIL, PERSON, SSN, PAN
+    token = make_token(s.type)          # "[EMAIL_1]", "[PERSON_2]"
+    vault.put(token, s.value, ttl=600)  # reversible, KMS-encrypted
+    mapping[token] = s.value
+    scrubbed = scrubbed.replace(s.value, token)
+
+answer = llm.generate(          # provider sees only tokens
+    endpoint="zero-retention",
+    prompt=scrubbed
+)
+
+final = answer
+for token, value in mapping.items():   # rehydrate inside perimeter
+    final = final.replace(token, value)
+vault.purge(mapping.keys())</code></pre>
+      <p class="muted">उलट करता येण्याजोगे <em>tokenization</em> तुम्हाला vault द्वारे खरी मूल्ये पुनर्संचयित करू देते; उलट न करता येणारे <em>anonymization</em> (mapping शिवाय masking किंवा hashing) तेव्हा वापरले जाते जेव्हा डेटा कधीही परत यायला नको. अंतिम उत्तराला खऱ्या मूल्याची गरज आहे की नाही यावर आधारित प्रत्येक फील्डनुसार निवडा.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>सविस्तर sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: detect→redact→process→rehydrate round-trip, egress पूर्वी फील्ड्स काढून टाकणारे boundary crossing, आणि PII तुमच्या traces पर्यंत पोहोचण्यापूर्वी scrub करणारा logging pipeline.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Detect → redact → process → rehydrate (provider कधीही कच्चा PII पाहत नाही)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ App
+    participant Det as 🔍 PII detector
+    participant Vault as 🔐 Token vault
+    participant LLM as 🧠 External LLM
+
+    U->>App: Submit text with PII
+    App->>Det: detect and classify spans
+    Det-->>App: entities with types
+    App->>Vault: store token to value map
+    Vault-->>App: reversible tokens
+    App->>LLM: send tokenized prompt
+    LLM-->>App: answer containing tokens
+    App->>Vault: resolve tokens to values
+    Vault-->>App: real values
+    Note over App,Vault: rehydrate inside perimeter then purge
+    App-->>U: complete answer
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Boundary crossing: परिघ सोडण्यापूर्वी कोणती फील्ड्स काढून टाकली जातात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Svc as 🏠 Internal service
+    participant Pol as 📋 Policy engine
+    participant GW as 🚪 Egress gateway
+    participant Prov as ☁️ External provider
+
+    Svc->>Pol: request to call model with record
+    Pol->>Pol: evaluate field allow-list and residency
+    alt field must stay inside
+        Pol-->>GW: strip SSN, MRN, address
+    else field safe to send
+        Pol-->>GW: keep tokenized order id
+    end
+    GW->>GW: verify no raw PII remains
+    GW->>Prov: forward scrubbed payload
+    Prov-->>GW: response
+    Note over GW,Prov: zero-retention endpoint under a DPA
+    GW-->>Svc: response for rehydration
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Logging pipeline traces लिहिण्यापूर्वी PII scrub करते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant Log as 🧹 Scrubbing middleware
+    participant Trace as 📊 Tracing backend
+    participant Store as 🗄️ Log store
+
+    App->>Log: emit event with prompt and response
+    Log->>Log: detect and mask PII in payload
+    alt sensitive field found
+        Log->>Log: replace with redacted marker
+    else no PII detected
+        Log->>Log: pass through unchanged
+    end
+    Log->>Trace: send sanitized span
+    Trace->>Store: persist scrubbed trace
+    Note over Log,Store: raw PII never reaches observability
+    Store-->>App: ack
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">कच्च्या वापरकर्ता input पासून संपूर्ण उत्तरापर्यंत - प्रत्येक ओलांडणीवर PII नियंत्रित असलेला संपूर्ण प्रवास.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Classify</span><h4>डेटाची यादी करा</h4><p>request मधील कोणती फील्ड्स PII, PHI किंवा आर्थिक डेटा आहेत हे मॅप करा, आणि त्यांची संवेदनशीलता व residency आवश्यकता आधीच नोंदवा.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Policy</span><h4>काय ओलांडू शकते ते ठरवा</h4><p>Policy engine field allow-list, residency rules आणि सक्रिय data-processing agreement तपासून परिघ काय सोडू शकते हे ठरवते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Detect</span><h4>मुक्त मजकुरात PII शोधा</h4><p>रचनात्मक ओळखकर्त्यांवर regex आणि असंरचित मजकुरावर NER/ML classifier चालवा, नावे, पत्ते व खाते क्रमांक पकडण्यासाठी संदर्भ वापरा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Classify</span><h4>प्रत्येक भाग लेबल करा व गुण द्या</h4><p>प्रत्येक ओळखलेल्या भागाला entity type आणि confidence नुसार टॅग करा जेणेकरून योग्य transform लागू होईल - आणि कमी confidence असलेल्या जुळण्यांचा आढावा घेता येईल.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Transform</span><h4>Redact, mask किंवा tokenize</h4><p>ज्या फील्ड्सची उत्तराला परत गरज असेल त्या उलट करता येण्याजोग्या पद्धतीने tokenize करा; ज्या कधीही परत यायला नकोत त्या उलट न करता येण्याजोग्या पद्धतीने mask करा किंवा टाकून द्या.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Vault</span><h4>Mapping सुरक्षितपणे साठवा</h4><p>token↔value जोड्या लहान TTL सह KMS-encrypted vault मध्ये लिहा, जेणेकरून mapping फक्त request ला जितका वेळ लागेल तितकाच अस्तित्वात राहील.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Verify</span><h4>Egress वर पहारा ठेवा</h4><p>boundary वर, बाहेर जाणारा payload शेवटचा एकदा स्कॅन करा आणि detection मधून कोणताही कच्चा PII निसटला असेल तर तो रोखा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Send</span><h4>Zero-retention endpoint ला कॉल करा</h4><p>scrub केलेला prompt एका no-training, zero-retention मॉडेल endpoint ला पाठवा जो स्वाक्षरी केलेल्या DPA अंतर्गत आणि आवश्यक तिथे in-region असेल.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Rehydrate</span><h4>आत खरी मूल्ये पुनर्संचयित करा</h4><p>मॉडेलच्या प्रतिसादातील placeholders vault वापरून खऱ्या मूल्यांशी परत जोडा, पूर्णपणे trust परिघाच्या आत.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Scrub</span><h4>लॉग व traces स्वच्छ करा</h4><p>कोणताही prompt किंवा प्रतिसाद लॉग, tracing किंवा analytics मध्ये लिहिण्यापूर्वी scrubbing middleware PII mask करते, नंतर token mapping पुसून टाकते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>संपूर्ण उत्तर परत करा</h4><p>वापरकर्त्याला पूर्ण, अचूक उत्तर मिळते तर provider ने फक्त tokens पाहिलेले असतात - आणि audit नोंदी boundary काय ओलांडले हे सिद्ध करतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">बहुतेक boundary अपयशे व्याप्तीतील त्रुटींमुळे येतात, मॉडेलमुळे नाही. हे नेहमीचे दोषी आहेत ज्यांच्यापासून बचाव करावा.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔤 फक्त Regex-आधारित detection</h4><p>Patterns रचनात्मक ओळखकर्ते पकडतात पण नावे, पत्ते आणि संदर्भावर अवलंबून असलेला PII चुकवतात. regex ला NER/ML classifier आणि context rules सोबत जोडा जेणेकरून असंरचित वैयक्तिक डेटा गुपचूप पुढे जाऊ दिला जाणार नाही.</p></div>
+        <div class="card"><h4>🪵 PII लॉग व traces मध्ये गळणे</h4><p>Prompts आणि प्रतिसाद जसेच्या तसे लॉग, spans किंवा error reports मध्ये कॉपी केल्याने तुम्ही scrub केलेला तोच डेटा पुन्हा उघड होतो. observability, analytics किंवा backups पर्यंत काहीही पोहोचण्यापूर्वी scrubbing middleware चालवा.</p></div>
+        <div class="card"><h4>🔒 rehydration ची गरज असताना उलट न करता येणारे redaction</h4><p>नंतर पुनर्संचयित करावी लागणारी फील्ड mask किंवा hash केल्याने उत्तर बिघडते. प्रतिसादाला परत लागणाऱ्या फील्ड्ससाठी उलट करता येण्याजोगे tokenization (vault द्वारे) निवडा, आणि मूल्य कधीही परत यायला नको तेव्हाच उलट न करता येणारे anonymization वापरा.</p></div>
+        <div class="card"><h4>☁️ Non-zero-retention endpoints</h4><p>inputs साठवणाऱ्या किंवा त्यावर train करणाऱ्या endpoint ला कच्चा डेटा पाठवणे म्हणजे एक कॉपी तुमच्या नियंत्रणाबाहेर राहते. नियंत्रित डेटा फक्त स्वाक्षरी केलेल्या कराराअंतर्गत no-training, zero-retention endpoints कडे वळवा.</p></div>
+        <div class="card"><h4>🌍 डेटा residency दुर्लक्षित करणे</h4><p>चुकीच्या अधिकारक्षेत्रातील मॉडेलकडे फील्ड्स पाठवणे, डेटा tokenized असला तरीही, कायद्याचे उल्लंघन करू शकते. residency policy मध्ये नोंदवा आणि egress पूर्वी in-region वळवा किंवा काढून टाका.</p></div>
+        <div class="card"><h4>✂️ अति-redaction उपयुक्तता नष्ट करणे</h4><p>इतक्या आक्रमकपणे scrub करणे की मॉडेल त्याला लागणारा संदर्भ गमावते, त्यामुळे निरुपयोगी उत्तरे मिळतात. detection अशा प्रकारे ट्यून करा की ते ओळखींचे संरक्षण करेल पण कामाला लागणारा ओळख न देणारा signal जपेल.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजावे</div>
+      <h2>PII हाताळणी कशी मोजावी</h2>
+      <p class="muted">संरक्षण आणि उपयुक्तता एकत्र मोजा, जेणेकरून boundary सुरक्षित आहे आणि तरीही उपयुक्त काम करत आहे की नाही हे तुम्हाला कळेल.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते काय सांगते</th><th>चांगले चिन्ह</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Detection recall</strong></td><td>detector प्रत्यक्षात किती वाटा खरा PII पकडतो</td><td>उच्च: फारच थोडा संवेदनशील डेटा निसटतो</td></tr>
+            <tr><td><strong>False-positive rate</strong></td><td>non-PII किती वेळा flag होऊन विनाकारण redact होतो</td><td>कमी: कामाचा मजकूर अखंड राहतो</td></tr>
+            <tr><td><strong>Leakage incidents</strong></td><td>provider, लॉग किंवा store पर्यंत पोहोचलेल्या कच्च्या PII ची संख्या</td><td>शून्य: boundary टिकून राहिली</td></tr>
+            <tr><td><strong>Rehydration accuracy</strong></td><td>placeholders योग्य मूल्यांशी परत जुळतात का</td><td>उच्च: उत्तरे स्वच्छपणे पुनर्संचयित होतात</td></tr>
+            <tr><td><strong>Added latency</strong></td><td>detect-transform-rehydrate मार्गाला लागणारा अतिरिक्त वेळ</td><td>तुमच्या SLA बजेटच्या आत</td></tr>
+            <tr><td><strong>डेटा प्रकारांमधील coverage</strong></td><td>कोणते entity types आणि स्वरूप हाताळले जातात (text, structured, tables)</td><td>उच्च: डेटा प्रकारानुसार कोणतेही अंधबिंदू नाहीत</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> leakage rate ला uptime सारखे वागवा - ते सतत मॉनिटर करा. जर recall उच्च असेल पण false positives उपयुक्तता नष्ट करत असतील, तर संरक्षण सैल करण्याआधी classifier ट्यून करा, कधीही उलट नाही.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">production-शैलीतील वापरात डेटा-बाउंडरी हाताळणी दाखवणारे तीन प्रातिनिधिक पॅटर्न.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏥</span><div><h3>1 · PHI हाताळणारे हेल्थकेअर अ‍ॅप</h3><div class="role">पॅटर्न: inference पूर्वी HIPAA-बद्ध PHI redaction</div></div></div>
+        <p class="muted">एक क्लिनिकल अ‍ॅप LLM ने रुग्णाच्या नोंदींचा सारांश करते, पण संरक्षित आरोग्य माहिती कधीही अपात्र provider पर्यंत पोहोचू नये.</p>
+        <ul>
+          <li>NER models नावे, वैद्यकीय नोंद क्रमांक आणि तारखा ओळखतात; कोणताही कॉल VPC सोडण्यापूर्वी त्या tokenize केल्या जातात.</li>
+          <li>Inference स्वाक्षरी केलेल्या business-associate agreement अंतर्गत HIPAA-eligible, zero-retention endpoint वर चालते.</li>
+          <li>सारांश परिघाच्या आत rehydrate केले जातात, आणि सर्व traces scrub केल्या जातात जेणेकरून PHI कधीही observability मध्ये पडत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> डॉक्टरांना उपयुक्त सारांश मिळतात तर मॉडेल फक्त de-identified मजकूर प्रक्रिया करते, प्रणाली HIPAA च्या boundary आत ठेवत.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>2 · आर्थिक PII सह फिनटेक सहाय्यक</h3><div class="role">पॅटर्न: खाते डेटाचे उलट करता येण्याजोगे tokenization</div></div></div>
+        <p class="muted">एक बँकिंग सहाय्यक व्यवहारांविषयी प्रश्नांची उत्तरे देतो, पण खाते व कार्ड क्रमांक संस्थेच्या boundary आतच राहिले पाहिजेत.</p>
+        <ul>
+          <li>Regex खाते व कार्ड क्रमांकांसारखे रचनात्मक ओळखकर्ते पकडते; एक vault उलट करता येण्याजोगे, format-preserving tokens जारी करते.</li>
+          <li>मॉडेल tokens वर विचार करते, आणि उत्तरे rehydrate केली जातात जेणेकरून ग्राहकाला त्याचे खरे खाते तपशील दिसतात.</li>
+          <li>एक policy engine residency लागू करते, नियंत्रित फील्ड्स फक्त in-region, no-training endpoints कडे वळवते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> सहाय्यक उपयुक्त व नेमका राहतो तर कच्चा आर्थिक PII कधीही provider कडे ओलांडत नाही, auditors आणि residency नियम समाधानी ठेवत.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎧</span><div><h3>3 · मोठ्या प्रमाणावर सपोर्ट-transcript प्रक्रिया</h3><div class="role">पॅटर्न: लॉग स्वच्छतेसह मोठ्या प्रमाणात de-identification</div></div></div>
+        <p class="muted">एक कंपनी अंतर्दृष्टीसाठी लाखो सपोर्ट transcripts चा अभ्यास करते, पण प्रत्येक transcript ग्राहकांची नावे, ईमेल आणि पत्त्यांनी भरलेला असतो.</p>
+        <ul>
+          <li>एक batch pipeline प्रत्येक transcript मधील PII embed किंवा विश्लेषणासाठी पाठवण्यापूर्वी ओळखते व mask करते.</li>
+          <li>जिथे ओळखीची कधीच गरज नसते तिथे उलट न करता येणारे anonymization वापरले जाते, ज्यामुळे analytics corpus रचनेनेच स्वच्छ राहतो.</li>
+          <li>Scrubbing ingestion वेळी चालते जेणेकरून कोणताही कच्चा PII data warehouse, search index किंवा trace store पर्यंत पोहोचत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> विश्लेषकांना मोठ्या प्रमाणात एकत्रित अंतर्दृष्टी मिळते तर वैयक्तिक ग्राहक संपूर्ण downstream pipeline मध्ये अनोळखी राहतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>डेटा-बाउंडरी हाताळणी कोणत्या दिशेने जात आहे</h2>
+      <p class="muted">LLMs नियंत्रित workflows मध्ये अधिक खोलवर जात असताना, boundary नियंत्रणे bolt-on filters पासून प्रथम-दर्जाच्या infrastructure कडे सरकत आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 संदर्भ-जाणकार detection</h4><p>अर्थ समजणारे LLM-आधारित detectors अप्रत्यक्ष व एकत्रित ओळखकर्ते पकडतील जे regex आणि classic NER चुकवतात.</p></div>
+        <div class="card"><h4>🏢 Confidential computing</h4><p>Trusted execution environments आणि encrypted inference provider ला असा डेटा प्रक्रिया करू देतात जो ते वाचू शकत नाहीत, ज्यामुळे boundary अधिक घट्ट होते.</p></div>
+        <div class="card"><h4>📐 Policy as code</h4><p>डेटा-बाउंडरी नियम versioned, testable policy म्हणून व्यक्त केले जातात, प्रत्येक egress बिंदूवर आपोआप लागू केले जातात.</p></div>
+        <div class="card"><h4>🔎 सतत PII evals</h4><p>leak rate ला मॉनिटर केलेला मापदंड म्हणून वागवणे - detection recall आणि scrubbing coverage तसे मोजणे जसे संघ uptime मोजतात.</p></div>
+        <div class="card"><h4>🏠 On-device आणि on-prem मॉडेल</h4><p>सक्षम local मॉडेल सर्वात संवेदनशील डेटा पूर्णपणे परिघाच्या आत ठेवतात, ओलांडण्याचे संरक्षण करण्याऐवजी ओलांडणेच काढून टाकतात.</p></div>
+        <div class="card"><h4>🧾 सिद्ध करता येणारे de-identification</h4><p>Differential-privacy आणि औपचारिक हमी ज्या संस्थांना डेटा anonymize केला गेला हे केवळ ठासून न सांगता, दाखवू देतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> डेटा-बाउंडरी हाताळणी हा तुमच्या वापरकर्त्यांच्या ओळखी न देता सामान्य मॉडेलचे मूल्य मिळवण्याचा मार्ग आहे. परिघावर Detect, transform आणि rehydrate करा - आणि मॉडेल सुधारत जातील तसे, ही शिस्त नियंत्रित उत्पादने AI कशी पाठवतात याचा default मार्ग बनते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">अन्वेषण सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">डेटा-बाउंडरी हाताळणी संबंधित कौशल्यांच्या जाळ्यात बसते. हे तिच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails</h4><p>असुरक्षित डेटा व मजकूर नियंत्रणात ठेवणारी input व output नियंत्रणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../llm-security/"><span class="ico">🔐</span><h4>LLM security</h4><p>मॉडेल व त्याच्या डेटाचे गळती व हल्ल्यांपासून संरक्षण करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../governance/"><span class="ico">📐</span><h4>Governance</h4><p>Policy, residency आणि audit जे boundary काय ओलांडू शकते हे ठरवतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../tracing/"><span class="ico">📊</span><h4>Tracing आणि observability</h4><p>Scrub केलेली, सुरक्षित telemetry जेणेकरून लॉग कधीही PII पुन्हा उघड करत नाहीत.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>PII आणि डेटा-बाउंडरी हाताळणीचे दृश्यात्मक मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

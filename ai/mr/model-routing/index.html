@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Routing आणि Cost/Latency समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="LLM model routing आणि cost/latency ऑप्टिमायझेशनसाठी एक सखोल, दृश्यात्मक मार्गदर्शक: classifier routing, cascading, semantic caching आणि fallbacks, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि भविष्यासह." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Model Routing आणि Cost/Latency</span>
+      <h1>प्रत्येक विनंती योग्य मॉडेलकडे पाठवा - सर्वात मोठ्याकडे नव्हे</h1>
+      <p class="lede">बहुतांश production traffic ला तुमच्या सर्वात महागड्या, सर्वात मंद मॉडेलची गरज नसते. <strong>Model routing</strong> प्रत्येक विनंतीचे परीक्षण करते आणि ती काम चांगल्या रीतीने करू शकणाऱ्या सर्वात स्वस्त मॉडेलकडे पाठवते - classifiers, cascades, semantic caches आणि fallbacks यांचा वापर करून. याचा फायदा म्हणजे ज्या विनंत्यांना खरोखर गरज असते त्यांच्या गुणवत्तेशी तडजोड न करता खर्च आणि latency मध्ये लक्षणीय बचत.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Classifier routing</span>
+        <span class="pill">Cascading / escalation</span>
+        <span class="pill">Semantic caching</span>
+        <span class="pill">Provider fallback</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Model routing म्हणजे काय?</h2>
+      <p class="muted"><strong>Model routing</strong> हा तुमचे application आणि model providers यांच्यामधील तो स्तर आहे जो प्रत्येक विनंती <em>कोणते</em> मॉडेल हाताळेल हे ठरवतो. प्रत्येक call एका flagship मॉडेलशी कायमची जोडण्याऐवजी, router येणाऱ्या विनंतीचे मूल्यमापन करतो - तिची कठीणता, cost budget आणि latency target - आणि किंमत, वेग व क्षमता यांच्यात तडजोड करणाऱ्या मॉडेलच्या ताफ्यातून एक निवडतो. सर्वोत्तम routers सरासरीने विनंत्या स्वस्त आणि जलद करतात, तर जिथे गरज असते तिथे गुणवत्ता टिकवून ठेवतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧭</span> मूल्यमापन (classify)</h4>
+          <p>मॉडेल निवडण्यापूर्वी विनंतीची कठीणता आणि गरजा तपासा - लांबी, task type, आवश्यक reasoning.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎚️</span> पाठवणे (route)</h4>
+          <p>सोप्या विनंत्या लहान, स्वस्त, जलद मॉडेलकडे आणि कठीण विनंत्या मोठ्या, अधिक सक्षम मॉडेलकडे पाठवा.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛟</span> संरक्षण (fallback)</h4>
+          <p>error, rate-limit किंवा timeout झाल्यास दुसऱ्या मॉडेल किंवा provider वर पुन्हा प्रयत्न करा, जेणेकरून एका outage मुळे तुमची सेवा कधीच बंद पडणार नाही.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य routing धोरणे</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>धोरण</th><th>ते काय करते</th><th>यासाठी सर्वोत्तम</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Classifier / predictive</strong></td><td>आधीच कठीणता तपासा, मग प्रत्येक विनंतीसाठी मॉडेल निवडा</td><td>सोप्या + कठीण queries असलेले मिश्र traffic</td></tr>
+            <tr><td><strong>Cascade / escalation</strong></td><td>स्वस्त मॉडेल वापरून पहा, फक्त कमी confidence असल्यास escalate करा</td><td>जेव्हा बहुतांश विनंत्या सोप्या असतात पण काही नसतात</td></tr>
+            <tr><td><strong>Semantic cache</strong></td><td>अर्थाने समान queries साठी साठवलेले उत्तर द्या</td><td>पुनरावृत्ती होणारे, उच्च-volume, FAQ-प्रकारचे traffic</td></tr>
+            <tr><td><strong>Fallback routing</strong></td><td>error, rate-limit किंवा timeout वर provider बदला</td><td>विश्वासार्हता आणि multi-provider लवचिकता</td></tr>
+            <tr><td><strong>Rule / metadata</strong></td><td>tenant, region, tier किंवा data-sensitivity नुसार route करा</td><td>compliance, SLAs आणि cost tiers</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> routing हा एक जुगार आहे. तुम्ही थोडासा overhead (एक classifier call, एक cache lookup) देऊन बहुतांश विनंत्यांसाठी खूप स्वस्त किंवा जलद मार्ग मिळवता. router चे काम म्हणजे इतक्या वेळा बरोबर असणे की बचत ही अधूनमधून चुकीचे ठरण्याच्या खर्चापेक्षा कितीतरी जास्त असेल - आणि जेव्हा तो चुकतो तेव्हा सहजतेने escalate करणे.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Routing का अस्तित्वात आहे</h2>
+      <p class="muted">Flagship मॉडेल प्रति token 10–30× जास्त खर्च करू शकतात आणि लहान मॉडेलपेक्षा कित्येक पटींनी मंद चालतात. जेव्हा प्रत्येक विनंती सर्वात मोठ्या मॉडेलकडे जाते, तेव्हा तुम्ही सोप्या 80% traffic साठी प्रचंड जास्त पैसे मोजता - आणि users ना गरजेपेक्षा जास्त वेळ थांबावे लागते. Routing ती नासाडी वाचवते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💸 खर्च नाट्यमयरीत्या कमी करते</h4><p>flagship ऐवजी लहान मॉडेल किंवा cache वरून सोप्या queries देणे उच्च-volume traffic वरील खर्च मोठ्या पटींनी कमी करू शकते.</p></div>
+        <div class="card"><h4>⚡ Latency कमी करते</h4><p>लहान मॉडेल आणि cache hits हे वेळेच्या अंशातच परत येतात. ज्या विनंत्यांना खोल reasoning ची गरज नसते त्यांना users जलद उत्तरे मिळतात.</p></div>
+        <div class="card"><h4>🎯 जिथे महत्त्वाचे तिथे गुणवत्ता टिकवते</h4><p>कठीण विनंत्या अजूनही सक्षम मॉडेलपर्यंत पोहोचतात. सर्वकाही एका tier वर सपाट करण्याऐवजी तुम्ही महत्त्वाच्या queries वरील गुणवत्तेचे रक्षण करता.</p></div>
+        <div class="card"><h4>🛟 विश्वासार्हता सुधारते</h4><p>Multi-provider fallback म्हणजे एका provider चा outage, rate-limit किंवा timeout तुमचे product बिघडवत नाही - traffic आपोआप पुन्हा route होते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले model routing</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती नीट समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Routing म्हणजे <strong>calculator कधी वापरायचा आणि रफ कागद कधी</strong> हे कळण्यासारखे आहे. सोपे गणित तुम्ही डोक्यातच करता; फक्त कठीण प्रश्नांसाठी मोठे साधन वापरता. दरवेळी सर्वात मोठ्या साधनाकडे न वळता तुम्ही प्रश्नानुसार प्रयत्न जुळवता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>हा <strong>बुद्धिमत्तेसाठीचा load balancer</strong> आहे. जसे तुम्ही स्वस्त reads एका replica कडे आणि जड writes primary कडे route करता, तसे router सोपे prompts लहान मॉडेलकडे आणि कठीण ते flagship कडे पाठवतो, आणि एखादा backend बंद असल्यास fallback pool ठेवतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>काम सोपवणाऱ्या manager</strong> चा विचार करा. नियमित कामे जलद व स्वस्त असणाऱ्या junior कडे जातात; फक्त गुंतागुंतीच्या, उच्च-जोखमीच्या केसेस senior तज्ज्ञाकडे escalate होतात. महागड्या तज्ज्ञाला तुम्ही खरोखर फायदेशीर तिथेच राखून ठेवता.</p></div>
+        <div class="card"><h4><span class="ico">🚑</span> रोजच्या जीवनातील आवृत्ती</h4><p>ER मधील <strong>triage nurse</strong> प्रत्येक रुग्णाला योग्य पातळीच्या उपचारांकडे पाठवते. किरकोळ जखमा जलद विभागाकडे; गंभीर केसेस थेट तज्ज्ञाकडे. खरचटलेल्या गुडघ्यावर कोणीही surgeon चा वेळ वाया घालवत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत हे कसे कार्य करते</h2>
+      <p class="muted">Router हा model providers च्या समोर बसतो आणि एकाच वेळी तीन गोष्टींचा तोल सांभाळतो - <strong>cost / latency / quality त्रिकोण</strong>. तुम्ही कोणतेही दोन ऑप्टिमाइझ करू शकता, पण एक घट्ट केल्याने सहसा इतरांवर दबाव येतो, म्हणून routing म्हणजे प्रत्येक विनंतीला त्या त्रिकोणावरील योग्य बिंदूवर आणणे.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔺</span> तडजोडीचा त्रिकोण</h4>
+          <p>Cost, latency आणि quality एकमेकांविरुद्ध ओढतात. स्वस्त जलद उत्तर कमी गुणवत्तेचे असू शकते; उत्कृष्ट-गुणवत्तेचे उत्तर जास्त खर्च करते आणि जास्त वेळ घेते. Routing प्रत्येक विनंतीला तिचे SLA आणि budget परवानगी देईल तिथे ठेवते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📏</span> मोजा, मग SLAs ठरवा</h4>
+          <p>प्रत्येक route साठी cost, p50/p95 latency आणि एक quality score नोंदवा. एक latency SLA आणि प्रति-विनंती budget ठरवा, मग router ला त्या मर्यादांमध्ये ऑप्टिमाइझ करू द्या आणि त्या तुटल्यावर alert द्या.</p>
+        </div>
+      </div>
+
+      <h3>Router आर्किटेक्चर एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">आर्किटेक्चर - router विनंती तपासतो, cache तपासतो, मग fallback सह योग्य मॉडेलकडे पाठवतो</div>
+        <pre class="mermaid">
+flowchart LR
+    Q["❓ Request"] --> R{"🧭 Router"}
+    subgraph Fast["⚡ Fast paths"]
+        C[("🧊 Semantic cache")]
+        SM["🐣 Small model"]
+    end
+    subgraph Strong["🧠 Strong paths"]
+        LG["🦾 Large model"]
+        FB["🛟 Fallback provider"]
+    end
+    R --> C
+    C -->|hit| ANS["✅ Response"]
+    C -->|miss| CL["📊 Classify difficulty"]
+    CL -->|easy| SM
+    CL -->|hard| LG
+    SM -->|low confidence| LG
+    LG -->|error / timeout| FB
+    SM --> ANS
+    LG --> ANS
+    FB --> ANS
+        </pre>
+      </div>
+
+      <h3>Pseudocode मधील routing लॉजिक</h3>
+      <pre><code>def route(request):
+    # 1. Semantic cache: serve similar past answers
+    hit = cache.lookup(embed(request), threshold=0.92)
+    if hit:
+        return hit.answer
+
+    # 2. Predictive routing: assess difficulty, pick a tier
+    score = classifier.difficulty(request)      # 0.0 .. 1.0
+    model = small_model if score &lt; 0.5 else large_model
+
+    # 3. Cascade: try cheap first, escalate on low confidence
+    resp = call(model, request)
+    if model is small_model and resp.confidence &lt; 0.7:
+        resp = call(large_model, request)       # escalate
+
+    # 4. Fallback: on error / rate-limit / timeout, switch provider
+    if resp.error:
+        resp = call(fallback_provider, request)
+
+    cache.store(embed(request), resp.answer)
+    return resp.answer</code></pre>
+      <p class="muted">क्रम लक्षात घ्या: आधी सर्वात स्वस्त तपासण्या (cache), मग एक हलका classifier, मग cascade, आणि सर्वकाही fallback ने वेढलेले. प्रत्येक स्तर पुढच्यासाठी फक्त गरज असेल तेव्हाच पैसे मोजतो - हेच सरासरी cost आणि latency कमी ठेवते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>सविस्तर sequence diagrams</h2>
+      <p class="muted">तीन दृष्टिकोन: योग्य मॉडेलकडे पाठवणारा classifier, confidence-आधारित escalation असलेला cheap-first cascade, आणि अपयशावर provider fallback असलेला semantic cache.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Classifier routing: कठीणता तपासा, मग योग्य मॉडेलकडे पाठवा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🧭 Router
+    participant C as 📊 Classifier
+    participant S as 🐣 Small model
+    participant L as 🧠 Large model
+
+    U->>R: Send request
+    R->>C: Score difficulty
+    C-->>R: score plus task type
+    alt easy request
+        R->>S: Dispatch to small model
+        S-->>R: Fast cheap answer
+    else hard request
+        R->>L: Dispatch to large model
+        L-->>R: High quality answer
+    end
+    R-->>U: Response plus route metadata
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Cascade: आधी स्वस्त मॉडेल, confidence तपासणी, खात्री नसल्यास escalate करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🧭 Router
+    participant S as 🐣 Small model
+    participant J as 🔍 Confidence check
+    participant L as 🧠 Large model
+
+    U->>R: Send request
+    R->>S: Try cheap model first
+    S-->>R: Draft answer plus signal
+    R->>J: Evaluate confidence
+    J-->>R: score
+    alt confident enough
+        R-->>U: Return cheap answer
+    else low confidence
+        R->>L: Escalate to strong model
+        L-->>R: Higher quality answer
+        R-->>U: Return escalated answer
+    end
+    Note over R,L: Only hard requests pay for the big model
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Semantic cache hit/miss आणि अपयशावर provider fallback</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🧭 Router
+    participant C as 🧊 Semantic cache
+    participant P as 🟣 Primary provider
+    participant F as 🛟 Fallback provider
+
+    U->>R: Send request
+    R->>C: Lookup similar query
+    alt cache hit
+        C-->>R: Stored answer
+        R-->>U: Instant cached response
+    else cache miss
+        C-->>R: No match
+        R->>P: Call primary provider
+        alt provider healthy
+            P-->>R: Answer
+        else error or rate limit or timeout
+            P-->>R: Failure
+            R->>F: Retry on fallback
+            F-->>R: Answer
+        end
+        R->>C: Store answer for reuse
+        R-->>U: Fresh response
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">कच्च्या विनंतीपासून वितरित प्रतिसादापर्यंत - router घेत असलेला प्रत्येक निर्णय, क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">स्वीकार</span><h4>विनंती स्वीकारा</h4><p>routing स्तरावर एक विनंती तिचे prompt, tenant आणि कोणतेही SLA किंवा budget संकेत metadata म्हणून जोडलेले असताना येते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Normalize</span><h4>Canonicalize आणि embed</h4><p>prompt normalize करा आणि एक embedding मोजा जेणेकरून त्याची semantic cache शी तुलना करता येईल व कठीणतेसाठी score देता येईल.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Cache</span><h4>Semantic cache तपासा</h4><p>अर्थाने समान भूतकाळातील queries शोधा. एखादी similarity threshold पेक्षा पुरेशी जवळ असल्यास, तिचे साठवलेले उत्तर द्या आणि मॉडेल पूर्णपणे वगळा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Classify</span><h4>कठीणता तपासा</h4><p>cache miss वर, एक हलका classifier विनंतीला score देतो - task type, reasoning खोली, लांबी - कोणता model tier ती हाताळू शकतो याचा अंदाज लावण्यासाठी.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Budget</span><h4>SLA आणि budget मर्यादा लागू करा</h4><p>allowed envelope मधील candidate मॉडेल निवडण्यासाठी कठीणता score ला विनंतीच्या latency SLA आणि cost budget सोबत एकत्र करा.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">पाठवा</span><h4>निवडलेल्या मॉडेलकडे route करा</h4><p>सोप्या विनंत्या लहान, स्वस्त, जलद मॉडेलकडे आणि कठीण विनंत्या थेट सक्षम मॉडेलकडे पाठवा. Metadata घेतलेला route नोंदवते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">मूल्यमापन</span><h4>Confidence संकेत तपासा</h4><p>cascade routes साठी, स्वस्त मॉडेलचे confidence तपासा - self-reported score, logprobs किंवा एक स्वस्त judge - उत्तर पुरेसे चांगले आहे का हे ठरवण्यासाठी.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Escalate</span><h4>कठीण केसेस पुढे न्या</h4><p>confidence threshold पेक्षा कमी असल्यास, मोठ्या मॉडेलकडे escalate करा. फक्त खरोखर कठीण विनंत्याच जास्त किंमत आणि latency मोजतात.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Fallback</span><h4>अपयश हाताळा</h4><p>error, rate-limit किंवा timeout वर, backoff सह पर्यायी मॉडेल किंवा provider वर पुन्हा प्रयत्न करा जेणेकरून एका outage चा user पर्यंत कधीच परिणाम पोहोचणार नाही.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">साठवा</span><h4>निकाल cache करा</h4><p>अंतिम उत्तर पुन्हा semantic cache मध्ये लिहा जेणेकरून पुढील समान query त्वरित आणि स्वस्तात दिली जाईल.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">वितरण</span><h4>परत करा आणि मोजा</h4><p>route metadata सह प्रतिसाद परत करा, आणि प्रत्येक route साठी cost, latency आणि quality नोंदवा जेणेकरून dashboards आणि evals कालांतराने thresholds जुळवू शकतील.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Routing जोपर्यंत गुणवत्ता किंवा विश्वासार्हता शांतपणे बिघडवत नाही तोपर्यंत पैसे वाचवते. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 चुकीच्या वर्गात टाकलेल्या कठीण queries</h4><p>कठीणता कमी लेखणारा router खरोखर कठीण विनंत्या लहान मॉडेलकडे पाठवतो आणि कधीच escalate करत नाही. निकाल dashboard वर स्वस्त दिसतो पण नेमक्या ज्या users ना सक्षम मॉडेलची सर्वात जास्त गरज होती त्यांना कमी सेवा मिळते.</p></div>
+        <div class="card"><h4>🪜 Cascade latency साचणे</h4><p>खूप जास्त escalation पायऱ्या म्हणजे एक विनंती लहान मॉडेल चालवते, confidence तपासणीत अपयशी होते, मग मोठे मॉडेल पुन्हा चालवते - दोन्हींसाठी पैसे मोजून latency दुप्पट करते. खोल cascades आधीच मोठ्याकडे जाण्यापेक्षा मंद आणि महाग ठरू शकतात.</p></div>
+        <div class="card"><h4>🧊 शिळे किंवा अति-व्यापक cache</h4><p>सैल similarity threshold असलेला semantic cache किंचित वेगळ्या प्रश्नासाठी साठवलेले उत्तर देतो, किंवा source बदलल्यानंतर जुनाट content देतो. चुकीचे-पण-जलद हे मंद-पण-बरोबरपेक्षा वाईट आहे.</p></div>
+        <div class="card"><h4>🚫 Outage वर fallback नाही</h4><p>पर्याय नसताना एकाच provider कडे route करणे म्हणजे एक outage, rate-limit किंवा timeout संपूर्ण product खाली आणतो. सेवा उपलब्ध नसेल तर cost optimization निरर्थक आहे.</p></div>
+        <div class="card"><h4>📉 शांतपणे गुणवत्ता खालावणे</h4><p>loop मध्ये कोणतेही quality संकेत नसताना केवळ cost साठी ऑप्टिमाइझ करणे उत्तरे इतक्या हळू खराब करते की users निघून जाईपर्यंत कोणाच्या लक्षात येत नाही. शांतपणे खालावणारे स्वस्त traffic हा विश्वासावरील छुपा कर आहे.</p></div>
+        <div class="card"><h4>🐌 Router च bottleneck बनतो</h4><p>प्रत्येक विनंतीवरील जड classifier, embedding call किंवा cache lookup स्वतःची latency आणि cost जोडते. जर routing overhead बचतीशी बरोबरी करत असेल, तर तो स्तर स्वतःचाच उद्देश हरवतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजावे</div>
+      <h2>Routing कसे मोजावे</h2>
+      <p class="muted">quality सोबतच cost आणि latency मागोवा घ्या, जेणेकरून बचत कधीही उत्तरांच्या किमतीवर होणार नाही.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते काय सांगते</th><th>चांगले लक्षण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रति विनंती खर्च</strong></td><td>संपूर्ण route मिश्रणातील प्रति call सरासरी खर्च</td><td>कमी: routing बचत मिळवत आहे</td></tr>
+            <tr><td><strong>p50 / p95 latency</strong></td><td>routing overhead सह ठराविक आणि tail प्रतिसाद वेळ</td><td>दोन्ही percentiles वर तुमच्या SLA मध्ये</td></tr>
+            <tr><td><strong>Quality / नेहमी-मोठ्या-मॉडेलच्या तुलनेत win-rate</strong></td><td>सर्वकाही flagship कडे पाठवण्याइतकी किंवा त्यापेक्षा चांगली उत्तरे routed मार्गाने किती वेळा मिळतात</td><td>उच्च: बचतीसाठी थोडीच गुणवत्ता गमावली</td></tr>
+            <tr><td><strong>Escalation rate</strong></td><td>cascade सक्षम मॉडेलकडे पुढे नेणाऱ्या विनंत्यांचा वाटा</td><td>स्थिर आणि मध्यम: फार उतावीळ नाही, कठीण queries ना उपाशी न ठेवणारे</td></tr>
+            <tr><td><strong>Cache hit rate</strong></td><td>semantic cache वरून दिल्या जाणाऱ्या विनंत्यांचा अंश</td><td>चुकीच्या-उत्तराच्या तक्रारींशिवाय उच्च</td></tr>
+            <tr><td><strong>Fallback / error rate</strong></td><td>primary मार्ग किती वेळा अपयशी होऊन पुन्हा route होतो</td><td>कमी, आणि जे अपयशी होते ते fallbacks पकडतात</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> quality मापदंडाशिवाय कधीही cost किंवा latency पाहू नका. जर प्रति विनंती खर्च कमी झाला पण win-rate घसरला, तर router उत्तरांच्या बदल्यात बचत करत आहे; cost आणखी खाली आणण्यापूर्वी दोन्ही टिकेपर्यंत thresholds जुळवा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">production-प्रकारच्या वापरात routing दाखवणारे तीन प्रातिनिधिक patterns.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💬</span><div><h3>1 · खर्च कमी करणारा उच्च-volume chatbot</h3><div class="role">Pattern: cache + classifier routing</div></div></div>
+        <p class="muted">एक ग्राहक chatbot दररोज लाखो messages हाताळतो, त्यातील बहुतांश साधे अभिवादन, FAQs आणि लहान follow-ups असतात.</p>
+        <ul>
+          <li>एक semantic cache पुनरावृत्ती होणारे प्रश्न शोषून घेतो, आणि मोठ्या प्रमाणातील traffic कोणत्याही model call शिवाय पुरवतो.</li>
+          <li>एक difficulty classifier अनौपचारिक गप्पा लहान मॉडेलकडे पाठवतो आणि गुंतागुंतीच्या, multi-step विनंत्यांसाठी flagship राखून ठेवतो.</li>
+          <li>route मिश्रण आणि गुणवत्तेवर लक्ष ठेवले जाते जेणेकरून traffic patterns बदलताना thresholds पुन्हा जुळवता येतील.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> बहुतांश विनंत्या महागड्या मॉडेलला कधीच स्पर्श करत नाहीत, ज्यामुळे प्रति संभाषण खर्चात मोठी घट होते तर कठीण tail साठी flagship गुणवत्ता टिकून राहते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏷️</span><div><h3>2 · Latency ऑप्टिमाइझ करणारे मोठ्या प्रमाणातील classification काम</h3><div class="role">Pattern: escalation सह cascade</div></div></div>
+        <p class="muted">एका data team ला निश्चित batch window मध्ये रात्रभरात लाखो documents ना label लावायचे आहे.</p>
+        <ul>
+          <li>एक जलद लहान मॉडेल आधी प्रत्येक document ला label लावते, प्रत्येक item साठी एक confidence संकेत देते.</li>
+          <li>फक्त कमी-confidence items सक्षम मॉडेलकडे escalate होतात, ज्यामुळे सक्षम मॉडेलच्या मंद, महागड्या calls किमान राहतात.</li>
+          <li>उच्च parallelism आणि cheap-first cascade end-to-end throughput batch window मध्ये ठेवते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> सर्वकाही मोठ्या मॉडेलमधून चालवण्याच्या खर्चाच्या अंशात हे काम त्याच्या window च्या आत सहज पूर्ण होते, आणि लक्ष्यित escalation मुळे अचूकता टिकून राहते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛡️</span><div><h3>3 · Multi-provider विश्वासार्हता रचना</h3><div class="role">Pattern: providers मध्ये fallback routing</div></div></div>
+        <p class="muted">एका व्यवसाय-महत्त्वाच्या product ला एक model provider खालावल्यास downtime परवडत नाही.</p>
+        <ul>
+          <li>एक primary provider सामान्य traffic पुरवतो; health, error rate आणि latency यांचा सतत मागोवा घेतला जातो.</li>
+          <li>errors, rate-limits किंवा timeouts वर, विनंत्या backoff सह दुसऱ्या provider वरील समतुल्य मॉडेलकडे पुन्हा route होतात.</li>
+          <li>एक circuit breaker अस्वस्थ provider वरील भार तो सावरेपर्यंत कमी करतो, मग सामान्य routing पुनर्स्थापित करतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> providers मध्ये अखंडपणे traffic हलवून product उपलब्ध राहते, ज्यामुळे provider outages आणि rate-limit spikes users ना अदृश्य होतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>Routing कोणत्या दिशेने जात आहे</h2>
+      <p class="muted">Routing स्थिर नियमांपासून शिकलेल्या, अनुकूल प्रणालींमध्ये विकसित होत आहे जे cost, latency आणि quality रिअल टाइममध्ये ऑप्टिमाइझ करतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 शिकलेले routers</h4><p>वास्तविक traffic वर प्रशिक्षित मॉडेल जे प्रत्येक विनंती पूर्ण करण्याची शक्यता असलेले सर्वात स्वस्त मॉडेल अंदाजतात - हाताने जुळवलेल्या नियमांना data-आधारित policies ने बदलतात.</p></div>
+        <div class="card"><h4>🎛️ Budget-जागरूक routing</h4><p>प्रत्येक विनंतीसाठी स्पष्ट cost कमाल मर्यादा आणि latency SLA विरुद्ध ऑप्टिमाइझ करणारे routers, जे budget फक्त जिथे गुणवत्तेला गरज असते तिथेच खर्च करतात.</p></div>
+        <div class="card"><h4>🧊 अधिक हुशार semantic caching</h4><p>freshness आणि आंशिक पुनर्वापराबद्दल विचार करणारे caches - cached तुकडे देणारे आणि फक्त बदललेले तेच रिफ्रेश करणारे.</p></div>
+        <div class="card"><h4>🔀 Cross-provider abstraction</h4><p>अनेक providers ना एक ताफा मानणारे एकत्रित gateways, जे vendors मध्ये पारदर्शकपणे load-balancing आणि failover करतात.</p></div>
+        <div class="card"><h4>📈 सतत route evals</h4><p>प्रत्येक route साठी online quality scoring जेणेकरून प्रणाली drift शोधते आणि manual वेळापत्रकाऐवजी आपोआप thresholds पुन्हा जुळवते.</p></div>
+        <div class="card"><h4>🤝 Speculative आणि hybrid decoding</h4><p>लहान मॉडेल मोठ्यांसाठी draft तयार करतात, routing आणि generation मधील रेषा अस्पष्ट करतात जेणेकरून गुणवत्ता न गमावता latency कमी होते.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> routing हाच मार्ग आहे ज्याने तुम्ही LLM products मोठ्या प्रमाणावर किफायतशीर बनवता - प्रत्येक विनंतीला तिचा निकष पूर्ण करणाऱ्या सर्वात स्वस्त मॉडेलशी जुळवून, आणि providers डगमगल्यावरही विश्वासार्ह राहून. मॉडेल वाढत जातात आणि किमती बदलत जातात तसतसा routing स्तर cost, latency आणि quality साठीचा control plane बनतो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">अधिक शोधत राहा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Routing हे संबंधित कौशल्यांच्या जाळ्यात बसते. हे त्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../tracing/"><span class="ico">🔬</span><h4>Tracing आणि observability</h4><p>प्रत्येक विनंतीने कोणता route घेतला आणि का ते पहा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals आणि LLM-as-judge</h4><p>routed उत्तरे त्यांचा गुणवत्ता निकष टिकवतात हे सिद्ध करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../edge-inference/"><span class="ico">📡</span><h4>Edge inference</h4><p>लहान, स्वस्त मॉडेल user च्या जवळ आणा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails आणि सुरक्षा</h4><p>कोणतेही मॉडेल उत्तर देवो, policy लागू करा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत जा</a></p>
+      <p>Model Routing साठी एक दृश्यात्मक मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

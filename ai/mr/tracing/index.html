@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM Tracing आणि Observability समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="LangSmith आणि Langfuse सह LLM tracing आणि observability चे सखोल, दृश्य मार्गदर्शक: traces आणि spans, काय नोंदवायचे, sequence diagrams, 0-100 प्रवाह, केस स्टडीज आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Tracing आणि Observability</span>
+      <h1>तुमच्या LLM अ‍ॅपच्या आत पाहा - traces, spans आणि observability</h1>
+      <p class="lede">LLM chains आणि agents हे non-deterministic ब्लॅक बॉक्स असतात: एकच request retrieval, model calls आणि tools मध्ये विखुरली जाते. Tracing ती संपूर्ण अंमलबजावणी <strong>nested spans च्या झाडासारखी</strong> नोंदवते - inputs, outputs, tokens, latency आणि cost सह - त्यामुळे <strong>LangSmith</strong> आणि <strong>Langfuse</strong> सारखी tools तुम्हाला तुमच्या अ‍ॅपने प्रत्यक्षात काय केले हे debug करू, मोजू आणि त्यावर विश्वास ठेवू देतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Traces आणि spans</span>
+        <span class="pill">Tokens, latency आणि cost</span>
+        <span class="pill">OpenTelemetry</span>
+        <span class="pill">Evals आणि alerts</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>LLM tracing म्हणजे काय?</h2>
+      <p class="muted"><strong>Tracing</strong> एका LLM request ची संपूर्ण अंमलबजावणी एक <em>trace</em> म्हणून नोंदवते - nested <em>spans</em> चे झाड. प्रत्येक span म्हणजे कामाचे एक एकक (एक retrieval, एक LLM call, एक tool invocation, एक chain step) ज्याचे स्वतःचे inputs, outputs, timing आणि metadata असते. <strong>Observability</strong> म्हणजे तुम्ही त्यावर जे बांधता ते: dashboards, evals आणि alerts जे त्या traces ला correctness, latency आणि cost विषयीच्या अंतर्दृष्टीत रूपांतरित करतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🌳</span> Trace</h4>
+          <p>संपूर्ण request, मुळापासून पानापर्यंत - एक वापरकर्ता प्रश्न एक span झाड तयार करतो. तो एक trace ID वाहतो जो प्रत्येक step एकत्र बांधतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📏</span> Span</h4>
+          <p>trace मधील एकच क्रिया - एक retrieval, generation किंवा tool call - सुरुवात/शेवट वेळ, inputs, outputs आणि parent link सह.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏷️</span> Metadata</h4>
+          <p>Model आणि version, prompt template, token counts, cost, user/session IDs, tags आणि errors जे नंतर विभागणीसाठी spans ला जोडलेले असतात.</p>
+        </div>
+      </div>
+
+      <h3>एका span ने काय नोंदवायला हवे</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>क्षेत्र</th><th>का महत्त्वाचे</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Inputs / outputs</strong></td><td>पाठवलेला नेमका prompt आणि परत आलेला मजकूर - debugging चा गाभा</td><td>Rendered prompt, completion, retrieved chunks</td></tr>
+            <tr><td><strong>Tokens</strong></td><td>Prompt + completion counts cost आणि context-limit तपासणी चालवतात</td><td><code>prompt: 1420, completion: 210</code></td></tr>
+            <tr><td><strong>Latency</strong></td><td>प्रति-span कालावधी कोणता step मंद आहे हे उघड करतो</td><td><code>retrieval: 40ms, llm: 2.3s</code></td></tr>
+            <tr><td><strong>Cost</strong></td><td>अंदाजपत्रकासाठी tokens × model price यातून काढलेला</td><td><code>$0.0043 / request</code></td></tr>
+            <tr><td><strong>Model आणि error</strong></td><td>Version regressions निश्चित करते; errors अयशस्वी steps दाखवतात</td><td><code>claude-sonnet-4-5</code>, timeout, 429</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमान:</strong> एक trace म्हणजे <em>probabilistic सॉफ्टवेअरसाठीचा stack trace</em>. Logs तुम्हाला सांगतात की एक request घडली; एक trace प्रश्नाचे उत्तर तयार करणाऱ्या steps, prompts आणि निर्णयांचे नेमके झाड दाखवतो - जो non-deterministic chain debug करण्याचा एकमेव मार्ग आहे.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Observability का अनिवार्य आहे</h2>
+      <p class="muted">एकच input वेगवेगळे outputs तयार करू शकते, chains एका response मागे अनेक steps लपवतात आणि agents runtime ला स्वतःचा मार्ग ठरवतात. Traces शिवाय तुम्ही अंदाज लावत असता. Observability "ते कधीकधी वाईट उत्तरे देते" याला तुम्ही तपासू आणि दुरुस्त करू शकता अशा विशिष्ट span मध्ये बदलते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔬 Non-deterministic chains debug करा</h4><p>एका वाईट उत्तराची नेमकी trace पुन्हा चालवून ते पुनरुत्पादित करा - retrieved context, rendered prompt आणि model कुठे चुकले ते पाहा.</p></div>
+        <div class="card"><h4>🕹️ Agent वर्तन समजून घ्या</h4><p>Agents स्वतःहून loop करतात, फांद्या फोडतात आणि tools call करतात. Span झाड त्यांचा तर्काचा मार्ग दृश्यमान करते जेणेकरून ते का loop झाले किंवा वाईट tool का निवडले ते तुम्ही पाहू शकता.</p></div>
+        <div class="card"><h4>💸 Tokens आणि cost नियंत्रित करा</h4><p>प्रत्येक span tokens आणि cost नोंदवते, त्यामुळे तुम्ही प्रति feature, user किंवा model खर्च आरोपित करू शकता आणि बिल येण्यापूर्वीच अनियंत्रित prompts पकडू शकता.</p></div>
+        <div class="card"><h4>⏱️ Latency आणि regressions शोधा</h4><p>प्रति-span timing मंद step उघड करते; model आणि prompt versions निश्चित केल्याने एखाद्या बदलाने गुणवत्ता किंवा latency खराब केली तेव्हा तुम्हाला ते पकडता येते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह LLM tracing समजावले</h2>
+      <p class="muted">एकच कल्पना, ती चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती स्पष्ट होते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एक trace म्हणजे <strong>सोडवलेले उत्तर</strong>, केवळ अंतिम उत्तर नाही. फक्त गुण पाहण्याऐवजी, तुम्ही model ने घेतलेला प्रत्येक step पाहता, त्यामुळे तर्क नेमका कुठे चुकला ते तुम्ही ओळखू शकता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हा <strong>probabilistic code साठीचा stack trace</strong> आहे. प्रत्येक span म्हणजे स्वतःचे inputs, outputs आणि timing असलेली एक frame, त्याच्या parent खाली nested, जेणेकरून प्रत्यक्षात तुटलेल्या call मध्ये तुम्ही खोलवर जाऊ शकता.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>प्रत्येक request साठीचा <strong>audit trail</strong> असा विचार करा: कोणी काय विचारले, कोणते sources खेचले गेले, प्रत्येक step ला किती खर्च आला आणि किती वेळ लागला, हे सर्व नंतर पुनर्रचित करता येते.</p></div>
+        <div class="card"><h4><span class="ico">🛫</span> रोजच्या भाषेत</h4><p>एक trace म्हणजे <strong>flight recorder</strong>, विमानातील ब्लॅक बॉक्स. जेव्हा काहीतरी बिघडते, तेव्हा मध्येच काय झाले याचा अंदाज लावण्याऐवजी तुम्ही रेकॉर्डिंग step by step पुन्हा चालवता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>Tracing पडद्यामागे कसे कार्य करते</h2>
+      <p class="muted">तुमचे अ‍ॅप असे <strong>instrumented</strong> केलेले असते की प्रत्येक step एक span उघडते, त्याचा डेटा नोंदवते आणि तो बंद करते. Spans batch केले जातात आणि asynchronously एका tracing backend कडे (<strong>LangSmith</strong>, <strong>Langfuse</strong> किंवा कोणताही OpenTelemetry collector) पाठवले जातात, जो त्यांना एका trace झाडात पुन्हा जोडतो आणि dashboards, evals आणि alerts चालवतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🪝</span> Instrumentation</h4>
+          <p>Functions ला एका decorator किंवा callback ने गुंडाळा, किंवा SDK auto-instrument करा. प्रत्येक गुंडाळलेली call parent link सह एक span उत्सर्जित करते, त्यामुळे nesting आपोआप नोंदवली जाते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚚</span> Export आणि ingest</h4>
+          <p>Hot path वेगवान ठेवण्यासाठी spans पार्श्वभूमीत buffer आणि flush केले जातात. Backend त्यांना साठवते, trace ID नुसार जोडते आणि tags, cost आणि latency नुसार index करते.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टिक्षेपात architecture</h3>
+      <div class="diagram">
+        <div class="cap">Architecture - instrumented अ‍ॅप spans उत्सर्जित करते; backend त्यांना पुन्हा जोडते आणि सादर करते</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph App["🖥️ Instrumented app"]
+        Q["❓ Request"] --> RT["🌳 Root span"]
+        RT --> RET["🔎 Retrieval span"]
+        RT --> GEN["🧠 LLM span"]
+        RT --> TOOL["🛠️ Tool span"]
+    end
+    subgraph Pipe["🚚 Telemetry pipeline"]
+        EXP["📤 Span exporter"] --> COL["🧰 OTel collector"]
+    end
+    subgraph Backend["📡 Tracing backend"]
+        ING["📥 Ingest + join by trace ID"] --> STORE[("🗄️ Trace store")]
+        STORE --> DASH["📊 Dashboards"]
+        STORE --> EVAL["🧪 Evals + datasets"]
+        STORE --> ALERT["🚨 Alerts"]
+    end
+    RET --> EXP
+    GEN --> EXP
+    TOOL --> EXP
+    COL --> ING
+        </pre>
+      </div>
+
+      <h3>Pseudocode मध्ये एक chain instrument करणे</h3>
+      <pre><code>@trace(name="rag_request")          # opens the root span
+def answer(question, user):
+    with span("retrieval") as s:    # child span
+        chunks = vector_db.search(question, filter=user.acl)
+        s.log(inputs=question, outputs=chunks, latency_ms=s.dt)
+
+    with span("llm") as s:          # sibling child span
+        out = llm.generate(prompt(question, chunks))
+        s.log(model="claude-sonnet-4-5",
+              prompt_tokens=out.usage.input,
+              completion_tokens=out.usage.output,
+              cost=price(out.usage))
+    return out.text
+# → backend reconstructs: rag_request → [retrieval, llm]</code></pre>
+      <p class="muted">प्रत्येक <code>with span(...)</code> सक्रिय parent खाली nest होते, त्यामुळे backend नेमके झाड पुन्हा बांधते. उच्च-volume systems मध्ये तुम्ही <em>sample</em> करता - 100% errors आणि उर्वरितांचा एक टक्का ठेवा - storage मर्यादित करण्यासाठी तरीही समस्या पकडत.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एका chain ओलांडून trace नोंदवणे, multi-step agent साठी nested spans, आणि alerting सह dashboards कडे वाहणारे traces.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Capture: chain retrieval, LLM आणि tool steps चालवताना spans उत्सर्जित</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant VDB as 🗄️ Vector DB
+    participant LLM as 🧠 LLM
+    participant TB as 📡 Tracing backend
+
+    App->>TB: Start root span (trace ID)
+    App->>VDB: retrieve(question)
+    VDB-->>App: top-k chunks
+    App->>TB: Log retrieval span (in, out, latency)
+    App->>LLM: generate(prompt + chunks)
+    LLM-->>App: answer + token usage
+    App->>TB: Log LLM span (tokens, cost, model)
+    App->>TB: End root span
+    Note over App,TB: Spans batched then flushed async
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Nested spans: multi-step agent एक span झाड तयार करतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Ag as 🤖 Agent
+    participant Tool as 🛠️ Tools
+    participant LLM as 🧠 LLM
+    participant TB as 📡 Tracing backend
+
+    Ag->>TB: Open agent root span
+    loop reason-act steps
+        Ag->>LLM: plan next action
+        LLM-->>Ag: chosen tool + args
+        Ag->>TB: Log LLM child span
+        Ag->>Tool: call tool(args)
+        Tool-->>Ag: observation
+        Ag->>TB: Log tool child span (nested)
+    end
+    alt goal reached
+        Ag->>TB: End root span (success)
+    else max steps hit
+        Ag->>TB: End root span (halted)
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Alerting: traces dashboards ला पुरवतात जे latency, cost किंवा errors वर trip होतात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App fleet
+    participant TB as 📡 Tracing backend
+    participant Dash as 📊 Dashboards
+    participant Ops as 🧑‍💻 On-call
+
+    App->>TB: Stream spans continuously
+    TB->>TB: Aggregate p95 latency, cost, error rate
+    TB->>Dash: Update live metrics
+    alt threshold breached
+        TB->>Ops: Fire alert (slow / costly / failing)
+        Ops->>TB: Open offending trace
+        TB-->>Ops: Root-cause span
+    else within budget
+        TB->>Dash: Show healthy trend
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका uninstrumented अ‍ॅपपासून पूर्णपणे observable अ‍ॅपपर्यंत - traces dashboards, evals आणि alerts ला अनुक्रमे पुरवत.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Instrument</span><h4>Entry point गुंडाळा</h4><p>तुमच्या अ‍ॅपमध्ये एक tracer जोडा आणि top-level handler ला decorate करा जेणेकरून प्रत्येक request एका अनन्य trace ID सह root span उघडते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Nest</span><h4>प्रत्येक step span करा</h4><p>Retrieval, LLM calls आणि tool calls गुंडाळा जेणेकरून प्रत्येक त्याच्या parent ला जोडलेला child span बनतो, ज्यातून trace झाड तयार होते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Capture</span><h4>Inputs आणि outputs नोंदवा</h4><p>प्रत्येक span वर rendered prompt, retrieved context आणि completion log करा - प्रत्येक नंतरच्या निदानासाठीचा कच्चा माल.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Measure</span><h4>Tokens, latency आणि cost जोडा</h4><p>Token counts, प्रति-span कालावधी, model आणि version आणि काढलेला cost जोडा जेणेकरून spans केवळ वर्णनात्मक नव्हे तर परिमाणात्मक होतात.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Tag</span><h4>Metadata जोडा</h4><p>User, session, tenant आणि feature tags सोबत environment जोडा, जेणेकरून traces नंतर विभागता आणि filter करता येतात.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Export</span><h4>Spans asynchronously पाठवा</h4><p>Request मंद न करता spans पार्श्वभूमीत buffer आणि flush करून LangSmith, Langfuse किंवा एका OpenTelemetry collector कडे पाठवा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Sample</span><h4>मोठ्या प्रमाणात volume मर्यादित करा</h4><p>100% errors आणि निरोगी वाहतुकीचा एक टक्का ठेवा जेणेकरून समस्या तरीही समोर येत असताना storage आणि cost मर्यादित राहतात.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Reassemble</span><h4>Trace झाडात जोडा</h4><p>Backend spans ला trace ID नुसार एका navigable झाडात जोडते आणि त्यांना tag, cost, latency आणि error नुसार index करते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Evaluate</span><h4>Traces ला evals आणि datasets शी जोडा</h4><p>वास्तविक traces evaluation datasets मध्ये चढवा आणि outputs गुणांकित करा - production वर्तनाला offline गुणवत्ता तपासण्यांशी जोडत.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Monitor</span><h4>Dashboards आणि alerts</h4><p>p95 latency, cost आणि error rate चार्ट करा; असे thresholds सेट करा जे एखादा मापदंड त्याचे अंदाजपत्रक ओलांडतो तेव्हा on-call ला page करतात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Improve</span><h4>Debug करा, दुरुस्त करा, पुन्हा करा</h4><p>दोषी trace उघडा, root-cause span शोधा, एक fix पाठवा आणि मापदंड सुधारताना पाहा - एक बंद observability loop.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Tracing चुकीच्या पद्धतीने जोडणे सोपे आहे. या त्या चुका आहेत ज्या traces ला गळक्या, महाग किंवा निरुपयोगी बनवतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔓 Traces मध्ये PII log करणे</h4><p>कच्चे prompts आणि outputs टाकल्याने नावे, ईमेल आणि secrets plaintext मध्ये नोंदवले जातात. संवेदनशील fields capture च्या वेळी redact किंवा hash करा आणि पाठवण्यापूर्वी retention नियम सेट करा.</p></div>
+        <div class="card"><h4>💥 मोठ्या प्रमाणात sampling नसणे</h4><p>100% वाहतूक साठवणे dev मध्ये ठीक दिसते आणि production मध्ये storage आणि cost फुगवते. मर्यादित राहण्यासाठी प्रत्येक error आणि निरोगी वाहतुकीचा एक sampled अंश ठेवा.</p></div>
+        <div class="card"><h4>📃 Spans ऐवजी flat logs</h4><p>असंरचित log ओळी उत्सर्जित केल्याने parent-child झाड फेकून दिले जाते. Nested spans शिवाय कोणत्या step ने कोणत्या step ला call केले, किंवा वेळ प्रत्यक्षात कुठे खर्च झाला हे तुम्ही पाहू शकत नाही.</p></div>
+        <div class="card"><h4>🏷️ Token आणि cost metadata गहाळ</h4><p>Token counts, model किंवा cost नसलेले spans observability ला अशा सुंदर timelines मध्ये बदलतात ज्यांच्या विरुद्ध तुम्ही अंदाजपत्रक करू शकत नाही. प्रत्येक model span ला usage जोडा.</p></div>
+        <div class="card"><h4>🚨 केवळ errors trace करणे</h4><p>फक्त काहीतरी throw होते तेव्हा spans नोंदवल्याने मंद-पण-यशस्वी आणि आत्मविश्वासाने-चुकीचे लपले जाते. केवळ exceptions नव्हे, संपूर्ण context trace करा.</p></div>
+        <div class="card"><h4>🔗 Traces evals शी जोडलेले नाहीत</h4><p>जे traces कधीच datasets किंवा scorers ला पुरवत नाहीत ते एक debugging खेळणे राहतात. वास्तविक traces evals मध्ये चढवा जेणेकरून production वर्तन offline गुणवत्ता तपासण्या चालवते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजायचे</div>
+      <h2>काय नोंदवायचे आणि पाहायचे</h2>
+      <p class="muted">चांगली observability म्हणजे मूठभर आकडे ज्यांवर तुम्ही alert करू शकता. हे प्रति span आणि प्रति trace नोंदवा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते तुम्हाला काय सांगते</th><th>चांगले चिन्ह</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रति span p50 / p95 latency</strong></td><td>कोणता step मंद आहे आणि tail किती वाईट आहे</td><td>SLA च्या आत; लहान p95-ते-p50 अंतर</td></tr>
+            <tr><td><strong>प्रति trace tokens आणि cost</strong></td><td>एका request, feature किंवा user ला आरोपित खर्च</td><td>स्थिर आणि अंदाजपत्रकाच्या आत</td></tr>
+            <tr><td><strong>Error / exception rate</strong></td><td>अयशस्वी किंवा throw झालेल्या traces चा वाटा</td><td>कमी आणि सपाट कल</td></tr>
+            <tr><td><strong>Tool-call success rate</strong></td><td>Agent tool calls किती वेळा वापरण्यायोग्य निकाल परत करतात</td><td>उच्च: agents क्वचितच पुन्हा प्रयत्न किंवा loop करतात</td></tr>
+            <tr><td><strong>Trace sampling coverage</strong></td><td>तुम्ही प्रत्यक्षात वाहतुकीचा किती अंश नोंदवता</td><td>Cost न फुगवता समस्या पकडण्याएवढा पुरेसा</td></tr>
+            <tr><td><strong>Time-to-debug</strong></td><td>Alert पासून root-cause span पर्यंत तुम्ही किती वेगाने जाता</td><td>मिनिटे, दिवस नव्हे</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जर p95 latency वाढते पण error rate सपाट असते, तर मंद span शोधा; जर जास्त वाहतुकीशिवाय cost चढते, तर बडबड्या prompt शोधा. Aggregates वर alert करा, मग विशिष्ट span दुरुस्त करण्यासाठी दोषी trace उघडा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">Production-शैलीच्या वापरात tracing आणि observability दाखवणारे तीन प्रातिनिधिक patterns.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🤖</span><div><h3>1 · गैरवर्तन करणारा agent debug करणे</h3><div class="role">Pattern: span झाडातून root-cause</div></div></div>
+        <p class="muted">एक agent कधीकधी अनंत काळ loop करतो किंवा चुकीच्या tool मधून उत्तर देतो, आणि logs फक्त अंतिम अपयश दाखवतात.</p>
+        <ul>
+          <li>Trace झाड प्रत्येक reason-act step, निवडलेले tool आणि प्रत्येक वळणावर पाठवलेले args उघड करते.</li>
+          <li>Spans तपासल्याने उघड होते की model ने database call करायला हवी होती तेव्हा एक search tool निवडले.</li>
+          <li>तो fix - एक धारदार tool वर्णन आणि एक step मर्यादा - trace पुन्हा चालवून पडताळला जातो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एक अस्पष्ट "agent अविश्वसनीय आहे" एका विशिष्ट span वरील विशिष्ट वाईट निर्णयात बदलतो, अंदाज लावण्याऐवजी दुरुस्त आणि पुष्ट केला जातो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💸</span><div><h3>2 · एका product ओलांडून cost आणि token देखरेख</h3><div class="role">Pattern: spans पासून खर्च आरोपण</div></div></div>
+        <p class="muted">एका LLM feature चे बिल चढत आहे आणि कोणता flow किंवा user ते चालवत आहे हे कोणालाच माहीत नाही.</p>
+        <ul>
+          <li>प्रत्येक span tokens आणि cost नोंदवते, feature, tenant आणि model नुसार tagged.</li>
+          <li>एक dashboard खर्च गटबद्ध करते जेणेकरून एक बडबडा prompt template सर्वात मोठा cost चालक म्हणून वेगळा दिसतो.</li>
+          <li>तो prompt छाटणे आणि एक step स्वस्त model वर बदलणे गुणवत्ता न गमावता cost कमी करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Cost नेमक्या feature आणि prompt ला आरोपित होतो, त्यामुळे optimization सरसकट rate limits ऐवजी खऱ्या चालकावर लक्ष केंद्रित करते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">⏱️</span><div><h3>3 · मंद span शोधून latency optimization</h3><div class="role">Pattern: प्रति-span timing विश्लेषण</div></div></div>
+        <p class="muted">एक RAG endpoint मंद वाटतो, पण retrieval, reranking की generation दोषी आहे हे संघाला सांगता येत नाही.</p>
+        <ul>
+          <li>प्रति-span latency दाखवते की reranking, LLM नव्हे, बहुतांश p95 अंदाजपत्रक खाते.</li>
+          <li>Reranker async केला जातो आणि त्याचा candidate set छाटला जातो, तो span आकुंचित करत.</li>
+          <li>Dashboard पुष्टी करते की p95 घसरते आणि कोणतेही error किंवा गुणवत्ता regression येत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> मंद step गृहीत न धरता मोजला जातो, त्यामुळे मेहनत प्रत्यक्षात latency आकडा हलवणाऱ्या span वर पडते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>Observability कुठे जात आहे</h2>
+      <p class="muted">LLM observability खुल्या मानकांवर एकत्र येत आहे आणि production traces आणि गुणवत्ता यांच्यातील loop घट्ट करत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📐 OpenTelemetry मानक</h4><p>GenAI semantic conventions span नावे आणि attributes प्रमाणित करत आहेत, त्यामुळे traces lock-in शिवाय vendors दरम्यान हलतात.</p></div>
+        <div class="card"><h4>🧪 Live traces वर online evals</h4><p>LLM-as-judge आणि heuristic scorers sampled production traces वर सतत चालतात, वास्तविक वेळेत गुणवत्ता घसरण उघड करत.</p></div>
+        <div class="card"><h4>🔁 Trace-ते-dataset loops</h4><p>रोचक किंवा अयशस्वी traces थेट eval datasets मध्ये वाहतात, जे पाठवले आणि जे तुम्ही तपासता यातील अंतर बंद करत.</p></div>
+        <div class="card"><h4>🧠 AI-सहाय्यित root cause</h4><p>Models एक अयशस्वी trace सारांशित करतात आणि दोषी span आणि fix सुचवतात, गुंतागुंतीच्या agents वर time-to-diagnosis कमी करत.</p></div>
+        <div class="card"><h4>🕹️ Agent-native observability</h4><p>Loops, फांद्या आणि tool graphs साठी खास बनवलेली दृश्ये खोल agent traces जबरदस्त होण्याऐवजी navigable बनवतात.</p></div>
+        <div class="card"><h4>🔐 गोपनीयता-जागरूक tracing</h4><p>आपोआप PII redaction आणि sampling संघांना data-handling आणि retention नियमांचा आदर करत समृद्ध traces ठेवू देतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> tracing हा probabilistic system चालवण्यायोग्य बनवण्याचा मार्ग आहे - अदृश्य chains आणि agents ला एका debuggable, मोजता येणाऱ्या span झाडात बदलत. मानके परिपक्व होत असताना आणि evals online जात असताना, observability प्रत्येक गंभीर LLM product चा कणा बनते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Tracing संबंधित कौशल्यांच्या जाळ्यात बसते. हे तिच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals आणि LLM-as-judge</h4><p>वास्तविक traces datasets मध्ये चढवा आणि त्यांना गुणांकित करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../model-routing/"><span class="ico">🔀</span><h4>Model routing</h4><p>अधिक हुशारीने route करण्यासाठी प्रति-span cost आणि latency वापरा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prompt-management/"><span class="ico">🗂️</span><h4>Prompt management</h4><p>Traces मध्ये regressions पकडण्यासाठी prompt versions निश्चित करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails</h4><p>तुमच्या safety checks ने काय अडवले ते trace आणि audit करा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>Tracing आणि Observability चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

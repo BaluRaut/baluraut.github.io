@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentic Orchestration समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="Agentic आणि multi-agent प्रणालींसाठी एक सखोल, दृश्य मार्गदर्शक: agent loop, ReAct reasoning, tool use, memory, guardrails, orchestration patterns, sequence diagrams, 0-100 flow, case studies आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Agentic आणि Multi-Agent Orchestration</span>
+      <h1>Agentic प्रणाली प्रत्यक्षात कशा काम करतात - संपूर्ण चित्र</h1>
+      <p class="lede">एक साधा LLM एकदाच उत्तर देतो आणि थांबतो. एक <strong>agent</strong> मात्र एक loop चालवतो: तो एका ध्येयाबद्दल विचार करतो, एक <strong>tool</strong> निवडतो, निकाल पाहतो, आणि पुन्हा विचार करतो - काम पूर्ण होईपर्यंत हे पुन्हा पुन्हा घडते. ही कल्पना अनेक विशेष agents एका supervisor खाली समन्वय साधताना वाढवा, आणि तुम्हाला अशा प्रणाली मिळतात ज्या योजना आखतात, कृती करतात, आणि स्वतःला दुरुस्त करतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Agent loop</span>
+        <span class="pill">ReAct reasoning</span>
+        <span class="pill">Tool use</span>
+        <span class="pill">Multi-agent orchestration</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Agentic प्रणाली म्हणजे काय?</h2>
+      <p class="muted">एक <strong>agent</strong> म्हणजे एका control loop मध्ये ठेवलेला आणि tools दिलेला LLM. एकच उत्तर तयार करण्याऐवजी, तो <em>पुढे काय करायचे</em> हे ठरवतो - search API कॉल करणे, code चालवणे, database ला query करणे - मग निकाल पाहतो आणि त्याबद्दल विचार करतो. ध्येय गाठेपर्यंत किंवा एखादी थांबण्याची अट येईपर्यंत तो loop करत राहतो. <strong>Multi-agent orchestration</strong> ही पुढची पायरी आहे: अनेक agents, प्रत्येकाची एक संकुचित भूमिका, असे कार्य सोडवण्यासाठी समन्वय साधतात जे एकटा agent चांगल्या प्रकारे हाताळू शकत नाही.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔁</span> Agent loop</h4>
+          <p>जाणून घेणे → योजना/विचार → tool ने कृती → निकाल पाहणे → चिंतन. ध्येय गाठेपर्यंत किंवा एखादा guardrail थांबवेपर्यंत पुन्हा करा.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧰</span> Tools</h4>
+          <p>Model कॉल करू शकणारी functions - search, code execution, HTTP, DB queries. Tools हाच मार्ग आहे ज्याने agent मजकुरापलीकडे जगावर परिणाम करतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧠</span> Memory</h4>
+          <p>Short-term context चालू scratchpad धरून ठेवते; long-term memory (एक vector store) तथ्ये आणि मागील निकाल runs मध्ये टिकवून ठेवते.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>सामान्य पर्याय</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Reasoning policy</strong></td><td>प्रत्येक पायरीला पुढील विचार आणि कृती ठरवते</td><td>ReAct, Plan-and-Execute, Reflexion</td></tr>
+            <tr><td><strong>Tool layer</strong></td><td>Typed schemas सह कॉल करता येणारी functions उघड करते</td><td>Function calling, MCP, code interpreter</td></tr>
+            <tr><td><strong>Memory</strong></td><td>Working state आणि long-term recall धरून ठेवते</td><td>Context window, vector store, scratchpad</td></tr>
+            <tr><td><strong>Orchestrator</strong></td><td>Agents आणि पायऱ्यांमध्ये काम मार्गस्थ करते</td><td>Supervisor, pipeline, fan-out, graph</td></tr>
+            <tr><td><strong>Guardrails</strong></td><td>खर्च, loops आणि असुरक्षित कृतींना मर्यादा घालते</td><td>Step limits, budgets, approvals, validators</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>महत्त्वाचे मानसिक चित्र:</strong> agent म्हणजे अधिक हुशार prompt नाही - तो tools आणि एका थांबण्याच्या अटीसह असलेला एक <em>loop</em> आहे. बुद्धिमत्ता पुनरावृत्तीतून येते: कृती करणे, प्रत्यक्षात काय घडले ते पाहणे, आणि समायोजन करणे. Loop नियंत्रित करा (steps, budget, termination) आणि तुम्ही agent नियंत्रित करता.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Agents का अस्तित्वात आहेत</h2>
+      <p class="muted">अनेक वास्तविक कामे एकाच झटक्यात सोडवता येत नाहीत - त्यांना lookups, मध्यवर्ती निकाल, आणि मार्ग-दुरुस्तीची गरज असते. एका prompt कडे मध्येच शिकलेल्या गोष्टींवर प्रतिक्रिया देण्याचा मार्ग नसतो. Agents एका one-shot कॉलला एका जुळवून घेणाऱ्या, tool वापरणाऱ्या प्रक्रियेत बदलून ती दरी भरून काढतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Multi-step कामे हाताळतो</h4><p>"याचे संशोधन करा आणि अहवाल तयार करा" अशी ध्येये अनेक कृतींमध्ये विभागतात. Agent त्या क्रमबद्ध करतो, प्रत्येक निकाल पुढील पायरीसाठी वापरतो.</p></div>
+        <div class="card"><h4>🌍 वास्तविक जगावर कृती करतो</h4><p>Tools model ला गोष्टी करण्यास देतात - code चालवणे, APIs वापरणे, records अद्ययावत करणे - फक्त वर्णन करणे नाही. यामुळे chatbot चा एक कामगार बनतो.</p></div>
+        <div class="card"><h4>♻️ स्वतःला दुरुस्त करतो</h4><p>Tool outputs आणि errors पाहून, agent पुन्हा प्रयत्न करू शकतो, मागे फिरू शकतो, किंवा एका critic ला पुनरावलोकन करण्यास सांगू शकतो - एका पासमध्ये पाठवल्या जाणाऱ्या चुका सावरून.</p></div>
+        <div class="card"><h4>🧑‍🤝‍🧑 कामाची विभागणी करतो</h4><p>Multi-agent रचना प्रत्येक agent ला एक केंद्रित भूमिका आणि prompt देतात. विशेषज्ञ एका अतिभारित सामान्यज्ञापेक्षा चांगले काम करतात आणि तपासणे सोपे असते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Agentic प्रणालींचे स्पष्टीकरण</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असलात तरी ती पटकन समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Agent म्हणजे <strong>कच्च्या कागदावर एक कठीण problem set सोडवण्यासारखे</strong>. तुम्ही एका ओळीत उत्तर देत नाही; तुम्ही एक पायरी करून पाहता, निकाल तपासता, अयशस्वी झालेले खोडता, आणि उत्तर टिकेपर्यंत पुढे जात राहता. Multi-agent संघ म्हणजे एक <strong>अभ्यास गट</strong> जिथे एक व्यक्ती संशोधन करते, एक गणिते करते, आणि एक ते लिहून काढते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> Developer साठी</h4><p>हा एका LLM कॉल भोवतीचा <strong>while-loop</strong> आहे, जिथे प्रत्येक iteration एक function कॉल करू शकते, तिचे return value वाचू शकते, आणि पुढील कॉल ठरवू शकते. Orchestration म्हणजे <strong>coordinator असलेली एक job queue</strong>: supervisor subtasks worker functions ला पाठवतो, मग त्यांचे निकाल एकत्र करतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>project manager ने विशेषज्ञांना काम सोपवण्याचा</strong> विचार करा. PM एक ध्येय कामांमध्ये विभागतो, प्रत्येक योग्य तज्ज्ञाला देतो, परत आलेले पुनरावलोकन करतो, आणि काही चुकल्यास पुन्हा करण्यास सांगतो, प्रत्येक भाग स्वतः करण्याऐवजी.</p></div>
+        <div class="card"><h4><span class="ico">🍳</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>स्वयंपाकी recipe चे अनुसरण करत जाताना चव पाहतो</strong>. प्रत्येक पायरी एक निकाल देते जो तो तपासतो - जास्त खारट, न शिजलेले - आणि पुढील पायरीआधी समायोजन करतो, आधी जे येईल ते डोळे झाकून वाढण्याऐवजी.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे काम करते</h2>
+      <p class="muted">एक agentic प्रणाली दोन थरांनी बनते: विचार करणारा आणि कृती करणारा <strong>single-agent loop</strong>, आणि एका सामायिक ध्येयाभोवती अनेक agents चा समन्वय साधणारा <strong>orchestration layer</strong>.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔂</span> Single-agent loop</h4>
+          <p>ReAct reasoning आणि acting एकमेकांत गुंफते: विचार → tool निवडणे → निरीक्षण → पुन्हा विचार. विचार आणि निरीक्षणांचा scratchpad प्रत्येक फेरीत वाढतो जोपर्यंत model अंतिम उत्तर देत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🗂️</span> Orchestration layer</h4>
+          <p>एक supervisor ध्येय विभागतो आणि subtasks worker agents ना मार्गस्थ करतो - क्रमाने, समांतर, किंवा एका critic द्वारे - मग त्यांच्या outputs एका निकालात एकत्र करतो.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात architecture</h3>
+      <div class="diagram">
+        <div class="cap">Architecture - एक supervisor worker agents चालवतो; प्रत्येक worker सामायिक memory विरुद्ध स्वतःचा tool loop चालवतो</div>
+        <pre class="mermaid">
+flowchart LR
+    U["👤 Goal"] --> SUP["🧭 Supervisor / planner"]
+    subgraph Workers["🤝 Worker agents"]
+        SUP --> W1["🔎 Researcher"]
+        SUP --> W2["💻 Coder"]
+        SUP --> W3["✍️ Writer"]
+    end
+    subgraph Tools["🧰 Tools"]
+        W1 --> T1["🌐 Search"]
+        W2 --> T2["⚙️ Code exec"]
+        W3 --> T3["🗄️ Knowledge base"]
+    end
+    subgraph Mem["🧠 Memory"]
+        MS["📝 Short-term context"]
+        ML[("📚 Long-term vectors")]
+    end
+    W1 --> MS
+    W2 --> MS
+    W3 --> ML
+    W1 --> SYN["🧩 Synthesize"]
+    W2 --> SYN
+    W3 --> SYN
+    SYN --> ANS["✅ Final result"]
+        </pre>
+      </div>
+
+      <h3>Python मध्ये एक किमान agent loop</h3>
+      <pre><code>messages = [
+    {"role": "system", "content": "Reason step by step. Call ONE tool per turn, or reply to finish."},
+    {"role": "user", "content": goal},
+]
+
+for step in range(MAX_STEPS):                 # guardrail: bounded loop
+    reply = client.messages.create(
+        model="claude-opus-4-8",
+        tools=TOOL_SCHEMAS,
+        messages=messages,
+    )
+    messages.append({"role": "assistant", "content": reply.content})
+
+    tool_calls = [b for b in reply.content if b.type == "tool_use"]
+    if not tool_calls:                        # no tool -> agent is done
+        return reply.text
+
+    results = []
+    for call in tool_calls:                   # tool use
+        output = TOOLS[call.name](**call.input)
+        results.append({"type": "tool_result", "tool_use_id": call.id, "content": output})
+    messages.append({"role": "user", "content": results})
+
+    if spend.exceeded() or looks_stuck(messages):   # soft termination
+        return escalate_to_human(messages)
+
+return "Step limit reached, returning best effort"</code></pre>
+      <p class="muted">दोन termination अटींकडे लक्ष द्या: एक कठोर <em>step limit</em> आणि एक मृदू <em>stuck/budget</em> तपासणी. त्यांच्याशिवाय agent अनंत काळ loop करू शकतो किंवा अयशस्वी कृतीची पुनरावृत्ती करून tokens जाळू शकतो - guardrails हेच loop production मध्ये चालवण्यास सुरक्षित करतात.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एका single agent चा ReAct loop, विशेषज्ञ workers ना काम सोपवणारा supervisor, आणि पुनरावलोकनासाठी critic सोबत जोडलेला generator.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Single agent: ReAct विचार → कृती → निरीक्षण loop</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant A as 🤖 Agent
+    participant T as 🧰 Tool
+    participant M as 🧠 Memory
+
+    U->>A: Goal
+    loop until FINISH or step limit
+        A->>A: Think - plan next action
+        A->>T: Act - call tool with args
+        T-->>A: Observation - result or error
+        A->>M: Append thought and observation
+        A->>A: Reflect - closer to the goal
+    end
+    A-->>U: Final answer
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Supervisor विशेषज्ञ workers ना subtasks सोपवतो, मग एकत्र करतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant S as 🧭 Supervisor
+    participant R as 🔎 Researcher
+    participant C as 💻 Coder
+    participant W as ✍️ Writer
+
+    U->>S: Complex goal
+    S->>S: Decompose into subtasks
+    par Fan-out to specialists
+        S->>R: Gather sources
+        R-->>S: Findings
+    and
+        S->>C: Produce analysis
+        C-->>S: Results
+    end
+    S->>W: Draft from findings and results
+    W-->>S: Draft
+    S->>S: Synthesize and check
+    S-->>U: Final deliverable
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Generator अधिक critic: verifier सह एक पुनरावृत्तीशील पुनरावलोकन loop</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant G as ✏️ Generator
+    participant V as 🔬 Critic
+    participant T as ✅ Verifier
+
+    U->>G: Task
+    G->>V: Draft answer
+    loop up to N revisions
+        V->>T: Run checks - tests or rubric
+        T-->>V: Pass or fail with reasons
+        alt verifier fails
+            V-->>G: Feedback - fix these issues
+            G->>V: Revised draft
+        else verifier passes
+            V-->>U: Approved answer
+        end
+    end
+    Note over G,V: Stop after N rounds and return best effort
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी दर पायरी</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका कच्च्या ध्येयापासून पडताळलेल्या, वितरित निकालापर्यंत - संपूर्ण agentic प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Goal</span><h4>उद्दिष्ट स्वीकारा</h4><p>एक user किंवा upstream प्रणाली agent ला नैसर्गिक भाषेत एक ध्येय देते, त्यासोबत कोणतीही मर्यादा, संदर्भ, आणि यशाचे निकष.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Plan</span><h4>Subtasks मध्ये विभागा</h4><p>Planner ध्येयाला पायऱ्यांच्या एका क्रमबद्ध संचात मोडतो आणि एक agent पुरेसा आहे की काम विशेषज्ञांमध्ये विभागावे हे ठरवतो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Perceive</span><h4>Working context जमवा</h4><p>संबंधित तथ्ये short-term context आणि long-term memory मधून खेचली जातात जेणेकरून agent प्रत्येक पायरी त्याला आवश्यक असलेल्या state सह सुरू करतो.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Reason</span><h4>पुढील कृती निवडा</h4><p>ReAct वापरून, model एक विचार लिहितो आणि नेमका एक tool call निवडतो - किंवा त्याच्याकडे पूर्ण करण्यासाठी आधीच पुरेसे आहे हे ठरवतो.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Act</span><h4>एक tool कॉल करा</h4><p>Agent typed arguments सह tool ला बोलावतो - search, code execution, एक API, एक database query - एक ठोस कृती करण्यासाठी.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Observe</span><h4>निकाल वाचा</h4><p>Tool एक निरीक्षण परत करतो - data, एक value, किंवा एक error. हा वास्तविक-जगातील प्रतिसाद scratchpad ला जोडला जातो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Reflect</span><h4>प्रगतीचे मूल्यमापन करा</h4><p>निरीक्षणाने ध्येयाकडे नेले का, पुन्हा प्रयत्न करावा, मागे फिरावे, की दृष्टिकोन बदलावा हे agent ठरवतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guard</span><h4>मर्यादा आणि सुरक्षा तपासा</h4><p>Step count, token budget, आणि policy तपासण्या प्रत्येक loop ला चालतात. धोकादायक कृती पुढे जाण्याआधी मानवी मंजुरीसाठी थांबू शकतात.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Orchestrate</span><h4>Agents चा समन्वय साधा</h4><p>Multi-agent कामासाठी supervisor subtasks समांतर fan-out करतो, त्या pipeline मध्ये जोडतो, किंवा एक draft critic ला मार्गस्थ करतो.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Verify</span><h4>टीका करा आणि एकत्र करा</h4><p>Outputs tests किंवा rubric विरुद्ध पुनरावलोकित होतात आणि एका सुसंगत निकालात विलीन होतात, अयशस्वी भाग पुनरावृत्तीसाठी परत पाठवले जातात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>परत करा आणि शिका</h4><p>पडताळलेला निकाल user कडे परत जातो. Traces, निकाल, आणि टिकाऊ तथ्ये भविष्यातील runs सुधारण्यासाठी long-term memory मध्ये लिहिली जातात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतेक agents reasoning वर नाही तर control वर अपयशी ठरतात. Production मध्ये त्रास देणारे हे failure modes आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔁 अनंत loops</h4><p>Step limit किंवा termination तपासणी नसताना, agent तीच अयशस्वी कृती कायमची पुन्हा करतो, tokens आणि वेळ जाळत. प्रत्येक loop ला एक कठोर मर्यादा आणि तो अडकला आहे हे ओळखून सोडून देण्याचा मार्ग आवश्यक आहे.</p></div>
+        <div class="card"><h4>📚 Context फुगणे</h4><p>प्रत्येक विचार, tool output, आणि error scratchpad ला जोडल्याने prompt इतका वाढतो की तो मंद, महाग, आणि "मध्ये हरवलेला" होतो. संपूर्ण इतिहास वाहून नेण्याऐवजी जुन्या पायऱ्या सारांशित करा किंवा छाटा.</p></div>
+        <div class="card"><h4>💥 Error साखळ्या</h4><p>एक चुकीचा tool निकाल पुढील पायरीला पुरवला जातो, जो trajectory मध्ये चूक वाढवत नेतो. पायऱ्यांमध्ये validation नसल्यास, एक चुकीचे निरीक्षण संपूर्ण run रुळावरून घसरवू शकते.</p></div>
+        <div class="card"><h4>🧩 अति-विभाजन</h4><p>एक साधे ध्येय डझनभर agents आणि subtasks मध्ये विभागल्याने coordination overhead, latency, आणि अपयशाच्या अधिक जागा वाढतात. आधी एका agent कडे वळा; single loop खरोखर सामना करू शकत नाही तेव्हाच विशेषज्ञ जोडा.</p></div>
+        <div class="card"><h4>🔓 अमर्याद tool परवानग्या</h4><p>Agent ला prod वर write access, निर्बंधरहित shell, किंवा एक खरे payments API देणे न सावरता येणाऱ्या नुकसानास आमंत्रण देते. प्रत्येक tool least privilege ला scope करा आणि धोकादायक कृती approvals मागे रोखा.</p></div>
+        <div class="card"><h4>🎯 Trajectory evals नाहीत</h4><p>फक्त अंतिम उत्तर पाहून agent तिथे कसा पोहोचला हे लपते - व्यर्थ मार्ग, नशिबाचे अंदाज, मूक side effects. संपूर्ण trajectory वरील evals शिवाय तुम्ही विश्वासार्ह agents ना नाजूक agents पासून वेगळे करू शकत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजायचे</div>
+      <h2>Agents कसे मोजायचे</h2>
+      <p class="muted">फक्त शेवटचा संदेश नाही तर संपूर्ण trajectory ला गुण द्या, म्हणजे agent विश्वासार्ह आणि परवडणारा आहे की नाही हे तुम्हाला कळेल.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>तो तुम्हाला काय सांगतो</th><th>चांगले लक्षण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Task success rate</strong></td><td>Agent किती वेळा प्रत्यक्षात ध्येय संपूर्णपणे गाठतो</td><td>उच्च आणि सर्व प्रकरणांत स्थिर</td></tr>
+            <tr><td><strong>Steps / tool-calls प्रति task</strong></td><td>तो किती कार्यक्षमतेने उत्तरापर्यंत पोहोचतो</td><td>कमी: थोडे वळसे किंवा व्यर्थ कृती</td></tr>
+            <tr><td><strong>Cost आणि latency प्रति task</strong></td><td>एका संपूर्ण run साठी token खर्च आणि प्रत्यक्ष वेळ</td><td>तुमच्या budget आणि SLA च्या आत</td></tr>
+            <tr><td><strong>Tool-call error rate</strong></td><td>अपयशी होणाऱ्या किंवा चुकीचे args परत करणाऱ्या tool calls चा भाग</td><td>कमी: schemas आणि inputs योग्य आहेत</td></tr>
+            <tr><td><strong>Loop / termination rate</strong></td><td>Runs किती वेळा पूर्ण होण्याऐवजी step cap वर आदळतात</td><td>कमी: agent ला कधी पूर्ण झाले हे कळते</td></tr>
+            <tr><td><strong>Human intervention rate</strong></td><td>व्यक्तीने अडकलेले सोडवण्यास किंवा मंजूर करण्यास लागणाऱ्या tasks चा वाटा</td><td>नित्य कामासाठी कमी, धोकादायक कामासाठी नियंत्रित</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जर success उच्च असेल पण steps आणि cost देखील उच्च असतील, तर agent बरोबर आहे पण उधळा आहे - prompts आणि tools घट्ट करा; जर success कमी असेल आणि loop rate उच्च असेल, तर model ला दोष देण्याआधी termination आणि error handling दुरुस्त करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>वास्तविक-जगातील case studies</h2>
+      <p class="muted">Production-सदृश वापरात agentic orchestration दाखवणारे तीन प्रातिनिधिक patterns.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💻</span><div><h3>1 · एक coding-agent ताफा</h3><div class="role">Pattern: supervisor + parallel workers सह एक verifier</div></div></div>
+        <p class="muted">एका engineering platform ला असे agents हवे आहेत जे issues संपूर्णपणे सोडवतात - repo वाचणे, code संपादित करणे, tests चालवणे, आणि एक pull request उघडणे.</p>
+        <ul>
+          <li>एक supervisor एका issue ला बदलण्याच्या files मध्ये विभागतो आणि त्यांच्यावर worker agents समांतर पाठवतो.</li>
+          <li>प्रत्येक worker loop करतो: code वाचणे, संपादन, test tool चालवणे, आणि suite pass होईपर्यंत अपयश पाहणे.</li>
+          <li>एक verifier agent PR ला रोखतो - merge होण्याआधी tests pass व्हायला हवे आणि एका critic ने diff मंजूर करायला हवा.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> नित्य bugs आणि refactors एका हिरव्या test run आणि पुनरावलोकित diff सह सोडवले जातात, तर step limits आणि आवश्यक approvals धोकादायक बदलांना अनियंत्रित पाठवण्यापासून रोखतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔬</span><div><h3>2 · एक स्वायत्त संशोधन सहाय्यक</h3><div class="role">Pattern: पुनरावृत्तीशील plan-search-synthesize loop</div></div></div>
+        <p class="muted">एका संघाला असा agent हवा आहे जो अनेक स्रोत शोधून एका उद्धृत briefing तयार करून सखोल प्रश्नांची उत्तरे देतो, एका one-shot अंदाजाने नाही.</p>
+        <ul>
+          <li>Agent sub-questions ची योजना आखतो, पुनरावृत्तीशीलपणे शोधतो, आणि पुरेसे पुरावे जमवले हे कधी ठरवायचे हे ठरवतो.</li>
+          <li>निष्कर्ष आणि स्रोत long-term memory मध्ये साठतात जेणेकरून नंतरच्या पायऱ्या आधीच्यांवर उभ्या राहतात.</li>
+          <li>एक critic pass retrieved स्रोतांविरुद्ध दाव्यांची तपासणी करतो आणि आधार नसलेले काहीही आणखी एका शोधासाठी चिन्हांकित करतो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> डझनभर tool calls मधून एक संरचित, स्रोत-आधारित अहवाल उदयास येतो, critic loop आधार नसलेले दावे वाचकापर्यंत पोहोचण्याआधी पकडतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎧</span><div><h3>3 · Customer-operations स्वयंचलन</h3><div class="role">Pattern: human-in-the-loop सह sequential pipeline</div></div></div>
+        <p class="muted">एका support संस्थेला असे agents हवे आहेत जे tickets ची छाननी करतात, नित्य कृती करतात, आणि संवेदनशील काहीही एका व्यक्तीकडे escalate करतात.</p>
+        <ul>
+          <li>एक classifier agent प्रत्येक ticket मार्गस्थ करतो, मग एक specialist agent account पाहतो आणि एक कृती draft करतो.</li>
+          <li>Tools agent ला refunds देण्यास किंवा records अद्ययावत करण्यास देतात - पण फक्त guardrails म्हणून लागू केलेल्या policy मर्यादांच्या आत.</li>
+          <li>उच्च-मूल्याची किंवा संदिग्ध प्रकरणे कोणतीही न सावरता येणारी कृती होण्याआधी मानवी मंजुरीसाठी थांबतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> सामान्य विनंत्या आपोआप संपूर्णपणे हाताळल्या जातात, तर guardrails आणि approval gates खात्री करतात की धोकादायक operations ना नेहमी मानवी संमती मिळते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>Agents कोणत्या दिशेने चालले आहेत</h2>
+      <p class="muted">Agentic प्रणाली चतुर demos पासून विश्वासार्ह infrastructure कडे सरकत आहेत - सीमारेषा म्हणजे मोठ्या प्रमाणावर coordination, memory, आणि विश्वास.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧭 उत्तम planners</h4><p>स्पष्ट plan-and-execute आणि कृतींवरील tree-search agents ना एका फेरीत लोभीपणे प्रतिक्रिया देण्याऐवजी अनेक पायऱ्या पुढे पाहायला लावतात.</p></div>
+        <div class="card"><h4>🗣️ प्रमाणित protocols</h4><p>MCP सारखे tool आणि agent protocols आणि agent-to-agent messaging agents ना vendors आणि frameworks मध्ये tools सामायिक करण्यास आणि संवाद साधण्यास देतात.</p></div>
+        <div class="card"><h4>📚 टिकाऊ memory</h4><p>अधिक समृद्ध long-term memory - episodic, semantic, आणि procedural - agents ना दरवेळी शून्यापासून सुरू करण्याऐवजी मागील runs मधून शिकू देते.</p></div>
+        <div class="card"><h4>🛡️ एक थर म्हणून Guardrails</h4><p>Policy engines, sandboxes, आणि permissioned tools agent घेऊ शकणाऱ्या प्रत्येक कृतीभोवती एक समर्पित सुरक्षा थर बनतात.</p></div>
+        <div class="card"><h4>📊 Agent evals</h4><p>Trajectory-स्तरावरील मूल्यमापन - agent ने ध्येय गाठले का, कोणत्या खर्चात, कोणत्या side effects सह - संघ ज्याला optimize करतात तो मापदंड बनते.</p></div>
+        <div class="card"><h4>🧑‍💼 रचनेतूनच Human-in-the-loop</h4><p>Approval gates आणि व्यत्यय आणता येणारे loops नंतरच्या विचारांतून first-class controls बनतात जेणेकरून लोक महत्त्वाच्या पायऱ्यांवर नियंत्रण ठेवतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> agent म्हणजे tools, memory, आणि एका थांबण्याच्या अटीसह असलेला एक loop - आणि multi-agent orchestration म्हणजे तुम्ही ते loops योजना आखणाऱ्या, कृती करणाऱ्या, आणि स्वतःला दुरुस्त करणाऱ्या प्रणालींमध्ये कसे जोडता. विजेत्यांकडे फक्त सर्वात हुशार model नसेल; त्यांच्याकडे त्याभोवती सर्वोत्तम control, memory, आणि guardrails असतील.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोधत राहा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Agents संबंधित कौशल्यांच्या जाळ्याच्या केंद्रस्थानी असतात. हे orchestration सोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../tool-calling/"><span class="ico">🧰</span><h4>Tool calling</h4><p>Agents हेतूचे typed function calls मध्ये कसे रूपांतर करतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="/mcp/"><span class="ico">🔌</span><h4>MCP</h4><p>Agents मध्ये tools सामायिक करण्यासाठी एक प्रमाणित protocol.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals आणि LLM-as-judge</h4><p>फक्त अंतिम उत्तरे नाही तर संपूर्ण trajectories ला गुण देणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails</h4><p>खर्च, loops, आणि असुरक्षित agent कृतींना मर्यादा घालणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत जा</a></p>
+      <p>Agentic Orchestration चा एक दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · Case Studies · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

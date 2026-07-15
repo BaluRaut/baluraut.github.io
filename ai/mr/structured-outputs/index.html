@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Structured Outputs समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="LLMs मधून येणाऱ्या structured outputs चे सखोल, दृश्य मार्गदर्शन: ते काय आहेत, schema-constrained decoding वैध JSON ची हमी कशी देते, validate-and-reask loops, sequence diagrams, 0-100 प्रवाह, case studies आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Structured Outputs</span>
+      <h1>structured outputs मजकुराचे विश्वसनीय डेटामध्ये रूपांतर कसे करतात</h1>
+      <p class="lede">LLMs गद्यात बोलतात, पण सॉफ्टवेअरला डेटा हवा असतो. Structured outputs मॉडेलकडून <strong>मशीन-वाचनीय JSON</strong> परत मिळवतात जे तुम्ही ठरवलेल्या schema नुसार असते, त्यामुळे त्याची उत्तरे थेट तुमच्या कोड, APIs आणि databases मध्ये उतरतात, <strong>ठिसूळ string parsing</strong> किंवा नशिबावर सोडलेल्या regex शिवाय.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">JSON Schema</span>
+        <span class="pill">Constrained decoding</span>
+        <span class="pill">Pydantic &amp; zod</span>
+        <span class="pill">Validate &amp; reask</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>structured outputs म्हणजे काय?</h2>
+      <p class="muted"><strong>Structured outputs</strong> ही मॉडेलची अशी उत्तरे आहेत जी मुक्त गद्याऐवजी तुम्ही आधीच ठरवलेल्या मशीन-वाचनीय आकाराचे अनुसरण करतात - सहसा schema शी जुळणारे JSON. तुम्ही मॉडेलला एक करार देता ("या fields आणि या types असलेला object परत करा"), आणि उत्तर डेटा म्हणून परत येते जे तुमचा प्रोग्राम थेट parse, validate आणि वापरू शकतो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📐</span> आकार ठरवा</h4>
+          <p>तुम्ही उद्दिष्ट JSON Schema किंवा typed model (Pydantic, zod) म्हणून वर्णन करता. हाच तो करार आहे जो output ने पूर्ण केला पाहिजे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> generation मर्यादित करा</h4>
+          <p>मॉडेलला असे मार्गदर्शन केले जाते की तो फक्त तेच tokens देतो जे output ला schema नुसार वैध ठेवतात, त्यामुळे तो गद्याकडे भरकटू शकत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">✅</span> Parse &amp; validate</h4>
+          <p>निकाल typed object मध्ये parse आणि validate केला जातो. जे काही निसटते ते तुमच्या कोडपर्यंत पोहोचण्याआधीच पकडले जाते.</p>
+        </div>
+      </div>
+
+      <h3>पद्धतींचा वर्णपट</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पद्धत</th><th>ती काय करते</th><th>हमी</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Prompt-and-hope</strong></td><td>prompt मध्ये विनंती करून JSON मागा; जे परत येईल ते parse करा</td><td>काहीच नाही - फक्त उत्तम प्रयत्न</td></tr>
+            <tr><td><strong>JSON mode</strong></td><td>Provider flag जो वाक्यरचनेने वैध JSON ची सक्ती करतो, पण कोणताही आकार</td><td>वैध JSON, तुमचे schema नाही</td></tr>
+            <tr><td><strong>Schema-constrained</strong></td><td>Decoding token पातळीवर दिलेल्या JSON Schema पुरते मर्यादित</td><td>वैध JSON <em>आणि</em> तुमचे schema</td></tr>
+            <tr><td><strong>Grammar-based</strong></td><td>औपचारिक grammar (GBNF, regex) प्रत्येक टप्प्यावर अवैध tokens लपवते</td><td>तुम्ही व्यक्त करू शकाल असा कोणताही औपचारिक आकार</td></tr>
+            <tr><td><strong>Typed models</strong></td><td>Pydantic / zod निकाल कोडमध्ये ठरवतात, coerce करतात आणि validate करतात</td><td>Runtime type safety + retries</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> JSON मागणारा prompt ही एक <em>विनंती</em> आहे; schema-constrained decoding ही एक <em>हमी</em> आहे. अंमलबजावणी जेवढी बळकट, तेवढे कमी बचावात्मक parsing तुमच्या पुढील कोडला वाहून न्यावे लागते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>structured outputs का अस्तित्वात आहेत</h2>
+      <p class="muted">गद्य माणसांसाठी उत्तम आणि मशीनसाठी भयंकर आहे. ज्या क्षणी एखादे LLM output दुसऱ्या यंत्रणेला दिले जाते - database, API call, UI component - तेव्हा तुम्हाला एक अपेक्षित आकार हवा असतो, ज्याचे उलगडून विश्लेषण करावे लागेल असा परिच्छेद नाही.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 मुळातच मशीन-वाचनीय</h4><p>पुढील यंत्रणा वाक्ये नव्हे तर fields वापरतात. हमी दिलेले schema म्हणजे तुम्ही ठिसूळ मजकूर काढणीशिवाय output index, store आणि route करू शकता.</p></div>
+        <div class="card"><h4>🧱 कमी parsing अपयश</h4><p>"साधारण JSON सारख्या" मजकुरावर आता regex नको. Constrained decoding "मॉडेलने कंसाआधी एक गोड वाक्य जोडले" या संपूर्ण प्रकारच्या bugs काढून टाकते.</p></div>
+        <div class="card"><h4>🧩 विश्वसनीय tool &amp; API calls</h4><p>Function आणि tool calling हे मुळात structured output आहे - arguments ने tool च्या parameter schema शी अगदी तंतोतंत जुळावे लागते नाहीतर call अपयशी होते.</p></div>
+        <div class="card"><h4>🤝 components मधील करार</h4><p>Schema म्हणजे typed interface. Producers आणि consumers त्यावर सहमत होतात, त्यामुळे संघ प्रत्येक बाजू स्वतंत्रपणे विकसित करू शकतात आणि लवकर विचलन पकडू शकतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह structured outputs समजावले</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ती लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे निबंधाऐवजी <strong>बहुपर्यायी उत्तरपत्रिका</strong> आहे. तुम्ही समासात खरडू शकत नाही; तुम्ही अचूक चौकटी भरता, म्हणजे तपासणी यंत्र तुमची उत्तरे तत्काळ वाचू शकते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे कच्च्या string ऐवजी <strong>typed return value</strong> आहे. Function signature एका आकाराचे वचन देते, आणि type checker तुमच्या logic पर्यंत पोहोचण्याआधीच न जुळणारे काहीही नाकारतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>प्रमाणित नोंदणी अर्जाचा</strong> विचार करा. प्रत्येक अर्जदार नाव, तारीख आणि रक्कम त्याच जागी देतो, त्यामुळे प्रक्रिया एकसमान राहते आणि काहीही चुकीच्या ठिकाणी दाखल होत नाही.</p></div>
+        <div class="card"><h4><span class="ico">📝</span> रोजची आवृत्ती</h4><p><strong>लेबल केलेल्या चौकटी असलेला काटेकोर कागदी अर्ज भरण्यासारखे</strong>: प्रत्येक चौरसात एक अक्षर, तारीख DD/MM/YYYY मध्ये. चौकटी आकार लादतात, त्यामुळे नंतर वाचणाऱ्याला कधीही अंदाज लावावा लागत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>हे आतून कसे कार्य करते</h2>
+      <p class="muted">Structured output चे दोन हलणारे भाग आहेत: generation दरम्यान <strong>constraint</strong>, जो मॉडेल काय देऊ शकतो त्याला आकार देतो, आणि generation नंतर <strong>validation</strong>, जे निकाल पडताळून तुमचा कोड विश्वास ठेवू शकेल अशा typed object मध्ये coerce करते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Constrained decoding</h4>
+          <p>प्रत्येक टप्प्यावर decoder ठरवतो कोणते tokens output ला schema नुसार वैध ठेवतील, बाकीचे शून्य संभाव्यतेवर लपवतो, आणि फक्त उरलेल्यातूनच sample घेतो. अवैध JSON तयार करणे अशक्य होते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">✅</span> आधी validate मग coerce</h4>
+          <p>कच्चा मजकूर parse केला जातो आणि typed model विरुद्ध तपासला जातो. गहाळ fields, चुकीचे types, किंवा जादा keys नाकारल्या जातात, आणि अपयशी तपासणी crash ऐवजी आपोआप reask सुरू करू शकते.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टिक्षेपात pipeline</h3>
+      <div class="diagram">
+        <div class="cap">Pipeline - schema constrained decoding चालवते, मग typed object मध्ये validation</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Define["📐 Define"]
+        SC["🧾 JSON Schema / typed model"]
+    end
+    subgraph Generate["🔒 Constrained generation"]
+        PR["🧩 Prompt + schema"] --> CD["⛓️ Constrained decode"]
+        CD --> RAW["📄 Raw JSON tokens"]
+    end
+    subgraph Consume["✅ Validate & use"]
+        VAL["🔍 Validate"] --> OBJ["📦 Typed object"]
+        OBJ --> SVC["🚀 Downstream service"]
+    end
+    SC --> PR
+    RAW --> VAL
+        </pre>
+      </div>
+
+      <h3>Python मधील एक वास्तविक structured call</h3>
+      <pre><code>from pydantic import BaseModel, Field
+from openai import OpenAI
+
+class Invoice(BaseModel):
+    vendor: str
+    invoice_number: str
+    total_amount: float = Field(ge=0)
+    currency: str = Field(pattern=r"^[A-Z]{3}$")
+    due_date: str  # ISO 8601
+
+client = OpenAI()
+
+# The SDK sends Invoice's JSON Schema and constrains decoding to it.
+resp = client.chat.completions.parse(
+    model="gpt-model",
+    messages=[
+        {"role": "system", "content": "Extract invoice fields from the text."},
+        {"role": "user", "content": document_text},
+    ],
+    response_format=Invoice,   # schema-constrained output
+)
+
+invoice: Invoice = resp.choices[0].message.parsed
+save_to_ledger(invoice)        # already a validated, typed object</code></pre>
+      <p class="muted"><code>response_format</code> हीच संपूर्ण युक्ती आहे: <code>Invoice</code> पासून मिळवलेले schema generation ला <em>मार्गदर्शन</em> करते आणि निकाल <em>validate</em> करते, त्यामुळे <code>parsed</code> हा खरा typed object असतो, तुम्हाला अजूनही विश्वास ठेवावा लागणारा string नाही.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>सविस्तर sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: token-by-token constrained decoding, validate-then-reask loop, आणि schema पासून पुढील बाजूला दिलेल्या typed object पर्यंतचा संपूर्ण मार्ग.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Constrained decoding: schema ची token by token अंमलबजावणी</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant Dec as ⛓️ Decoder
+    participant SM as 📐 Schema mask
+    participant LM as 🧠 Language model
+
+    App->>Dec: generate(prompt, schema)
+    Dec->>SM: compile schema to token constraints
+    SM-->>Dec: valid next-token set
+    loop for each token
+        Dec->>LM: next-token logits
+        LM-->>Dec: raw probabilities
+        Dec->>SM: which tokens keep JSON valid
+        SM-->>Dec: allowed token mask
+        Dec->>Dec: mask illegal tokens then sample
+    end
+    Dec-->>App: guaranteed schema-valid JSON
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - output schema मध्ये अपयशी झाल्यावर validate मग reask</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant LLM as 🧠 LLM
+    participant Val as 🔍 Validator
+
+    App->>LLM: prompt + schema
+    LLM-->>App: candidate JSON
+    App->>Val: validate(candidate, schema)
+    alt valid
+        Val-->>App: typed object
+        App-->>App: proceed
+    else invalid
+        Val-->>App: errors (wrong type, missing field)
+        loop until valid or max retries
+            App->>LLM: reask with errors + prior output
+            LLM-->>App: corrected JSON
+            App->>Val: validate again
+        end
+        Note over App,Val: give up gracefully after max retries
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Schema पासून prompt पासून generate पासून पुढील service साठी typed object पर्यंत</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 👩‍💻 Schema author
+    participant App as 🖥️ App
+    participant LLM as 🧠 LLM
+    participant Svc as 🚀 Downstream service
+
+    Dev->>App: define typed model (Pydantic / zod)
+    App->>App: derive JSON Schema from model
+    App->>LLM: prompt + schema (constrained)
+    LLM-->>App: schema-valid JSON
+    App->>App: parse into typed object
+    App->>Svc: call API with typed payload
+    Svc-->>App: 200 OK, record created
+    App-->>Dev: structured result logged
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">असंरचित विनंतीपासून तुमच्या यंत्रणांमध्ये वाहणाऱ्या validate केलेल्या, typed object पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>उद्दिष्ट आकार ठरवा</h4><p>इच्छित output typed model किंवा JSON Schema म्हणून लिहा: fields, types, enums, आवश्यक keys, आणि ranges व patterns सारख्या मर्यादा.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Derive</span><h4>schema तयार करा</h4><p>Typed model (Pydantic, zod) provider समजू शकेल अशा JSON Schema मध्ये रूपांतरित करा. हाच तो करार आहे ज्यावर दोन्ही बाजू सहमत असतात.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Prompt</span><h4>विनंती जुळवा</h4><p>तुमच्या सूचना schema सोबत एकत्र करा. प्रत्येक field चा अर्थ वर्णन करा म्हणजे मॉडेल केवळ योग्य type नव्हे तर योग्य मूल्य भरेल.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Constrain</span><h4>output format जोडा</h4><p>Schema response format म्हणून द्या म्हणजे provider मुक्त मजकुराऐवजी schema-constrained decoding चालू करतो.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Compile</span><h4>token mask बनवा</h4><p>Decoder schema ला अशा state machine मध्ये compile करतो जी प्रत्येक स्थानावर कोणते tokens JSON वैध ठेवतात हे जाणते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Decode</span><h4>constraint खाली generate करा</h4><p>प्रत्येक टप्प्यावर मॉडेलचे logits परवानगी असलेल्या संचापुरते mask केले जातात, त्यामुळे तो फक्त वैध document पुढे नेणारे tokens देऊ शकतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Stream</span><h4>आंशिक रचना द्या</h4><p>पर्यायाने tokens येताच stream करा, वाढणारे JSON parse करा म्हणजे fields पूर्ण होताच UI ती render करू शकते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Parse</span><h4>मजकुराचे object मध्ये रूपांतर करा</h4><p>पूर्ण झाल्यावर JSON parse करा आणि typed model मध्ये लोड करा, schema परवानगी देईल तिथे मूल्ये coerce करा.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Validate</span><h4>business नियम तपासा</h4><p>schema व्यक्त करू शकत नाही असे semantic validation चालवा - cross-field logic, संदर्भ तपासण्या, वाजवी ranges - केवळ type शुद्धतेच्या पलीकडे.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Reask</span><h4>अपयशावर पुन्हा प्रयत्न करा</h4><p>Validation अपयशी झाल्यास, errors आणि आधीचे output दुरुस्तीसाठी परत पाठवा, सुरळीत fallback आधी retry मर्यादेपर्यंत loop करा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>typed object सुपूर्द करा</h4><p>Validate केलेला object API, database, किंवा UI ला द्या. अपयश आणि reasks च्या logs evals ना पुरवतात ज्या कालांतराने schema घट्ट करतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी &amp; anti-patterns</h2>
+      <p class="muted">वैध JSON आणि योग्य डेटा एकच नाहीत. production मध्ये चावा घेणारे हे अपयशाचे प्रकार आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>✂️ Truncation</h4><p>object च्या मध्येच token मर्यादा गाठल्यास असे JSON मिळते जे वैध सुरू होते आणि अचानक संपते. उदार max ठेवा, अपूर्ण output ओळखा, आणि अर्धी नोंद पाठवण्याऐवजी reask करा.</p></div>
+        <div class="card"><h4>🔢 चुकीचे types</h4><p>constraint शिवाय मॉडेल number साठी <code>"42"</code> किंवा boolean साठी <code>"true"</code> परत करतो. coercion सह typed validation हे पुढील गणित बिघडवण्याआधी पकडते आणि दुरुस्त करते.</p></div>
+        <div class="card"><h4>👻 काल्पनिक fields</h4><p>मॉडेल तुम्ही कधीही न ठरवलेल्या keys शोधून काढतो किंवा आवश्यक fields आत्मविश्वासाने केलेल्या अंदाजांनी भरतो. जादा properties मनाई करा आणि "unknown" ला प्रथम श्रेणीचे परवानगी असलेले मूल्य माना.</p></div>
+        <div class="card"><h4>📦 अति-nested schemas</h4><p>खोलवर nested, पसरलेली schemas error rates आणि latency वाढवतात. शक्य तिथे सपाट करा आणि मोठ्या extractions ना लहान, केंद्रित calls मध्ये विभाजित करा.</p></div>
+        <div class="card"><h4>🎭 वैध पण चुकीचे</h4><p>schema आकाराची हमी देते, सत्याची नाही. अगदी अचूक typed invoice अजूनही चुकीची total वाहून नेऊ शकते. रचनात्मक तपासण्या semantic evals आणि spot audits सोबत जोडा.</p></div>
+        <div class="card"><h4>🔁 अनंत reask loops</h4><p>अशक्य constraint वर कायम पुन्हा प्रयत्न केल्याने tokens जळतात आणि विनंत्या थांबतात. नेहमी retries मर्यादित करा आणि खऱ्या अपयशांसाठी स्वच्छ fallback ठरवा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजावे</div>
+      <h2>structured outputs कसे मोजावे</h2>
+      <p class="muted">रचनात्मक वैधता आणि semantic शुद्धता वेगवेगळी नोंदवा, म्हणजे schema दुरुस्त करायचे की prompt हे तुम्हाला कळेल.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>तो काय सांगतो</th><th>चांगले लक्षण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Schema validity rate</strong></td><td>पहिल्याच प्रयत्नात parse होऊन schema शी जुळणाऱ्या outputs चा भाग</td><td>उच्च: constraints काम करत आहेत</td></tr>
+            <tr><td><strong>Field-level accuracy</strong></td><td>काढलेली मूल्ये ground truth विरुद्ध खरोखर योग्य आहेत का?</td><td>उच्च: योग्य डेटा, केवळ योग्य आकार नाही</td></tr>
+            <tr><td><strong>Reask rate</strong></td><td>वैध output गाठण्यासाठी किती वेळा retry लागते</td><td>कमी: कमी वाया गेलेल्या फेऱ्या</td></tr>
+            <tr><td><strong>Truncation rate</strong></td><td>पूर्ण होण्याआधी कापल्या गेलेल्या उत्तरांचा वाटा</td><td>कमी: token अंदाजपत्रक पुरेसे आहे</td></tr>
+            <tr><td><strong>Hallucinated-field rate</strong></td><td>शोधून काढलेली किंवा चुकीची भरलेली fields किती वेळा दिसतात</td><td>कमी: मॉडेल कराराच्या आत राहतो</td></tr>
+            <tr><td><strong>Latency &amp; cost / call</strong></td><td>constraints आणि reasks मुळे लागणारा जादा वेळ आणि tokens</td><td>तुमच्या SLA आणि अंदाजपत्रकात</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> जर वैधता उच्च पण field accuracy कमी असेल, तर prompt आणि field descriptions दुरुस्त करा; जर वैधताच कमी असेल, तर आधी schema घट्ट करा किंवा अधिक बळकट constrained decoding चालू करा. मॉडेलला दोष देण्याआधी दोन्ही मोजा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>वास्तविक जगातील case studies</h2>
+      <p class="muted">production सारख्या वापरात structured outputs दाखवणारे तीन प्रातिनिधिक patterns.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📄</span><div><h3>1 · कागदपत्रांमधून fields काढणे</h3><div class="role">Pattern: असंरचित मजकुरापासून typed records पर्यंत</div></div></div>
+        <p class="muted">एका finance संघाला हजारो PDF invoices मधून vendor, रक्कम, currency, आणि due date त्यांच्या ledger मध्ये काढायचे आहे.</p>
+        <ul>
+          <li>एक Pydantic model प्रत्येक field types, patterns, आणि ranges सह extraction करार म्हणून ठरवते.</li>
+          <li>Schema-constrained decoding प्रत्येक उत्तर त्या model मध्ये स्वच्छपणे parse होण्याची हमी देते.</li>
+          <li>Cross-field validation (totals line-item बेरजांशी समान) आकडे जुळत नसतील तेव्हा reask सुरू करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> Invoices validate केलेले objects म्हणून थेट ledger मध्ये वाहतात, प्रत्येक कागदपत्राऐवजी फक्त खरे संदिग्ध प्रकरणच माणसाकडे पाठवले जातात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔧</span><div><h3>2 · tool आणि API call arguments तयार करणे</h3><div class="role">Pattern: function calling म्हणून structured output</div></div></div>
+        <p class="muted">एका assistant ला नैसर्गिक-भाषेतील विनंत्यांचे अंतर्गत APIs विरुद्ध अचूक calls मध्ये भाषांतर करावे लागते - search, booking, refunds.</p>
+        <ul>
+          <li>प्रत्येक tool चे parameter schema मॉडेलला परवानगी असलेले arguments मर्यादित करते.</li>
+          <li>Enums आणि आवश्यक fields हे सुनिश्चित करतात की मॉडेल पूर्ण inputs सह खऱ्या operations निवडतो.</li>
+          <li>अवैध argument संच कोणतेही API स्पर्श होण्याआधी नाकारले जातात आणि reask केले जातात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> assistant सुव्यवस्थित arguments सह खरे endpoints कॉल करतो, त्यामुळे विकृत विनंत्या कधीही production यंत्रणांपर्यंत पोहोचत नाहीत आणि error handling साधे राहते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗂️</span><div><h3>3 · Form आणि data-entry automation</h3><div class="role">Pattern: संभाषणापासून पूर्ण झालेल्या form पर्यंत</div></div></div>
+        <p class="muted">एक onboarding प्रवाह मुक्त-स्वरूपाच्या chat मधून अर्जदाराचे तपशील गोळा करतो आणि एक काटेकोर backend form भरावा लागतो.</p>
+        <ul>
+          <li>एक zod schema form च्या अचूक fields, formats, आणि आवश्यक चौकटींचे प्रतिबिंब करते.</li>
+          <li>आंशिक structured output UI मध्ये stream होते, मॉडेल सोडवताच चौकटी थेट भरत जाते.</li>
+          <li>गहाळ किंवा विकृत नोंदी मूक अपयशाऐवजी लक्ष्यित पाठपुरावा प्रश्न विचारतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> संभाषणे स्वच्छ, validate केलेल्या form सादरीकरणांमध्ये बदलतात, backend चा काटेकोर करार अबाधित ठेवत मॅन्युअल पुनर्टंकन कमी करतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>structured outputs कुठे चालले आहेत</h2>
+      <p class="muted">Structured outputs एका जोडलेल्या parsing युक्तीपासून मॉडेल runtime च्या प्रथम श्रेणीच्या, हमी दिलेल्या क्षमतेकडे वाटचाल करत आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⛓️ Native constrained decoding</h4><p>Grammar आणि schema अंमलबजावणी serving stack मध्येच बांधलेली, त्यामुळे retries भोवतीच्या SDK wrapper ऐवजी वैध output हा default असतो.</p></div>
+        <div class="card"><h4>🌊 Streaming typed objects</h4><p>प्रमाणित आंशिक parsing जे typed, टप्प्याटप्प्याने पूर्ण होणारे objects देते, त्यामुळे fields सुटताच UIs ती render करतात.</p></div>
+        <div class="card"><h4>🧩 समृद्ध schema समर्थन</h4><p>अधिक पूर्ण JSON Schema व्याप्ती - recursion, unions, conditionals, formats - तुम्ही काय व्यक्त करू शकता आणि decoding काय अंमलात आणू शकते यातील अंतर कमी करत.</p></div>
+        <div class="card"><h4>🔗 Structured सोबत tools सोबत RAG</h4><p>Typed outputs हे agents चे जोडणारे ऊतक: retrieval fields भरते, tools ती वापरतात, आणि प्रत्येक टप्पा मशीन-तपासण्याजोगा राहतो.</p></div>
+        <div class="card"><h4>🧪 Semantic validation स्तर</h4><p>Model-graded आणि नियम-आधारित तपासण्या ज्या केवळ आकार नव्हे तर अर्थ पडताळतात, schemas चुकवणारे "वैध पण चुकीचे" outputs पकडत.</p></div>
+        <div class="card"><h4>⚡ कमी-भार अंमलबजावणी</h4><p>वेगवान constraint compilation आणि token masking, latency खर्च कमी करत, त्यामुळे structured output सर्वत्र चालू करणे मुक्त होते.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> structured outputs हाच मार्ग आहे ज्याने तुम्ही probabilistic मॉडेलला विश्वासार्ह software component सारखे वागायला लावता - typed, validate केलेले, आणि खऱ्या यंत्रणांशी जोडण्यास सुरक्षित. जसजशी अंमलबजावणी runtime मध्ये सरकते, तसतसे "फक्त मला वैध डेटा द्या" ही आशा राहत नाही आणि हमी बनते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">अन्वेषण सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Structured outputs संबंधित कौशल्यांच्या जाळ्यात बसतात. हे त्याच्यासोबत स्वाभाविकपणे जोडतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../tool-calling/"><span class="ico">🔧</span><h4>Tool &amp; function calling</h4><p>खऱ्या API calls चालवणारे structured arguments.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails</h4><p>मॉडेल वर्तन सुरक्षितपणे validate आणि मर्यादित करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>योग्य मूल्ये भरली जावीत म्हणून fields चे वर्णन करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals &amp; LLM-as-judge</h4><p>वैधता आणि field-level accuracy मोजणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>structured outputs चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · Case Studies · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>

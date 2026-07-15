@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt आणि Version व्यवस्थापन समजून घ्या - काय, कसे, का आणि भविष्य</title>
+  <meta name="description" content="Prompt आणि version व्यवस्थापनाचे सखोल, दृश्य मार्गदर्शक: prompts ना versioned first-class artifacts म्हणून हाताळणे, prompt registry, environment pinning, सुरक्षित canary rollouts, तत्काळ rollback, sequence diagrams, 0-100 flow, केस स्टडीज आणि भविष्य." />
+  <link rel="stylesheet" href="/ai/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#metrics">मापदंड</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Prompt आणि Version व्यवस्थापन</span>
+      <h1>Prompts हे versioned, first-class artifacts म्हणून</h1>
+      <p class="lede">application code मध्ये दडलेले hardcoded prompt strings चाचणी करणे, roll back करणे किंवा एखाद्या डोमेन तज्ज्ञाकडे सोपवणे अशक्य असते. Prompt व्यवस्थापन प्रत्येक prompt ला registry मधील एक <strong>versioned artifact</strong> म्हणून हाताळते - templated, typed, प्रत्येक environment साठी pinned आणि deploys पासून वेगळे - जेणेकरून तुम्ही एखादा prompt बदल सुरक्षितपणे ship करू शकता, त्याचे मोजमाप करू शकता आणि काही सेकंदांत तो undo करू शकता.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Prompt registry</span>
+        <span class="pill">Version pinning</span>
+        <span class="pill">Canary rollout</span>
+        <span class="pill">तत्काळ rollback</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Prompt आणि version व्यवस्थापन म्हणजे काय?</h2>
+      <p class="muted"><strong>Prompt व्यवस्थापन</strong> ही prompts ला source code आणि configuration एकत्र केल्यासारखे हाताळण्याची शिस्त आहे: एका मध्यवर्ती registry मध्ये साठवलेले, typed variables सह templated, अपरिवर्तनीय version क्रमांक दिलेले, प्रत्येक environment साठी pinned, आणि ते काम करतात हे सिद्ध करणाऱ्या eval निकाल व traces शी जोडलेले. तुमचे app जो prompt चालवते तो <em>runtime ला नाव आणि version वरून fetch केला जातो</em> - कधीही एखाद्या code file मध्ये paste करून binary मध्ये ship केला जात नाही.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📝</span> लेखन आणि template</h4>
+          <p>प्रत्येक prompt हा typed variables आणि एका system message सह एक नावाचा template असतो. लेखक application code मध्ये नव्हे, तर playground मध्ये पुनरावृत्ती करतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏷️</span> Version आणि pin</h4>
+          <p>प्रत्येक save एक अपरिवर्तनीय version तयार करते. प्रत्येक environment - dev, staging, prod - एका विशिष्ट pinned version कडे निर्देश करते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚀</span> Publish आणि fetch</h4>
+          <p>Publishing केल्याने pin अद्ययावत होते; apps runtime ला active version fetch करतात, त्यामुळे prompt बदल code deploy शिवाय ship होतात.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>सामान्य पर्याय</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Prompt registry</strong></td><td>नावाचे prompts, templates आणि प्रत्येक version साठवते</td><td>Langfuse, PromptLayer, Humanloop, custom</td></tr>
+            <tr><td><strong>Template engine</strong></td><td>typed, validated variables सह prompts render करते</td><td>Jinja, Mustache, f-string, structured</td></tr>
+            <tr><td><strong>Version pointer</strong></td><td>एका environment किंवा label ला एका version शी जोडते</td><td><code>prod</code>, <code>staging</code>, <code>@latest</code>, <code>v7</code></td></tr>
+            <tr><td><strong>Rollout controller</strong></td><td>A/B किंवा canary साठी versions मध्ये traffic विभागते</td><td>Weighted labels, feature flags</td></tr>
+            <tr><td><strong>Eval आणि trace link</strong></td><td>प्रत्येक version ला त्याच्या scores व runtime traces शी जोडते</td><td>Eval sets, LLM-judge, trace IDs</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>महत्त्वाची मानसिक प्रतिमा:</strong> prompt ही तुमच्या code मधील string नाही - तो एक versioned artifact आहे ज्याला एक मालक, एक environment pin, एक eval इतिहास आणि एक traceable वंशावळ असते. Application त्याचा <em>संदर्भ</em> देते; ती त्याला <em>सामावून</em> घेत नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Prompt व्यवस्थापन का अस्तित्वात आहे</h2>
+      <p class="muted">एखादा prompt बदल एखाद्या code बदलाइतकाच वर्तन बदलू शकतो - पण hardcoded prompts ना आपण code ला देतो ती सुरक्षितता मिळत नाही: version इतिहास नाही, review नाही, टप्प्याटप्प्याने rollout नाही, rollback नाही. Prompts ना artifacts म्हणून व्यवस्थापित केल्याने ती दरी भरून निघते आणि सर्वात महत्त्वाचे म्हणजे, ज्यांना डोमेन समजते त्या लोकांना ते संपादित करता येते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔁 पुन्हा deploy न करता बदल</h4><p>Prompts binary बाहेर राहतात. एखादा संपादित केल्याने पुढील request ला वर्तन अद्ययावत होते - build नाही, release train नाही, engineering ची वाट पाहणे नाही.</p></div>
+        <div class="card"><h4>↩️ तत्काळ, सुरक्षित rollback</h4><p>प्रत्येक version अपरिवर्तनीय असते आणि जपले जाते. नवीन prompt खराब झाला, तर तुम्ही काही सेकंदांत environment ला मागील version कडे repin करता - revert commit नाही, hotfix नाही.</p></div>
+        <div class="card"><h4>👥 गैर-engineers ship करू शकतात</h4><p>PMs आणि डोमेन तज्ज्ञ review व staging सह एका governed UI मध्ये prompts संपादित करतात, त्यामुळे विषय-तज्ज्ञतेचे ज्ञान थेट production पर्यंत पोहोचते.</p></div>
+        <div class="card"><h4>🔬 Provenance आणि auditability</h4><p>प्रत्येक version त्याच्या eval scores आणि production traces शी जोडलेले असते, त्यामुळे कोणत्या prompt ने कोणते उत्तर तयार केले आणि त्याला किती score मिळाला हे तुम्हाला नेहमी कळते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांसह prompt व्यवस्थापन समजावले</h2>
+      <p class="muted">एकच कल्पना, ती चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटकन समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे <strong>निबंधाचा प्रत्येक draft</strong> जपून ठेवण्यासारखे आहे, प्रत्येकाला क्रमांक व तारीख दिलेली. नवीन draft ला कमी गुण मिळाले, तर तो कायमचा गमावण्याऐवजी, ज्याला A मिळाला हे तुम्हाला माहीत आहे तो आधीचा परत सादर करता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>Prompt व्यवस्थापन म्हणजे <strong>prompts साठीचे Git</strong>. Prompts एका registry मध्ये अपरिवर्तनीय versions, प्रत्येक environment साठी tags आणि एक-ओळ rollback सह राहतात, build मध्ये भाजलेल्या string literals म्हणून नव्हे.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>नियंत्रित दस्तऐवज प्रणालीचा</strong> विचार करा: धोरणांना version क्रमांक, एक मंजूरी देणारा आणि एक प्रभावी तारीख असते. कर्मचारी नेहमी सध्या published आवृत्तीचे पालन करतात, आणि जुन्या audit साठी फाईलमध्ये राहतात.</p></div>
+        <div class="card"><h4><span class="ico">🍳</span> रोजच्या जीवनातील आवृत्ती</h4><p>समासात <strong>version टिपांसह पाककृतीचे पुस्तक</strong>. मसाला बदलताना तुम्ही एक नवीन कार्ड लिहिता, त्याची चाचणी करता, आणि तो जुन्याला मागे टाकल्यावरच binder मध्ये अदलाबदल करता, तर जुना कार्ड खबरदारी म्हणून जपून ठेवता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत रचनेत हे कसे कार्य करते</h2>
+      <p class="muted">Prompt व्यवस्थापनाला दोन बाजू आहेत: एक <strong>authoring आणि release</strong> plane जिथे prompts लिहिले, चाचणी केले आणि published केले जातात, आणि एक <strong>runtime</strong> plane जिथे application pinned version fetch करते आणि request data सह ते render करते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🛠️</span> Authoring आणि release plane</h4>
+          <p>Template संपादित करा → eval set वर चालवा → review व approve करा → एक नवीन अपरिवर्तनीय version publish करा → environment pin हलवा. हे सर्व application deploy चक्राबाहेर.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚡</span> Runtime plane</h4>
+          <p>App त्याच्या environment साठी नावाने prompt मागते → registry pinned version परत करते → app typed variables भरते → model कडे पाठवते → version ने tagged एक trace उत्सर्जित करते.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टिक्षेपात architecture</h3>
+      <div class="diagram">
+        <div class="cap">Architecture - authoring versions publish करते; runtime pinned version fetch करते</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Authoring["🛠️ Authoring &amp; release"]
+        A["✍️ Author"] --> PB["🧪 Playground"]
+        PB --> EV["📊 Eval set"]
+        EV --> AP["✅ Approve"]
+        AP --> REG[("🏷️ Prompt registry")]
+    end
+    subgraph Pins["🎯 Environment pins"]
+        REG --> DP["dev → v9"]
+        REG --> SP["staging → v8"]
+        REG --> PP["prod → v7"]
+    end
+    subgraph Runtime["⚡ Runtime"]
+        APP["🖥️ Application"] --> FE["📥 fetch(name, env)"]
+        PP --> FE
+        FE --> RN["🧩 Render + variables"]
+        RN --> LLM["🧠 LLM"]
+        LLM --> TR["🧵 Trace + version tag"]
+    end
+        </pre>
+      </div>
+
+      <h3>एक versioned prompt template, version वरून fetched</h3>
+      <pre><code># Registered once in the prompt registry - an immutable artifact
+prompt = registry.register(
+    name="support-answer",
+    version=7,                       # immutable; publishing bumps it
+    system="You are a support agent. Answer only from {{context}}. "
+           "Cite the article id. If unsure, escalate to a human.",
+    template="Customer ({{tier}}) asks: {{question}}",
+    variables={"context": str, "tier": str, "question": str},  # typed
+)
+
+# At runtime the app fetches the version PINNED for its environment
+p = registry.get("support-answer", label="prod")   # -> resolves to v7
+msg = p.render(context=docs, tier=user.tier, question=q)
+
+answer = llm.generate(system=p.system, user=msg,
+                      metadata={"prompt_version": p.version})  # trace link
+</code></pre>
+      <p class="muted">App कधीही शब्दरचना hardcode करत नाही - ते <code>support-answer@prod</code> मागते आणि सध्या जो version pinned असेल तो मिळते. Pin v7 वरून v8 वर बदलल्याने शून्य code बदलांसह production वर्तन बदलते, आणि प्रत्येक generation ला ती तयार करणाऱ्या version ने tagged केले जाते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: author पासून runtime fetch पर्यंतचे prompt जीवनचक्र, दोन versions मध्ये traffic विभागणारा एक canary rollout, आणि एखादा version खराब झाल्यावर एक तत्काळ rollback.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - जीवनचक्र: author, चाचणी, approve, publish, नंतर runtime ला fetch</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Auth as ✍️ Author
+    participant Reg as 🏷️ Registry
+    participant Eval as 📊 Eval set
+    participant Rev as 👀 Reviewer
+    participant App as 🖥️ App
+
+    Auth->>Reg: Draft new prompt template
+    Reg->>Eval: Run draft on eval set
+    Eval-->>Reg: Scores and diffs
+    Reg-->>Auth: Results attached to draft
+    Auth->>Rev: Request approval
+    Rev-->>Reg: Approve and publish v8
+    Note over Reg: v8 is immutable, staging pin moves to v8
+    App->>Reg: fetch(name, env=staging)
+    Reg-->>App: v8 template + system
+    App-->>App: Render with variables and call model
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Canary: v2 आणि v1 मध्ये traffic विभागा, मापदंडांची तुलना करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ App
+    participant Roll as 🎛️ Rollout controller
+    participant Reg as 🏷️ Registry
+    participant Met as 📈 Metrics
+
+    U->>App: Request
+    App->>Roll: Which version for this request
+    alt 10 percent canary
+        Roll-->>App: Use v2 candidate
+    else 90 percent baseline
+        Roll-->>App: Use v1 baseline
+    end
+    App->>Reg: fetch(name, version)
+    Reg-->>App: Prompt template
+    App->>Met: Log outcome tagged with version
+    Met-->>Roll: v2 vs v1 quality and latency
+    Note over Roll,Met: Promote v2 only if metrics hold
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Rollback: v2 खराब होतो, prod ला तत्काळ v1 वर repin करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Met as 📈 Metrics
+    participant Ops as 🧑‍🔧 On-call
+    participant Reg as 🏷️ Registry
+    participant App as 🖥️ App
+
+    Met->>Ops: Alert v2 regression on prod
+    Ops->>Reg: Repin prod label to v1
+    Note over Reg: No code deploy, pointer change only
+    Reg-->>Ops: prod now serves v1
+    App->>Reg: fetch(name, env=prod)
+    Reg-->>App: v1 template restored
+    App-->>Met: Metrics recover on next requests
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">Application code मध्ये hardcoded असलेल्या एका prompt पासून एका governed, versioned, सुरक्षितपणे rolled-out artifact पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Extract</span><h4>Prompts ना code मधून बाहेर काढा</h4><p>codebase मध्ये विखुरलेल्या hardcoded strings शोधा आणि त्यांना नावाच्या prompts मध्ये उचला जेणेकरून ते स्वतंत्रपणे व्यवस्थापित करता येतील.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Template</span><h4>Typed variables सह parameterize करा</h4><p>प्रत्येक prompt ला string concatenation ऐवजी स्पष्ट, typed placeholders - context, user input, tier - असलेला template बनवा.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Register</span><h4>Prompt registry मध्ये साठवा</h4><p>Template ला एका मालक, वर्णन आणि metadata सह version 1 म्हणून मध्यवर्ती registry मध्ये save करा. तो आता एक first-class artifact आहे.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Integrate</span><h4>Runtime ला नावाने fetch करा</h4><p>App ला मजकूर embed करण्याऐवजी नाव व environment वरून prompt मागण्यासाठी बदला, जेणेकरून भविष्यातील संपादनांना पुन्हा deploy लागणार नाही.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Author</span><h4>Playground मध्ये पुनरावृत्ती करा</h4><p>लेखक - engineers किंवा डोमेन तज्ज्ञ - एका governed UI मध्ये template संपादित करतात, वास्तविक inputs विरुद्ध renders चा पूर्वावलोकन करतात.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Evaluate</span><h4>नवीन draft eval set वर चालवा</h4><p>काहीही ship होण्यापूर्वी candidate ला एका निवडक eval set विरुद्ध score करा आणि सध्याच्या version शी थेट तुलना करा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Review</span><h4>एक version approve आणि publish करा</h4><p>एक reviewer बदल मंजूर करतो; publishing एक नवीन अपरिवर्तनीय version तयार करते आणि provenance साठी त्याचे eval निकाल जोडते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Stage</span><h4>प्रथम staging मध्ये pin करा</h4><p>Staging pin नवीन version कडे हलवा आणि prod सिद्ध version वर राहत असताना ते वास्तविक-सदृश traffic विरुद्ध मुरू द्या.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Canary</span><h4>Prod च्या एका भागाला rollout करा</h4><p>Production traffic चा एक लहान टक्का नवीन version कडे पाठवा, baseline विरुद्ध quality, latency आणि cost ची तुलना करत.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Promote</span><h4>Prod repin करा किंवा roll back करा</h4><p>मापदंड टिकले, तर prod pin पूर्णपणे नवीन version कडे हलवा. ते खराब झाले, तर तत्काळ मागील version कडे repin करा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Trace</span><h4>Versions ना live traces शी जोडा</h4><p>प्रत्येक production generation ला त्याच्या prompt version ने tagged केले जाते, त्यामुळे उत्तरे auditable राहतात आणि पुढील पुनरावृत्ती वास्तविक पुराव्यापासून सुरू होते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतेक prompt घटना prompts ना governed artifacts ऐवजी टाकाऊ strings म्हणून हाताळण्यातून येतात. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📌 Code मध्ये hardcoded prompts</h4><p>Services मध्ये string literals म्हणून paste केलेला prompt मजकूर फक्त एका deploy ने बदलू शकतो, audit करता येत नाही आणि कोणी काय संपादित केले हे लपवतो. Prompts ना नावाने संदर्भ दिलेल्या registry मध्ये उचला.</p></div>
+        <div class="card"><h4>🏷️ प्रत्येक environment साठी version pinning नाही</h4><p>प्रत्येक environment ला <code>@latest</code> वर resolve होऊ देणे म्हणजे एखादा draft संपादन save होताच production ला धडकतो. Dev, staging आणि prod ला स्पष्ट versions वर pin करा आणि pins जाणीवपूर्वक हलवा.</p></div>
+        <div class="card"><h4>✏️ Review शिवाय prod prompts संपादित करणे</h4><p>कोणत्याही मंजूरी टप्प्याशिवाय live prompt थेट बदलणे म्हणजे एक unreviewed production बदल आहे. एखादा version prod पर्यंत पोहोचण्यापूर्वी review आणि एक staging soak आवश्यक करा.</p></div>
+        <div class="card"><h4>🔗 Version आणि eval निकालांमध्ये दुवा नाही</h4><p>एखादा version त्याला score करणाऱ्या eval run शी जोडलेला नसेल, तर बदलाने मदत केली की तोटा हे तुम्हाला सांगता येत नाही. प्रत्येक published version ला eval scores जोडा.</p></div>
+        <div class="card"><h4>🌫️ मापदंडांशिवाय मूक rollouts</h4><p>Quality, latency आणि cost न पाहता संपूर्ण fleet एका नवीन prompt कडे पलटवणे म्हणजे regressions dashboards म्हणून नव्हे तर user तक्रारी म्हणून समोर येतात. Promote करण्यापूर्वी canary आणि मोजा.</p></div>
+        <div class="card"><h4>🚫 Rollback मार्ग नाही</h4><p>एखादा prompt जागच्या जागी overwrite करणे किंवा जुने versions हटवणे, बदल खराब झाल्यावर परत जाण्यासाठी काहीही ठेवत नाही. Versions अपरिवर्तनीय ठेवा जेणेकरून शेवटच्या चांगल्याकडे repinning तत्काळ होते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="wrap">
+      <div class="eyebrow">कसे मोजावे</div>
+      <h2>Prompt व्यवस्थापन कसे मोजावे</h2>
+      <p class="muted">प्रत्येक prompt version ची गुणवत्ता आणि ती ship करणाऱ्या release प्रक्रियेचे आरोग्य - दोन्हीचा मागोवा घ्या.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>मापदंड</th><th>ते तुम्हाला काय सांगते</th><th>चांगले लक्षण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रत्येक version साठी eval score</strong></td><td>प्रत्येक version निवडक eval set वर कसा कामगिरी करते</td><td>प्रत्येक release मागोमाग वाढणारा कल</td></tr>
+            <tr><td><strong>Rollout यश / regression दर</strong></td><td>Promote झालेल्या canaries चा वाटा वि. roll back झालेले</td><td>उच्च promote दर, थोडे regressions</td></tr>
+            <tr><td><strong>Time-to-rollback</strong></td><td>एखादा वाईट version शेवटच्या चांगल्याकडे किती वेगाने repin होतो</td><td>काही सेकंद, deploy चक्र नाही</td></tr>
+            <tr><td><strong>Version control खालील prompts ची टक्केवारी</strong></td><td>Hardcoded विरुद्ध registry मधील prompts चे coverage</td><td>100 टक्क्यांच्या जवळ जाणारे</td></tr>
+            <tr><td><strong>बदल वारंवारता</strong></td><td>Prompts किती वेळा संपादित आणि published होतात</td><td>अनावश्यक उलथापालथीशिवाय निरोगी पुनरावृत्ती</td></tr>
+            <tr><td><strong>Prompt बदलांमुळे झालेल्या घटना</strong></td><td>एखाद्या prompt संपादनाशी जोडलेल्या production समस्या</td><td>Governance परिपक्व होताना कमी आणि घटणाऱ्या</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> eval scores ठीक दिसत असतील पण घटना जास्त असतील, तर rollout आणि review घट्ट करा; coverage कमी असेल, तर आधी prompts ना registry मध्ये आणा - जे अजून code मध्ये string म्हणून राहते ते तुम्ही मोजू किंवा roll back करू शकत नाही.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">Production-सदृश वापरात prompt आणि version व्यवस्थापन दाखवणारे तीन प्रातिनिधिक नमुने.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧹</span><div><h3>1 · Hardcoded strings संपवण्यासाठी registry स्वीकारणे</h3><div class="role">नमुना: prompts हे versioned artifacts म्हणून</div></div></div>
+        <p class="muted">एका टीमचे prompts डझनभर services मध्ये f-strings म्हणून विखुरलेले होते, audit करणे किंवा deploy शिवाय बदलणे अशक्य.</p>
+        <ul>
+          <li>प्रत्येक prompt extract केला, typed variables सह templated केला आणि version 1 म्हणून registered केला.</li>
+          <li>Services runtime ला नाव आणि environment वरून prompts fetch करण्याकडे वळल्या.</li>
+          <li>एक prompt बदल हा एक registry publish बनला, code release नव्हे - reviewable आणि उलट करता येणारा.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Prompt बदल संपूर्ण version इतिहासासह काही मिनिटांत ship झाले, आणि प्रत्येक generation ते तयार करणाऱ्या नेमक्या prompt version पर्यंत मागोवा घेता आले.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🐤</span><div><h3>2 · पुनर्रचित system prompt चा सुरक्षित canary rollout</h3><div class="role">नमुना: तत्काळ rollback सह मोजलेला rollout</div></div></div>
+        <p class="muted">Assistant च्या system prompt ची मोठी पुनर्रचना playground मध्ये चांगली दिसली, पण टीमने ती सर्वांसाठी एकाच वेळी पलटवायला नकार दिला.</p>
+        <ul>
+          <li>नवीन version staging मध्ये pin केला, नंतर एक canary म्हणून production traffic च्या 10% ला release केला.</li>
+          <li>Quality, latency आणि cost नवीन version व baseline दरम्यान live तुलना केली गेली.</li>
+          <li>एक मापदंड घसरताच, prod pin काही सेकंदांत मागील version कडे repin केला.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> एक धोकादायक prompt बदल वास्तविक traffic वर 10% च्या blast radius सह validate झाला, आणि एकमेव regression कोणत्याही deploy शिवाय तत्काळ roll back झाला.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">👩‍💼</span><div><h3>3 · गैर-engineers ना सुरक्षितपणे prompts संपादित करू देणे</h3><div class="role">नमुना: डोमेन तज्ज्ञांसाठी governed authoring</div></div></div>
+        <p class="muted">Product managers आणि डोमेन तज्ज्ञांना इच्छित सूर व धोरण engineers पेक्षा चांगले समजत होते, पण प्रत्येक शब्दरचना बदलासाठी एक engineer लागत असे.</p>
+        <ul>
+          <li>तज्ज्ञांनी एका governed UI मध्ये typed variables सह prompts संपादित केले जे ते खंडित करू शकत नव्हते.</li>
+          <li>बदल आपोआप eval set चालवत आणि publish होण्यापूर्वी review आवश्यक करत.</li>
+          <li>Publishing आधी staging ला जात असे; prod ला promotion एक नियंत्रित, pinned टप्पा राहिला.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> डोमेन ज्ञान थेट आणि जलद production पर्यंत पोहोचले, तर guardrails - types, evals, review, staging - मुळे असुरक्षित बदल कधीही users पर्यंत पोहोचले नाहीत.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - भविष्य</div>
+      <h2>Prompt व्यवस्थापन कुठे जात आहे</h2>
+      <p class="muted">Prompt व्यवस्थापन strings साठवण्याच्या जागेपासून prompts साठीच्या एका संपूर्ण release-engineering शिस्तीत परिपक्व होत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🤖 स्वयंचलित optimization</h4><p>अयशस्वी traces आणि eval त्रुटींमधून prompt संपादने सुचवणारी आणि नंतर review साठी एक candidate version उघडणारी साधने - prompts साठी CI.</p></div>
+        <div class="card"><h4>🔗 Prompt + model + tool bundles</h4><p>संपूर्ण configuration एकत्र versioning - prompt, model, temperature आणि tool schema - जेणेकरून एक rollout एक सुसंगत घटक pin करते.</p></div>
+        <div class="card"><h4>🚦 Metric-gated स्वयं-promotion</h4><p>Live eval मापदंड एक उंबरठा ओलांडतात तेव्हा स्वतःच promote किंवा roll back करणारे canaries, manual पलटी काढून टाकत.</p></div>
+        <div class="card"><h4>📐 Typed, contract-tested prompts</h4><p>Inputs आणि outputs साठी schemas जेणेकरून एखादा downstream contract खंडित करणारा prompt बदल ship होण्यापूर्वीच अयशस्वी होतो.</p></div>
+        <div class="card"><h4>🌍 Localized आणि segmented variants</h4><p>एका prompt खाली व्यवस्थापित प्रति-locale आणि प्रति-segment versions, प्रत्येक स्वतंत्रपणे pinned व evaluated.</p></div>
+        <div class="card"><h4>🧾 संपूर्ण provenance आणि governance</h4><p>प्रत्येक उत्तर एका prompt version, त्याच्या evals आणि त्याच्या मंजूरी देणाऱ्यापर्यंत traceable - regulators आणि enterprises अपेक्षित असलेला audit trail.</p></div>
+      </div>
+      <div class="callout"><strong>निष्कर्ष:</strong> prompts code इतकेच वर्तन चालवतात, म्हणून त्यांना तीच काटेकोरता मिळायला हवी - versioning, environments, टप्प्याटप्प्याने rollout, rollback आणि provenance. Prompt व्यवस्थापन हा असा मार्ग आहे ज्याने तुम्ही prompt बदल डोमेन तज्ज्ञांसाठी जलद आणि सर्वांसाठी सुरक्षित बनवता.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Prompt व्यवस्थापन संबंधित कौशल्यांच्या जाळ्यात बसते. हे त्याच्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../prompt-engineering/"><span class="ico">✍️</span><h4>Prompt engineering</h4><p>प्रत्येक version जो पकडतो तो prompt मजकूर घडवणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../evals/"><span class="ico">🧪</span><h4>Evals आणि LLM-as-judge</h4><p>प्रत्येक version prod ला pin होण्यापूर्वी score करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../tracing/"><span class="ico">🧵</span><h4>Tracing आणि observability</h4><p>Live generations ना prompt version शी परत जोडणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../guardrails/"><span class="ico">🛡️</span><h4>Guardrails आणि सुरक्षा</h4><p>प्रत्येक version धोरण व contract च्या आत ठेवणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← AI Engineering hub कडे परत</a></p>
+      <p>Prompt आणि Version व्यवस्थापनाचे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/ai/assets/app.js"></script>
+</body>
+</html>
