@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt &amp; Version Management Explained — What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to prompt and version management: treating prompts as versioned first-class artifacts, a prompt registry, environment pinning, safe canary rollouts, instant rollback, sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Prompt &amp; Version Management</span>
+      <h1>Prompts as versioned, first-class artifacts</h1>
+      <p class="lede">Hardcoded prompt strings buried in application code are impossible to test, roll back, or hand to a domain expert. Prompt management treats every prompt as a <strong>versioned artifact</strong> in a registry — templated, typed, pinned per environment, and decoupled from deploys — so you can ship a prompt change safely, measure it, and undo it in seconds.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Prompt registry</span>
+        <span class="pill">Version pinning</span>
+        <span class="pill">Canary rollout</span>
+        <span class="pill">Instant rollback</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What is prompt &amp; version management?</h2>
+      <p class="muted"><strong>Prompt management</strong> is the discipline of treating prompts like source code and configuration rolled into one: stored in a central registry, templated with typed variables, assigned immutable version numbers, pinned per environment, and linked to the eval results and traces that prove they work. The prompt your app runs is <em>fetched by name and version at runtime</em> — never pasted into a code file and shipped in a binary.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📝</span> Author &amp; template</h4>
+          <p>A prompt is a named template with typed variables and a system message. Authors iterate in a playground, not in application code.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏷️</span> Version &amp; pin</h4>
+          <p>Every save creates an immutable version. Each environment — dev, staging, prod — points to a specific pinned version.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚀</span> Publish &amp; fetch</h4>
+          <p>Publishing updates the pin; apps fetch the active version at runtime, so prompt changes ship without a code deploy.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common choices</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Prompt registry</strong></td><td>Stores named prompts, templates, and every version</td><td>Langfuse, PromptLayer, Humanloop, custom</td></tr>
+            <tr><td><strong>Template engine</strong></td><td>Renders prompts with typed, validated variables</td><td>Jinja, Mustache, f-string, structured</td></tr>
+            <tr><td><strong>Version pointer</strong></td><td>Maps an environment or label to a version</td><td><code>prod</code>, <code>staging</code>, <code>@latest</code>, <code>v7</code></td></tr>
+            <tr><td><strong>Rollout controller</strong></td><td>Splits traffic between versions for A/B or canary</td><td>Weighted labels, feature flags</td></tr>
+            <tr><td><strong>Eval &amp; trace link</strong></td><td>Ties each version to its scores and runtime traces</td><td>Eval sets, LLM-judge, trace IDs</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a prompt is not a string in your code — it is a versioned artifact with an owner, an environment pin, an eval history, and a traceable lineage. The application <em>references</em> it; it does not <em>contain</em> it.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why prompt management exists</h2>
+      <p class="muted">A prompt tweak can change behavior as much as a code change — but hardcoded prompts get none of the safety we give code: no version history, no review, no staged rollout, no rollback. Managing prompts as artifacts closes that gap and, crucially, lets the people who understand the domain edit them.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔁 Change without redeploying</h4><p>Prompts live outside the binary. Editing one updates behavior on the next request — no build, no release train, no waiting on engineering.</p></div>
+        <div class="card"><h4>↩️ Instant, safe rollback</h4><p>Every version is immutable and retained. If a new prompt regresses, you repin the environment to the previous version in seconds — no revert commit, no hotfix.</p></div>
+        <div class="card"><h4>👥 Non-engineers can ship</h4><p>PMs and domain experts edit prompts in a governed UI with review and staging, so subject-matter knowledge reaches production directly.</p></div>
+        <div class="card"><h4>🔬 Provenance &amp; auditability</h4><p>Each version links to its eval scores and production traces, so you always know which prompt produced which answer and how it scored.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Prompt management has two sides: an <strong>authoring &amp; release</strong> plane where prompts are written, tested, and published, and a <strong>runtime</strong> plane where the application fetches the pinned version and renders it with request data.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🛠️</span> Authoring &amp; release plane</h4>
+          <p>Edit template → run against an eval set → review &amp; approve → publish a new immutable version → move the environment pin. All outside the application deploy cycle.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚡</span> Runtime plane</h4>
+          <p>App requests a prompt by name for its environment → registry returns the pinned version → app fills typed variables → sends to the model → emits a trace tagged with the version.</p>
+        </div>
+      </div>
+
+      <h3>The architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — authoring publishes versions; runtime fetches the pinned one</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Authoring["🛠️ Authoring &amp; release"]
+        A["✍️ Author"] --> PB["🧪 Playground"]
+        PB --> EV["📊 Eval set"]
+        EV --> AP["✅ Approve"]
+        AP --> REG[("🏷️ Prompt registry")]
+    end
+    subgraph Pins["🎯 Environment pins"]
+        REG --> DP["dev → v9"]
+        REG --> SP["staging → v8"]
+        REG --> PP["prod → v7"]
+    end
+    subgraph Runtime["⚡ Runtime"]
+        APP["🖥️ Application"] --> FE["📥 fetch(name, env)"]
+        PP --> FE
+        FE --> RN["🧩 Render + variables"]
+        RN --> LLM["🧠 LLM"]
+        LLM --> TR["🧵 Trace + version tag"]
+    end
+        </pre>
+      </div>
+
+      <h3>A versioned prompt template, fetched by version</h3>
+      <pre><code># Registered once in the prompt registry — an immutable artifact
+prompt = registry.register(
+    name="support-answer",
+    version=7,                       # immutable; publishing bumps it
+    system="You are a support agent. Answer only from {{context}}. "
+           "Cite the article id. If unsure, escalate to a human.",
+    template="Customer ({{tier}}) asks: {{question}}",
+    variables={"context": str, "tier": str, "question": str},  # typed
+)
+
+# At runtime the app fetches the version PINNED for its environment
+p = registry.get("support-answer", label="prod")   # -> resolves to v7
+msg = p.render(context=docs, tier=user.tier, question=q)
+
+answer = llm.generate(system=p.system, user=msg,
+                      metadata={"prompt_version": p.version})  # trace link
+</code></pre>
+      <p class="muted">The app never hardcodes the wording — it asks for <code>support-answer@prod</code> and gets whatever version is currently pinned. Swapping the pin from v7 to v8 changes production behavior with zero code changes, and every generation is tagged with the version that produced it.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the prompt lifecycle from author to runtime fetch, a canary rollout splitting traffic between two versions, and an instant rollback when a version regresses.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — Lifecycle: author, test, approve, publish, then fetch at runtime</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Auth as ✍️ Author
+    participant Reg as 🏷️ Registry
+    participant Eval as 📊 Eval set
+    participant Rev as 👀 Reviewer
+    participant App as 🖥️ App
+
+    Auth->>Reg: Draft new prompt template
+    Reg->>Eval: Run draft on eval set
+    Eval-->>Reg: Scores and diffs
+    Reg-->>Auth: Results attached to draft
+    Auth->>Rev: Request approval
+    Rev-->>Reg: Approve and publish v8
+    Note over Reg: v8 is immutable, staging pin moves to v8
+    App->>Reg: fetch(name, env=staging)
+    Reg-->>App: v8 template + system
+    App-->>App: Render with variables and call model
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — Canary: split traffic between v2 and v1, compare metrics</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ App
+    participant Roll as 🎛️ Rollout controller
+    participant Reg as 🏷️ Registry
+    participant Met as 📈 Metrics
+
+    U->>App: Request
+    App->>Roll: Which version for this request
+    alt 10 percent canary
+        Roll-->>App: Use v2 candidate
+    else 90 percent baseline
+        Roll-->>App: Use v1 baseline
+    end
+    App->>Reg: fetch(name, version)
+    Reg-->>App: Prompt template
+    App->>Met: Log outcome tagged with version
+    Met-->>Roll: v2 vs v1 quality and latency
+    Note over Roll,Met: Promote v2 only if metrics hold
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — Rollback: v2 regresses, repin prod to v1 instantly</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Met as 📈 Metrics
+    participant Ops as 🧑‍🔧 On-call
+    participant Reg as 🏷️ Registry
+    participant App as 🖥️ App
+
+    Met->>Ops: Alert v2 regression on prod
+    Ops->>Reg: Repin prod label to v1
+    Note over Reg: No code deploy, pointer change only
+    Reg-->>Ops: prod now serves v1
+    App->>Reg: fetch(name, env=prod)
+    Reg-->>App: v1 template restored
+    App-->>Met: Metrics recover on next requests
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a prompt hardcoded in application code to a governed, versioned, safely-rolled-out artifact — the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Extract</span><h4>Pull prompts out of code</h4><p>Find the hardcoded strings scattered across the codebase and lift them into named prompts so they can be managed independently.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Template</span><h4>Parameterize with typed variables</h4><p>Turn each prompt into a template with explicit, typed placeholders — context, user input, tier — instead of string concatenation.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Register</span><h4>Store in the prompt registry</h4><p>Save the template to a central registry as version 1, with an owner, a description, and metadata. It is now a first-class artifact.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Integrate</span><h4>Fetch by name at runtime</h4><p>Change the app to request the prompt by name and environment rather than embedding text, so future edits need no redeploy.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Author</span><h4>Iterate in a playground</h4><p>Authors — engineers or domain experts — edit the template in a governed UI, previewing renders against real inputs.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Evaluate</span><h4>Run the new draft on an eval set</h4><p>Score the candidate against a curated eval set and compare it head-to-head with the current version before anything ships.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Review</span><h4>Approve &amp; publish a version</h4><p>A reviewer approves the change; publishing mints a new immutable version and attaches its eval results for provenance.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Stage</span><h4>Pin it in staging first</h4><p>Move the staging pin to the new version and let it soak against real-ish traffic while prod stays on the proven version.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Canary</span><h4>Roll out to a slice of prod</h4><p>Send a small percentage of production traffic to the new version, comparing quality, latency, and cost against the baseline.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Promote</span><h4>Repin prod or roll back</h4><p>If metrics hold, move the prod pin fully to the new version. If they regress, repin to the previous version instantly.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Trace</span><h4>Link versions to live traces</h4><p>Every production generation is tagged with its prompt version, so answers stay auditable and the next iteration starts from real evidence.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing prompt and version management in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧹</span><div><h3>1 · Adopting a registry to end hardcoded strings</h3><div class="role">Pattern: prompts as versioned artifacts</div></div></div>
+        <p class="muted">A team's prompts were scattered as f-strings across a dozen services, impossible to audit or change without a deploy.</p>
+        <ul>
+          <li>Every prompt was extracted, templated with typed variables, and registered as version 1.</li>
+          <li>Services switched to fetching prompts by name and environment at runtime.</li>
+          <li>A prompt tweak became a registry publish, not a code release — reviewable and reversible.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Prompt changes shipped in minutes with full version history, and every generation could be traced back to the exact prompt version that produced it.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🐤</span><div><h3>2 · Safe canary rollout of a reworked system prompt</h3><div class="role">Pattern: measured rollout with instant rollback</div></div></div>
+        <p class="muted">A big rewrite of the assistant's system prompt looked better in the playground, but the team refused to flip it for everyone at once.</p>
+        <ul>
+          <li>The new version was pinned in staging, then released to 10% of production traffic as a canary.</li>
+          <li>Quality, latency, and cost were compared live between the new version and the baseline.</li>
+          <li>When one metric dipped, the prod pin was repinned to the previous version in seconds.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A risky prompt change was validated on real traffic with a blast radius of 10%, and the single regression was rolled back instantly with no deploy.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">👩‍💼</span><div><h3>3 · Letting non-engineers edit prompts safely</h3><div class="role">Pattern: governed authoring for domain experts</div></div></div>
+        <p class="muted">Product managers and domain experts understood the desired tone and policy better than engineers, but every wording change required an engineer.</p>
+        <ul>
+          <li>Experts edited prompts in a governed UI with typed variables they could not break.</li>
+          <li>Changes ran the eval set automatically and required review before publishing.</li>
+          <li>Publishing went to staging first; promotion to prod stayed a controlled, pinned step.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Domain knowledge reached production directly and faster, while guardrails — types, evals, review, staging — kept unsafe changes from ever reaching users.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where prompt management is heading</h2>
+      <p class="muted">Prompt management is maturing from a place to store strings into a full release-engineering discipline for prompts.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🤖 Automated optimization</h4><p>Tools that propose prompt edits from failing traces and eval gaps, then open a candidate version for review — CI for prompts.</p></div>
+        <div class="card"><h4>🔗 Prompt + model + tool bundles</h4><p>Versioning the whole configuration together — prompt, model, temperature, and tool schema — so a rollout pins a coherent unit.</p></div>
+        <div class="card"><h4>🚦 Metric-gated auto-promotion</h4><p>Canaries that promote or roll back themselves when live eval metrics cross a threshold, removing the manual flip.</p></div>
+        <div class="card"><h4>📐 Typed, contract-tested prompts</h4><p>Schemas for inputs and outputs so a prompt change that breaks a downstream contract fails before it ships.</p></div>
+        <div class="card"><h4>🌍 Localized &amp; segmented variants</h4><p>Per-locale and per-segment versions managed under one prompt, each pinned and evaluated independently.</p></div>
+        <div class="card"><h4>🧾 Full provenance &amp; governance</h4><p>Every answer traceable to a prompt version, its evals, and its approver — the audit trail regulators and enterprises expect.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> prompts drive behavior as much as code, so they deserve the same rigor — versioning, environments, staged rollout, rollback, and provenance. Prompt management is how you make prompt changes fast for domain experts and safe for everyone.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to Prompt &amp; Version Management · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

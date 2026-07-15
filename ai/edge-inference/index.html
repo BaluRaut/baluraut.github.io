@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edge &amp; On-Device Inference Explained — What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to edge and on-device LLM inference: what it is, how it works, why it matters, model compression, runtimes, sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Edge / On-Device Inference</span>
+      <h1>Running LLMs on the device — the complete picture</h1>
+      <p class="lede">Cloud inference is powerful but it costs money per token, leaks data off-device, and dies without a network. On-device inference flips that: a <strong>compressed</strong> model runs locally on the phone, laptop, or sensor, so answers are <strong>private, instant, and offline</strong> — no round trip to a server.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Quantization</span>
+        <span class="pill">llama.cpp &amp; GGUF</span>
+        <span class="pill">NPU / GPU</span>
+        <span class="pill">Hybrid edge-cloud</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What is on-device inference?</h2>
+      <p class="muted"><strong>On-device (edge) inference</strong> means the model weights live and execute on the end-user's hardware — a phone, laptop, wearable, car, or industrial gateway — rather than in a datacenter. The prompt never leaves the device, and there is no API call: tokens are generated locally by a runtime reading a compressed model file from local storage.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🗜️</span> Compress (offline)</h4>
+          <p>A large model is shrunk via quantization, distillation, and pruning until it fits in device RAM and runs at usable speed.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Package &amp; ship (offline)</h4>
+          <p>The compressed weights are bundled into an app or downloaded on first launch, targeting a specific runtime and hardware backend.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚡</span> Infer locally (online)</h4>
+          <p>At use time the on-device runtime loads the model, runs the forward pass on CPU/GPU/NPU, and streams tokens straight to the UI.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common choices</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Compression</strong></td><td>Shrinks weights so they fit and run fast on-device</td><td>Quantization (int8/int4), distillation, pruning</td></tr>
+            <tr><td><strong>Model format</strong></td><td>Serializes quantized weights for a runtime</td><td><code>GGUF</code>, ONNX, Core ML <code>.mlpackage</code>, safetensors</td></tr>
+            <tr><td><strong>Runtime</strong></td><td>Executes the forward pass on local hardware</td><td>llama.cpp, ONNX Runtime, Core ML, MLC, TensorRT</td></tr>
+            <tr><td><strong>Hardware backend</strong></td><td>Does the actual matrix math</td><td>CPU (SIMD), GPU (Metal/Vulkan), NPU/ANE</td></tr>
+            <tr><td><strong>Orchestrator</strong></td><td>Decides local vs. cloud, manages memory &amp; KV cache</td><td>Router logic, hybrid escalation policy</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> on-device inference is a fit-and-speed problem before it is a quality problem. The whole game is compressing a model enough to fit device RAM and hit interactive token rates <em>without</em> destroying its answers — everything else follows from that trade-off.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why on-device inference exists</h2>
+      <p class="muted">Sending every token to a cloud API is fine until privacy, latency, connectivity, or per-request cost become the constraint. Running the model on the device removes the network from the critical path — and with it a whole class of problems.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔐 Privacy by default</h4><p>Sensitive input — health notes, messages, camera frames — never leaves the device, so there is no data to intercept, log, or subpoena. Compliance gets dramatically simpler.</p></div>
+        <div class="card"><h4>⚡ Ultra-low latency</h4><p>No network round trip means first-token latency is bounded by local compute, not by radio conditions. Interactions feel instant even on a flaky connection.</p></div>
+        <div class="card"><h4>📴 Works offline</h4><p>Planes, tunnels, factories, remote field sites — the model runs with zero connectivity. Availability no longer depends on a signal or an uptime SLA.</p></div>
+        <div class="card"><h4>💸 No per-token cost</h4><p>Once shipped, inference is essentially free at the margin — you spend the user's battery, not your API budget. Costs don't scale with usage.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">There are two pipelines: an <strong>offline build</strong> pipeline that compresses and packages the model, and an <strong>on-device runtime</strong> that loads those weights and generates tokens locally per request.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🗜️</span> Compression pipeline</h4>
+          <p>Start from a full-precision checkpoint → optionally distill to a smaller student → prune redundant weights → quantize fp16 down to int8/int4 → export to a runtime format like GGUF or Core ML. Each step trades a little quality for a lot of size and speed.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> On-device runtime</h4>
+          <p>Memory-map the quantized weights → dispatch layers to CPU/GPU/NPU → run the forward pass with a growing KV cache → sample the next token → stream it to the UI. All within a fixed RAM, thermal, and battery envelope.</p>
+        </div>
+      </div>
+
+      <h3>The architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — an offline build produces weights the device loads and runs locally</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Build["🏭 Offline build"]
+        M["🧠 Full model fp16"] --> DI["🎓 Distill"]
+        DI --> PR["✂️ Prune"]
+        PR --> QZ["🗜️ Quantize int4"]
+        QZ --> PK["📦 Package GGUF"]
+    end
+    subgraph Device["📱 On-device runtime"]
+        PK --> LD["📥 mmap weights"]
+        APP["🖥️ App"] --> RT["⚙️ Local runtime"]
+        LD --> RT
+        RT --> HW["🔋 CPU / GPU / NPU"]
+        HW --> TOK["✅ Streamed tokens"]
+    end
+        </pre>
+      </div>
+
+      <h3>Loading a quantized model on-device</h3>
+      <pre><code># Pull a 4-bit GGUF build sized for the device
+# Q4_K_M ≈ 4.4 GB for a 7B model — fits a modern phone/laptop
+from llama_cpp import Llama
+
+llm = Llama(
+    model_path="mistral-7b-instruct.Q4_K_M.gguf",
+    n_ctx=4096,          # KV cache budget — costs RAM
+    n_gpu_layers=-1,     # offload all layers to Metal/GPU if present
+    n_threads=6,         # CPU fallback threads
+)
+
+for chunk in llm("Summarize this note offline:", stream=True):
+    print(chunk["choices"][0]["text"], end="")   # tokens stream locally</code></pre>
+      <p class="muted">Notice there is no API key and no URL — the weights are a local file, and <code>n_gpu_layers</code> plus <code>n_ctx</code> are the two knobs that decide whether the model actually fits and runs fast on the target hardware.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the local inference request path with no network, the offline build-and-deploy pipeline, and a hybrid flow that escalates hard queries to the cloud.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — On-device request: prompt to tokens with no network</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 📱 App
+    participant RT as ⚙️ Local runtime
+    participant HW as 🔋 NPU/GPU
+
+    U->>App: Type a prompt
+    App->>RT: run(prompt, params)
+    RT->>RT: Tokenize input
+    RT->>HW: Forward pass on-device
+    HW-->>RT: Logits for next token
+    loop until stop token
+        RT->>RT: Sample next token
+        RT-->>App: Stream token
+        App-->>U: Render text live
+    end
+    Note over U,HW: No network call — fully offline
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — Build &amp; deploy: train, quantize, package, ship to device</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Tr as 🏋️ Training
+    participant Comp as 🗜️ Compressor
+    participant Pkg as 📦 Packager
+    participant Store as 🛰️ App store/CDN
+    participant Dev as 📱 Device
+
+    Tr->>Comp: Full-precision checkpoint
+    Comp->>Comp: Distill and prune
+    Comp->>Comp: Quantize to int4
+    Comp-->>Pkg: Quantized weights
+    Pkg->>Pkg: Export GGUF/Core ML
+    Pkg->>Store: Publish build
+    Dev->>Store: Download on first launch
+    Store-->>Dev: Model file cached locally
+    Note over Comp,Dev: Validate quality after each shrink
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — Hybrid: local handles easy queries, cloud handles hard ones</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 📱 App
+    participant Loc as ⚙️ Local model
+    participant Cloud as ☁️ Cloud model
+
+    U->>App: Ask a question
+    App->>Loc: Try on-device first
+    Loc-->>App: Answer plus confidence
+    alt confident and simple
+        App-->>U: Local answer instantly
+    else hard or low confidence
+        App->>Cloud: Escalate query
+        Cloud-->>App: High-quality answer
+        App-->>U: Cloud answer
+    end
+    Note over Loc,Cloud: Most traffic stays local and free
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a bloated cloud checkpoint to tokens streaming on a phone with the network off — the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Target</span><h4>Pick the device envelope</h4><p>Decide the hardware budget first: available RAM, whether there's an NPU or GPU, thermal headroom, and battery cost. Everything downstream is sized to this.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Select</span><h4>Choose a base model</h4><p>Pick the smallest model that can plausibly do the job — often a 1B–8B parameter model, since it must fit in a few gigabytes after compression.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Distill</span><h4>Transfer knowledge to a student</h4><p>Optionally distill a large teacher into a smaller student model, keeping most of the quality at a fraction of the parameter count.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Prune</span><h4>Remove redundant weights</h4><p>Strip low-impact weights or whole structures (heads, channels) to cut size and compute with minimal accuracy loss.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Quantize</span><h4>Drop precision fp16 → int4</h4><p>Convert weights from fp16 to int8 or int4. A 7B model goes from ~14 GB to ~4 GB, making phone-scale RAM viable.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Export</span><h4>Serialize to a runtime format</h4><p>Write the quantized weights to GGUF (llama.cpp), ONNX, or Core ML so a specific on-device runtime can load them.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Package</span><h4>Bundle into the app</h4><p>Ship the model inside the app or fetch it on first launch to a local cache, matched to the device's runtime and backend.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Load</span><h4>Memory-map on device</h4><p>At startup the runtime mmaps the weights and allocates a KV cache sized to the context window — the main runtime RAM cost.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Route</span><h4>Decide local vs. cloud</h4><p>A hybrid orchestrator checks difficulty and confidence: easy queries stay on-device; hard ones escalate to a cloud model.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Infer</span><h4>Run the forward pass locally</h4><p>The runtime dispatches layers to the NPU/GPU/CPU, samples tokens, and manages thermals so the device doesn't throttle mid-generation.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Stream</span><h4>Deliver tokens to the UI</h4><p>Tokens stream to the interface in real time, fully offline. Telemetry (opt-in, on-device metrics) feeds the next build's tuning.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing on-device inference in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📱</span><div><h3>1 · Mobile personal assistant</h3><div class="role">Pattern: hybrid local-first with cloud escalation</div></div></div>
+        <p class="muted">A phone maker wants an assistant that summarizes messages and drafts replies instantly, even in airplane mode, without shipping every keystroke to a server.</p>
+        <ul>
+          <li>A 3B model quantized to int4 runs on the phone's NPU for everyday summarize/rewrite tasks.</li>
+          <li>Confidence-gated routing keeps common requests local; only genuinely hard queries escalate to a cloud model.</li>
+          <li>The KV cache is capped to protect RAM, and generation backs off when the SoC gets warm.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Instant, private assistance for the vast majority of requests, with cloud cost incurred only on the small fraction that truly needs it.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏥</span><div><h3>2 · Private on-device healthcare app</h3><div class="role">Pattern: privacy-critical fully-local inference</div></div></div>
+        <p class="muted">A clinical note-taking app must transcribe and summarize patient conversations where regulation forbids sending identifiable data off-device.</p>
+        <ul>
+          <li>A distilled, int8-quantized model runs entirely on the tablet — protected health information never touches a network.</li>
+          <li>Core ML targets the Neural Engine so summaries generate fast without draining the battery between patients.</li>
+          <li>No cloud fallback exists by design, so compliance boundaries are structurally guaranteed, not merely promised.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Clinicians get automated notes with a defensible privacy posture — the data physically cannot leave the device.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛠️</span><div><h3>3 · Offline field &amp; industrial app</h3><div class="role">Pattern: zero-connectivity edge deployment</div></div></div>
+        <p class="muted">Technicians on remote rigs and underground sites need an assistant over equipment manuals and safety procedures where there is no signal at all.</p>
+        <ul>
+          <li>A small quantized model plus a local index ships on a rugged tablet or edge gateway.</li>
+          <li>llama.cpp with a Vulkan/GPU backend keeps inference usable on modest industrial hardware.</li>
+          <li>Builds are updated over the wire only when the device is back at base — inference itself never depends on a network.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Workers get instant, grounded guidance deep in the field, with availability that no cloud outage or dead zone can take away.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where on-device inference is heading</h2>
+      <p class="muted">Edge inference is moving from a heroic engineering feat into a default deployment target as silicon, formats, and compression methods mature.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧮 Dedicated NPUs everywhere</h4><p>Phones, laptops, and even wearables now ship neural accelerators, pushing usable local model sizes up every generation while keeping battery cost down.</p></div>
+        <div class="card"><h4>🔬 Sub-4-bit quantization</h4><p>2–3 bit and mixed-precision schemes, plus quantization-aware training, are shrinking models further with surprisingly little quality loss.</p></div>
+        <div class="card"><h4>🧩 Smarter hybrid routing</h4><p>Orchestrators that learn per-query when local is good enough, blending on-device speed with cloud quality automatically and cheaply.</p></div>
+        <div class="card"><h4>📚 On-device retrieval</h4><p>Local vector indexes let edge models ground answers in the user's own files and history — private RAG that never phones home.</p></div>
+        <div class="card"><h4>🔄 On-device personalization</h4><p>Lightweight local fine-tuning and LoRA adapters let a shipped model adapt to one user without any data leaving the device.</p></div>
+        <div class="card"><h4>🖼️ Multimodal at the edge</h4><p>Compressed vision and speech models bring on-device image, audio, and video understanding — not just text — to constrained hardware.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> on-device inference is how you make AI private, instant, and available everywhere — trading a controlled amount of model quality for enormous gains in cost, latency, and trust. As silicon and compression improve, more of every workload shifts to the edge, with the cloud reserved for the genuinely hard cases.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to Edge / On-Device Inference · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

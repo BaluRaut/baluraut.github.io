@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM Tracing &amp; Observability Explained — What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to LLM tracing and observability with LangSmith and Langfuse: traces and spans, what to capture, sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Tracing &amp; Observability</span>
+      <h1>See inside your LLM app — traces, spans &amp; observability</h1>
+      <p class="lede">LLM chains and agents are non-deterministic black boxes: a single request fans out across retrieval, model calls, and tools. Tracing captures that execution as a <strong>tree of nested spans</strong> — with inputs, outputs, tokens, latency, and cost — so tools like <strong>LangSmith</strong> and <strong>Langfuse</strong> let you debug, measure, and trust what your app actually did.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Traces &amp; spans</span>
+        <span class="pill">Tokens, latency &amp; cost</span>
+        <span class="pill">OpenTelemetry</span>
+        <span class="pill">Evals &amp; alerts</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What is LLM tracing?</h2>
+      <p class="muted"><strong>Tracing</strong> records the full execution of an LLM request as a <em>trace</em> — a tree of nested <em>spans</em>. Each span is one unit of work (a retrieval, an LLM call, a tool invocation, a chain step) with its own inputs, outputs, timing, and metadata. <strong>Observability</strong> is what you build on top: dashboards, evals, and alerts that turn those traces into insight about correctness, latency, and cost.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🌳</span> Trace</h4>
+          <p>The whole request, root to leaf — one user question producing one span tree. It carries a trace ID that ties every step together.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📏</span> Span</h4>
+          <p>A single operation inside the trace — a retrieval, generation, or tool call — with start/end time, inputs, outputs, and a parent link.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏷️</span> Metadata</h4>
+          <p>Model &amp; version, prompt template, token counts, cost, user/session IDs, tags, and errors attached to spans for slicing later.</p>
+        </div>
+      </div>
+
+      <h3>What a span should capture</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Why it matters</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Inputs / outputs</strong></td><td>The exact prompt sent and text returned — the core of debugging</td><td>Rendered prompt, completion, retrieved chunks</td></tr>
+            <tr><td><strong>Tokens</strong></td><td>Prompt + completion counts drive cost and context-limit checks</td><td><code>prompt: 1420, completion: 210</code></td></tr>
+            <tr><td><strong>Latency</strong></td><td>Per-span duration reveals which step is slow</td><td><code>retrieval: 40ms, llm: 2.3s</code></td></tr>
+            <tr><td><strong>Cost</strong></td><td>Derived from tokens × model price for budgeting</td><td><code>$0.0043 / request</code></td></tr>
+            <tr><td><strong>Model &amp; error</strong></td><td>Version pins regressions; errors show failed steps</td><td><code>claude-sonnet-4-5</code>, timeout, 429</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a trace is a <em>stack trace for probabilistic software</em>. Logs tell you a request happened; a trace shows the exact tree of steps, prompts, and decisions that produced the answer — which is the only way to debug a non-deterministic chain.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why observability is essential</h2>
+      <p class="muted">The same input can produce different outputs, chains hide many steps behind one response, and agents decide their own path at runtime. Without traces you are guessing. Observability turns "it sometimes gives bad answers" into a specific span you can inspect and fix.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔬 Debug non-deterministic chains</h4><p>Reproduce a bad answer by replaying its exact trace — see the retrieved context, the rendered prompt, and where the model went wrong.</p></div>
+        <div class="card"><h4>🕹️ Understand agent behavior</h4><p>Agents loop, branch, and call tools on their own. The span tree makes their reasoning path visible so you can see why they looped or picked a bad tool.</p></div>
+        <div class="card"><h4>💸 Control tokens &amp; cost</h4><p>Every span records tokens and cost, so you can attribute spend per feature, user, or model and catch runaway prompts before the bill does.</p></div>
+        <div class="card"><h4>⏱️ Find latency &amp; regressions</h4><p>Per-span timing exposes the slow step; pinning model &amp; prompt versions lets you catch when a change made quality or latency worse.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How tracing works under the hood</h2>
+      <p class="muted">Your app is <strong>instrumented</strong> so each step opens a span, records its data, and closes it. Spans are batched and shipped asynchronously to a tracing backend (<strong>LangSmith</strong>, <strong>Langfuse</strong>, or any OpenTelemetry collector), which reassembles them into a trace tree and powers dashboards, evals, and alerts.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🪝</span> Instrumentation</h4>
+          <p>Wrap functions with a decorator or callback, or auto-instrument the SDK. Each wrapped call emits a span with a parent link, so nesting is captured automatically.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚚</span> Export &amp; ingest</h4>
+          <p>Spans are buffered and flushed in the background to keep the hot path fast. The backend stores them, joins them by trace ID, and indexes by tags, cost, and latency.</p>
+        </div>
+      </div>
+
+      <h3>The architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — instrumented app emits spans; backend reassembles &amp; serves them</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph App["🖥️ Instrumented app"]
+        Q["❓ Request"] --> RT["🌳 Root span"]
+        RT --> RET["🔎 Retrieval span"]
+        RT --> GEN["🧠 LLM span"]
+        RT --> TOOL["🛠️ Tool span"]
+    end
+    subgraph Pipe["🚚 Telemetry pipeline"]
+        EXP["📤 Span exporter"] --> COL["🧰 OTel collector"]
+    end
+    subgraph Backend["📡 Tracing backend"]
+        ING["📥 Ingest + join by trace ID"] --> STORE[("🗄️ Trace store")]
+        STORE --> DASH["📊 Dashboards"]
+        STORE --> EVAL["🧪 Evals + datasets"]
+        STORE --> ALERT["🚨 Alerts"]
+    end
+    RET --> EXP
+    GEN --> EXP
+    TOOL --> EXP
+    COL --> ING
+        </pre>
+      </div>
+
+      <h3>Instrumenting a chain in pseudocode</h3>
+      <pre><code>@trace(name="rag_request")          # opens the root span
+def answer(question, user):
+    with span("retrieval") as s:    # child span
+        chunks = vector_db.search(question, filter=user.acl)
+        s.log(inputs=question, outputs=chunks, latency_ms=s.dt)
+
+    with span("llm") as s:          # sibling child span
+        out = llm.generate(prompt(question, chunks))
+        s.log(model="claude-sonnet-4-5",
+              prompt_tokens=out.usage.input,
+              completion_tokens=out.usage.output,
+              cost=price(out.usage))
+    return out.text
+# → backend reconstructs: rag_request → [retrieval, llm]</code></pre>
+      <p class="muted">Each <code>with span(...)</code> nests under the active parent, so the backend rebuilds the exact tree. In high-volume systems you <em>sample</em> — keep 100% of errors and a percentage of the rest — to bound storage while still catching problems.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: capturing a trace across a chain, nested spans for a multi-step agent, and traces flowing to dashboards with alerting.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — Capture: spans emitted as a chain runs retrieval, LLM, and tool steps</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant VDB as 🗄️ Vector DB
+    participant LLM as 🧠 LLM
+    participant TB as 📡 Tracing backend
+
+    App->>TB: Start root span (trace ID)
+    App->>VDB: retrieve(question)
+    VDB-->>App: top-k chunks
+    App->>TB: Log retrieval span (in, out, latency)
+    App->>LLM: generate(prompt + chunks)
+    LLM-->>App: answer + token usage
+    App->>TB: Log LLM span (tokens, cost, model)
+    App->>TB: End root span
+    Note over App,TB: Spans batched then flushed async
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — Nested spans: a multi-step agent forms a span tree</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Ag as 🤖 Agent
+    participant Tool as 🛠️ Tools
+    participant LLM as 🧠 LLM
+    participant TB as 📡 Tracing backend
+
+    Ag->>TB: Open agent root span
+    loop reason-act steps
+        Ag->>LLM: plan next action
+        LLM-->>Ag: chosen tool + args
+        Ag->>TB: Log LLM child span
+        Ag->>Tool: call tool(args)
+        Tool-->>Ag: observation
+        Ag->>TB: Log tool child span (nested)
+    end
+    alt goal reached
+        Ag->>TB: End root span (success)
+    else max steps hit
+        Ag->>TB: End root span (halted)
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — Alerting: traces feed dashboards that trip on latency, cost, or errors</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App fleet
+    participant TB as 📡 Tracing backend
+    participant Dash as 📊 Dashboards
+    participant Ops as 🧑‍💻 On-call
+
+    App->>TB: Stream spans continuously
+    TB->>TB: Aggregate p95 latency, cost, error rate
+    TB->>Dash: Update live metrics
+    alt threshold breached
+        TB->>Ops: Fire alert (slow / costly / failing)
+        Ops->>TB: Open offending trace
+        TB-->>Ops: Root-cause span
+    else within budget
+        TB->>Dash: Show healthy trend
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an uninstrumented app to a fully observable one — traces feeding dashboards, evals, and alerts, in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Instrument</span><h4>Wrap the entry point</h4><p>Add a tracer to your app and decorate the top-level handler so every request opens a root span with a unique trace ID.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Nest</span><h4>Span each step</h4><p>Wrap retrieval, LLM calls, and tool calls so each becomes a child span linked to its parent, forming the trace tree.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Capture</span><h4>Record inputs &amp; outputs</h4><p>Log the rendered prompt, retrieved context, and completion on each span — the raw material for every later diagnosis.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Measure</span><h4>Attach tokens, latency &amp; cost</h4><p>Add token counts, per-span duration, model and version, and derived cost so spans are quantitative, not just descriptive.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Tag</span><h4>Add metadata</h4><p>Attach user, session, tenant, and feature tags plus environment, so traces can be sliced and filtered later.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Export</span><h4>Ship spans asynchronously</h4><p>Buffer and flush spans in the background to LangSmith, Langfuse, or an OpenTelemetry collector without slowing the request.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Sample</span><h4>Bound volume at scale</h4><p>Keep 100% of errors and a percentage of healthy traffic so storage and cost stay bounded while problems still surface.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Reassemble</span><h4>Join into a trace tree</h4><p>The backend stitches spans by trace ID into a navigable tree and indexes them by tag, cost, latency, and error.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Evaluate</span><h4>Link traces to evals &amp; datasets</h4><p>Promote real traces into evaluation datasets and score outputs — connecting production behavior to offline quality checks.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Monitor</span><h4>Dashboards &amp; alerts</h4><p>Chart p95 latency, cost, and error rate; set thresholds that page on-call when a metric breaches its budget.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Improve</span><h4>Debug, fix, repeat</h4><p>Open the offending trace, find the root-cause span, ship a fix, and watch the metric recover — a closed observability loop.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing tracing and observability in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🤖</span><div><h3>1 · Debugging a misbehaving agent</h3><div class="role">Pattern: root-cause from the span tree</div></div></div>
+        <p class="muted">An agent occasionally loops forever or answers from the wrong tool, and logs only show the final failure.</p>
+        <ul>
+          <li>The trace tree exposes every reason-act step, the tool chosen, and the args passed at each turn.</li>
+          <li>Inspecting spans reveals the model picked a search tool when it should have called the database.</li>
+          <li>The fix — a sharper tool description and a step limit — is verified by replaying the trace.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A vague "the agent is flaky" becomes a specific bad decision on a specific span, fixed and confirmed instead of guessed at.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💸</span><div><h3>2 · Cost &amp; token monitoring across a product</h3><div class="role">Pattern: spend attribution from spans</div></div></div>
+        <p class="muted">An LLM feature's bill is climbing and no one knows which flow or user is driving it.</p>
+        <ul>
+          <li>Every span records tokens and cost, tagged by feature, tenant, and model.</li>
+          <li>A dashboard groups spend so one chatty prompt template stands out as the top cost driver.</li>
+          <li>Trimming that prompt and switching a step to a cheaper model cuts cost with no quality loss.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Cost is attributed to the exact feature and prompt, so optimization targets the real driver instead of blanket rate limits.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">⏱️</span><div><h3>3 · Latency optimization by finding the slow span</h3><div class="role">Pattern: per-span timing breakdown</div></div></div>
+        <p class="muted">A RAG endpoint feels slow, but the team can't tell whether retrieval, reranking, or generation is to blame.</p>
+        <ul>
+          <li>Per-span latency shows reranking, not the LLM, eats most of the p95 budget.</li>
+          <li>The reranker is made async and its candidate set trimmed, shrinking that span.</li>
+          <li>The dashboard confirms p95 drops and no error or quality regression follows.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The slow step is measured, not assumed, so effort lands on the span that actually moves the latency number.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where observability is heading</h2>
+      <p class="muted">LLM observability is converging on open standards and tightening the loop between production traces and quality.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>📐 OpenTelemetry standard</h4><p>GenAI semantic conventions are standardizing span names and attributes, so traces move between vendors without lock-in.</p></div>
+        <div class="card"><h4>🧪 Online evals on live traces</h4><p>LLM-as-judge and heuristic scorers run continuously on sampled production traces, flagging quality drops in real time.</p></div>
+        <div class="card"><h4>🔁 Trace-to-dataset loops</h4><p>Interesting or failing traces flow straight into eval datasets, closing the gap between what shipped and what you test.</p></div>
+        <div class="card"><h4>🧠 AI-assisted root cause</h4><p>Models summarize a failing trace and suggest the offending span and fix, cutting time-to-diagnosis on complex agents.</p></div>
+        <div class="card"><h4>🕹️ Agent-native observability</h4><p>Purpose-built views for loops, branches, and tool graphs make deep agent traces navigable instead of overwhelming.</p></div>
+        <div class="card"><h4>🔐 Privacy-aware tracing</h4><p>Automatic PII redaction and sampling let teams keep rich traces while respecting data-handling and retention rules.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> tracing is how you make a probabilistic system operable — turning invisible chains and agents into a debuggable, measurable span tree. As standards mature and evals move online, observability becomes the backbone of every serious LLM product.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to Tracing &amp; Observability · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

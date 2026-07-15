@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Explained — What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to Retrieval-Augmented Generation (RAG): what it is, how it works, why it matters, sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Retrieval-Augmented Generation</span>
+      <h1>How RAG actually works — the complete picture</h1>
+      <p class="lede">LLMs are frozen at their training cutoff and know nothing about your private data. RAG fixes that: it <strong>retrieves</strong> relevant chunks from your knowledge base at query time and <strong>augments</strong> the prompt with them, so the model answers from real, current, cited sources instead of guessing.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Embeddings</span>
+        <span class="pill">Vector search</span>
+        <span class="pill">Chunking</span>
+        <span class="pill">Grounding &amp; citations</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What is RAG?</h2>
+      <p class="muted"><strong>Retrieval-Augmented Generation</strong> is a pattern that connects a language model to an external knowledge store. Instead of relying only on what the model memorized during training, you <em>retrieve</em> the most relevant passages for a question and paste them into the prompt as context. The model then generates an answer grounded in that retrieved evidence.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📥</span> Ingestion (offline)</h4>
+          <p>Documents are split into chunks, embedded into vectors, and stored in a vector database. Done once, ahead of time.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔎</span> Retrieval (online)</h4>
+          <p>At query time, the question is embedded and the closest chunks are fetched by semantic similarity.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧠</span> Generation (online)</h4>
+          <p>Retrieved chunks are stitched into the prompt; the model answers using them, ideally with citations.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common choices</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Chunker</strong></td><td>Splits documents into retrievable units</td><td>Fixed-size, recursive, semantic, by-heading</td></tr>
+            <tr><td><strong>Embedding model</strong></td><td>Turns text into vectors capturing meaning</td><td><code>text-embedding-3</code>, open models</td></tr>
+            <tr><td><strong>Vector store</strong></td><td>Indexes vectors for fast similarity search</td><td>pgvector, Pinecone, Weaviate, FAISS</td></tr>
+            <tr><td><strong>Retriever</strong></td><td>Finds top-k relevant chunks per query</td><td>Dense, keyword (BM25), hybrid</td></tr>
+            <tr><td><strong>Reranker</strong></td><td>Re-scores candidates for precision</td><td>Cross-encoders, LLM rerankers</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> RAG doesn't teach the model new facts — it puts the right facts <em>in front of</em> the model at the moment it answers. Retrieval quality, not the LLM, is usually what makes or breaks a RAG system.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why RAG exists</h2>
+      <p class="muted">Fine-tuning bakes knowledge into weights — it's slow, expensive, and stale the moment your data changes. RAG keeps knowledge <em>outside</em> the model, where it's cheap to update and easy to control.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 Reduces hallucination</h4><p>Grounding answers in retrieved text sharply cuts made-up facts and lets you cite sources for verification.</p></div>
+        <div class="card"><h4>🔄 Always current</h4><p>Update the knowledge base and answers change instantly — no retraining. Add, edit, or delete a document and it's reflected on the next query.</p></div>
+        <div class="card"><h4>🔐 Private &amp; access-controlled</h4><p>Your data never enters model weights. You can filter retrieval by user permissions so people only see what they're allowed to.</p></div>
+        <div class="card"><h4>💸 Cheaper than fine-tuning</h4><p>No training runs. You pay for embeddings once and a bit of extra context per query — a fraction of the cost and effort.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">RAG has two pipelines: an <strong>offline ingestion</strong> pipeline that builds the index, and an <strong>online query</strong> pipeline that runs per request.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📦</span> Ingestion pipeline</h4>
+          <p>Load → clean → chunk → embed → upsert into the vector store. Metadata (source, section, permissions, timestamp) rides along with each chunk.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚡</span> Query pipeline</h4>
+          <p>Embed the question → search top-k → (optionally) rerank → assemble a grounded prompt → generate → return answer + citations.</p>
+        </div>
+      </div>
+
+      <h3>The architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — ingestion builds the index; queries read from it</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Ingest["📦 Offline ingestion"]
+        D["📄 Documents"] --> CH["✂️ Chunk"]
+        CH --> EM1["🔢 Embed"]
+        EM1 --> VDB[("🗄️ Vector DB")]
+    end
+    subgraph Query["⚡ Online query"]
+        Q["❓ User question"] --> EM2["🔢 Embed query"]
+        EM2 --> SR["🔎 Similarity search"]
+        VDB --> SR
+        SR --> RR["📊 Rerank"]
+        RR --> PR["🧩 Build prompt + context"]
+        PR --> LLM["🧠 LLM"]
+        LLM --> ANS["✅ Grounded answer + citations"]
+    end
+        </pre>
+      </div>
+
+      <h3>A minimal query in pseudocode</h3>
+      <pre><code>q_vec   = embed(question)
+hits    = vector_db.search(q_vec, top_k=20, filter=user_acl)
+top     = rerank(question, hits)[:5]
+context = "\n\n".join(h.text + f"  [source: {h.source}]" for h in top)
+
+answer = llm.generate(
+    system="Answer ONLY from the context. Cite sources. Say 'I don't know' if absent.",
+    user=f"Context:\n{context}\n\nQuestion: {question}"
+)</code></pre>
+      <p class="muted">Notice the system prompt <em>constrains</em> the model to the retrieved context and tells it to abstain — this is what turns retrieval into trustworthy, grounded generation.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: offline ingestion, the online query path, and an advanced flow with reranking and abstention.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — Ingestion: building the vector index (offline, once)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Src as 📄 Source docs
+    participant Pipe as ⚙️ Ingest pipeline
+    participant Emb as 🔢 Embedding model
+    participant VDB as 🗄️ Vector DB
+
+    Src->>Pipe: Load raw files (PDF, HTML, DB)
+    Pipe->>Pipe: Clean & normalize text
+    Pipe->>Pipe: Split into chunks (+ metadata)
+    loop for each chunk
+        Pipe->>Emb: embed(chunk)
+        Emb-->>Pipe: vector[1536]
+    end
+    Pipe->>VDB: upsert(vectors + text + metadata)
+    VDB-->>Pipe: index updated
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — Query: retrieval then grounded generation (the hot path)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ RAG app
+    participant Emb as 🔢 Embedding model
+    participant VDB as 🗄️ Vector DB
+    participant LLM as 🧠 LLM
+
+    U->>App: Ask a question
+    App->>Emb: embed(question)
+    Emb-->>App: query vector
+    App->>VDB: search(query vector, top_k, filter=ACL)
+    VDB-->>App: top-k chunks + sources
+    App->>App: Assemble prompt (context + question)
+    App->>LLM: generate(grounded prompt)
+    LLM-->>App: answer with citations
+    App-->>U: Answer + linked sources
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — Advanced: rerank, abstain, and fall back</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ RAG app
+    participant VDB as 🗄️ Vector DB
+    participant RR as 📊 Reranker
+    participant LLM as 🧠 LLM
+
+    U->>App: Question
+    App->>VDB: hybrid search (dense + BM25), top_k=20
+    VDB-->>App: 20 candidates
+    App->>RR: rerank(question, candidates)
+    RR-->>App: ordered by relevance
+    alt top score below threshold
+        App-->>U: "I don't have enough information"
+    else relevant context found
+        App->>LLM: generate(top 5 chunks + question)
+        LLM-->>App: grounded answer + citations
+        App-->>U: Answer + sources
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an empty knowledge base to a cited, grounded answer — the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Ingest</span><h4>Collect &amp; clean sources</h4><p>Gather the documents — wikis, PDFs, tickets, databases — and strip boilerplate, headers, and noise so only useful text remains.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Chunk</span><h4>Split into retrievable units</h4><p>Break documents into chunks sized for retrieval (often 200–800 tokens) with slight overlap, attaching metadata like source and section.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Embed</span><h4>Turn chunks into vectors</h4><p>Run each chunk through an embedding model to get a vector that captures its meaning in high-dimensional space.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Index</span><h4>Store in a vector database</h4><p>Upsert vectors plus their text and metadata into a vector store with an ANN index for fast similarity search.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Query</span><h4>User asks a question</h4><p>A request arrives. The question is embedded with the same model used for ingestion so the vectors live in the same space.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Retrieve</span><h4>Find the top-k chunks</h4><p>Search the vector store for the nearest neighbors, filtered by the user's access permissions. Hybrid search adds keyword matching.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Rerank</span><h4>Sharpen relevance</h4><p>A cross-encoder or LLM reranker re-scores the candidates so the most on-point passages rise to the top before they hit the prompt.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Gate</span><h4>Decide: answer or abstain</h4><p>If the best score is too low, the system says "I don't know" rather than hallucinate — a crucial trust step.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Augment</span><h4>Assemble the grounded prompt</h4><p>Stitch the selected chunks into the prompt with instructions to answer only from context and cite each source.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Generate</span><h4>Model answers from evidence</h4><p>The LLM produces an answer using the retrieved context, attaching citations that point back to the exact sources.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>Return answer + sources</h4><p>The user gets a grounded, verifiable answer with clickable citations. Feedback and logs feed evals to improve retrieval over time.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing RAG in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎧</span><div><h3>1 · Customer-support assistant over a help center</h3><div class="role">Pattern: grounded Q&amp;A with citations</div></div></div>
+        <p class="muted">A SaaS company wants an assistant that answers customer questions from its docs without inventing features.</p>
+        <ul>
+          <li>Help-center articles and release notes are chunked by heading and embedded nightly.</li>
+          <li>Each answer must cite the article it came from; low-confidence queries route to a human.</li>
+          <li>Retrieval is filtered by product tier so customers only see docs for what they bought.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Deflection of routine tickets with far fewer wrong answers, because every response is grounded and traceable to a real doc.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">⚖️</span><div><h3>2 · Legal &amp; contract search</h3><div class="role">Pattern: precision retrieval over sensitive documents</div></div></div>
+        <p class="muted">A legal team needs to ask questions across thousands of contracts and get exact clauses, not paraphrases.</p>
+        <ul>
+          <li>Hybrid search (semantic + keyword) captures both meaning and exact legal terms.</li>
+          <li>A cross-encoder reranker ensures the precise clause ranks first.</li>
+          <li>Strict access controls and on-prem embeddings keep confidential data inside the firm.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Lawyers find governing clauses in seconds with citations to the source contract, while sensitive text never leaves the security boundary.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏥</span><div><h3>3 · Internal knowledge base for engineers</h3><div class="role">Pattern: enterprise search across many systems</div></div></div>
+        <p class="muted">An engineering org unifies wikis, runbooks, Slack, and code docs into one assistant.</p>
+        <ul>
+          <li>Connectors ingest from many sources; metadata records origin and freshness.</li>
+          <li>Stale chunks are re-embedded on change so answers reflect the current state.</li>
+          <li>Answers link back to the exact runbook or thread for verification.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Engineers stop hunting across five tools; the assistant surfaces the right runbook with a citation, cutting resolution time.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where RAG is heading</h2>
+      <p class="muted">RAG is evolving from a single retrieve-then-read step into richer, more adaptive systems.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🤖 Agentic RAG</h4><p>Agents that plan multi-step retrieval — decomposing questions, searching iteratively, and deciding when they have enough evidence.</p></div>
+        <div class="card"><h4>🕸️ GraphRAG</h4><p>Combining vector search with knowledge graphs to answer questions that require connecting facts across many documents.</p></div>
+        <div class="card"><h4>📈 Retrieval evals as first-class</h4><p>Measuring recall, precision, and faithfulness continuously — treating retrieval quality as the metric that matters most.</p></div>
+        <div class="card"><h4>🧩 Long-context vs. RAG</h4><p>Bigger context windows won't kill RAG; they complement it — RAG controls cost, freshness, and access at any scale.</p></div>
+        <div class="card"><h4>🎛️ Adaptive retrieval</h4><p>Systems that decide <em>whether</em> to retrieve at all, and how much, based on the question's difficulty and confidence.</p></div>
+        <div class="card"><h4>🖼️ Multimodal RAG</h4><p>Retrieving over images, tables, audio, and video — not just text — for grounded answers across every data type.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> RAG is how you give a general model your specific, current, permissioned knowledge — cheaply and verifiably. As models and retrievers improve, the pattern only gets more central to real AI products.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to RAG · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

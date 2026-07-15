@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evals &amp; LLM-as-Judge Explained — What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to LLM evals and LLM-as-judge: eval datasets, deterministic and semantic metrics, judge rubrics and their biases, offline vs online evals, CI regression gates, sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Evals &amp; LLM-as-Judge</span>
+      <h1>How to actually measure an LLM app — evals &amp; the judge</h1>
+      <p class="lede">LLM outputs are non-deterministic and rarely have one right answer, so you can't unit-test them the old way. <strong>Evals</strong> replace vibes with evidence: curated datasets, deterministic and semantic scorers, and an <strong>LLM-as-judge</strong> that grades free-form text against a rubric — calibrated against humans and wired into CI so quality never silently regresses.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Golden datasets</span>
+        <span class="pill">LLM-as-judge</span>
+        <span class="pill">Faithfulness</span>
+        <span class="pill">CI regression gates</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What are LLM evals?</h2>
+      <p class="muted">An <strong>eval</strong> is a repeatable measurement of how well an LLM system does a task: run it over a fixed dataset, score each output with one or more graders, and aggregate into metrics you can track over time. Because outputs are open-ended, scoring often blends <em>deterministic checks</em> (exact match, JSON validity) with <em>semantic</em> and <em>LLM-as-judge</em> grading. The goal is the same as any test suite — catch regressions and prove improvements — but adapted to text that has no single correct string.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🗂️</span> Dataset (the questions)</h4>
+          <p>A curated set of inputs plus optional references or expected behaviors — golden examples, sampled real traffic, and hand-built edge cases.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📏</span> Scorers (the graders)</h4>
+          <p>Functions that turn an output into a score: deterministic rules, semantic similarity, task-specific metrics, or an LLM judge with a rubric.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📊</span> Report (the verdict)</h4>
+          <p>Aggregated metrics per slice, compared to a baseline, so you can see pass rate, faithfulness, and where quality moved up or down.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common choices</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Eval dataset</strong></td><td>Fixed inputs (+ references) to run the system against</td><td>Golden set, sampled traffic, synthetic edge cases</td></tr>
+            <tr><td><strong>Deterministic scorer</strong></td><td>Rule-based pass/fail, cheap and exact</td><td>Exact match, regex, <code>JSON.parse</code>, schema valid</td></tr>
+            <tr><td><strong>Semantic scorer</strong></td><td>Measures meaning-level closeness to a reference</td><td>Embedding cosine, BERTScore, ROUGE</td></tr>
+            <tr><td><strong>Task-specific scorer</strong></td><td>Metrics tied to the job (esp. RAG)</td><td>Faithfulness, answer-relevance, context recall</td></tr>
+            <tr><td><strong>LLM-as-judge</strong></td><td>Grades open-ended text with a rubric or reference</td><td>Pairwise, reference-free, reference-based</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> an eval is a <em>dataset × scorer</em> pair. The dataset decides <em>what</em> you measure; the scorer decides <em>how</em>. Most failures trace back to a weak dataset or an uncalibrated judge — not the model itself.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why evals exist</h2>
+      <p class="muted">You can't ship what you can't measure. LLM behavior shifts with every prompt tweak, model upgrade, or retrieval change — and it changes silently. Evals turn "seems better" into a number, and stop yesterday's fix from becoming tomorrow's regression.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎲 Handle non-determinism</h4><p>The same prompt yields different text each run. Evals average over a dataset so you measure a distribution, not one lucky (or unlucky) sample.</p></div>
+        <div class="card"><h4>🌫️ No single right answer</h4><p>Many tasks have many acceptable outputs. Rubric-based judging scores <em>quality</em> and <em>correctness properties</em> instead of demanding one exact string.</p></div>
+        <div class="card"><h4>🛡️ Catch regressions early</h4><p>A prompt edit that helps one case can break ten others. Running evals in CI blocks the regression before it reaches users.</p></div>
+        <div class="card"><h4>🚀 Ship with confidence</h4><p>Comparing candidate versions on the same dataset gives a defensible reason to promote one prompt, model, or retriever over another.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How evals work under the hood</h2>
+      <p class="muted">Evals run in two settings: <strong>offline</strong> against a curated dataset (before you ship), and <strong>online</strong> against sampled production traffic (after you ship). Both feed the same scorers; only the source of inputs differs.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧪</span> Offline eval harness</h4>
+          <p>Take a fixed dataset, run the system under test on every row, score each output, and diff the aggregate metrics against a stored baseline. Deterministic, reproducible, gate-able in CI.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📡</span> Online (production) eval</h4>
+          <p>Sample live traffic, run reference-free judges and heuristics on real outputs, and track metrics on dashboards. Catches drift and edge cases your dataset never anticipated.</p>
+        </div>
+      </div>
+
+      <h3>The harness architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — a dataset flows through the system under test into scorers and a report</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Data["🗂️ Eval dataset"]
+        G["⭐ Golden set"] --> DS[("📚 Cases + refs")]
+        T["📡 Sampled traffic"] --> DS
+        E["🧨 Edge cases"] --> DS
+    end
+    subgraph Run["🧪 Eval harness"]
+        DS --> SUT["🤖 System under test"]
+        SUT --> OUT["📝 Candidate outputs"]
+        OUT --> DET["📏 Deterministic scorers"]
+        OUT --> SEM["🧬 Semantic scorers"]
+        OUT --> JUD["⚖️ LLM-as-judge"]
+        DET --> AGG["📊 Aggregate + slice"]
+        SEM --> AGG
+        JUD --> AGG
+    end
+    AGG --> REP["📈 Report vs baseline"]
+        </pre>
+      </div>
+
+      <h3>A judge rubric prompt (reference-free scoring)</h3>
+      <pre><code>You are a strict grader. Score the ANSWER on each criterion
+from 1-5. Judge only what is written. Do NOT reward length.
+Return JSON only.
+
+Criteria:
+  - faithfulness:  every claim is supported by CONTEXT (no invented facts)
+  - relevance:     the answer addresses the QUESTION directly
+  - completeness:  no essential part of the question is ignored
+
+CONTEXT:  {{context}}
+QUESTION: {{question}}
+ANSWER:   {{answer}}
+
+Respond exactly as:
+{"faithfulness": n, "relevance": n, "completeness": n,
+ "rationale": "one sentence"}</code></pre>
+      <p class="muted">Notice the guardrails: a fixed scale, "do not reward length" to fight verbosity bias, JSON-only output for deterministic parsing, and a forced rationale so scores are auditable. A judge is only trustworthy once its scores are <em>calibrated</em> against human labels.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: an offline harness run, an LLM-as-judge scoring one output against a rubric, and a CI pipeline that blocks a deploy on regression.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — Offline eval run: dataset → system under test → scorer → report</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 👤 Engineer
+    participant Harn as 🧪 Eval harness
+    participant DS as 🗂️ Dataset
+    participant SUT as 🤖 System under test
+    participant Scr as 📏 Scorers
+    participant Rep as 📈 Report
+
+    Dev->>Harn: run eval(suite, baseline)
+    Harn->>DS: load cases + references
+    DS-->>Harn: N test rows
+    loop for each case
+        Harn->>SUT: run(input)
+        SUT-->>Harn: candidate output
+        Harn->>Scr: score(output, reference)
+        Scr-->>Harn: metric values
+    end
+    Harn->>Rep: aggregate + diff vs baseline
+    Rep-->>Dev: pass rate, deltas, failures
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — LLM-as-judge: grade one candidate against a rubric and reference</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Harn as 🧪 Harness
+    participant Prompt as 🧩 Rubric builder
+    participant Judge as ⚖️ Judge LLM
+    participant Cal as 🎚️ Calibration
+    participant Store as 🗄️ Results
+
+    Harn->>Prompt: build(question, answer, reference, rubric)
+    Prompt-->>Harn: judge prompt
+    Harn->>Judge: grade(prompt)
+    Judge-->>Harn: scores + rationale (JSON)
+    Note over Harn,Judge: swap A/B order to check position bias
+    Harn->>Cal: compare to human labels
+    alt agreement below threshold
+        Cal-->>Harn: recalibrate rubric
+    else judge trusted
+        Cal-->>Harn: accept scores
+    end
+    Harn->>Store: persist scores + rationale
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — CI gate: run evals on a PR and block deploy on regression</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 👤 Developer
+    participant CI as 🔁 CI pipeline
+    participant Harn as 🧪 Eval harness
+    participant Base as 📊 Baseline metrics
+    participant Deploy as 🚀 Deploy
+
+    Dev->>CI: open pull request
+    CI->>Harn: run eval suite on PR build
+    Harn-->>CI: candidate metrics
+    CI->>Base: compare against threshold
+    alt metrics regressed
+        Base-->>CI: fail (delta below gate)
+        CI-->>Dev: block merge + show diff
+    else metrics hold or improve
+        Base-->>CI: pass
+        CI->>Deploy: promote build
+        Deploy-->>Dev: shipped
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From "we have no idea if it's good" to a calibrated judge guarding every deploy — the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Define</span><h4>Pin down what "good" means</h4><p>Write down the task and the qualities that matter — correctness, faithfulness, tone, safety. Vague goals produce useless evals.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Dataset</span><h4>Build the golden set</h4><p>Curate representative inputs with expected answers or behaviors. Start small (30–100 hand-checked cases) but make them count.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Enrich</span><h4>Add real traffic &amp; edge cases</h4><p>Sample production logs for realistic distribution, then hand-craft adversarial and rare cases the golden set misses.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Scorers</span><h4>Pick metrics per case</h4><p>Use deterministic checks where an exact/JSON answer exists; semantic similarity for paraphrase; a judge for open-ended quality.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Rubric</span><h4>Write the judge rubric</h4><p>Define explicit criteria and a scoring scale, forbid length rewards, and demand JSON plus a rationale for auditability.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Calibrate</span><h4>Align the judge to humans</h4><p>Have humans label a slice, then measure judge–human agreement. Tune the rubric until they correlate; otherwise the judge lies.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Debias</span><h4>Neutralize known biases</h4><p>Swap A/B order to counter position bias, cap or normalize length, and avoid self-preference by judging with a different model family.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Baseline</span><h4>Run &amp; record the current system</h4><p>Execute the full suite to get baseline metrics per slice. This frozen snapshot is what every future change is measured against.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Gate</span><h4>Wire evals into CI</h4><p>Run the suite on every PR and fail the build when key metrics drop below the baseline threshold — a hard regression gate.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Monitor</span><h4>Add online production evals</h4><p>Sample live outputs, run reference-free judges and heuristics, and dashboard the trends to catch drift the offline set can't.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Iterate</span><h4>Feed failures back in</h4><p>Promote real failures into the dataset, refine rubrics, and re-baseline. The eval suite compounds in value with every cycle.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing evals and LLM-as-judge in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔗</span><div><h3>1 · RAG faithfulness &amp; groundedness evaluation</h3><div class="role">Pattern: reference-free judge over retrieved context</div></div></div>
+        <p class="muted">A team ships a RAG assistant and needs proof that answers stay grounded in the retrieved passages instead of inventing facts.</p>
+        <ul>
+          <li>For each answer, a judge checks every claim against the retrieved context and scores <strong>faithfulness</strong> plus <strong>answer-relevance</strong>.</li>
+          <li>Context recall is measured separately so a hallucination isn't confused with a retrieval miss.</li>
+          <li>The judge is calibrated against human groundedness labels before its scores gate releases.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Ungrounded answers are caught automatically, and the team can attribute failures to either retrieval or generation instead of guessing.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💬</span><div><h3>2 · Chatbot quality regression suite</h3><div class="role">Pattern: offline suite as a CI gate</div></div></div>
+        <p class="muted">A support chatbot is edited constantly — new prompts, new tools, new model versions — and each change risks silently breaking prior behavior.</p>
+        <ul>
+          <li>A golden set of past conversations plus mined failures runs on every pull request.</li>
+          <li>Deterministic checks verify structure and refusals; a rubric judge scores helpfulness and tone.</li>
+          <li>The CI job fails the merge if any key metric drops below its baseline threshold.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Regressions are blocked before merge, so a fix for one intent can no longer quietly degrade ten others in production.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">⚔️</span><div><h3>3 · Pairwise judge ranking of two prompt versions</h3><div class="role">Pattern: A/B comparison with bias controls</div></div></div>
+        <p class="muted">An engineer has two candidate system prompts and needs a defensible answer to "which one is actually better?"</p>
+        <ul>
+          <li>Both prompts run on the same dataset; a judge picks the better output <strong>pairwise</strong> per case.</li>
+          <li>Each pair is judged twice with the order swapped to cancel position bias, and length is normalized.</li>
+          <li>Win rate with confidence intervals decides the promotion — not a handful of cherry-picked chats.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The winning prompt is chosen on a statistically honest win rate, and the debiasing steps keep the judge from favoring the longer or first answer.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where evals are heading</h2>
+      <p class="muted">Evals are moving from occasional spreadsheets to continuous, automated infrastructure that sits at the center of every LLM product.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🤖 Agentic &amp; trajectory evals</h4><p>Scoring not just final answers but the whole tool-using trajectory — did the agent take the right steps, call the right tools, and recover from errors?</p></div>
+        <div class="card"><h4>🎚️ Auto-calibrated judges</h4><p>Judges that continuously fit themselves to fresh human labels, reporting their own agreement so you know exactly how far to trust them.</p></div>
+        <div class="card"><h4>🧬 Synthetic dataset generation</h4><p>Models that generate targeted edge cases and adversarial inputs to grow coverage far beyond what humans can curate by hand.</p></div>
+        <div class="card"><h4>⚖️ Bias-aware judging by default</h4><p>Position, verbosity, and self-preference controls baked into judge frameworks — swapped orders, length normalization, cross-family graders.</p></div>
+        <div class="card"><h4>📡 Online evals as observability</h4><p>Reference-free scoring on live traffic becomes standard telemetry, catching drift the moment it appears rather than at the next release.</p></div>
+        <div class="card"><h4>🛡️ Safety &amp; policy evals</h4><p>Dedicated suites for jailbreaks, toxicity, PII leakage, and policy compliance shipping alongside quality metrics as a release requirement.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> evals are the test suite of the LLM era. A curated dataset paired with calibrated, debiased scorers — run in CI and in production — is what turns an unpredictable model into a product you can ship and improve with confidence.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to Evals &amp; LLM-as-Judge · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

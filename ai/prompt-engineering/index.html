@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Engineering Explained — What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to prompt engineering: the anatomy of a prompt, core techniques, sequence diagrams, a 0-100 flow, case studies, and where prompting is heading." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Prompt Engineering</span>
+      <h1>How prompt engineering actually works — the complete picture</h1>
+      <p class="lede">A prompt is the program you write for a language model in plain language. Prompt engineering is the craft of <strong>structuring</strong> that input — role, instructions, context, examples, and format — so the model reliably produces the output you want. Done well, it turns a general model into a dependable component you can build products on.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">System role</span>
+        <span class="pill">Few-shot examples</span>
+        <span class="pill">Chain-of-thought</span>
+        <span class="pill">Output formatting</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What is prompt engineering?</h2>
+      <p class="muted"><strong>Prompt engineering</strong> is the practice of designing the text you send to a language model so that its behavior is predictable, accurate, and useful. Because a model's output is entirely conditioned on its input, small changes in wording, structure, and examples produce large changes in quality. Good prompting is less about clever phrasing and more about giving the model a clear <em>role</em>, unambiguous <em>instructions</em>, the right <em>context</em>, and a precise <em>output contract</em>.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎭</span> Role &amp; instructions</h4>
+          <p>The system message sets persona, tone, and hard rules; the instructions state the task in specific, testable terms.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📎</span> Context &amp; examples</h4>
+          <p>Relevant reference material and a few worked examples (few-shot) show the model the pattern to imitate rather than describe it.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📐</span> Output contract</h4>
+          <p>An explicit format spec — JSON schema, headings, length limits — makes responses machine-parseable and consistent.</p>
+        </div>
+      </div>
+
+      <h3>The anatomy of a prompt</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Component</th><th>What it does</th><th>Typical form</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>System role</strong></td><td>Establishes persona, scope, and non-negotiable rules</td><td>"You are a meticulous data extractor…"</td></tr>
+            <tr><td><strong>Instructions</strong></td><td>States the task and success criteria precisely</td><td>Numbered steps, explicit constraints</td></tr>
+            <tr><td><strong>Context</strong></td><td>Supplies the facts the model must reason over</td><td>Retrieved docs, user data, delimiters</td></tr>
+            <tr><td><strong>Few-shot examples</strong></td><td>Demonstrates the input → output mapping</td><td>2–5 labeled pairs</td></tr>
+            <tr><td><strong>Output-format spec</strong></td><td>Defines the exact shape of the answer</td><td>JSON schema, template, length cap</td></tr>
+            <tr><td><strong>User query</strong></td><td>The actual request to act on</td><td>Placed last, clearly delimited</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a prompt is a specification, not a wish. The model does exactly what the text conditions it to do — so ambiguity, conflicting instructions, and missing format specs are <em>your</em> bugs, not the model's. Engineer the input like you'd engineer an API contract.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why prompt engineering matters</h2>
+      <p class="muted">Fine-tuning changes weights — slow, costly, and hard to iterate. Prompting changes behavior <em>instantly</em>, at zero training cost, and is the fastest lever you have for quality. Most of a model's usable capability is unlocked or wasted by how you ask.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚡ Instant iteration</h4><p>Reword the prompt and rerun — no retraining, no deploys. You can go from failing to passing an eval in minutes, not days.</p></div>
+        <div class="card"><h4>🎯 Reliability &amp; control</h4><p>Structure, constraints, and format specs turn a chatty model into a deterministic-enough component you can put behind an API.</p></div>
+        <div class="card"><h4>💸 Cheaper than fine-tuning</h4><p>No labeled datasets, no GPU hours. A well-designed prompt often matches or beats a fine-tune for a fraction of the effort.</p></div>
+        <div class="card"><h4>🔍 Steers reasoning quality</h4><p>Techniques like step-by-step reasoning and decomposition materially raise accuracy on hard, multi-step tasks.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">A production prompt is <em>assembled</em> at request time from static and dynamic parts, then sent as a single conditioned input. The two concerns are <strong>composition</strong> (what goes in, in what order) and <strong>technique</strong> (how you phrase it to steer behavior).</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Composition</h4>
+          <p>A template merges the system role, retrieved context, few-shot examples, format spec, and the user query. Order matters: instructions and the query anchor the ends, bulky context sits in the middle.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛠️</span> Technique</h4>
+          <p>Zero-shot vs few-shot, chain-of-thought, role prompting, delimiters, decomposition, JSON output, and negative guardrails are the toolkit you combine to hit the target behavior.</p>
+        </div>
+      </div>
+
+      <h3>The prompt-assembly architecture</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — static template + dynamic parts compose into one conditioned input</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Static["🧱 Static template"]
+        SYS["🎭 System role + rules"]
+        FMT["📐 Output-format spec"]
+        FS["📝 Few-shot examples"]
+    end
+    subgraph Dynamic["🔀 Per-request inputs"]
+        CTX["📎 Retrieved context"]
+        UQ["❓ User query"]
+    end
+    SYS --> ASM["🧩 Assemble prompt"]
+    FMT --> ASM
+    FS --> ASM
+    CTX --> ASM
+    UQ --> ASM
+    ASM --> LLM["🧠 LLM"]
+    LLM --> OUT["✅ Structured output"]
+        </pre>
+      </div>
+
+      <h3>A structured prompt in practice</h3>
+      <pre><code>SYSTEM:
+You are a support-ticket classifier. Follow the rules exactly.
+Rules:
+- Choose exactly ONE category from the allowed list.
+- Do NOT invent categories. If unsure, use "other".
+- Output ONLY valid JSON matching the schema. No prose.
+
+Allowed categories: ["billing","bug","feature_request","other"]
+
+Examples:
+Ticket: "I was charged twice this month"  -> {"category":"billing","confidence":0.97}
+Ticket: "The app crashes on export"        -> {"category":"bug","confidence":0.95}
+
+Schema: {"category": string, "confidence": number}
+
+USER:
+Ticket: "Can you add dark mode to the mobile app?"</code></pre>
+      <p class="muted">Notice the pattern: a constraining <em>system role</em>, an explicit <em>allowed set</em>, a <em>negative guardrail</em> ("do NOT invent"), <em>few-shot</em> examples that fix the mapping, a <em>schema</em> that makes output parseable, and the <em>user query</em> placed last behind a clear delimiter.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: how a prompt is assembled and sent, chain-of-thought versus a direct answer, and the eval-driven refinement loop.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — Prompt assembly: composing system, context, few-shot, and query</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ App
+    participant Tpl as 🧱 Template
+    participant Ctx as 📎 Context source
+    participant LLM as 🧠 LLM
+
+    U->>App: Send query
+    App->>Tpl: Load system role and format spec
+    Tpl-->>App: Base prompt scaffold
+    App->>Ctx: Fetch relevant context
+    Ctx-->>App: Reference passages
+    App->>App: Insert few-shot examples
+    Note over App: Order is role then context then examples then query
+    App->>LLM: Send assembled prompt
+    LLM-->>App: Structured response
+    App-->>U: Parsed answer
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — Chain-of-thought vs direct answer on a hard task</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ App
+    participant LLM as 🧠 LLM
+
+    U->>App: Multi-step reasoning question
+    alt Direct answer prompt
+        App->>LLM: Answer immediately
+        LLM-->>App: Single guess, often wrong
+    else Chain-of-thought prompt
+        App->>LLM: Think step by step, then answer
+        loop Reasoning steps
+            LLM->>LLM: Work through each step
+        end
+        LLM-->>App: Reasoning plus final answer
+        App->>App: Strip reasoning, keep answer
+    end
+    App-->>U: Final answer
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — Eval-driven refinement: author, run, score, revise</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Eng as 👩‍💻 Engineer
+    participant App as 🖥️ Prompt harness
+    participant Set as 📚 Eval set
+    participant LLM as 🧠 LLM
+    participant Judge as 📊 Scorer
+
+    Eng->>App: Author prompt version
+    App->>Set: Load labeled cases
+    loop For each case
+        App->>LLM: Run prompt on case
+        LLM-->>App: Output
+        App->>Judge: Score vs expected
+        Judge-->>App: Pass or fail
+    end
+    App-->>Eng: Aggregate score
+    alt Score improved
+        Eng->>App: Keep this version
+    else Regressed
+        Eng->>App: Revert and revise
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a vague goal to a hardened, evaluated prompt in production — the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Define</span><h4>Pin down the task &amp; success criteria</h4><p>State exactly what the model must do and what a good output looks like. If you can't describe success, you can't prompt or evaluate for it.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Role</span><h4>Set the system persona &amp; rules</h4><p>Give the model a role and the non-negotiable constraints — scope, tone, and what it must never do — in the system message.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Instruct</span><h4>Write clear, specific instructions</h4><p>Turn the task into unambiguous steps. Prefer positive, testable directives over vague adjectives like "good" or "professional".</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Structure</span><h4>Add delimiters &amp; sections</h4><p>Separate instructions, context, and the query with clear markers (headings, XML tags, triple quotes) so the model never confuses them.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Exemplify</span><h4>Provide few-shot examples</h4><p>Show 2–5 input → output pairs that cover the tricky cases. Examples teach the pattern more reliably than description alone.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Format</span><h4>Specify the output contract</h4><p>Declare the exact shape — JSON schema, template, length limits — so downstream code can parse the response deterministically.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Reason</span><h4>Add step-by-step reasoning if needed</h4><p>For multi-step tasks, ask the model to think through the problem before answering, then extract the final answer.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Guardrail</span><h4>Add negative instructions &amp; fallbacks</h4><p>State what to avoid and what to do on uncertainty — "if unsure, return null" — to prevent hallucination and off-scope output.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Evaluate</span><h4>Run against an eval set</h4><p>Test the prompt on a labeled set of representative cases and score outputs automatically or with an LLM judge.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Iterate</span><h4>Change → eval → keep or revert</h4><p>Make one change at a time, re-run the evals, and keep it only if the score improves. Never tune on a single anecdote.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Version, monitor &amp; maintain</h4><p>Pin the winning prompt as a versioned artifact, log real outputs, and feed failures back into the eval set to keep improving.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing prompt engineering in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏷️</span><div><h3>1 · Text-classification pipeline</h3><div class="role">Pattern: constrained single-label output</div></div></div>
+        <p class="muted">A team needs to route thousands of support tickets into fixed categories with high, consistent accuracy.</p>
+        <ul>
+          <li>The system role fixes an allowed category set and forbids inventing new labels.</li>
+          <li>Few-shot examples cover the ambiguous edge cases that a description alone would miss.</li>
+          <li>Output is a strict JSON object with a confidence score, so low-confidence cases route to a human.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Stable, parseable classifications with far less drift, because the allowed set and examples pin behavior and evals catch regressions before release.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>2 · Structured data extraction to JSON</h3><div class="role">Pattern: schema-locked extraction</div></div></div>
+        <p class="muted">A finance team must pull fields — vendor, amount, date, line items — out of messy invoices into a clean schema.</p>
+        <ul>
+          <li>The prompt embeds the target JSON schema and demands output that validates against it.</li>
+          <li>Negative guardrails ("return null for missing fields, never guess") prevent fabricated values.</li>
+          <li>Delimiters isolate the raw document from the instructions so long inputs don't leak into the rules.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Extraction that plugs straight into a database with a schema validator, turning a manual data-entry task into an automated, auditable pipeline.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">✍️</span><div><h3>3 · Brand-voice writing assistant</h3><div class="role">Pattern: persona + style constraints</div></div></div>
+        <p class="muted">A marketing org wants copy that always sounds like the brand across dozens of writers and channels.</p>
+        <ul>
+          <li>A detailed persona and style guide live in the system role — tone, reading level, words to avoid.</li>
+          <li>Few-shot examples of on-brand and off-brand copy anchor the target voice concretely.</li>
+          <li>An LLM judge scores drafts against the style rubric so the prompt can be tuned against real evals.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Consistent, on-brand drafts at scale, with a measurable voice rubric that keeps quality steady even as the prompt and models evolve.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where prompt engineering is heading</h2>
+      <p class="muted">Prompting is maturing from hand-crafted strings into a disciplined, tooled engineering practice — measured, versioned, and increasingly automated.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🤖 Automated prompt optimization</h4><p>Tools that search and rewrite prompts against an eval set — treating prompt design as an optimization problem rather than manual guesswork.</p></div>
+        <div class="card"><h4>📊 Evals as first-class</h4><p>Prompt changes gated by regression tests and scored on labeled sets, so quality is a metric you track, not a vibe you hope for.</p></div>
+        <div class="card"><h4>🧠 Reasoning models shift the craft</h4><p>Models that reason internally reduce the need for manual chain-of-thought, moving effort toward clear specs and verification.</p></div>
+        <div class="card"><h4>🗂️ Context engineering</h4><p>Managing the "lost in the middle" effect — ordering, compressing, and budgeting context across long windows becomes its own discipline.</p></div>
+        <div class="card"><h4>🧰 Structured &amp; tool-aware prompts</h4><p>Native JSON modes, function calling, and tool schemas make the output contract part of the API, not just prose in the prompt.</p></div>
+        <div class="card"><h4>🔁 Prompts as versioned artifacts</h4><p>Prompt registries, diffs, and rollbacks bring software-engineering rigor — version control, review, and CI — to the prompt layer.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> prompt engineering is how you turn a general model into a reliable component — cheaply, quickly, and verifiably. As models get stronger, the craft shifts from wording tricks toward clear specifications, evaluation, and context management, but it doesn't go away — it becomes more of an engineering discipline.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to prompt engineering · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

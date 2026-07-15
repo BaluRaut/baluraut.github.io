@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Engineering &amp; LLMOps — Visual Knowledge Hub</title>
+  <meta name="description" content="A visual, deeply-explained knowledge hub for modern AI engineering and LLMOps: agents, tool calling, MCP, RAG, prompting, routing, edge inference, evals, tracing, guardrails, PII, and governance." />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="./">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#engineering">Engineering</a>
+        <a href="#llmops">LLMOps</a>
+        <a href="/mcp/">MCP</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Visual Knowledge Hub</span>
+      <h1>AI Engineering &amp; LLMOps, explained the way it actually works</h1>
+      <p class="lede">Thirteen deep, visual guides to the skills that ship real AI products — each with a clear <strong>what / why / how</strong>, detailed <strong>sequence diagrams</strong>, a step-by-step <strong>0→100 flow</strong>, and <strong>real case studies</strong>. Built to be read, not skimmed.</p>
+      <div class="cta">
+        <a class="btn primary" href="#engineering">Explore the topics ↓</a>
+        <a class="btn ghost" href="/mcp/">Start with MCP</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">13 topics</span>
+        <span class="pill">Sequence diagrams</span>
+        <span class="pill">0→100 flows</span>
+        <span class="pill">Case studies</span>
+        <span class="pill">Light · Dark · Sepia · Contrast</span>
+      </div>
+    </div>
+  </header>
+
+  <section id="engineering">
+    <div class="wrap">
+      <div class="eyebrow">Track 1</div>
+      <h2>AI Engineering</h2>
+      <p class="group-sub">Designing and building systems on top of large language models.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="agentic/">
+          <span class="status live">Live</span>
+          <span class="ico">🕹️</span>
+          <h4>Agentic &amp; multi-agent orchestration</h4>
+          <p>Planning loops, tool use, memory, and coordinating fleets of specialized agents.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="tool-calling/">
+          <span class="status live">Live</span>
+          <span class="ico">🔧</span>
+          <h4>Tool / function-calling design</h4>
+          <p>How models invoke functions — schemas, arguments, validation, and the call loop.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="/mcp/">
+          <span class="status live">Live</span>
+          <span class="ico">🔌</span>
+          <h4>MCP (Model Context Protocol)</h4>
+          <p>The open standard that plugs any model into any tool, data source, or API.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="rag/">
+          <span class="status live">Live</span>
+          <span class="ico">📚</span>
+          <h4>RAG</h4>
+          <p>Retrieval-augmented generation: grounding answers in your own live data.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="prompt-engineering/">
+          <span class="status live">Live</span>
+          <span class="ico">✍️</span>
+          <h4>Prompt engineering</h4>
+          <p>Structuring instructions, context, few-shot, and reasoning for reliable output.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="model-routing/">
+          <span class="status live">Live</span>
+          <span class="ico">🔀</span>
+          <h4>Model routing &amp; cost / latency</h4>
+          <p>Sending each request to the right model to balance quality, speed, and spend.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="edge-inference/">
+          <span class="status live">Live</span>
+          <span class="ico">📱</span>
+          <h4>Edge / on-device inference</h4>
+          <p>Running quantized models locally for privacy, latency, and offline use.</p>
+          <span class="go">Read →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="llmops">
+    <div class="wrap">
+      <div class="eyebrow">Track 2</div>
+      <h2>AI Reliability &amp; LLMOps</h2>
+      <p class="group-sub">Measuring, observing, and governing AI systems in production.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="evals/">
+          <span class="status live">Live</span>
+          <span class="ico">🧪</span>
+          <h4>Evals &amp; LLM-as-judge</h4>
+          <p>Measuring quality with datasets, scorers, and models grading models.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="tracing/">
+          <span class="status live">Live</span>
+          <span class="ico">🔍</span>
+          <h4>Tracing (LangSmith / Langfuse)</h4>
+          <p>Observability for LLM apps — spans, tokens, latency, and debugging chains.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="prompt-management/">
+          <span class="status live">Live</span>
+          <span class="ico">🗂️</span>
+          <h4>Prompt &amp; version management</h4>
+          <p>Treating prompts as versioned artifacts: registries, rollouts, and rollback.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="guardrails/">
+          <span class="status live">Live</span>
+          <span class="ico">🛡️</span>
+          <h4>Guardrails</h4>
+          <p>Input/output filters, schema enforcement, and safety checks around the model.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="pii/">
+          <span class="status live">Live</span>
+          <span class="ico">🔒</span>
+          <h4>PII / data-boundary handling</h4>
+          <p>Detecting, redacting, and containing sensitive data across the AI pipeline.</p>
+          <span class="go">Read →</span>
+        </a>
+        <a class="topic-card" href="governance/">
+          <span class="status live">Live</span>
+          <span class="ico">⚖️</span>
+          <h4>AI governance &amp; model risk</h4>
+          <p>Policies, model risk management, audits, and regulatory compliance.</p>
+          <span class="go">Read →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p>AI Engineering &amp; LLMOps — a visual knowledge hub · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+      <p>Use the floating <strong>Aa</strong> button to adjust text size and color theme.</p>
+    </div>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

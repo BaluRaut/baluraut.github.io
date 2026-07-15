@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Routing &amp; Cost/Latency Explained — What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to LLM model routing and cost/latency optimization: classifier routing, cascading, semantic caching, and fallbacks, with sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">Model Routing &amp; Cost/Latency</span>
+      <h1>Send each request to the right model — not the biggest one</h1>
+      <p class="lede">Most production traffic doesn't need your most expensive, slowest model. <strong>Model routing</strong> inspects each request and dispatches it to the cheapest model that can do the job well — using classifiers, cascades, semantic caches, and fallbacks. The payoff is dramatic cost and latency savings without sacrificing quality on the requests that actually need it.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Classifier routing</span>
+        <span class="pill">Cascading / escalation</span>
+        <span class="pill">Semantic caching</span>
+        <span class="pill">Provider fallback</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What is model routing?</h2>
+      <p class="muted"><strong>Model routing</strong> is the layer between your application and the model providers that decides <em>which</em> model handles each request. Instead of hard-wiring every call to one flagship model, a router assesses the incoming request — its difficulty, cost budget, and latency target — and picks from a fleet of models that trade off price, speed, and capability. The best routers make requests cheaper and faster on average while keeping quality where it matters.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧭</span> Assess (classify)</h4>
+          <p>Score the request's difficulty and requirements — length, task type, required reasoning — before choosing a model.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎚️</span> Dispatch (route)</h4>
+          <p>Send simple requests to a small, cheap, fast model and hard ones to a larger, stronger model.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛟</span> Protect (fallback)</h4>
+          <p>On error, rate-limit, or timeout, retry on another model or provider so a single outage never takes you down.</p>
+        </div>
+      </div>
+
+      <h3>The core routing strategies</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Strategy</th><th>What it does</th><th>Best for</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Classifier / predictive</strong></td><td>Assess difficulty up front, then pick a model per request</td><td>Mixed traffic with easy + hard queries</td></tr>
+            <tr><td><strong>Cascade / escalation</strong></td><td>Try a cheap model, escalate only on low confidence</td><td>When most requests are easy but some aren't</td></tr>
+            <tr><td><strong>Semantic cache</strong></td><td>Serve a stored answer for semantically similar queries</td><td>Repetitive, high-volume, FAQ-style traffic</td></tr>
+            <tr><td><strong>Fallback routing</strong></td><td>Switch provider on error, rate-limit, or timeout</td><td>Reliability and multi-provider resilience</td></tr>
+            <tr><td><strong>Rule / metadata</strong></td><td>Route by tenant, region, tier, or data-sensitivity</td><td>Compliance, SLAs, and cost tiers</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> routing is a bet. You trade a tiny bit of overhead (a classifier call, a cache lookup) for a much cheaper or faster path on the majority of requests. The router's job is to be right often enough that the savings dwarf the cost of being occasionally wrong — and to escalate gracefully when it is.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why routing exists</h2>
+      <p class="muted">Flagship models can cost 10–30× more per token and run several times slower than small ones. When every request hits the biggest model, you overpay massively for the easy 80% of traffic — and users wait longer than they need to. Routing recovers that waste.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💸 Cuts cost dramatically</h4><p>Serving simple queries from a small model or a cache — instead of a flagship — can slash spend by large multiples on high-volume traffic.</p></div>
+        <div class="card"><h4>⚡ Lowers latency</h4><p>Small models and cache hits return in a fraction of the time. Users get faster answers on the requests that don't need deep reasoning.</p></div>
+        <div class="card"><h4>🎯 Preserves quality where it counts</h4><p>Hard requests still reach the strong model. You protect quality on the queries that matter instead of flattening everything to one tier.</p></div>
+        <div class="card"><h4>🛟 Improves reliability</h4><p>Multi-provider fallback means a single provider's outage, rate-limit, or timeout doesn't break your product — traffic reroutes automatically.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">A router sits in front of the model providers and juggles three concerns at once — the <strong>cost / latency / quality triangle</strong>. You can optimize any two, but tightening one usually pressures the others, so routing is about landing each request at the right point on that triangle.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔺</span> The trade-off triangle</h4>
+          <p>Cost, latency, and quality pull against each other. A cheap fast answer may be lower quality; a top-quality answer costs more and takes longer. Routing places each request where its SLA and budget allow.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📏</span> Measure, then set SLAs</h4>
+          <p>Log cost, p50/p95 latency, and a quality score per route. Set a latency SLA and a per-request budget, then let the router optimize within those guardrails and alert when they're breached.</p>
+        </div>
+      </div>
+
+      <h3>The router architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — the router inspects a request, checks the cache, then dispatches to the right model with fallback</div>
+        <pre class="mermaid">
+flowchart LR
+    Q["❓ Request"] --> R{"🧭 Router"}
+    subgraph Fast["⚡ Fast paths"]
+        C[("🧊 Semantic cache")]
+        SM["🐣 Small model"]
+    end
+    subgraph Strong["🧠 Strong paths"]
+        LG["🦾 Large model"]
+        FB["🛟 Fallback provider"]
+    end
+    R --> C
+    C -->|hit| ANS["✅ Response"]
+    C -->|miss| CL["📊 Classify difficulty"]
+    CL -->|easy| SM
+    CL -->|hard| LG
+    SM -->|low confidence| LG
+    LG -->|error / timeout| FB
+    SM --> ANS
+    LG --> ANS
+    FB --> ANS
+        </pre>
+      </div>
+
+      <h3>Routing logic in pseudocode</h3>
+      <pre><code>def route(request):
+    # 1. Semantic cache: serve similar past answers
+    hit = cache.lookup(embed(request), threshold=0.92)
+    if hit:
+        return hit.answer
+
+    # 2. Predictive routing: assess difficulty, pick a tier
+    score = classifier.difficulty(request)      # 0.0 .. 1.0
+    model = small_model if score &lt; 0.5 else large_model
+
+    # 3. Cascade: try cheap first, escalate on low confidence
+    resp = call(model, request)
+    if model is small_model and resp.confidence &lt; 0.7:
+        resp = call(large_model, request)       # escalate
+
+    # 4. Fallback: on error / rate-limit / timeout, switch provider
+    if resp.error:
+        resp = call(fallback_provider, request)
+
+    cache.store(embed(request), resp.answer)
+    return resp.answer</code></pre>
+      <p class="muted">Notice the ordering: cheapest checks first (cache), then a light classifier, then the cascade, with fallback wrapping everything. Each layer only pays for the next when it has to — that's what keeps average cost and latency low.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a classifier dispatching to the right model, a cheap-first cascade with confidence-based escalation, and a semantic cache with provider fallback on failure.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — Classifier routing: assess difficulty, then dispatch to the right model</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🧭 Router
+    participant C as 📊 Classifier
+    participant S as 🐣 Small model
+    participant L as 🧠 Large model
+
+    U->>R: Send request
+    R->>C: Score difficulty
+    C-->>R: score plus task type
+    alt easy request
+        R->>S: Dispatch to small model
+        S-->>R: Fast cheap answer
+    else hard request
+        R->>L: Dispatch to large model
+        L-->>R: High quality answer
+    end
+    R-->>U: Response plus route metadata
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — Cascade: cheap model first, confidence check, escalate when unsure</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🧭 Router
+    participant S as 🐣 Small model
+    participant J as 🔍 Confidence check
+    participant L as 🧠 Large model
+
+    U->>R: Send request
+    R->>S: Try cheap model first
+    S-->>R: Draft answer plus signal
+    R->>J: Evaluate confidence
+    J-->>R: score
+    alt confident enough
+        R-->>U: Return cheap answer
+    else low confidence
+        R->>L: Escalate to strong model
+        L-->>R: Higher quality answer
+        R-->>U: Return escalated answer
+    end
+    Note over R,L: Only hard requests pay for the big model
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — Semantic cache hit/miss plus provider fallback on failure</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🧭 Router
+    participant C as 🧊 Semantic cache
+    participant P as 🟣 Primary provider
+    participant F as 🛟 Fallback provider
+
+    U->>R: Send request
+    R->>C: Lookup similar query
+    alt cache hit
+        C-->>R: Stored answer
+        R-->>U: Instant cached response
+    else cache miss
+        C-->>R: No match
+        R->>P: Call primary provider
+        alt provider healthy
+            P-->>R: Answer
+        else error or rate limit or timeout
+            P-->>R: Failure
+            R->>F: Retry on fallback
+            F-->>R: Answer
+        end
+        R->>C: Store answer for reuse
+        R-->>U: Fresh response
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a raw request to a delivered response — every decision the router makes, in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Receive</span><h4>Accept the request</h4><p>A request arrives at the routing layer with its prompt, tenant, and any SLA or budget hints attached as metadata.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Normalize</span><h4>Canonicalize &amp; embed</h4><p>Normalize the prompt and compute an embedding so it can be compared against the semantic cache and scored for difficulty.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Cache</span><h4>Check the semantic cache</h4><p>Look up semantically similar past queries. If one is close enough above the similarity threshold, serve its stored answer and skip the model entirely.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Classify</span><h4>Assess difficulty</h4><p>On a cache miss, a lightweight classifier scores the request — task type, reasoning depth, length — to predict which model tier can handle it.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Budget</span><h4>Apply SLA &amp; budget guardrails</h4><p>Combine the difficulty score with the request's latency SLA and cost budget to choose a candidate model within the allowed envelope.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Dispatch</span><h4>Route to the chosen model</h4><p>Send easy requests to a small, cheap, fast model and hard ones straight to a stronger model. Metadata records the route taken.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Evaluate</span><h4>Check the confidence signal</h4><p>For cascade routes, inspect the cheap model's confidence — self-reported score, logprobs, or a cheap judge — to decide if the answer is good enough.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Escalate</span><h4>Promote hard cases</h4><p>If confidence is below the threshold, escalate to a larger model. Only the genuinely hard requests pay the premium price and latency.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Fallback</span><h4>Handle failures</h4><p>On error, rate-limit, or timeout, retry on an alternate model or provider with backoff so a single outage never surfaces to the user.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Store</span><h4>Cache the result</h4><p>Write the final answer back to the semantic cache so the next similar query is served instantly and cheaply.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>Return &amp; measure</h4><p>Return the response with route metadata, and log cost, latency, and quality per route so dashboards and evals can tune thresholds over time.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing routing in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💬</span><div><h3>1 · High-volume chatbot cutting cost</h3><div class="role">Pattern: cache + classifier routing</div></div></div>
+        <p class="muted">A consumer chatbot handles millions of messages a day, most of them simple greetings, FAQs, and short follow-ups.</p>
+        <ul>
+          <li>A semantic cache absorbs repetitive questions, serving a large share of traffic with no model call at all.</li>
+          <li>A difficulty classifier sends casual chit-chat to a small model and reserves the flagship for complex, multi-step requests.</li>
+          <li>Route mix and quality are monitored so thresholds can be retuned as traffic patterns shift.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The majority of requests never touch the expensive model, driving a large drop in cost per conversation while flagship quality is preserved for the hard tail.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏷️</span><div><h3>2 · Bulk classification job optimizing latency</h3><div class="role">Pattern: cascade with escalation</div></div></div>
+        <p class="muted">A data team must label millions of documents overnight within a fixed batch window.</p>
+        <ul>
+          <li>A fast small model labels every document first, emitting a confidence signal per item.</li>
+          <li>Only low-confidence items escalate to a stronger model, keeping the strong model's slow, costly calls to a minimum.</li>
+          <li>High parallelism plus the cheap-first cascade keeps end-to-end throughput inside the batch window.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The job finishes well within its window at a fraction of the cost of running everything through the large model, with accuracy held up by targeted escalation.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛡️</span><div><h3>3 · Multi-provider reliability setup</h3><div class="role">Pattern: fallback routing across providers</div></div></div>
+        <p class="muted">A business-critical product cannot afford downtime when a single model provider degrades.</p>
+        <ul>
+          <li>A primary provider serves normal traffic; health, error rate, and latency are tracked continuously.</li>
+          <li>On errors, rate-limits, or timeouts, requests reroute to an equivalent model on a second provider with backoff.</li>
+          <li>A circuit breaker sheds load from an unhealthy provider until it recovers, then restores normal routing.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Provider outages and rate-limit spikes become invisible to users, with the product staying available by seamlessly shifting traffic across providers.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where routing is heading</h2>
+      <p class="muted">Routing is evolving from static rules into learned, adaptive systems that optimize cost, latency, and quality in real time.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 Learned routers</h4><p>Models trained on real traffic that predict the cheapest model likely to satisfy each request — replacing hand-tuned rules with data-driven policies.</p></div>
+        <div class="card"><h4>🎛️ Budget-aware routing</h4><p>Routers that optimize against an explicit cost ceiling and latency SLA per request, spending the budget only where quality demands it.</p></div>
+        <div class="card"><h4>🧊 Smarter semantic caching</h4><p>Caches that reason about freshness and partial reuse — serving cached fragments and refreshing only what has changed.</p></div>
+        <div class="card"><h4>🔀 Cross-provider abstraction</h4><p>Unified gateways that treat many providers as one fleet, load-balancing and failing over transparently across vendors.</p></div>
+        <div class="card"><h4>📈 Continuous route evals</h4><p>Online quality scoring per route so the system detects drift and re-tunes thresholds automatically instead of on a manual cadence.</p></div>
+        <div class="card"><h4>🤝 Speculative &amp; hybrid decoding</h4><p>Small models drafting for large ones, blurring the line between routing and generation to cut latency without losing quality.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> routing is how you make LLM products economical at scale — matching each request to the cheapest model that meets its bar, and staying reliable when providers wobble. As models proliferate and prices shift, the routing layer becomes the control plane for cost, latency, and quality.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to Model Routing · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

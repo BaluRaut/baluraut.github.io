@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PII &amp; Data-Boundary Handling Explained — What, How, Why &amp; the Future</title>
+  <meta name="description" content="A deep, visual guide to PII and data-boundary handling for LLM apps: detection, redaction, tokenization, the detect→redact→rehydrate pattern, zero-retention providers, log scrubbing, sequence diagrams, a 0-100 flow, case studies, and the future." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">AI<span>·</span>Engineering</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0–100 Flow</a>
+        <a href="#cases">Case Studies</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">PII &amp; Data-Boundary Handling</span>
+      <h1>Keeping personal data out of the model — the complete picture</h1>
+      <p class="lede">LLM apps constantly handle names, emails, health records, and account numbers — and much of that work happens at an external provider you don't control. Safe systems <strong>detect</strong> personal data, <strong>redact or tokenize</strong> it before it crosses the trust boundary, and <strong>rehydrate</strong> the answer afterward, so the model does useful work while the raw PII never leaves your perimeter.</p>
+      <div class="cta">
+        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Detection &amp; classification</span>
+        <span class="pill">Tokenization &amp; vaults</span>
+        <span class="pill">Zero-retention endpoints</span>
+        <span class="pill">Log &amp; trace scrubbing</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 — What</div>
+      <h2>What is PII &amp; data-boundary handling?</h2>
+      <p class="muted"><strong>Personally identifiable information (PII)</strong> is any data that can identify a person — directly (name, email, SSN) or indirectly (an address plus a birth date). A <strong>data boundary</strong> is the perimeter around a trusted zone: your database, your VPC, your on-prem cluster. Data-boundary handling is the discipline of deciding <em>which fields may cross which perimeter to which model or provider</em> — and transforming them so the crossing is safe.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔍</span> Detect</h4>
+          <p>Find PII in the text before it moves — using regex for structured identifiers, ML classifiers for names and addresses, and context to disambiguate.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛡️</span> Transform</h4>
+          <p>Redact, mask, tokenize, or anonymize the detected spans so the payload leaving the boundary carries no raw personal data.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Rehydrate</h4>
+          <p>After the model responds, swap the placeholders back for the real values inside your perimeter, so the user sees a complete answer.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common choices</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Detector</strong></td><td>Locates PII spans in text and structured fields</td><td>Regex, NER models, Presidio, cloud DLP</td></tr>
+            <tr><td><strong>Classifier</strong></td><td>Labels each span by entity type &amp; sensitivity</td><td>PERSON, EMAIL, SSN, MRN, PAN</td></tr>
+            <tr><td><strong>Transformer</strong></td><td>Applies redaction, masking, or tokenization</td><td>Mask, hash, format-preserving token</td></tr>
+            <tr><td><strong>Token vault</strong></td><td>Stores reversible token↔value mappings securely</td><td>KMS-backed store, HSM, secrets vault</td></tr>
+            <tr><td><strong>Policy engine</strong></td><td>Decides what may cross which boundary</td><td>Field allow-lists, residency rules, DPAs</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the goal is not to stop using the LLM — it's to make sure the provider only ever sees data it doesn't need to be trusted with. If raw PII never crosses the boundary, a provider breach, a training leak, or a stray log line can't expose your users.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 — Why</div>
+      <h2>Why data-boundary handling exists</h2>
+      <p class="muted">Sending a prompt to a hosted model means copying data to a third party. Without controls, that copy can be retained, logged, used for training, or stored in the wrong jurisdiction. Boundary handling keeps the useful signal flowing while the identifying details stay home.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚖️ Regulatory compliance</h4><p>GDPR, HIPAA, CCPA, and sector rules demand a lawful basis, data minimization, and control over where personal data goes. Redaction and DPAs are how you meet them.</p></div>
+        <div class="card"><h4>🔐 Shrinks the blast radius</h4><p>If the model never sees raw PII, a provider incident or a leaked prompt exposes only meaningless tokens — not real identities.</p></div>
+        <div class="card"><h4>🌍 Data residency</h4><p>Some data legally cannot leave a region. Boundary policy routes those fields to in-region or on-prem models, or strips them entirely before egress.</p></div>
+        <div class="card"><h4>🚫 No silent training</h4><p>Zero-retention, no-training endpoints and signed agreements ensure your users' data isn't absorbed into a future model version.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 — How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Two concerns run in tandem: a <strong>data-transformation</strong> path that scrubs PII on the way out and restores it on the way back, and a <strong>governance</strong> layer of provider agreements, retention settings, and log hygiene that keeps the boundary honest.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">✂️</span> Transformation path</h4>
+          <p>Detect → classify → tokenize (reversible via a vault) or anonymize (irreversible) → send the scrubbed prompt to the model → map placeholders back to real values in the response.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📋</span> Governance layer</h4>
+          <p>Zero-retention / no-training endpoints, data-processing agreements, residency routing, and trace scrubbing so PII never lands in logs, observability, or backups.</p>
+        </div>
+      </div>
+
+      <h3>The architecture at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Architecture — PII is stripped inside the perimeter; only tokens cross to the provider</div>
+        <pre class="mermaid">
+flowchart LR
+    subgraph Trust["🏠 Trust perimeter"]
+        IN["📝 Raw input"] --> DET["🔍 Detect PII"]
+        DET --> CLS["🏷️ Classify + policy"]
+        CLS --> TOK["🎭 Tokenize / redact"]
+        TOK --> VLT[("🔐 Token vault")]
+        REH["🔁 Rehydrate"] --> OUT["✅ Final answer"]
+        VLT --> REH
+    end
+    subgraph Provider["☁️ External provider"]
+        LLM["🧠 LLM (zero-retention)"]
+    end
+    TOK -->|scrubbed prompt| LLM
+    LLM -->|tokenized answer| REH
+        </pre>
+      </div>
+
+      <h3>Detection &amp; tokenization in pseudocode</h3>
+      <pre><code>spans = detect(text)          # regex + NER + context rules
+mapping = {}
+scrubbed = text
+for s in spans:               # e.g. EMAIL, PERSON, SSN, PAN
+    token = make_token(s.type)          # "[EMAIL_1]", "[PERSON_2]"
+    vault.put(token, s.value, ttl=600)  # reversible, KMS-encrypted
+    mapping[token] = s.value
+    scrubbed = scrubbed.replace(s.value, token)
+
+answer = llm.generate(          # provider sees only tokens
+    endpoint="zero-retention",
+    prompt=scrubbed
+)
+
+final = answer
+for token, value in mapping.items():   # rehydrate inside perimeter
+    final = final.replace(token, value)
+vault.purge(mapping.keys())</code></pre>
+      <p class="muted">Reversible <em>tokenization</em> lets you restore real values via the vault; irreversible <em>anonymization</em> (masking or hashing with no mapping) is used when the data should never come back. Choose per field based on whether the final answer needs the real value.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 — Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the detect→redact→process→rehydrate round-trip, a boundary crossing that strips fields before egress, and a logging pipeline that scrubs PII before it hits your traces.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 — Detect → redact → process → rehydrate (provider never sees raw PII)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant App as 🖥️ App
+    participant Det as 🔍 PII detector
+    participant Vault as 🔐 Token vault
+    participant LLM as 🧠 External LLM
+
+    U->>App: Submit text with PII
+    App->>Det: detect and classify spans
+    Det-->>App: entities with types
+    App->>Vault: store token to value map
+    Vault-->>App: reversible tokens
+    App->>LLM: send tokenized prompt
+    LLM-->>App: answer containing tokens
+    App->>Vault: resolve tokens to values
+    Vault-->>App: real values
+    Note over App,Vault: rehydrate inside perimeter then purge
+    App-->>U: complete answer
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 — Boundary crossing: which fields are stripped before leaving the perimeter</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Svc as 🏠 Internal service
+    participant Pol as 📋 Policy engine
+    participant GW as 🚪 Egress gateway
+    participant Prov as ☁️ External provider
+
+    Svc->>Pol: request to call model with record
+    Pol->>Pol: evaluate field allow-list and residency
+    alt field must stay inside
+        Pol-->>GW: strip SSN, MRN, address
+    else field safe to send
+        Pol-->>GW: keep tokenized order id
+    end
+    GW->>GW: verify no raw PII remains
+    GW->>Prov: forward scrubbed payload
+    Prov-->>GW: response
+    Note over GW,Prov: zero-retention endpoint under a DPA
+    GW-->>Svc: response for rehydration
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 — Logging pipeline scrubs PII before writing traces</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ App
+    participant Log as 🧹 Scrubbing middleware
+    participant Trace as 📊 Tracing backend
+    participant Store as 🗄️ Log store
+
+    App->>Log: emit event with prompt and response
+    Log->>Log: detect and mask PII in payload
+    alt sensitive field found
+        Log->>Log: replace with redacted marker
+    else no PII detected
+        Log->>Log: pass through unchanged
+    end
+    Log->>Trace: send sanitized span
+    Trace->>Store: persist scrubbed trace
+    Note over Log,Store: raw PII never reaches observability
+    Store-->>App: ack
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 — Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From raw user input to a complete answer — the whole journey with PII controlled at every crossing.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Classify</span><h4>Inventory the data</h4><p>Map which fields in the request are PII, PHI, or financial data, and record their sensitivity and residency requirements up front.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Policy</span><h4>Decide what may cross</h4><p>The policy engine checks a field allow-list, residency rules, and the active data-processing agreement to determine what can leave the perimeter.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Detect</span><h4>Find PII in free text</h4><p>Run regex on structured identifiers and an NER/ML classifier on unstructured text, using context to catch names, addresses, and account numbers.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Classify</span><h4>Label &amp; score each span</h4><p>Tag every detected span by entity type and confidence so the right transform is applied — and low-confidence matches can be reviewed.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Transform</span><h4>Redact, mask, or tokenize</h4><p>Reversibly tokenize fields the answer will need back; irreversibly mask or drop fields that must never return.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Vault</span><h4>Store the mapping securely</h4><p>Write token↔value pairs to a KMS-encrypted vault with a short TTL, so the mapping exists only as long as the request needs it.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Verify</span><h4>Gate the egress</h4><p>At the boundary, scan the outgoing payload one last time and block it if any raw PII slipped through detection.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Send</span><h4>Call a zero-retention endpoint</h4><p>Forward the scrubbed prompt to a no-training, zero-retention model endpoint covered by a signed DPA and, where required, in-region.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Rehydrate</span><h4>Restore real values inside</h4><p>Map placeholders in the model's response back to real values using the vault, entirely within the trust perimeter.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Scrub</span><h4>Sanitize logs &amp; traces</h4><p>Scrubbing middleware masks PII before any prompt or response is written to logs, tracing, or analytics, then purges the token mapping.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Deliver</span><h4>Return the complete answer</h4><p>The user receives a full, accurate answer while the provider only ever saw tokens — and audit records prove what crossed the boundary.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 — Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative patterns showing data-boundary handling in production-style use.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏥</span><div><h3>1 · Healthcare app handling PHI</h3><div class="role">Pattern: HIPAA-bound PHI redaction before inference</div></div></div>
+        <p class="muted">A clinical app summarizes patient notes with an LLM, but protected health information may never reach an unqualified provider.</p>
+        <ul>
+          <li>NER models detect names, medical record numbers, and dates; they are tokenized before any call leaves the VPC.</li>
+          <li>Inference runs against a HIPAA-eligible, zero-retention endpoint under a signed business-associate agreement.</li>
+          <li>Summaries are rehydrated inside the perimeter, and all traces are scrubbed so PHI never lands in observability.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Clinicians get useful summaries while the model only ever processes de-identified text, keeping the system inside HIPAA's boundary.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>2 · Fintech assistant with financial PII</h3><div class="role">Pattern: reversible tokenization of account data</div></div></div>
+        <p class="muted">A banking assistant answers questions about transactions, but account and card numbers must stay within the institution's boundary.</p>
+        <ul>
+          <li>Regex catches structured identifiers like account and card numbers; a vault issues reversible, format-preserving tokens.</li>
+          <li>The model reasons over tokens, and answers are rehydrated so the customer sees their real account details.</li>
+          <li>A policy engine enforces residency, routing regulated fields only to in-region, no-training endpoints.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The assistant is helpful and specific while raw financial PII never crosses to the provider, satisfying auditors and residency rules.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎧</span><div><h3>3 · Support-transcript processing at scale</h3><div class="role">Pattern: bulk de-identification with log hygiene</div></div></div>
+        <p class="muted">A company mines millions of support transcripts for insights, but each transcript is full of customer names, emails, and addresses.</p>
+        <ul>
+          <li>A batch pipeline detects and masks PII in every transcript before it is embedded or sent for analysis.</li>
+          <li>Irreversible anonymization is used where identity is never needed, keeping the analytics corpus clean by design.</li>
+          <li>Scrubbing runs at ingestion so no raw PII reaches the data warehouse, search index, or trace store.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Analysts get aggregate insights at scale while individual customers stay unidentifiable across the entire downstream pipeline.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 — Future</div>
+      <h2>Where data-boundary handling is heading</h2>
+      <p class="muted">As LLMs move deeper into regulated workflows, boundary controls are shifting from bolt-on filters to first-class infrastructure.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧠 Context-aware detection</h4><p>LLM-based detectors that understand meaning will catch indirect and combined identifiers that regex and classic NER miss.</p></div>
+        <div class="card"><h4>🏢 Confidential computing</h4><p>Trusted execution environments and encrypted inference let providers process data they cannot read, tightening the boundary further.</p></div>
+        <div class="card"><h4>📐 Policy as code</h4><p>Data-boundary rules expressed as versioned, testable policy, enforced automatically at every egress point.</p></div>
+        <div class="card"><h4>🔎 Continuous PII evals</h4><p>Treating leak rate as a monitored metric — measuring detection recall and scrubbing coverage the way teams measure uptime.</p></div>
+        <div class="card"><h4>🏠 On-device &amp; on-prem models</h4><p>Capable local models keep the most sensitive data inside the perimeter entirely, removing the crossing rather than protecting it.</p></div>
+        <div class="card"><h4>🧾 Provable de-identification</h4><p>Differential-privacy and formal guarantees that let organizations demonstrate, not just assert, that data was anonymized.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> data-boundary handling is how you get the value of a general model without handing it your users' identities. Detect, transform, and rehydrate at the perimeter — and as models improve, the discipline becomes the default way regulated products ship AI.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the AI Engineering hub</a></p>
+      <p>A visual guide to PII &amp; data-boundary handling · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>
