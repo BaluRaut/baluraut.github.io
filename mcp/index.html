@@ -198,6 +198,64 @@
     footer a { color: var(--text-soft); }
     .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
     .pill { font-size: .8rem; padding: 4px 12px; border-radius: 999px; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-soft); }
+
+    /* Explicit theme overrides chosen from the reading widget — win over the media query */
+    :root[data-theme="light"] {
+      --bg:#fff; --bg-soft:#f6f8fa; --bg-card:#fff; --border:#e2e6eb;
+      --text:#1a1f26; --text-soft:#5a6472; --accent:#6b46e5; --accent-2:#0ea5a4;
+      --accent-soft:#efeaff; --code-bg:#0f1524; --code-text:#e6e9f0;
+    }
+    :root[data-theme="dark"] {
+      --bg:#0c1017; --bg-soft:#11161f; --bg-card:#141a24; --border:#232b38;
+      --text:#e8ecf3; --text-soft:#98a2b3; --accent:#a78bfa; --accent-2:#2dd4bf;
+      --accent-soft:#1e1b34; --code-bg:#0a0e17; --code-text:#e6e9f0;
+    }
+    :root[data-theme="sepia"] {
+      --bg:#f4ecd8; --bg-soft:#ece0c4; --bg-card:#f8f1e0; --border:#d9c9a3;
+      --text:#3b2f1c; --text-soft:#6b5b42; --accent:#9a6a2f; --accent-2:#4f7a4f;
+      --accent-soft:#ecdcbf; --code-bg:#2b2416; --code-text:#f0e6d0;
+    }
+    :root[data-theme="contrast"] {
+      --bg:#000; --bg-soft:#0a0a0a; --bg-card:#000; --border:#ffffff;
+      --text:#fff; --text-soft:#ffe600; --accent:#ffff00; --accent-2:#00e5ff;
+      --accent-soft:#1a1a00; --code-bg:#000; --code-text:#fff;
+      --shadow:0 0 0 1px #fff;
+    }
+
+    /* Floating reading-settings widget */
+    .a11y-fab { position: fixed; right: 20px; bottom: 20px; z-index: 200; }
+    .a11y-toggle {
+      height: 56px; width: 56px; border-radius: 50%; border: 2px solid var(--bg);
+      background: var(--accent); color: #fff; font-weight: 800; font-size: 1.15rem;
+      cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,.25); display: grid; place-items: center;
+      transition: transform .15s ease; line-height: 1;
+    }
+    .a11y-toggle:hover { transform: scale(1.07); }
+    .a11y-toggle:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+    .a11y-panel {
+      position: absolute; right: 0; bottom: 68px; width: 264px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+      box-shadow: var(--shadow); padding: 16px; display: none;
+    }
+    .a11y-panel.open { display: block; }
+    .a11y-panel h5 { margin: 0 0 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-soft); }
+    .a11y-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+    .a11y-btn {
+      flex: 1; padding: 10px 0; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg-soft); color: var(--text); font-weight: 700; cursor: pointer; font-size: .95rem;
+    }
+    .a11y-btn:hover { border-color: var(--accent); }
+    .a11y-size { min-width: 54px; text-align: center; font-variant-numeric: tabular-nums; font-size: .85rem; color: var(--text-soft); font-weight: 700; }
+    .a11y-themes { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 14px; }
+    .a11y-theme {
+      padding: 9px 8px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer;
+      font-size: .82rem; font-weight: 600; color: var(--text); background: var(--bg-soft);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .a11y-theme:hover { border-color: var(--accent); }
+    .a11y-theme.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+    .a11y-swatch { height: 14px; width: 14px; border-radius: 50%; border: 1px solid var(--border); flex: 0 0 auto; }
+    @media print { .a11y-fab, nav { display: none !important; } }
   </style>
 </head>
 <body>
@@ -525,16 +583,111 @@ sequenceDiagram
     </div>
   </footer>
 
+  <!-- Floating reading-settings widget -->
+  <div class="a11y-fab">
+    <div class="a11y-panel" id="a11yPanel" role="dialog" aria-label="Reading settings">
+      <h5>Text size</h5>
+      <div class="a11y-row">
+        <button class="a11y-btn" id="fontMinus" aria-label="Decrease text size">A&minus;</button>
+        <span class="a11y-size" id="fontVal">100%</span>
+        <button class="a11y-btn" id="fontPlus" aria-label="Increase text size">A+</button>
+      </div>
+      <h5>Color theme</h5>
+      <div class="a11y-themes">
+        <button class="a11y-theme" data-set-theme="light"><span class="a11y-swatch" style="background:#ffffff"></span>Light</button>
+        <button class="a11y-theme" data-set-theme="dark"><span class="a11y-swatch" style="background:#141a24"></span>Dark</button>
+        <button class="a11y-theme" data-set-theme="sepia"><span class="a11y-swatch" style="background:#f4ecd8"></span>Sepia</button>
+        <button class="a11y-theme" data-set-theme="contrast"><span class="a11y-swatch" style="background:#000000;border-color:#fff"></span>Contrast</button>
+      </div>
+      <div class="a11y-row" style="margin-bottom:0">
+        <button class="a11y-btn" id="a11yReset">Reset</button>
+      </div>
+    </div>
+    <button class="a11y-toggle" id="a11yToggle" aria-label="Open reading settings" aria-expanded="false" title="Reading settings">Aa</button>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <script>
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: prefersDark ? 'dark' : 'neutral',
-      securityLevel: 'loose',
-      sequence: { showSequenceNumbers: false, actorMargin: 40, mirrorActors: false },
-      flowchart: { curve: 'basis' }
+  (function () {
+    const root = document.documentElement;
+    const LS_FONT = 'mcpFontScale', LS_THEME = 'mcpTheme';
+
+    // Keep original Mermaid source so diagrams can be re-themed on demand.
+    const diagrams = Array.from(document.querySelectorAll('.mermaid'));
+    const sources = diagrams.map(el => el.textContent);
+    function mermaidThemeFor(theme) {
+      const t = theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      return (t === 'dark' || t === 'contrast') ? 'dark' : 'neutral';
+    }
+    function renderDiagrams(theme) {
+      if (typeof mermaid === 'undefined') return;
+      diagrams.forEach((el, i) => { el.removeAttribute('data-processed'); el.innerHTML = sources[i]; });
+      mermaid.initialize({
+        startOnLoad: false, theme: mermaidThemeFor(theme), securityLevel: 'loose',
+        sequence: { showSequenceNumbers: false, actorMargin: 40, mirrorActors: false },
+        flowchart: { curve: 'basis' }
+      });
+      try { mermaid.run({ nodes: diagrams }); } catch (e) {}
+    }
+
+    // Theme
+    function markActive(theme) {
+      document.querySelectorAll('.a11y-theme').forEach(b =>
+        b.classList.toggle('active', b.getAttribute('data-set-theme') === theme));
+    }
+    function applyTheme(theme) {
+      if (theme) root.setAttribute('data-theme', theme); else root.removeAttribute('data-theme');
+      markActive(theme);
+      renderDiagrams(theme);
+    }
+    document.querySelectorAll('.a11y-theme').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.getAttribute('data-set-theme');
+        localStorage.setItem(LS_THEME, t); applyTheme(t);
+      });
     });
+
+    // Font size
+    let scale = parseInt(localStorage.getItem(LS_FONT) || '100', 10);
+    const fontVal = document.getElementById('fontVal');
+    function applyFont() {
+      scale = Math.max(80, Math.min(180, scale));
+      root.style.fontSize = scale + '%';
+      fontVal.textContent = scale + '%';
+      localStorage.setItem(LS_FONT, String(scale));
+    }
+    document.getElementById('fontPlus').addEventListener('click', () => { scale += 10; applyFont(); });
+    document.getElementById('fontMinus').addEventListener('click', () => { scale -= 10; applyFont(); });
+
+    // Reset
+    document.getElementById('a11yReset').addEventListener('click', () => {
+      localStorage.removeItem(LS_FONT); localStorage.removeItem(LS_THEME);
+      scale = 100; applyFont(); applyTheme(null);
+    });
+
+    // Toggle panel
+    const toggle = document.getElementById('a11yToggle');
+    const panel = document.getElementById('a11yPanel');
+    toggle.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = panel.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.a11y-fab')) { panel.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); }
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { panel.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); }
+    });
+
+    // Init (restore saved preferences, render diagrams once Mermaid is ready)
+    const savedTheme = localStorage.getItem(LS_THEME);
+    applyFont();
+    window.addEventListener('load', () => {
+      if (savedTheme) { root.setAttribute('data-theme', savedTheme); markActive(savedTheme); }
+      renderDiagrams(savedTheme);
+    });
+  })();
   </script>
 </body>
 </html>
