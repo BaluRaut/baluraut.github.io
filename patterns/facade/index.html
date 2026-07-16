@@ -165,8 +165,14 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A realistic facade in TypeScript</h3>
-      <pre><code>// Subsystem classes: each is detailed and usable on its own.
+      <h3>A realistic facade in three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Subsystem classes: each is detailed and usable on its own.
 class InventoryService {
   reserve(items: LineItem[]): Reservation { /* ... */ }
   release(r: Reservation): void { /* ... */ }
@@ -213,6 +219,99 @@ const receipt = checkout.placeOrder(cart);
 // subsystem class on its own when it needs to.
 const lowStock = inventory.reserve; // subsystem remains public
 </code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Subsystem classes: each is detailed and usable on its own.
+class InventoryService:
+    def reserve(self, items): ...        # returns a Reservation
+    def release(self, reservation): ...
+
+class PaymentGateway:
+    def charge(self, amount, token): ... # returns a TxnId
+    def refund(self, txn): ...
+
+class ShippingService:
+    def schedule(self, address, items): ...  # returns Tracking
+
+class EmailService:
+    def send_receipt(self, to, receipt): ...
+
+# Facade: one intent-shaped method over the whole checkout workflow.
+class CheckoutFacade:
+    def __init__(self, inventory, payments, shipping, email):
+        self._inventory = inventory
+        self._payments = payments
+        self._shipping = shipping
+        self._email = email
+
+    def place_order(self, cart):
+        reservation = self._inventory.reserve(cart.items)
+        try:
+            txn = self._payments.charge(cart.total, cart.payment_token)
+            tracking = self._shipping.schedule(cart.address, cart.items)
+            receipt = Receipt(txn=txn, tracking=tracking, items=cart.items)
+            self._email.send_receipt(cart.email, receipt)
+            return receipt
+        except Exception:
+            self._inventory.release(reservation)  # compensate on failure
+            raise
+
+# Client: one call, no knowledge of ordering or rollback.
+receipt = checkout.place_order(cart)
+
+# Direct access is NOT forbidden: a report job may still use a
+# subsystem class on its own when it needs to.
+low_stock = inventory.reserve  # subsystem remains public
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Subsystem classes: each is detailed and usable on its own.
+class InventoryService
+  def reserve(items); end   # returns a Reservation
+  def release(reservation); end
+end
+
+class PaymentGateway
+  def charge(amount, token); end # returns a TxnId
+  def refund(txn); end
+end
+
+class ShippingService
+  def schedule(address, items); end # returns Tracking
+end
+
+class EmailService
+  def send_receipt(to, receipt); end
+end
+
+# Facade: one intent-shaped method over the whole checkout workflow.
+class CheckoutFacade
+  def initialize(inventory, payments, shipping, email)
+    @inventory = inventory
+    @payments = payments
+    @shipping = shipping
+    @email = email
+  end
+
+  def place_order(cart)
+    reservation = @inventory.reserve(cart.items)
+    begin
+      txn = @payments.charge(cart.total, cart.payment_token)
+      tracking = @shipping.schedule(cart.address, cart.items)
+      receipt = Receipt.new(txn: txn, tracking: tracking, items: cart.items)
+      @email.send_receipt(cart.email, receipt)
+      receipt
+    rescue StandardError
+      @inventory.release(reservation) # compensate on failure
+      raise
+    end
+  end
+end
+
+# Client: one call, no knowledge of ordering or rollback.
+receipt = checkout.place_order(cart)
+
+# Direct access is NOT forbidden: a report job may still use a
+# subsystem class on its own when it needs to.
+low_stock = inventory.method(:reserve) # subsystem remains public
+</code></pre>
+      </div>
       <p class="muted">Notice the facade owns the ordering, the try/catch compensation, and the notification, so the client never sees them. Yet <code>InventoryService</code> and friends stay public classes, callable directly by any code that needs finer control. That is the deliberate line between a facade and a locked-down encapsulation.</p>
     </div>
   </section>

@@ -159,49 +159,152 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A realistic example in Java</h3>
-      <pre><code>abstract class DataImporter {
+      <h3>A realistic example</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// A data-import pipeline: the base fixes the order, subclasses fill the steps.
+abstract class DataImporter {
 
-    // The template method: the algorithm skeleton, locked with final.
-    public final void run(String path) {
-        String raw = read(path);          // abstract step
-        List&lt;Record&gt; records = parse(raw); // abstract step
-        if (shouldValidate()) {            // hook controls an optional step
-            validate(records);            // hook step
-        }
-        save(records);                    // shared, invariant step
-        onComplete(records.size());       // hook, empty by default
+  // The template method: the algorithm skeleton. Not overridable by convention.
+  run(path: string): void {
+    const raw = this.read(path);        // abstract step
+    const records = this.parse(raw);    // abstract step
+    if (this.shouldValidate()) {        // hook controls an optional step
+      this.validate(records);           // hook step
     }
+    this.save(records);                 // shared, invariant step
+    this.onComplete(records.length);    // hook, no-op by default
+  }
 
-    // Required steps: every subclass MUST provide these.
-    protected abstract String read(String path);
-    protected abstract List&lt;Record&gt; parse(String raw);
+  // Required steps: every subclass MUST provide these.
+  protected abstract read(path: string): string;
+  protected abstract parse(raw: string): Record[];
 
-    // Hook methods: optional, with sensible defaults.
-    protected boolean shouldValidate() { return true; }
-    protected void validate(List&lt;Record&gt; records) { /* default no-op */ }
-    protected void onComplete(int count) { /* subclasses may log here */ }
+  // Hook methods: optional, with sensible defaults.
+  protected shouldValidate(): boolean { return true; }
+  protected validate(records: Record[]): void { /* default no-op */ }
+  protected onComplete(count: number): void { /* subclasses may log here */ }
 
-    // Invariant step shared by all importers.
-    private void save(List&lt;Record&gt; records) {
-        Database.bulkInsert(records);
-    }
+  // Invariant step shared by all importers.
+  private save(records: Record[]): void {
+    Database.bulkInsert(records);
+  }
 }
 
 class CsvImporter extends DataImporter {
-    protected String read(String path) { return Files.readString(path); }
-    protected List&lt;Record&gt; parse(String raw) { return Csv.toRecords(raw); }
-    protected void onComplete(int count) {
-        System.out.println("Imported " + count + " CSV rows");
-    }
+  protected read(path: string): string { return fs.readFileSync(path, "utf8"); }
+  protected parse(raw: string): Record[] { return Csv.toRecords(raw); }
+  protected onComplete(count: number): void {
+    console.log(`Imported ${count} CSV rows`);
+  }
 }
 
 class JsonImporter extends DataImporter {
-    protected String read(String path) { return Http.get(path); }
-    protected List&lt;Record&gt; parse(String raw) { return Json.toRecords(raw); }
-    // Trusted feed, so skip validation via the hook.
-    protected boolean shouldValidate() { return false; }
-}</code></pre>
+  protected read(path: string): string { return Http.get(path); }
+  protected parse(raw: string): Record[] { return JSON.parse(raw); }
+  // Trusted feed, so skip validation via the hook.
+  protected shouldValidate(): boolean { return false; }
+}
+
+new CsvImporter().run("customers.csv");
+new JsonImporter().run("https://api.example.com/orders");</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># A data-import pipeline: the base fixes the order, subclasses fill the steps.
+from abc import ABC, abstractmethod
+
+class DataImporter(ABC):
+
+    # The template method: the algorithm skeleton. Do not override.
+    def run(self, path):
+        raw = self.read(path)             # abstract step
+        records = self.parse(raw)         # abstract step
+        if self.should_validate():        # hook controls an optional step
+            self.validate(records)        # hook step
+        self._save(records)               # shared, invariant step
+        self.on_complete(len(records))    # hook, no-op by default
+
+    # Required steps: every subclass MUST provide these.
+    @abstractmethod
+    def read(self, path): ...
+    @abstractmethod
+    def parse(self, raw): ...
+
+    # Hook methods: optional, with sensible defaults.
+    def should_validate(self): return True
+    def validate(self, records): pass          # default no-op
+    def on_complete(self, count): pass          # subclasses may log here
+
+    # Invariant step shared by all importers.
+    def _save(self, records):
+        Database.bulk_insert(records)
+
+class CsvImporter(DataImporter):
+    def read(self, path):
+        with open(path) as f:
+            return f.read()
+    def parse(self, raw):
+        return Csv.to_records(raw)
+    def on_complete(self, count):
+        print(f"Imported {count} CSV rows")
+
+class JsonImporter(DataImporter):
+    def read(self, path): return Http.get(path)
+    def parse(self, raw): return json.loads(raw)
+    # Trusted feed, so skip validation via the hook.
+    def should_validate(self): return False
+
+CsvImporter().run("customers.csv")
+JsonImporter().run("https://api.example.com/orders")</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># A data-import pipeline: the base fixes the order, subclasses fill the steps.
+class DataImporter
+
+  # The template method: the algorithm skeleton. Do not override.
+  def run(path)
+    raw = read(path)              # abstract step
+    records = parse(raw)          # abstract step
+    validate(records) if should_validate?  # hook controls an optional step
+    save(records)                # shared, invariant step
+    on_complete(records.size)    # hook, no-op by default
+  end
+
+  # Required steps: every subclass MUST provide these.
+  def read(path)  = raise NotImplementedError
+  def parse(raw)  = raise NotImplementedError
+
+  # Hook methods: optional, with sensible defaults.
+  def should_validate? = true
+  def validate(records); end          # default no-op
+  def on_complete(count); end         # subclasses may log here
+
+  private
+
+  # Invariant step shared by all importers.
+  def save(records)
+    Database.bulk_insert(records)
+  end
+end
+
+class CsvImporter < DataImporter
+  def read(path)  = File.read(path)
+  def parse(raw)  = Csv.to_records(raw)
+  def on_complete(count)
+    puts "Imported #{count} CSV rows"
+  end
+end
+
+class JsonImporter < DataImporter
+  def read(path)  = Http.get(path)
+  def parse(raw)  = JSON.parse(raw)
+  # Trusted feed, so skip validation via the hook.
+  def should_validate? = false
+end
+
+CsvImporter.new.run("customers.csv")
+JsonImporter.new.run("https://api.example.com/orders")</code></pre>
+      </div>
       <p class="muted">Notice that <code>run()</code> is <code>final</code>: subclasses cannot change the order of read, parse, validate, save. They only override <em>steps</em>. The base class calls down into the subclass, never the reverse, which is the Hollywood Principle in action: do not call us, we will call you.</p>
     </div>
   </section>

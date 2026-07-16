@@ -156,42 +156,97 @@ classDiagram
         </pre>
       </div>
 
-      <h3>An object adapter in Java</h3>
-      <pre><code>// Target: the interface our application already speaks
-public interface PaymentGateway {
-    Receipt charge(Money amount, String customerId);
+      <h3>An object adapter in code</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Target: the interface our application already speaks
+interface PaymentGateway {
+  charge(amount: Money, customerId: string): Receipt;
 }
 
 // Adaptee: a third-party SDK we do not control
-public final class StripeClient {
-    public StripeResult createCharge(long cents, String currency, String customer) {
-        // ... real HTTP call to Stripe ...
-        return new StripeResult("ch_123", "succeeded");
-    }
+class StripeClient {
+  createCharge(cents: number, currency: string, customer: string): StripeResult {
+    // ... real HTTP call to Stripe ...
+    return { id: "ch_123", status: "succeeded" };
+  }
 }
 
 // Adapter: implements Target, holds the Adaptee (composition), translates both ways
-public final class StripePaymentAdapter implements PaymentGateway {
-    private final StripeClient stripe; // has-a Adaptee
+class StripePaymentAdapter implements PaymentGateway {
+  constructor(private readonly stripe: StripeClient) {} // has-a Adaptee
 
-    public StripePaymentAdapter(StripeClient stripe) {
-        this.stripe = stripe;
+  charge(amount: Money, customerId: string): Receipt {
+    const cents = amount.toMinorUnits();                 // reshape input
+    const r = this.stripe.createCharge(cents, amount.currencyCode(), customerId);
+    if (r.status !== "succeeded") {                      // translate errors
+      throw new PaymentFailedError(r.id);
     }
-
-    @Override
-    public Receipt charge(Money amount, String customerId) {
-        long cents = amount.toMinorUnits();               // reshape input
-        StripeResult r = stripe.createCharge(cents, amount.currencyCode(), customerId);
-        if (!"succeeded".equals(r.status())) {            // translate errors
-            throw new PaymentFailedException(r.id());
-        }
-        return new Receipt(r.id(), amount);               // reshape output
-    }
+    return new Receipt(r.id, amount);                    // reshape output
+  }
 }
 
 // Client stays blissfully unaware of Stripe
-PaymentGateway gateway = new StripePaymentAdapter(new StripeClient());
-Receipt receipt = gateway.charge(Money.usd(49.99), "cus_42");</code></pre>
+const gateway: PaymentGateway = new StripePaymentAdapter(new StripeClient());
+const receipt = gateway.charge(Money.usd(49.99), "cus_42");</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Target: the interface our application already speaks
+class PaymentGateway(Protocol):
+    def charge(self, amount: Money, customer_id: str) -> Receipt: ...
+
+# Adaptee: a third-party SDK we do not control
+class StripeClient:
+    def create_charge(self, cents: int, currency: str, customer: str) -> StripeResult:
+        # ... real HTTP call to Stripe ...
+        return StripeResult(id="ch_123", status="succeeded")
+
+# Adapter: implements Target, holds the Adaptee (composition), translates both ways
+class StripePaymentAdapter:
+    def __init__(self, stripe: StripeClient) -> None:
+        self._stripe = stripe                            # has-a Adaptee
+
+    def charge(self, amount: Money, customer_id: str) -> Receipt:
+        cents = amount.to_minor_units()                  # reshape input
+        r = self._stripe.create_charge(cents, amount.currency_code(), customer_id)
+        if r.status != "succeeded":                      # translate errors
+            raise PaymentFailedError(r.id)
+        return Receipt(r.id, amount)                      # reshape output
+
+# Client stays blissfully unaware of Stripe
+gateway: PaymentGateway = StripePaymentAdapter(StripeClient())
+receipt = gateway.charge(Money.usd(49.99), "cus_42")</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Target: the interface our application already speaks (duck-typed)
+# every gateway responds to #charge(amount, customer_id) -> Receipt
+
+# Adaptee: a third-party SDK we do not control
+class StripeClient
+  def create_charge(cents, currency, customer)
+    # ... real HTTP call to Stripe ...
+    StripeResult.new(id: "ch_123", status: "succeeded")
+  end
+end
+
+# Adapter: exposes #charge, holds the Adaptee (composition), translates both ways
+class StripePaymentAdapter
+  def initialize(stripe)
+    @stripe = stripe                                     # has-a Adaptee
+  end
+
+  def charge(amount, customer_id)
+    cents = amount.to_minor_units                        # reshape input
+    r = @stripe.create_charge(cents, amount.currency_code, customer_id)
+    raise PaymentFailedError, r.id unless r.status == "succeeded" # translate errors
+    Receipt.new(r.id, amount)                            # reshape output
+  end
+end
+
+# Client stays blissfully unaware of Stripe
+gateway = StripePaymentAdapter.new(StripeClient.new)
+receipt = gateway.charge(Money.usd(49.99), "cus_42")</code></pre>
+      </div>
       <p class="muted">The client only ever sees <code>PaymentGateway</code>. All the mismatch - dollars to cents, the vendor result shape, the vendor error convention - is absorbed inside the adapter, so swapping providers means writing a new adapter, not touching the client.</p>
     </div>
   </section>

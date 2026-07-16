@@ -163,51 +163,150 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A realistic example in Java</h3>
-      <pre><code>// 1. The strategy interface - the common contract
+      <h3>A realistic example</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// 1. The strategy interface - the common contract
 interface PaymentStrategy {
-    void pay(int amountCents);
+  pay(amountCents: number): void;
 }
 
 // 2. Interchangeable concrete strategies
 class CreditCardPayment implements PaymentStrategy {
-    private final String number;
-    CreditCardPayment(String number) { this.number = number; }
-    public void pay(int amountCents) {
-        System.out.printf("Charged %d to card %s%n", amountCents, mask(number));
-    }
-    private String mask(String n) { return "****" + n.substring(n.length() - 4); }
+  constructor(private number: string) {}
+  pay(amountCents: number): void {
+    console.log(`Charged ${amountCents} to card ${this.mask()}`);
+  }
+  private mask(): string { return "****" + this.number.slice(-4); }
 }
 
 class PayPalPayment implements PaymentStrategy {
-    private final String email;
-    PayPalPayment(String email) { this.email = email; }
-    public void pay(int amountCents) {
-        System.out.printf("Charged %d via PayPal (%s)%n", amountCents, email);
-    }
+  constructor(private email: string) {}
+  pay(amountCents: number): void {
+    console.log(`Charged ${amountCents} via PayPal (${this.email})`);
+  }
 }
 
 // 3. The context - delegates, never branches on payment type
 class Checkout {
-    private PaymentStrategy strategy;
-    void setStrategy(PaymentStrategy s) { this.strategy = s; }
-    void checkout(int amountCents) {
-        if (strategy == null) throw new IllegalStateException("No payment method");
-        strategy.pay(amountCents);   // the varying step, delegated
-    }
+  private strategy?: PaymentStrategy;
+  setStrategy(s: PaymentStrategy): void { this.strategy = s; }
+  checkout(amountCents: number): void {
+    if (!this.strategy) throw new Error("No payment method");
+    this.strategy.pay(amountCents);   // the varying step, delegated
+  }
 }
 
 // 4. The client selects a strategy at runtime
-Checkout checkout = new Checkout();
+const checkout = new Checkout();
 checkout.setStrategy(new CreditCardPayment("4242424242424242"));
 checkout.checkout(1999);
 
 checkout.setStrategy(new PayPalPayment("buyer@example.com")); // swap, same call
 checkout.checkout(1999);</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># 1. The strategy interface - the common contract
+from typing import Protocol
+
+class PaymentStrategy(Protocol):
+    def pay(self, amount_cents: int) -> None: ...
+
+# 2. Interchangeable concrete strategies
+class CreditCardPayment:
+    def __init__(self, number: str) -> None:
+        self._number = number
+    def pay(self, amount_cents: int) -> None:
+        print(f"Charged {amount_cents} to card {self._mask()}")
+    def _mask(self) -> str:
+        return "****" + self._number[-4:]
+
+class PayPalPayment:
+    def __init__(self, email: str) -> None:
+        self._email = email
+    def pay(self, amount_cents: int) -> None:
+        print(f"Charged {amount_cents} via PayPal ({self._email})")
+
+# 3. The context - delegates, never branches on payment type
+class Checkout:
+    def __init__(self) -> None:
+        self._strategy: PaymentStrategy | None = None
+    def set_strategy(self, strategy: PaymentStrategy) -> None:
+        self._strategy = strategy
+    def checkout(self, amount_cents: int) -> None:
+        if self._strategy is None:
+            raise RuntimeError("No payment method")
+        self._strategy.pay(amount_cents)   # the varying step, delegated
+
+# 4. The client selects a strategy at runtime
+checkout = Checkout()
+checkout.set_strategy(CreditCardPayment("4242424242424242"))
+checkout.checkout(1999)
+
+checkout.set_strategy(PayPalPayment("buyer@example.com"))  # swap, same call
+checkout.checkout(1999)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># 1. The strategy "interface" - a common duck-typed contract
+#    Each strategy responds to pay(amount_cents).
+
+# 2. Interchangeable concrete strategies
+class CreditCardPayment
+  def initialize(number)
+    @number = number
+  end
+
+  def pay(amount_cents)
+    puts "Charged #{amount_cents} to card #{mask}"
+  end
+
+  private
+
+  def mask
+    "****" + @number[-4..]
+  end
+end
+
+class PayPalPayment
+  def initialize(email)
+    @email = email
+  end
+
+  def pay(amount_cents)
+    puts "Charged #{amount_cents} via PayPal (#{@email})"
+  end
+end
+
+# 3. The context - delegates, never branches on payment type
+class Checkout
+  def strategy=(strategy)
+    @strategy = strategy
+  end
+
+  def checkout(amount_cents)
+    raise "No payment method" unless @strategy
+    @strategy.pay(amount_cents)   # the varying step, delegated
+  end
+end
+
+# 4. The client selects a strategy at runtime
+checkout = Checkout.new
+checkout.strategy = CreditCardPayment.new("4242424242424242")
+checkout.checkout(1999)
+
+checkout.strategy = PayPalPayment.new("buyer@example.com") # swap, same call
+checkout.checkout(1999)</code></pre>
+      </div>
       <p class="muted">Notice the context has <em>no</em> conditional on payment type. Adding <code>CryptoPayment</code> means writing one new class - <code>Checkout</code> never changes. That is composition doing the work a <code>switch</code> statement used to do.</p>
 
-      <h3>Functional strategies with lambdas (TypeScript)</h3>
-      <pre><code>// When a strategy is a single method, it is just a function type.
+      <h3>Functional strategies without classes</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// When a strategy is a single method, it is just a function type.
 type SortStrategy&lt;T&gt; = (a: T, b: T) =&gt; number;
 
 class ProductList {
@@ -231,6 +330,57 @@ const sorters: Record&lt;string, SortStrategy&lt;Product&gt;&gt; = {
   rating: byRatingDesc,
 };
 list.sortBy(sorters[userChoice] ?? byPriceAsc);</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># When a strategy is a single method, it is just a callable.
+from typing import Callable
+
+SortKey = Callable[[Product], object]
+
+class ProductList:
+    def __init__(self, items: list[Product]) -> None:
+        self._items = items
+    def sort_by(self, key: SortKey, reverse: bool = False) -> list[Product]:
+        return sorted(self._items, key=key, reverse=reverse)
+
+# Strategies as plain lambdas - no class boilerplate needed
+by_price_asc:   SortKey = lambda p: p.price
+by_rating_desc: SortKey = lambda p: p.rating
+
+products = ProductList(catalog)
+products.sort_by(by_price_asc)                 # choose at the call site
+products.sort_by(by_rating_desc, reverse=True) # swap it freely
+
+# A registry makes runtime selection data-driven
+sorters: dict[str, SortKey] = {
+    "price":  by_price_asc,
+    "rating": by_rating_desc,
+}
+products.sort_by(sorters.get(user_choice, by_price_asc))</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># When a strategy is a single method, it is just a lambda.
+class ProductList
+  def initialize(items)
+    @items = items
+  end
+
+  def sort_by_strategy(strategy)
+    @items.sort(&amp;strategy)
+  end
+end
+
+# Strategies as plain lambdas - no class boilerplate needed
+by_price_asc   = ->(a, b) { a.price &lt;=&gt; b.price }
+by_rating_desc = ->(a, b) { b.rating &lt;=&gt; a.rating }
+
+list = ProductList.new(catalog)
+list.sort_by_strategy(by_price_asc)    # choose an algorithm at the call site
+list.sort_by_strategy(by_rating_desc)  # swap it freely
+
+# A registry makes runtime selection data-driven
+sorters = {
+  "price"  =&gt; by_price_asc,
+  "rating" =&gt; by_rating_desc,
+}
+list.sort_by_strategy(sorters.fetch(user_choice, by_price_asc))</code></pre>
+      </div>
       <p class="muted">In modern languages a strategy with one method collapses into a lambda. The pattern is identical - interface, interchangeable implementations, runtime selection - but a functional interface (<code>Comparator</code>, <code>Runnable</code>, a function type) removes the class ceremony.</p>
     </div>
   </section>

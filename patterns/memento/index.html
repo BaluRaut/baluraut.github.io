@@ -158,8 +158,14 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A working example in TypeScript</h3>
-      <pre><code>// Memento: opaque snapshot. Only the Originator reads its full state.
+      <h3>A working example</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Memento: opaque snapshot. Only the Originator reads its full state.
 class EditorMemento {
   constructor(
     private readonly content: string,
@@ -222,6 +228,139 @@ console.log(editor.toString()); // Hello
 history.undo(editor);
 console.log(editor.toString()); // (empty)
 </code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Memento: opaque snapshot. Only the Originator reads its full state.
+class EditorMemento:
+    def __init__(self, content: str, cursor: int) -> None:
+        # Underscore-prefixed: treated as private to the Originator.
+        self._content = content
+        self._cursor = cursor
+
+    # Wide interface, used by the Originator only.
+    def get_content(self) -> str:
+        return self._content
+
+    def get_cursor(self) -> int:
+        return self._cursor
+
+
+# Originator: owns the state, creates and restores snapshots.
+class Editor:
+    def __init__(self) -> None:
+        self._content = ""
+        self._cursor = 0
+
+    def type(self, text: str) -> None:
+        self._content = (
+            self._content[: self._cursor] + text + self._content[self._cursor :]
+        )
+        self._cursor += len(text)
+
+    def save(self) -> EditorMemento:
+        return EditorMemento(self._content, self._cursor)
+
+    def restore(self, m: EditorMemento) -> None:
+        self._content = m.get_content()
+        self._cursor = m.get_cursor()
+
+    def __str__(self) -> str:
+        return self._content
+
+
+# Caretaker: keeps history, never inspects a memento.
+class History:
+    def __init__(self) -> None:
+        self._stack: list[EditorMemento] = []
+
+    def backup(self, editor: Editor) -> None:
+        self._stack.append(editor.save())
+
+    def undo(self, editor: Editor) -> None:
+        if self._stack:
+            editor.restore(self._stack.pop())
+
+
+editor = Editor()
+history = History()
+
+history.backup(editor)
+editor.type("Hello")
+history.backup(editor)
+editor.type(", world")
+print(editor)  # Hello, world
+
+history.undo(editor)
+print(editor)  # Hello
+history.undo(editor)
+print(editor)  # (empty)
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Memento: opaque snapshot. Only the Originator reads its full state.
+class EditorMemento
+  # Wide interface, used by the Originator only.
+  attr_reader :content, :cursor
+
+  def initialize(content, cursor)
+    @content = content
+    @cursor = cursor
+  end
+end
+
+# Originator: owns the state, creates and restores snapshots.
+class Editor
+  def initialize
+    @content = ""
+    @cursor = 0
+  end
+
+  def type(text)
+    @content = @content[0...@cursor] + text + @content[@cursor..]
+    @cursor += text.length
+  end
+
+  def save
+    EditorMemento.new(@content, @cursor)
+  end
+
+  def restore(m)
+    @content = m.content
+    @cursor = m.cursor
+  end
+
+  def to_s
+    @content
+  end
+end
+
+# Caretaker: keeps history, never inspects a memento.
+class History
+  def initialize
+    @stack = []
+  end
+
+  def backup(editor)
+    @stack.push(editor.save)
+  end
+
+  def undo(editor)
+    m = @stack.pop
+    editor.restore(m) if m
+  end
+end
+
+editor = Editor.new
+history = History.new
+
+history.backup(editor)
+editor.type("Hello")
+history.backup(editor)
+editor.type(", world")
+puts editor # Hello, world
+
+history.undo(editor)
+puts editor # Hello
+history.undo(editor)
+puts editor # (empty)
+</code></pre>
+      </div>
       <p class="muted">Notice the caretaker never reads <code>getContent()</code> or <code>getCursor()</code>. It stores and returns mementos blindly, so the editor is free to change how it represents content without breaking the history.</p>
     </div>
   </section>

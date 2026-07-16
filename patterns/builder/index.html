@@ -163,62 +163,151 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A realistic fluent builder in Java</h3>
-      <pre><code>public final class HttpRequest {
-    private final String method;
-    private final String url;
-    private final Map&lt;String, String&gt; headers;
-    private final String body;
+      <h3>A realistic fluent builder</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Assemble an immutable HTTP request step by step.
+class HttpRequestBuilder {
+  private _method = "GET";                       // sensible default
+  private readonly _headers = new Map&lt;string, string&gt;();
+  private _body: string | null = null;           // optional
 
-    // Private: the only way in is through the Builder.
-    private HttpRequest(Builder b) {
-        this.method  = b.method;
-        this.url     = b.url;
-        this.headers = Map.copyOf(b.headers); // defensive, immutable copy
-        this.body    = b.body;
-    }
+  constructor(private readonly url: string) {    // required, taken up front
+    if (!url) throw new Error("url is required");
+  }
 
-    public String method()  { return method; }
-    public String url()     { return url; }
-    public Map&lt;String, String&gt; headers() { return headers; }
+  method(m: string): this { this._method = m; return this; }
+  header(k: string, v: string): this { this._headers.set(k, v); return this; }
+  body(b: string): this { this._body = b; return this; }
 
-    public static Builder to(String url) {
-        return new Builder(url);
-    }
+  build(): HttpRequest {
+    // Central place to validate cross-field invariants.
+    if (this._body !== null &amp;&amp; this._method === "GET")
+      throw new Error("GET cannot have a body");
+    return new HttpRequest(this._method, this.url, new Map(this._headers), this._body);
+  }
+}
 
-    // Static nested Builder holds the mutable, half-built state.
-    public static final class Builder {
-        private String method = "GET";              // sensible default
-        private final String url;                   // required
-        private final Map&lt;String, String&gt; headers = new LinkedHashMap&lt;&gt;();
-        private String body = null;                 // optional
+class HttpRequest {
+  constructor(
+    readonly method: string,
+    readonly url: string,
+    readonly headers: ReadonlyMap&lt;string, string&gt;,  // defensive, immutable copy
+    readonly body: string | null,
+  ) {}
 
-        private Builder(String url) {
-            if (url == null || url.isBlank())
-                throw new IllegalArgumentException("url is required");
-            this.url = url;
-        }
-
-        public Builder method(String m) { this.method = m; return this; }
-        public Builder header(String k, String v) { headers.put(k, v); return this; }
-        public Builder body(String b) { this.body = b; return this; }
-
-        public HttpRequest build() {
-            // Central place to validate cross-field invariants.
-            if (body != null &amp;&amp; method.equals("GET"))
-                throw new IllegalStateException("GET cannot have a body");
-            return new HttpRequest(this);
-        }
-    }
+  static to(url: string): HttpRequestBuilder {
+    return new HttpRequestBuilder(url);
+  }
 }
 
 // Call site reads like a description of the request:
-HttpRequest req = HttpRequest.to("https://api.example.com/orders")
-        .method("POST")
-        .header("Content-Type", "application/json")
-        .header("Authorization", "Bearer " + token)
-        .body("{\"item\":\"book\"}")
-        .build();</code></pre>
+const req = HttpRequest.to("https://api.example.com/orders")
+  .method("POST")
+  .header("Content-Type", "application/json")
+  .header("Authorization", `Bearer ${token}`)
+  .body('{"item":"book"}')
+  .build();</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass
+from types import MappingProxyType
+
+@dataclass(frozen=True)               # product is immutable once built
+class HttpRequest:
+    method: str
+    url: str
+    headers: MappingProxyType         # read-only view of the headers
+    body: str | None
+
+    @staticmethod
+    def to(url: str) -> "HttpRequestBuilder":
+        return HttpRequestBuilder(url)
+
+class HttpRequestBuilder:
+    def __init__(self, url: str):     # required value taken up front
+        if not url:
+            raise ValueError("url is required")
+        self._url = url
+        self._method = "GET"          # sensible default
+        self._headers: dict[str, str] = {}
+        self._body: str | None = None # optional
+
+    def method(self, m: str) -> "HttpRequestBuilder":
+        self._method = m
+        return self
+
+    def header(self, k: str, v: str) -> "HttpRequestBuilder":
+        self._headers[k] = v
+        return self
+
+    def body(self, b: str) -> "HttpRequestBuilder":
+        self._body = b
+        return self
+
+    def build(self) -> HttpRequest:
+        # Central place to validate cross-field invariants.
+        if self._body is not None and self._method == "GET":
+            raise ValueError("GET cannot have a body")
+        return HttpRequest(self._method, self._url,
+                           MappingProxyType(dict(self._headers)), self._body)
+
+# Call site reads like a description of the request:
+req = (
+    HttpRequest.to("https://api.example.com/orders")
+    .method("POST")
+    .header("Content-Type", "application/json")
+    .header("Authorization", f"Bearer {token}")
+    .body('{"item":"book"}')
+    .build()
+)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Assemble an immutable HTTP request step by step.
+class HttpRequest
+  attr_reader :verb, :url, :headers, :body
+
+  def self.to(url)                    # entry point returns a builder
+    Builder.new(url)
+  end
+
+  def initialize(verb, url, headers, body)
+    @verb = verb
+    @url = url
+    @headers = headers.dup.freeze     # defensive, immutable copy
+    @body = body
+    freeze                            # product is read-only once built
+  end
+
+  class Builder
+    def initialize(url)               # required value taken up front
+      raise ArgumentError, "url is required" if url.nil? || url.empty?
+      @url = url
+      @verb = "GET"                   # sensible default
+      @headers = {}
+      @body = nil                     # optional
+    end
+
+    def verb(v)   = tap { @verb = v }        # tap returns self, so calls chain
+    def header(k, v) = tap { @headers[k] = v }
+    def body(b)   = tap { @body = b }
+
+    def build
+      # Central place to validate cross-field invariants.
+      raise "GET cannot have a body" if @body &amp;&amp; @verb == "GET"
+      HttpRequest.new(@verb, @url, @headers, @body)
+    end
+  end
+end
+
+# Call site reads like a description of the request:
+req = HttpRequest.to("https://api.example.com/orders")
+  .verb("POST")
+  .header("Content-Type", "application/json")
+  .header("Authorization", "Bearer #{token}")
+  .body('{"item":"book"}')
+  .build</code></pre>
+      </div>
       <p class="muted">Notice how the product constructor is <em>private</em> and takes the builder itself. Every field is set before <code>build()</code> validates and freezes the object, so an <code>HttpRequest</code> can never exist in a half-configured or mutable state.</p>
     </div>
   </section>

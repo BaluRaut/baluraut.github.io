@@ -169,52 +169,146 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A realistic example in Java</h3>
-      <pre><code>// Component: the shared interface
+      <h3>A realistic example</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Component: the shared interface
 interface DataSource {
-    void writeData(String data);
-    String readData();
+  writeData(data: string): void;
+  readData(): string;
 }
 
 // Concrete Component: does the real work
 class FileDataSource implements DataSource {
-    private final String path;
-    FileDataSource(String path) { this.path = path; }
-    public void writeData(String data) { /* write raw bytes to file */ }
-    public String readData()          { /* read raw bytes from file */ return "..."; }
+  constructor(private readonly path: string) {}
+  writeData(data: string): void { /* write raw bytes to this.path */ }
+  readData(): string { /* read raw bytes from this.path */ return "..."; }
 }
 
 // Base Decorator: implements the interface, forwards to the wrappee
 abstract class DataSourceDecorator implements DataSource {
-    protected final DataSource wrappee;
-    DataSourceDecorator(DataSource source) { this.wrappee = source; }
-    public void writeData(String data) { wrappee.writeData(data); }
-    public String readData()           { return wrappee.readData(); }
+  constructor(protected readonly wrappee: DataSource) {}
+  writeData(data: string): void { this.wrappee.writeData(data); }
+  readData(): string { return this.wrappee.readData(); }
 }
 
 // Concrete Decorator: adds behavior around the forwarded call
 class CompressionDecorator extends DataSourceDecorator {
-    CompressionDecorator(DataSource source) { super(source); }
-    public void writeData(String data) { wrappee.writeData(compress(data)); }
-    public String readData()           { return decompress(wrappee.readData()); }
-    private String compress(String s)   { /* deflate */ return s; }
-    private String decompress(String s) { /* inflate */ return s; }
+  writeData(data: string): void { this.wrappee.writeData(this.compress(data)); }
+  readData(): string { return this.decompress(this.wrappee.readData()); }
+  private compress(s: string): string { /* deflate */ return s; }
+  private decompress(s: string): string { /* inflate */ return s; }
 }
 
 class EncryptionDecorator extends DataSourceDecorator {
-    EncryptionDecorator(DataSource source) { super(source); }
-    public void writeData(String data) { wrappee.writeData(encrypt(data)); }
-    public String readData()           { return decrypt(wrappee.readData()); }
-    private String encrypt(String s) { /* cipher */ return s; }
-    private String decrypt(String s) { /* decipher */ return s; }
+  writeData(data: string): void { this.wrappee.writeData(this.encrypt(data)); }
+  readData(): string { return this.decrypt(this.wrappee.readData()); }
+  private encrypt(s: string): string { /* cipher */ return s; }
+  private decrypt(s: string): string { /* decipher */ return s; }
 }
 
 // Client: composes the stack at runtime, then uses the base interface
-DataSource source = new EncryptionDecorator(
-                        new CompressionDecorator(
-                            new FileDataSource("out.dat")));
+const source: DataSource = new EncryptionDecorator(
+  new CompressionDecorator(
+    new FileDataSource("out.dat")));
 source.writeData("salary report");   // compresses, then encrypts, then writes
-String plain = source.readData();     // reads, decrypts, then decompresses</code></pre>
+const plain = source.readData();      // reads, decrypts, then decompresses</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+
+# Component: the shared interface
+class DataSource(ABC):
+    @abstractmethod
+    def write_data(self, data: str) -> None: ...
+    @abstractmethod
+    def read_data(self) -> str: ...
+
+# Concrete Component: does the real work
+class FileDataSource(DataSource):
+    def __init__(self, path: str) -> None:
+        self._path = path
+    def write_data(self, data: str) -> None:
+        ...  # write raw bytes to self._path
+    def read_data(self) -> str:
+        return "..."  # read raw bytes from self._path
+
+# Base Decorator: implements the interface, forwards to the wrappee
+class DataSourceDecorator(DataSource):
+    def __init__(self, wrappee: DataSource) -> None:
+        self._wrappee = wrappee
+    def write_data(self, data: str) -> None:
+        self._wrappee.write_data(data)
+    def read_data(self) -> str:
+        return self._wrappee.read_data()
+
+# Concrete Decorator: adds behavior around the forwarded call
+class CompressionDecorator(DataSourceDecorator):
+    def write_data(self, data: str) -> None:
+        self._wrappee.write_data(self._compress(data))
+    def read_data(self) -> str:
+        return self._decompress(self._wrappee.read_data())
+    def _compress(self, s: str) -> str:   return s   # deflate
+    def _decompress(self, s: str) -> str: return s   # inflate
+
+class EncryptionDecorator(DataSourceDecorator):
+    def write_data(self, data: str) -> None:
+        self._wrappee.write_data(self._encrypt(data))
+    def read_data(self) -> str:
+        return self._decrypt(self._wrappee.read_data())
+    def _encrypt(self, s: str) -> str: return s   # cipher
+    def _decrypt(self, s: str) -> str: return s   # decipher
+
+# Client: composes the stack at runtime, then uses the base interface
+source = EncryptionDecorator(
+    CompressionDecorator(
+        FileDataSource("out.dat")))
+source.write_data("salary report")   # compresses, then encrypts, then writes
+plain = source.read_data()           # reads, decrypts, then decompresses</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Component: the shared interface (duck-typed in Ruby)
+class FileDataSource            # Concrete Component: does the real work
+  def initialize(path)
+    @path = path
+  end
+  def write_data(data) end      # write raw bytes to @path
+  def read_data() "..." end     # read raw bytes from @path
+end
+
+# Base Decorator: holds the wrappee and forwards every call to it
+class DataSourceDecorator
+  def initialize(wrappee)
+    @wrappee = wrappee
+  end
+  def write_data(data) @wrappee.write_data(data) end
+  def read_data()      @wrappee.read_data() end
+end
+
+# Concrete Decorator: adds behavior around the forwarded call
+class CompressionDecorator < DataSourceDecorator
+  def write_data(data) @wrappee.write_data(compress(data)) end
+  def read_data()      decompress(@wrappee.read_data()) end
+  private
+  def compress(s)   s end   # deflate
+  def decompress(s) s end   # inflate
+end
+
+class EncryptionDecorator < DataSourceDecorator
+  def write_data(data) @wrappee.write_data(encrypt(data)) end
+  def read_data()      decrypt(@wrappee.read_data()) end
+  private
+  def encrypt(s) s end   # cipher
+  def decrypt(s) s end   # decipher
+end
+
+# Client: composes the stack at runtime, then uses the base interface
+source = EncryptionDecorator.new(
+  CompressionDecorator.new(
+    FileDataSource.new("out.dat")))
+source.write_data("salary report")   # compresses, then encrypts, then writes
+plain = source.read_data             # reads, decrypts, then decompresses</code></pre>
+      </div>
       <p class="muted">The client only ever sees <code>DataSource</code>. Writing runs the stack outer to inner (encrypt wraps compress wraps file); reading unwinds it inner to outer. Add a new concern, say a <code>LoggingDecorator</code>, without editing any existing class.</p>
     </div>
   </section>

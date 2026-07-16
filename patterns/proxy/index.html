@@ -157,59 +157,139 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A virtual (lazy-loading) proxy in Java</h3>
-      <pre><code>// Shared interface: both real object and proxy implement it
-interface Image {
-    void render();
+      <h3>A virtual (lazy-loading) proxy</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Shared interface: both real object and proxy implement it
+interface Report {
+  render(): string;
 }
 
-// RealSubject: construction is expensive (reads bytes from disk)
-class HighResImage implements Image {
-    private final String path;
-    private byte[] pixels;
+// RealSubject: construction is expensive (runs a heavy DB query)
+class SalesReport implements Report {
+  private rows: string[];
 
-    HighResImage(String path) {
-        this.path = path;
-        loadFromDisk(); // heavy work happens in the constructor
-    }
+  constructor(private readonly quarter: string) {
+    this.rows = this.runQuery(); // heavy work happens up front
+  }
 
-    private void loadFromDisk() {
-        System.out.println("Loading " + path + " from disk...");
-        this.pixels = new byte[10_000_000]; // pretend this is costly
-    }
+  private runQuery(): string[] {
+    console.log(`Querying warehouse for ${this.quarter}...`);
+    return new Array(100_000).fill("row"); // pretend this is costly
+  }
 
-    public void render() {
-        System.out.println("Rendering " + path);
-    }
+  render(): string {
+    return `Report ${this.quarter}: ${this.rows.length} rows`;
+  }
 }
 
 // Virtual Proxy: same interface, defers creation until first render()
-class LazyImage implements Image {
-    private final String path;
-    private HighResImage real; // created on demand
+class LazyReport implements Report {
+  private real?: SalesReport; // created on demand
 
-    LazyImage(String path) {
-        this.path = path; // cheap: no disk I/O yet
-    }
+  constructor(private readonly quarter: string) {} // cheap: no query yet
 
-    public void render() {
-        if (real == null) {            // lazy load on first use
-            real = new HighResImage(path);
-        }
-        real.render();                 // delegate to the real subject
+  render(): string {
+    if (!this.real) {                        // lazy load on first use
+      this.real = new SalesReport(this.quarter);
     }
+    return this.real.render();               // delegate to the real subject
+  }
 }
 
 // Client codes to the interface and never knows it holds a proxy
-class Gallery {
-    public static void main(String[] args) {
-        Image img = new LazyImage("photo.raw"); // instant, nothing loaded
-        System.out.println("Gallery ready.");
-        img.render(); // NOW the real image loads, then renders
-        img.render(); // already loaded: just renders
-    }
-}</code></pre>
-      <p class="muted">Notice the proxy adds no new methods - it exposes exactly <code>Image</code>. All it changes is <em>when</em> the heavy <code>HighResImage</code> is built. Swap <code>LazyImage</code> for a <code>ProtectedImage</code> that checks permissions, or a <code>CachedImage</code> that memoizes, and the client stays untouched.</p>
+const report: Report = new LazyReport("Q3"); // instant, nothing queried
+console.log("Dashboard ready.");
+console.log(report.render()); // NOW the query runs, then renders
+console.log(report.render()); // already loaded: just renders</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+
+# Shared interface: both real object and proxy implement it
+class Report(ABC):
+    @abstractmethod
+    def render(self) -> str: ...
+
+# RealSubject: construction is expensive (runs a heavy DB query)
+class SalesReport(Report):
+    def __init__(self, quarter: str) -> None:
+        self.quarter = quarter
+        self.rows = self._run_query()  # heavy work happens up front
+
+    def _run_query(self) -> list[str]:
+        print(f"Querying warehouse for {self.quarter}...")
+        return ["row"] * 100_000  # pretend this is costly
+
+    def render(self) -> str:
+        return f"Report {self.quarter}: {len(self.rows)} rows"
+
+# Virtual Proxy: same interface, defers creation until first render()
+class LazyReport(Report):
+    def __init__(self, quarter: str) -> None:
+        self.quarter = quarter     # cheap: no query yet
+        self._real: SalesReport | None = None
+
+    def render(self) -> str:
+        if self._real is None:     # lazy load on first use
+            self._real = SalesReport(self.quarter)
+        return self._real.render() # delegate to the real subject
+
+# Client codes to the interface and never knows it holds a proxy
+report: Report = LazyReport("Q3")  # instant, nothing queried
+print("Dashboard ready.")
+print(report.render())  # NOW the query runs, then renders
+print(report.render())  # already loaded: just renders</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Shared interface: both real object and proxy respond to render
+module Report
+  def render = raise NotImplementedError
+end
+
+# RealSubject: construction is expensive (runs a heavy DB query)
+class SalesReport
+  include Report
+
+  def initialize(quarter)
+    @quarter = quarter
+    @rows = run_query # heavy work happens up front
+  end
+
+  def render
+    "Report #{@quarter}: #{@rows.size} rows"
+  end
+
+  private
+
+  def run_query
+    puts "Querying warehouse for #{@quarter}..."
+    Array.new(100_000, "row") # pretend this is costly
+  end
+end
+
+# Virtual Proxy: same interface, defers creation until first render
+class LazyReport
+  include Report
+
+  def initialize(quarter)
+    @quarter = quarter # cheap: no query yet
+    @real = nil
+  end
+
+  def render
+    @real ||= SalesReport.new(@quarter) # lazy load on first use
+    @real.render                        # delegate to the real subject
+  end
+end
+
+# Client codes to the interface and never knows it holds a proxy
+report = LazyReport.new("Q3") # instant, nothing queried
+puts "Dashboard ready."
+puts report.render # NOW the query runs, then renders
+puts report.render # already loaded: just renders</code></pre>
+      </div>
+      <p class="muted">Notice the proxy adds no new methods - it exposes exactly <code>Report</code>. All it changes is <em>when</em> the heavy <code>SalesReport</code> is built. Swap <code>LazyReport</code> for a <code>ProtectedReport</code> that checks permissions, or a <code>CachedReport</code> that memoizes, and the client stays untouched.</p>
     </div>
   </section>
 

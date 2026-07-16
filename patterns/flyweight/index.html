@@ -164,60 +164,183 @@ classDiagram
 </pre>
       </div>
 
-      <h3>A realistic implementation in Java</h3>
-      <pre><code>import java.util.Map;
-import java.util.HashMap;
+      <h3>A realistic implementation</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Flyweight: stores only intrinsic, shared, immutable state
+class Glyph {
+  constructor(
+    readonly symbol: string, // intrinsic
+    readonly font: string,   // intrinsic (outline lives here too)
+  ) {}
 
-// Flyweight: stores only intrinsic, shared, immutable state
-final class Glyph {
-    private final char symbol;   // intrinsic
-    private final String font;   // intrinsic (outline lives here too)
-
-    Glyph(char symbol, String font) {
-        this.symbol = symbol;
-        this.font = font;
-    }
-
-    // Extrinsic state (x, y, color) is passed in, never stored
-    void draw(int x, int y, String color) {
-        System.out.printf("'%c' [%s] at (%d,%d) in %s%n",
-                          symbol, font, x, y, color);
-    }
+  // Extrinsic state (x, y, color) is passed in, never stored
+  draw(x: number, y: number, color: string): void {
+    console.log(`'${this.symbol}' [${this.font}] at (${x},${y}) in ${color}`);
+  }
 }
 
 // Factory: pools flyweights so identical intrinsic state is stored once
-final class GlyphFactory {
-    private final Map&lt;String, Glyph&gt; pool = new HashMap&lt;&gt;();
+class GlyphFactory {
+  private pool = new Map&lt;string, Glyph&gt;();
 
-    Glyph getGlyph(char symbol, String font) {
-        String key = symbol + "@" + font;
-        return pool.computeIfAbsent(key, k -&gt; new Glyph(symbol, font));
-    }
+  getGlyph(symbol: string, font: string): Glyph {
+    const key = `${symbol}@${font}`;
+    let g = this.pool.get(key);
+    if (!g) { g = new Glyph(symbol, font); this.pool.set(key, g); }
+    return g;
+  }
 
-    int distinctGlyphs() { return pool.size(); }
+  get distinctGlyphs(): number { return this.pool.size; }
 }
 
+interface Placed { glyph: Glyph; x: number; y: number; color: string; }
+
 // Client holds extrinsic state and reuses shared flyweights
-final class Document {
-    private record Placed(Glyph glyph, int x, int y, String color) {}
-    private final GlyphFactory factory = new GlyphFactory();
-    private final java.util.List&lt;Placed&gt; chars = new java.util.ArrayList&lt;&gt;();
+class Document {
+  private factory = new GlyphFactory();
+  private chars: Placed[] = [];
 
-    void type(String text, String font) {
-        int x = 0;
-        for (char c : text.toCharArray()) {
-            Glyph g = factory.getGlyph(c, font); // shared, not new
-            chars.add(new Placed(g, x, 0, "black"));
-            x += 8;
-        }
+  type(text: string, font: string): void {
+    let x = 0;
+    for (const c of text) {
+      const g = this.factory.getGlyph(c, font); // shared, not new
+      this.chars.push({ glyph: g, x, y: 0, color: "black" });
+      x += 8;
     }
+  }
 
-    void render() {
-        for (Placed p : chars) p.glyph().draw(p.x(), p.y(), p.color());
-    }
+  render(): void {
+    for (const p of this.chars) p.glyph.draw(p.x, p.y, p.color);
+  }
 
-    int distinctGlyphs() { return factory.distinctGlyphs(); }
-}</code></pre>
+  get distinctGlyphs(): number { return this.factory.distinctGlyphs; }
+}
+
+const doc = new Document();
+doc.type("mississippi", "serif");
+console.log(doc.distinctGlyphs); // 4 distinct glyphs (m, i, s, p)</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass, field
+
+
+# Flyweight: stores only intrinsic, shared, immutable state
+@dataclass(frozen=True)
+class Glyph:
+    symbol: str  # intrinsic
+    font: str    # intrinsic (outline lives here too)
+
+    # Extrinsic state (x, y, color) is passed in, never stored
+    def draw(self, x, y, color):
+        print(f"'{self.symbol}' [{self.font}] at ({x},{y}) in {color}")
+
+
+# Factory: pools flyweights so identical intrinsic state is stored once
+class GlyphFactory:
+    def __init__(self):
+        self._pool = {}
+
+    def get_glyph(self, symbol, font):
+        key = (symbol, font)
+        if key not in self._pool:
+            self._pool[key] = Glyph(symbol, font)
+        return self._pool[key]
+
+    @property
+    def distinct_glyphs(self):
+        return len(self._pool)
+
+
+# Client holds extrinsic state and reuses shared flyweights
+class Document:
+    def __init__(self):
+        self._factory = GlyphFactory()
+        self._chars = []
+
+    def type(self, text, font):
+        x = 0
+        for c in text:
+            g = self._factory.get_glyph(c, font)  # shared, not new
+            self._chars.append((g, x, 0, "black"))
+            x += 8
+
+    def render(self):
+        for g, x, y, color in self._chars:
+            g.draw(x, y, color)
+
+    @property
+    def distinct_glyphs(self):
+        return self._factory.distinct_glyphs
+
+
+doc = Document()
+doc.type("mississippi", "serif")
+print(doc.distinct_glyphs)  # 4 distinct glyphs (m, i, s, p)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Flyweight: stores only intrinsic, shared, immutable state
+class Glyph
+  attr_reader :symbol, :font
+
+  def initialize(symbol, font)
+    @symbol = symbol # intrinsic
+    @font = font     # intrinsic (outline lives here too)
+    freeze
+  end
+
+  # Extrinsic state (x, y, color) is passed in, never stored
+  def draw(x, y, color)
+    puts "'#{@symbol}' [#{@font}] at (#{x},#{y}) in #{color}"
+  end
+end
+
+# Factory: pools flyweights so identical intrinsic state is stored once
+class GlyphFactory
+  def initialize
+    @pool = {}
+  end
+
+  def get_glyph(symbol, font)
+    @pool[[symbol, font]] ||= Glyph.new(symbol, font) # shared, not new
+  end
+
+  def distinct_glyphs
+    @pool.size
+  end
+end
+
+Placed = Struct.new(:glyph, :x, :y, :color)
+
+# Client holds extrinsic state and reuses shared flyweights
+class Document
+  def initialize
+    @factory = GlyphFactory.new
+    @chars = []
+  end
+
+  def type(text, font)
+    x = 0
+    text.each_char do |c|
+      g = @factory.get_glyph(c, font)
+      @chars &lt;&lt; Placed.new(g, x, 0, "black")
+      x += 8
+    end
+  end
+
+  def render
+    @chars.each { |p| p.glyph.draw(p.x, p.y, p.color) }
+  end
+
+  def distinct_glyphs
+    @factory.distinct_glyphs
+  end
+end
+
+doc = Document.new
+doc.type("mississippi", "serif")
+puts doc.distinct_glyphs # 4 distinct glyphs (m, i, s, p)</code></pre>
+      </div>
       <p class="muted">Typing <code>"mississippi"</code> creates eleven placements but only four distinct <code>Glyph</code> objects (m, i, s, p). The <code>Glyph</code> is <code>final</code> with only <code>final</code> fields, so sharing is safe: no client can mutate the intrinsic state and corrupt it for everyone else.</p>
     </div>
   </section>

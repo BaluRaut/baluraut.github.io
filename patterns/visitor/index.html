@@ -30,7 +30,7 @@
     <div class="wrap">
       <span class="kicker">Behavioral Pattern</span>
       <h1>The Visitor pattern - operations that travel to your objects</h1>
-      <p class="lede">You have a stable tree of objects (an AST, a document, a shape hierarchy) and a growing list of things you want to <em>do</em> with it. Visitor lets you <strong>add new operations without touching the element classes</strong>. It moves each operation into its own visitor object and uses <strong>double dispatch</strong> so the right code runs for the right element type.</p>
+      <p class="lede">You have a stable tree of objects (an AST, a document, an order/cart hierarchy) and a growing list of things you want to <em>do</em> with it. Visitor lets you <strong>add new operations without touching the element classes</strong>. It moves each operation into its own visitor object and uses <strong>double dispatch</strong> so the right code runs for the right element type.</p>
       <div class="cta">
         <a class="btn primary" href="#flow">See the full flow ↓</a>
         <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
@@ -173,57 +173,128 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A realistic AST visitor in Java</h3>
-      <pre><code>// Element hierarchy: a tiny expression AST
-interface Expr {
-    &lt;R&gt; R accept(Visitor&lt;R&gt; v);
-}
-
-record Number(double value) implements Expr {
-    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitNumber(this); }
-}
-
-record Add(Expr left, Expr right) implements Expr {
-    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitAdd(this); }
-}
-
-record Mul(Expr left, Expr right) implements Expr {
-    public &lt;R&gt; R accept(Visitor&lt;R&gt; v) { return v.visitMul(this); }
-}
-
-// Visitor interface: one method per concrete element
+      <h3>A realistic AST visitor across three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Element hierarchy: a tiny expression AST
 interface Visitor&lt;R&gt; {
-    R visitNumber(Number n);
-    R visitAdd(Add a);
-    R visitMul(Mul m);
+  visitNumber(n: NumberLit): R;
+  visitAdd(a: Add): R;
+  visitMul(m: Mul): R;
 }
 
-// One whole operation = one visitor. Evaluate the tree to a double.
-class EvalVisitor implements Visitor&lt;Double&gt; {
-    public Double visitNumber(Number n) { return n.value(); }
-    public Double visitAdd(Add a) {
-        return a.left().accept(this) + a.right().accept(this);
-    }
-    public Double visitMul(Mul m) {
-        return m.left().accept(this) * m.right().accept(this);
-    }
+interface Expr {
+  accept&lt;R&gt;(v: Visitor&lt;R&gt;): R;
+}
+
+class NumberLit implements Expr {
+  constructor(readonly value: number) {}
+  accept&lt;R&gt;(v: Visitor&lt;R&gt;): R { return v.visitNumber(this); }
+}
+
+class Add implements Expr {
+  constructor(readonly left: Expr, readonly right: Expr) {}
+  accept&lt;R&gt;(v: Visitor&lt;R&gt;): R { return v.visitAdd(this); }
+}
+
+class Mul implements Expr {
+  constructor(readonly left: Expr, readonly right: Expr) {}
+  accept&lt;R&gt;(v: Visitor&lt;R&gt;): R { return v.visitMul(this); }
+}
+
+// One whole operation = one visitor. Evaluate the tree to a number.
+class EvalVisitor implements Visitor&lt;number&gt; {
+  visitNumber(n: NumberLit): number { return n.value; }
+  visitAdd(a: Add): number { return a.left.accept(this) + a.right.accept(this); }
+  visitMul(m: Mul): number { return m.left.accept(this) * m.right.accept(this); }
 }
 
 // A second operation added with ZERO changes to Expr classes.
-class PrintVisitor implements Visitor&lt;String&gt; {
-    public String visitNumber(Number n) { return String.valueOf(n.value()); }
-    public String visitAdd(Add a) {
-        return "(" + a.left().accept(this) + " + " + a.right().accept(this) + ")";
-    }
-    public String visitMul(Mul m) {
-        return "(" + m.left().accept(this) + " * " + m.right().accept(this) + ")";
-    }
+class PrintVisitor implements Visitor&lt;string&gt; {
+  visitNumber(n: NumberLit): string { return String(n.value); }
+  visitAdd(a: Add): string { return `(${a.left.accept(this)} + ${a.right.accept(this)})`; }
+  visitMul(m: Mul): string { return `(${m.left.accept(this)} * ${m.right.accept(this)})`; }
 }
 
 // Usage: (1 + 2) * 3
-Expr ast = new Mul(new Add(new Number(1), new Number(2)), new Number(3));
-double result = ast.accept(new EvalVisitor());   // 9.0
-String pretty = ast.accept(new PrintVisitor());  // ((1.0 + 2.0) * 3.0)</code></pre>
+const ast: Expr = new Mul(new Add(new NumberLit(1), new NumberLit(2)), new NumberLit(3));
+console.log(ast.accept(new EvalVisitor()));  // 9
+console.log(ast.accept(new PrintVisitor())); // ((1 + 2) * 3)</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Element hierarchy: a tiny expression AST
+from __future__ import annotations
+from dataclasses import dataclass
+
+# Visitor: one visit method per concrete element (duck-typed here)
+
+@dataclass
+class NumberLit:
+    value: float
+    def accept(self, v): return v.visit_number(self)
+
+@dataclass
+class Add:
+    left: object
+    right: object
+    def accept(self, v): return v.visit_add(self)
+
+@dataclass
+class Mul:
+    left: object
+    right: object
+    def accept(self, v): return v.visit_mul(self)
+
+# One whole operation = one visitor. Evaluate the tree to a number.
+class EvalVisitor:
+    def visit_number(self, n): return n.value
+    def visit_add(self, a): return a.left.accept(self) + a.right.accept(self)
+    def visit_mul(self, m): return m.left.accept(self) * m.right.accept(self)
+
+# A second operation added with ZERO changes to the Expr classes.
+class PrintVisitor:
+    def visit_number(self, n): return str(n.value)
+    def visit_add(self, a): return f"({a.left.accept(self)} + {a.right.accept(self)})"
+    def visit_mul(self, m): return f"({m.left.accept(self)} * {m.right.accept(self)})"
+
+# Usage: (1 + 2) * 3
+ast = Mul(Add(NumberLit(1), NumberLit(2)), NumberLit(3))
+print(ast.accept(EvalVisitor()))   # 9
+print(ast.accept(PrintVisitor()))  # ((1 + 2) * 3)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Element hierarchy: a tiny expression AST
+NumberLit = Struct.new(:value) do
+  def accept(v) = v.visit_number(self)
+end
+
+Add = Struct.new(:left, :right) do
+  def accept(v) = v.visit_add(self)
+end
+
+Mul = Struct.new(:left, :right) do
+  def accept(v) = v.visit_mul(self)
+end
+
+# One whole operation = one visitor. Evaluate the tree to a number.
+class EvalVisitor
+  def visit_number(n) = n.value
+  def visit_add(a) = a.left.accept(self) + a.right.accept(self)
+  def visit_mul(m) = m.left.accept(self) * m.right.accept(self)
+end
+
+# A second operation added with ZERO changes to the Expr classes.
+class PrintVisitor
+  def visit_number(n) = n.value.to_s
+  def visit_add(a) = "(#{a.left.accept(self)} + #{a.right.accept(self)})"
+  def visit_mul(m) = "(#{m.left.accept(self)} * #{m.right.accept(self)})"
+end
+
+# Usage: (1 + 2) * 3
+ast = Mul.new(Add.new(NumberLit.new(1), NumberLit.new(2)), NumberLit.new(3))
+puts ast.accept(EvalVisitor.new)   # 9
+puts ast.accept(PrintVisitor.new)  # ((1 + 2) * 3)</code></pre>
+      </div>
       <p class="muted">Notice that <code>EvalVisitor</code> and <code>PrintVisitor</code> are entirely separate operations, yet neither required editing <code>Number</code>, <code>Add</code>, or <code>Mul</code>. The recursion lives in the visitor via <code>child.accept(this)</code>, so each visitor controls its own traversal and return type.</p>
     </div>
   </section>
@@ -360,7 +431,7 @@ sequenceDiagram
           <tbody>
             <tr><td><strong>Pros</strong></td><td>New operations without editing elements; related logic gathered per operation; double dispatch replaces type-switch ladders; a visitor can accumulate results across a whole traversal.</td></tr>
             <tr><td><strong>Cons</strong></td><td>Adding an element type touches every visitor; often breaks element encapsulation; a lot of boilerplate; two-way coupling between elements and visitors.</td></tr>
-            <tr><td><strong>Use when</strong></td><td>The element hierarchy is stable but operations keep growing; you have an AST, parse tree, document model, or shape hierarchy walked in many ways.</td></tr>
+            <tr><td><strong>Use when</strong></td><td>The element hierarchy is stable but operations keep growing; you have an AST, parse tree, document model, or order/cart hierarchy walked in many ways.</td></tr>
             <tr><td><strong>Avoid when</strong></td><td>Node types change often, the operations are few, or a language feature (pattern matching, sealed types) already gives you exhaustive, cheap dispatch.</td></tr>
             <tr><td><strong>Complexity</strong></td><td>Moderate. The mechanism is small but indirection and the accept/visit ceremony add cognitive load and files.</td></tr>
             <tr><td><strong>Related</strong></td><td>Composite (the tree Visitor walks), Iterator (an alternative traversal), Interpreter (Visitor often evaluates its grammar), Strategy (each visitor is a swappable operation).</td></tr>

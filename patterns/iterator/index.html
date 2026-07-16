@@ -165,46 +165,93 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A custom iterator in Java</h3>
-      <pre><code>import java.util.Iterator;
-import java.util.NoSuchElementException;
+      <h3>A custom iterator</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Concrete Aggregate: a playlist that hands out cursors
+// without revealing the backing array of tracks.
+class Playlist implements Iterable&lt;string&gt; {
+  private tracks: string[] = ["Intro", "Verse", "Chorus", "Outro"];
 
-// Concrete Aggregate: exposes iterators without revealing the array
-public class NameRepository implements Iterable&lt;String&gt; {
-    private final String[] names = { "Ada", "Alan", "Grace", "Linus" };
-
-    @Override
-    public Iterator&lt;String&gt; iterator() {
-        return new NameIterator();       // factory method
-    }
-
-    // Concrete Iterator: an inner class holding the traversal state
-    private class NameIterator implements Iterator&lt;String&gt; {
-        private int index = 0;           // externalized cursor position
-
-        @Override
-        public boolean hasNext() {
-            return index &lt; names.length;
+  // Factory method: the built-in iterable protocol.
+  [Symbol.iterator](): Iterator&lt;string&gt; {
+    let index = 0;                       // externalized cursor position
+    const tracks = this.tracks;
+    return {
+      next(): IteratorResult&lt;string&gt; {
+        if (index &lt; tracks.length) {
+          return { value: tracks[index++], done: false };
         }
-
-        @Override
-        public String next() {
-            if (!hasNext()) throw new NoSuchElementException();
-            return names[index++];       // read, then advance
-        }
-    }
+        return { value: undefined, done: true };
+      },
+    };
+  }
 }
 
-// Client: uses the interface, never the array
-class Demo {
-    public static void main(String[] args) {
-        NameRepository repo = new NameRepository();
-        for (String name : repo) {       // for-each calls iterator() + next()
-            System.out.println(name);
-        }
-    }
+// Client: uses the protocol, never the array.
+const playlist = new Playlist();
+for (const track of playlist) {          // for-of calls [Symbol.iterator]()
+  console.log(track);
 }</code></pre>
-      <p class="muted">Because <code>NameRepository</code> implements <code>Iterable</code>, the enhanced <code>for</code> loop works automatically: the compiler expands it into calls to <code>iterator()</code>, <code>hasNext()</code>, and <code>next()</code>. The <code>index</code> lives in the iterator, not the repository, so two loops over the same repo never collide.</p>
+        <pre class="code-panel" data-lang="py" hidden><code># Concrete Aggregate: a playlist that hands out cursors
+# without revealing the backing list of tracks.
+class Playlist:
+    def __init__(self):
+        self._tracks = ["Intro", "Verse", "Chorus", "Outro"]
+
+    # Factory method: return a fresh iterator each call.
+    def __iter__(self):
+        return PlaylistIterator(self._tracks)
+
+# Concrete Iterator: holds the traversal state.
+class PlaylistIterator:
+    def __init__(self, tracks):
+        self._tracks = tracks
+        self._index = 0                  # externalized cursor position
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._index &gt;= len(self._tracks):
+            raise StopIteration          # signals exhaustion
+        track = self._tracks[self._index]
+        self._index += 1                 # read, then advance
+        return track
+
+# Client: uses the protocol, never the list.
+playlist = Playlist()
+for track in playlist:                   # for-in calls __iter__() + __next__()
+    print(track)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Concrete Aggregate: a playlist that hands out cursors
+# without revealing the backing array of tracks.
+class Playlist
+  include Enumerable                     # mixes in map, select, to_a, ...
+
+  def initialize
+    @tracks = ["Intro", "Verse", "Chorus", "Outro"]
+  end
+
+  # Factory method: yield each element in order.
+  def each
+    return enum_for(:each) unless block_given?  # external iterator on demand
+    index = 0                            # externalized cursor position
+    while index &lt; @tracks.length
+      yield @tracks[index]               # read, then advance
+      index += 1
+    end
+  end
+end
+
+# Client: uses the protocol, never the array.
+playlist = Playlist.new
+playlist.each { |track| puts track }     # each drives the loop</code></pre>
+      </div>
+      <p class="muted">Because <code>Playlist</code> implements the language iterable protocol, the built-in loop works automatically: the runtime expands it into calls that create a cursor and advance it. The position lives in the iterator, not the playlist, so two loops over the same playlist never collide.</p>
     </div>
   </section>
 

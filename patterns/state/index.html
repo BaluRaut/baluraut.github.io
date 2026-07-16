@@ -173,60 +173,201 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A finite state machine in Java: a media player</h3>
-      <pre><code>// State interface: the state-dependent operations
+      <h3>A finite state machine: a media player</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// State interface: the state-dependent operations
 interface PlayerState {
-    void play(Player p);
-    void pause(Player p);
-    void stop(Player p);
+  play(p: Player): void;
+  pause(p: Player): void;
+  stop(p: Player): void;
 }
 
 // Context: delegates every request to the current state
 class Player {
-    private PlayerState state = new Stopped();
+  private state: PlayerState = new Stopped();
 
-    void setState(PlayerState next) { this.state = next; }
+  setState(next: PlayerState): void { this.state = next; }
 
-    void play()  { state.play(this); }
-    void pause() { state.pause(this); }
-    void stop()  { state.stop(this); }
+  play():  void { this.state.play(this); }
+  pause(): void { this.state.pause(this); }
+  stop():  void { this.state.stop(this); }
 }
 
 // Concrete state: nothing is playing yet
 class Stopped implements PlayerState {
-    public void play(Player p) {
-        System.out.println("Starting playback");
-        p.setState(new Playing());        // transition
-    }
-    public void pause(Player p) { /* no-op: cannot pause when stopped */ }
-    public void stop(Player p)  { /* already stopped */ }
+  play(p: Player): void {
+    console.log("Starting playback");
+    p.setState(new Playing());          // transition
+  }
+  pause(_p: Player): void { /* no-op: cannot pause when stopped */ }
+  stop(_p: Player): void  { /* already stopped */ }
 }
 
 // Concrete state: audio is running
 class Playing implements PlayerState {
-    public void play(Player p)  { /* already playing */ }
-    public void pause(Player p) {
-        System.out.println("Pausing");
-        p.setState(new Paused());         // transition
-    }
-    public void stop(Player p) {
-        System.out.println("Stopping");
-        p.setState(new Stopped());        // transition
-    }
+  play(_p: Player): void { /* already playing */ }
+  pause(p: Player): void {
+    console.log("Pausing");
+    p.setState(new Paused());           // transition
+  }
+  stop(p: Player): void {
+    console.log("Stopping");
+    p.setState(new Stopped());          // transition
+  }
 }
 
 // Concrete state: playback is suspended
 class Paused implements PlayerState {
-    public void play(Player p) {
-        System.out.println("Resuming");
-        p.setState(new Playing());        // transition
-    }
-    public void pause(Player p) { /* already paused */ }
-    public void stop(Player p) {
-        System.out.println("Stopping");
-        p.setState(new Stopped());        // transition
-    }
-}</code></pre>
+  play(p: Player): void {
+    console.log("Resuming");
+    p.setState(new Playing());          // transition
+  }
+  pause(_p: Player): void { /* already paused */ }
+  stop(p: Player): void {
+    console.log("Stopping");
+    p.setState(new Stopped());          // transition
+  }
+}
+
+// Exercise the machine
+const player = new Player();
+player.play();   // Stopped -> Playing
+player.pause();  // Playing -> Paused
+player.play();   // Paused  -> Playing
+player.stop();   // Playing -> Stopped</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from __future__ import annotations
+from abc import ABC, abstractmethod
+
+# State interface: the state-dependent operations
+class PlayerState(ABC):
+    @abstractmethod
+    def play(self, p: "Player") -> None: ...
+    @abstractmethod
+    def pause(self, p: "Player") -> None: ...
+    @abstractmethod
+    def stop(self, p: "Player") -> None: ...
+
+# Context: delegates every request to the current state
+class Player:
+    def __init__(self) -> None:
+        self._state: PlayerState = Stopped()
+
+    def set_state(self, nxt: PlayerState) -> None:
+        self._state = nxt
+
+    def play(self)  -> None: self._state.play(self)
+    def pause(self) -> None: self._state.pause(self)
+    def stop(self)  -> None: self._state.stop(self)
+
+# Concrete state: nothing is playing yet
+class Stopped(PlayerState):
+    def play(self, p: Player) -> None:
+        print("Starting playback")
+        p.set_state(Playing())            # transition
+    def pause(self, p: Player) -> None:
+        pass  # no-op: cannot pause when stopped
+    def stop(self, p: Player) -> None:
+        pass  # already stopped
+
+# Concrete state: audio is running
+class Playing(PlayerState):
+    def play(self, p: Player) -> None:
+        pass  # already playing
+    def pause(self, p: Player) -> None:
+        print("Pausing")
+        p.set_state(Paused())             # transition
+    def stop(self, p: Player) -> None:
+        print("Stopping")
+        p.set_state(Stopped())            # transition
+
+# Concrete state: playback is suspended
+class Paused(PlayerState):
+    def play(self, p: Player) -> None:
+        print("Resuming")
+        p.set_state(Playing())            # transition
+    def pause(self, p: Player) -> None:
+        pass  # already paused
+    def stop(self, p: Player) -> None:
+        print("Stopping")
+        p.set_state(Stopped())            # transition
+
+# Exercise the machine
+player = Player()
+player.play()   # Stopped -> Playing
+player.pause()  # Playing -> Paused
+player.play()   # Paused  -> Playing
+player.stop()   # Playing -> Stopped</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># State interface: the state-dependent operations
+module PlayerState
+  def play(p);  end
+  def pause(p); end
+  def stop(p);  end
+end
+
+# Context: delegates every request to the current state
+class Player
+  def initialize
+    @state = Stopped.new
+  end
+
+  def set_state(nxt) = @state = nxt
+
+  def play  = @state.play(self)
+  def pause = @state.pause(self)
+  def stop  = @state.stop(self)
+end
+
+# Concrete state: nothing is playing yet
+class Stopped
+  include PlayerState
+  def play(p)
+    puts "Starting playback"
+    p.set_state(Playing.new)            # transition
+  end
+  def pause(p); end  # no-op: cannot pause when stopped
+  def stop(p);  end  # already stopped
+end
+
+# Concrete state: audio is running
+class Playing
+  include PlayerState
+  def play(p); end   # already playing
+  def pause(p)
+    puts "Pausing"
+    p.set_state(Paused.new)             # transition
+  end
+  def stop(p)
+    puts "Stopping"
+    p.set_state(Stopped.new)            # transition
+  end
+end
+
+# Concrete state: playback is suspended
+class Paused
+  include PlayerState
+  def play(p)
+    puts "Resuming"
+    p.set_state(Playing.new)            # transition
+  end
+  def pause(p); end  # already paused
+  def stop(p)
+    puts "Stopping"
+    p.set_state(Stopped.new)            # transition
+  end
+end
+
+# Exercise the machine
+player = Player.new
+player.play   # Stopped -> Playing
+player.pause  # Playing -> Paused
+player.play   # Paused  -> Playing
+player.stop   # Playing -> Stopped</code></pre>
+      </div>
       <p class="muted">Notice that <code>Player</code> has no <code>if</code> or <code>switch</code> anywhere. Each state answers the same three methods but behaves differently, and each one decides which state the player becomes next. Calling <code>pause()</code> while <code>Stopped</code> is simply a legal no-op, so illegal transitions are handled by construction rather than by scattered guards.</p>
     </div>
   </section>

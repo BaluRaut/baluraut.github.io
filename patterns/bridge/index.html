@@ -70,17 +70,17 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Role</th><th>What it does</th><th>Shapes example</th></tr>
+            <tr><th>Role</th><th>What it does</th><th>Reports example</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Abstraction</strong></td><td>Defines the high-level interface and holds a reference to an Implementor</td><td><code>Shape</code></td></tr>
-            <tr><td><strong>RefinedAbstraction</strong></td><td>Extends the abstraction with variants, still delegating drawing to the implementor</td><td><code>Circle</code>, <code>Square</code></td></tr>
-            <tr><td><strong>Implementor</strong></td><td>Declares the primitive operations the abstraction relies on</td><td><code>Renderer</code></td></tr>
-            <tr><td><strong>ConcreteImplementor</strong></td><td>Provides a specific realization of those primitives</td><td><code>SvgRenderer</code>, <code>CanvasRenderer</code></td></tr>
+            <tr><td><strong>Abstraction</strong></td><td>Defines the high-level interface and holds a reference to an Implementor</td><td><code>Report</code></td></tr>
+            <tr><td><strong>RefinedAbstraction</strong></td><td>Extends the abstraction with variants, still delegating formatting to the implementor</td><td><code>SalesReport</code>, <code>InventoryReport</code></td></tr>
+            <tr><td><strong>Implementor</strong></td><td>Declares the primitive operations the abstraction relies on</td><td><code>Exporter</code></td></tr>
+            <tr><td><strong>ConcreteImplementor</strong></td><td>Provides a specific realization of those primitives</td><td><code>PdfExporter</code>, <code>CsvExporter</code></td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> Bridge is one concept expressed as <em>two</em> class hierarchies wired together by composition rather than one hierarchy tangled by inheritance. Shapes vary on one axis; rendering backends vary on another. The bridge lets them cross without multiplying.</div>
+      <div class="callout"><strong>Key mental model:</strong> Bridge is one concept expressed as <em>two</em> class hierarchies wired together by composition rather than one hierarchy tangled by inheritance. Report types vary on one axis; export formats vary on another. The bridge lets them cross without multiplying.</div>
     </div>
   </section>
 
@@ -89,9 +89,9 @@
     <div class="wrap">
       <div class="eyebrow">02 - Why</div>
       <h2>Why the Bridge pattern exists</h2>
-      <p class="muted">The moment a type needs to vary along two independent dimensions, inheritance betrays you. Model <em>M</em> shapes across <em>N</em> renderers with subclassing and you get M times N classes: <code>SvgCircle</code>, <code>CanvasCircle</code>, <code>SvgSquare</code>, and so on. Bridge turns that product into a sum, M plus N.</p>
+      <p class="muted">The moment a type needs to vary along two independent dimensions, inheritance betrays you. Model <em>M</em> report types across <em>N</em> export formats with subclassing and you get M times N classes: <code>PdfSalesReport</code>, <code>CsvSalesReport</code>, <code>PdfInventoryReport</code>, and so on. Bridge turns that product into a sum, M plus N.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>💥 Kills the class explosion</h4><p>Two axes combined by inheritance grow multiplicatively. Split them into separate hierarchies joined by a reference and growth becomes additive: add one shape or one renderer, not one per combination.</p></div>
+        <div class="card"><h4>💥 Kills the class explosion</h4><p>Two axes combined by inheritance grow multiplicatively. Split them into separate hierarchies joined by a reference and growth becomes additive: add one report type or one format, not one per combination.</p></div>
         <div class="card"><h4>🔌 Swap implementations at runtime</h4><p>Because the abstraction only holds an interface, you can inject a different concrete implementor when constructing the object, or even switch it later, without recompiling the abstraction.</p></div>
         <div class="card"><h4>🧩 Independent evolution</h4><p>Platform teams extend the implementor hierarchy while feature teams extend the abstraction hierarchy. Neither side breaks the other because they meet only at a stable interface.</p></div>
         <div class="card"><h4>🙈 Hides platform detail</h4><p>Clients program against the abstraction and never see the concrete backend. The messy, platform-specific code stays sealed behind the implementor interface.</p></div>
@@ -107,7 +107,7 @@
       <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
       <div class="grid cols-2">
         <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of a <strong>TV and its remote</strong>. The remote is the abstraction, the TV is the implementation. Any remote works with any brand of TV because they agree on a signal, so you can mix and match instead of buying one fused remote-plus-TV unit per brand.</p></div>
-        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is <strong>a class that holds an interface, not a subclass of it</strong>. Your <code>Shape</code> keeps a <code>Renderer</code> field and calls <code>renderer.drawCircle(...)</code>. Change the field and the same shape draws to SVG, Canvas, or the terminal.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is <strong>a class that holds an interface, not a subclass of it</strong>. Your <code>Report</code> keeps an <code>Exporter</code> field and calls <code>exporter.writeRow(...)</code>. Change the field and the same report writes to PDF, CSV, or HTML.</p></div>
         <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Like a <strong>company and its payment providers</strong>. The billing workflow is one hierarchy; Stripe, PayPal, and bank transfer are another. Finance changes the workflow, integrations swap the provider, and the two teams never step on each other.</p></div>
         <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>A <strong>wall socket and appliances</strong>. The socket is a fixed interface; a lamp, a charger, and a kettle each plug into it. You do not build a new socket per appliance, you build to the shared plug shape.</p></div>
       </div>
@@ -124,11 +124,11 @@
       <div class="grid cols-2">
         <div class="card">
           <h4><span class="ico">🎨</span> Abstraction hierarchy</h4>
-          <p><code>Shape</code> is the base abstraction holding a <code>Renderer</code>. <code>Circle</code> and <code>Square</code> are RefinedAbstractions that add shape-specific behavior yet still delegate the actual drawing across the bridge.</p>
+          <p><code>Report</code> is the base abstraction holding an <code>Exporter</code>. <code>SalesReport</code> and <code>InventoryReport</code> are RefinedAbstractions that add report-specific behavior yet still delegate the actual formatting across the bridge.</p>
         </div>
         <div class="card">
           <h4><span class="ico">⚙️</span> Implementor hierarchy</h4>
-          <p><code>Renderer</code> declares primitives like <code>drawCircle</code> and <code>drawLine</code>. <code>SvgRenderer</code> and <code>CanvasRenderer</code> implement them for their respective backends, unaware of any shape.</p>
+          <p><code>Exporter</code> declares primitives like <code>writeRow</code> and <code>open</code>. <code>PdfExporter</code> and <code>CsvExporter</code> implement them for their respective formats, unaware of any report.</p>
         </div>
       </div>
 
@@ -137,99 +137,214 @@
         <div class="cap">Structure - abstraction holds a reference to implementor; both hierarchies extend independently</div>
         <pre class="mermaid">
 classDiagram
-    class Shape {
-        #Renderer renderer
-        +draw()
-        +resize(factor)
+    class Report {
+        #Exporter exporter
+        +export()
+        +addRow(cells)
     }
-    class Circle {
-        +draw()
+    class SalesReport {
+        +export()
     }
-    class Square {
-        +draw()
+    class InventoryReport {
+        +export()
     }
-    class Renderer {
+    class Exporter {
         &lt;&lt;interface&gt;&gt;
-        +drawCircle(x, y, r)
-        +drawSquare(x, y, s)
+        +open(title)
+        +writeRow(cells)
+        +close()
     }
-    class SvgRenderer {
-        +drawCircle(x, y, r)
-        +drawSquare(x, y, s)
+    class PdfExporter {
+        +open(title)
+        +writeRow(cells)
+        +close()
     }
-    class CanvasRenderer {
-        +drawCircle(x, y, r)
-        +drawSquare(x, y, s)
+    class CsvExporter {
+        +open(title)
+        +writeRow(cells)
+        +close()
     }
-    Shape <|-- Circle
-    Shape <|-- Square
-    Renderer <|.. SvgRenderer
-    Renderer <|.. CanvasRenderer
-    Shape o--> Renderer : bridge
+    Report <|-- SalesReport
+    Report <|-- InventoryReport
+    Exporter <|.. PdfExporter
+    Exporter <|.. CsvExporter
+    Report o--> Exporter : bridge
         </pre>
       </div>
 
-      <h3>A realistic implementation in Java</h3>
-      <pre><code>// Implementor: the "how" primitives, one per rendering backend
-interface Renderer {
-    void drawCircle(double x, double y, double radius);
-    void drawSquare(double x, double y, double side);
+      <h3>A realistic implementation</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Implementor: the "how" primitives, one per export format
+interface Exporter {
+  open(title: string): void;
+  writeRow(cells: string[]): void;
+  close(): void;
 }
 
 // ConcreteImplementor A
-class SvgRenderer implements Renderer {
-    public void drawCircle(double x, double y, double r) {
-        System.out.printf("&lt;circle cx='%.0f' cy='%.0f' r='%.0f'/&gt;%n", x, y, r);
-    }
-    public void drawSquare(double x, double y, double s) {
-        System.out.printf("&lt;rect x='%.0f' y='%.0f' width='%.0f' height='%.0f'/&gt;%n", x, y, s, s);
-    }
+class PdfExporter implements Exporter {
+  open(title: string) { console.log(`%PDF header: ${title}`); }
+  writeRow(cells: string[]) { console.log(`pdf.text("${cells.join(" | ")}")`); }
+  close() { console.log("%%EOF"); }
 }
 
 // ConcreteImplementor B
-class CanvasRenderer implements Renderer {
-    public void drawCircle(double x, double y, double r) {
-        System.out.printf("ctx.arc(%.0f, %.0f, %.0f, 0, 2*PI)%n", x, y, r);
-    }
-    public void drawSquare(double x, double y, double s) {
-        System.out.printf("ctx.rect(%.0f, %.0f, %.0f, %.0f)%n", x, y, s, s);
-    }
+class CsvExporter implements Exporter {
+  open(title: string) { console.log(`# ${title}`); }
+  writeRow(cells: string[]) { console.log(cells.join(",")); }
+  close() { /* nothing to flush */ }
 }
 
 // Abstraction: holds the bridge reference to an implementor
-abstract class Shape {
-    protected final Renderer renderer;   // the bridge
-    protected Shape(Renderer renderer) { this.renderer = renderer; }
-    public abstract void draw();
+abstract class Report {
+  constructor(protected readonly exporter: Exporter) {}   // the bridge
+  abstract export(): void;
 }
 
-// RefinedAbstraction: adds shape-specific state, delegates drawing
-class Circle extends Shape {
-    private final double x, y, radius;
-    Circle(Renderer r, double x, double y, double radius) {
-        super(r); this.x = x; this.y = y; this.radius = radius;
-    }
-    public void draw() { renderer.drawCircle(x, y, radius); }
+// RefinedAbstraction: adds report-specific data, delegates formatting
+class SalesReport extends Report {
+  constructor(exporter: Exporter, private rows: string[][]) { super(exporter); }
+  export() {
+    this.exporter.open("Sales Report");
+    for (const row of this.rows) this.exporter.writeRow(row);
+    this.exporter.close();
+  }
 }
 
-class Square extends Shape {
-    private final double x, y, side;
-    Square(Renderer r, double x, double y, double side) {
-        super(r); this.x = x; this.y = y; this.side = side;
-    }
-    public void draw() { renderer.drawSquare(x, y, side); }
+class InventoryReport extends Report {
+  constructor(exporter: Exporter, private rows: string[][]) { super(exporter); }
+  export() {
+    this.exporter.open("Inventory Report");
+    for (const row of this.rows) this.exporter.writeRow(row);
+    this.exporter.close();
+  }
 }
 
-// Client: mix any shape with any renderer, no combinatorial subclasses
-public class Demo {
-    public static void main(String[] args) {
-        Shape svgCircle    = new Circle(new SvgRenderer(), 10, 10, 5);
-        Shape canvasSquare = new Square(new CanvasRenderer(), 0, 0, 8);
-        svgCircle.draw();      // &lt;circle .../&gt;
-        canvasSquare.draw();   // ctx.rect(...)
-    }
-}</code></pre>
-      <p class="muted">Notice there is no <code>SvgCircle</code> or <code>CanvasSquare</code> class. Two shapes plus two renderers give four working combinations from just four classes, and adding a <code>TerminalRenderer</code> adds one class that every existing shape can immediately use.</p>
+// Client: mix any report with any format, no combinatorial subclasses
+const salesPdf     = new SalesReport(new PdfExporter(), [["Widget", "1200"]]);
+const inventoryCsv = new InventoryReport(new CsvExporter(), [["Bolt", "540"]]);
+salesPdf.export();       // %PDF header: Sales Report ...
+inventoryCsv.export();   // Bolt,540</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+
+# Implementor: the "how" primitives, one per export format
+class Exporter(ABC):
+    @abstractmethod
+    def open(self, title): ...
+    @abstractmethod
+    def write_row(self, cells): ...
+    @abstractmethod
+    def close(self): ...
+
+# ConcreteImplementor A
+class PdfExporter(Exporter):
+    def open(self, title): print(f"%PDF header: {title}")
+    def write_row(self, cells): print('pdf.text("' + " | ".join(cells) + '")')
+    def close(self): print("%%EOF")
+
+# ConcreteImplementor B
+class CsvExporter(Exporter):
+    def open(self, title): print(f"# {title}")
+    def write_row(self, cells): print(",".join(cells))
+    def close(self): pass
+
+# Abstraction: holds the bridge reference to an implementor
+class Report(ABC):
+    def __init__(self, exporter: Exporter):
+        self.exporter = exporter          # the bridge
+    @abstractmethod
+    def export(self): ...
+
+# RefinedAbstraction: adds report-specific data, delegates formatting
+class SalesReport(Report):
+    def __init__(self, exporter, rows):
+        super().__init__(exporter)
+        self.rows = rows
+    def export(self):
+        self.exporter.open("Sales Report")
+        for row in self.rows:
+            self.exporter.write_row(row)
+        self.exporter.close()
+
+class InventoryReport(Report):
+    def __init__(self, exporter, rows):
+        super().__init__(exporter)
+        self.rows = rows
+    def export(self):
+        self.exporter.open("Inventory Report")
+        for row in self.rows:
+            self.exporter.write_row(row)
+        self.exporter.close()
+
+# Client: mix any report with any format, no combinatorial subclasses
+SalesReport(PdfExporter(), [["Widget", "1200"]]).export()   # %PDF header: Sales Report ...
+InventoryReport(CsvExporter(), [["Bolt", "540"]]).export()  # Bolt,540</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Implementor: the "how" primitives, one per export format
+module Exporter
+  def open(title); raise NotImplementedError; end
+  def write_row(cells); raise NotImplementedError; end
+  def close; raise NotImplementedError; end
+end
+
+# ConcreteImplementor A
+class PdfExporter
+  include Exporter
+  def open(title) = puts("%PDF header: #{title}")
+  def write_row(cells) = puts(%(pdf.text("#{cells.join(' | ')}")))
+  def close = puts("%%EOF")
+end
+
+# ConcreteImplementor B
+class CsvExporter
+  include Exporter
+  def open(title) = puts("# #{title}")
+  def write_row(cells) = puts(cells.join(","))
+  def close = nil
+end
+
+# Abstraction: holds the bridge reference to an implementor
+class Report
+  def initialize(exporter)
+    @exporter = exporter          # the bridge
+  end
+  def export = raise(NotImplementedError)
+end
+
+# RefinedAbstraction: adds report-specific data, delegates formatting
+class SalesReport &lt; Report
+  def initialize(exporter, rows)
+    super(exporter)
+    @rows = rows
+  end
+  def export
+    @exporter.open("Sales Report")
+    @rows.each { |row| @exporter.write_row(row) }
+    @exporter.close
+  end
+end
+
+class InventoryReport &lt; Report
+  def initialize(exporter, rows)
+    super(exporter)
+    @rows = rows
+  end
+  def export
+    @exporter.open("Inventory Report")
+    @rows.each { |row| @exporter.write_row(row) }
+    @exporter.close
+  end
+end
+
+# Client: mix any report with any format, no combinatorial subclasses
+SalesReport.new(PdfExporter.new, [["Widget", "1200"]]).export   # %PDF header: Sales Report ...
+InventoryReport.new(CsvExporter.new, [["Bolt", "540"]]).export  # Bolt,540</code></pre>
+      </div>
+      <p class="muted">Notice there is no <code>PdfSalesReport</code> or <code>CsvInventoryReport</code> class. Two report types plus two formats give four working combinations from just four classes, and adding an <code>HtmlExporter</code> adds one class that every existing report can immediately use.</p>
     </div>
   </section>
 
@@ -246,34 +361,34 @@ public class Demo {
 sequenceDiagram
     autonumber
     participant Client as 👤 Client
-    participant Circle as 🎨 Circle
-    participant Svg as ⚙️ SvgRenderer
+    participant Report as 🎨 SalesReport
+    participant Pdf as ⚙️ PdfExporter
 
-    Client->>Svg: new SvgRenderer()
-    Svg-->>Client: renderer
-    Client->>Circle: new Circle(renderer, x, y, r)
-    Circle->>Circle: store renderer as bridge
-    Circle-->>Client: shape ready
-    Note over Circle,Svg: Abstraction now holds implementor by reference
+    Client->>Pdf: new PdfExporter()
+    Pdf-->>Client: exporter
+    Client->>Report: new SalesReport(exporter, rows)
+    Report->>Report: store exporter as bridge
+    Report-->>Client: report ready
+    Note over Report,Pdf: Abstraction now holds implementor by reference
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 - Draw: the abstraction delegates the primitive across the bridge</div>
+        <div class="cap">Diagram 2 - Export: the abstraction delegates the primitive across the bridge</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
     participant Client as 👤 Client
-    participant Circle as 🎨 Circle
-    participant Renderer as ⚙️ Renderer
+    participant Report as 🎨 SalesReport
+    participant Exporter as ⚙️ Exporter
 
-    Client->>Circle: draw()
-    Circle->>Circle: prepare shape state
-    Circle->>Renderer: drawCircle(x, y, radius)
-    Renderer->>Renderer: emit backend-specific output
-    Renderer-->>Circle: done
-    Circle-->>Client: drawn
-    Note over Circle,Renderer: Abstraction knows what, implementor knows how
+    Client->>Report: export()
+    Report->>Report: prepare report rows
+    Report->>Exporter: writeRow(cells)
+    Exporter->>Exporter: emit format-specific output
+    Exporter-->>Report: done
+    Report-->>Client: exported
+    Note over Report,Exporter: Abstraction knows what, implementor knows how
         </pre>
       </div>
 
@@ -283,20 +398,20 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     participant Client as 👤 Client
-    participant Shape as 🎨 Shape
-    participant Svg as 🖼️ SvgRenderer
-    participant Canvas as 🕹️ CanvasRenderer
+    participant Report as 🎨 Report
+    participant Pdf as 🖼️ PdfExporter
+    participant Csv as 🕹️ CsvExporter
 
-    Client->>Shape: draw() with SvgRenderer
-    Shape->>Svg: drawCircle(...)
-    Svg-->>Shape: SVG markup
-    alt switch backend
-        Client->>Shape: setRenderer(CanvasRenderer)
-        Client->>Shape: draw()
-        Shape->>Canvas: drawCircle(...)
-        Canvas-->>Shape: canvas calls
+    Client->>Report: export() with PdfExporter
+    Report->>Pdf: writeRow(...)
+    Pdf-->>Report: PDF bytes
+    alt switch format
+        Client->>Report: setExporter(CsvExporter)
+        Client->>Report: export()
+        Report->>Csv: writeRow(...)
+        Csv-->>Report: CSV lines
     end
-    Shape-->>Client: output on chosen backend
+    Report-->>Client: output in chosen format
         </pre>
       </div>
     </div>
@@ -310,16 +425,16 @@ sequenceDiagram
       <p class="muted">From spotting the two axes of change to a fully decoupled, extensible design - the whole journey in order.</p>
 
       <div class="steps">
-        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Find two axes of change</h4><p>Notice a type varying along two independent dimensions at once, like shape versus rendering backend, or message versus transport channel.</p></div></div>
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Find two axes of change</h4><p>Notice a type varying along two independent dimensions at once, like report type versus export format, or message versus transport channel.</p></div></div>
         <div class="step"><div class="num">10</div><div class="body"><span class="tag">Diagnose</span><h4>See the class explosion coming</h4><p>Sketch what pure inheritance would cost: M times N subclasses. If that product is growing, Bridge is the fix.</p></div></div>
         <div class="step"><div class="num">20</div><div class="body"><span class="tag">Split</span><h4>Separate abstraction from implementation</h4><p>Decide which dimension is the high-level concept (abstraction) and which is the low-level mechanism (implementor).</p></div></div>
-        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Define</span><h4>Declare the Implementor interface</h4><p>Write the primitive operations the abstraction needs, kept small and platform-neutral, such as <code>drawCircle</code> and <code>drawSquare</code>.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Build ConcreteImplementors</h4><p>Provide one class per backend, like <code>SvgRenderer</code> and <code>CanvasRenderer</code>, each realizing the primitives its own way.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Define</span><h4>Declare the Implementor interface</h4><p>Write the primitive operations the abstraction needs, kept small and format-neutral, such as <code>open</code> and <code>writeRow</code>.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Build ConcreteImplementors</h4><p>Provide one class per format, like <code>PdfExporter</code> and <code>CsvExporter</code>, each realizing the primitives its own way.</p></div></div>
         <div class="step"><div class="num">50</div><div class="body"><span class="tag">Compose</span><h4>Give the Abstraction a reference</h4><p>Add an implementor field to the base abstraction. This reference is the bridge over which all low-level work is delegated.</p></div></div>
-        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Refine</span><h4>Add RefinedAbstractions</h4><p>Extend the abstraction with variants like <code>Circle</code> and <code>Square</code> that add state and still delegate drawing through the bridge.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Refine</span><h4>Add RefinedAbstractions</h4><p>Extend the abstraction with variants like <code>SalesReport</code> and <code>InventoryReport</code> that add state and still delegate formatting through the bridge.</p></div></div>
         <div class="step"><div class="num">70</div><div class="body"><span class="tag">Inject</span><h4>Wire them at construction</h4><p>The client picks a concrete implementor and passes it into the abstraction. Dependency injection keeps the choice external.</p></div></div>
-        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Delegate</span><h4>Run operations across the bridge</h4><p>Calling <code>draw()</code> forwards to <code>renderer.drawCircle(...)</code>. The abstraction never knows which backend answers.</p></div></div>
-        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>Grow either side alone</h4><p>Add a new shape or a new renderer in isolation. Every existing combination keeps working, and new pairings come for free.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Delegate</span><h4>Run operations across the bridge</h4><p>Calling <code>export()</code> forwards to <code>exporter.writeRow(...)</code>. The abstraction never knows which format answers.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Extend</span><h4>Grow either side alone</h4><p>Add a new report type or a new format in isolation. Every existing combination keeps working, and new pairings come for free.</p></div></div>
         <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Enjoy additive growth</h4><p>Your design now scales as M plus N instead of M times N, with platform detail hidden and implementations swappable.</p></div></div>
       </div>
     </div>
@@ -335,7 +450,7 @@ sequenceDiagram
         <div class="card"><h4>🎯 Only one axis of change</h4><p>If the implementation never varies, Bridge adds a pointless layer. A single implementor with no siblings means you introduced ceremony for nothing. Wait until the second axis is real.</p></div>
         <div class="card"><h4>🔀 Confusing it with Adapter</h4><p>Adapter retrofits two existing, incompatible interfaces after the fact. Bridge is designed up front so both hierarchies can evolve. Reaching for Bridge to glue a legacy class is the wrong tool.</p></div>
         <div class="card"><h4>🧱 Leaky Implementor interface</h4><p>Letting backend-specific concepts bleed into the implementor primitives couples the abstraction to one platform. Keep the interface minimal and truly generic, or the bridge stops being swappable.</p></div>
-        <div class="card"><h4>🪆 Over-engineering early</h4><p>Introducing Bridge before you have two shapes and two renderers is speculative generality. Refactor toward it when the class matrix actually starts to grow, not before.</p></div>
+        <div class="card"><h4>🪆 Over-engineering early</h4><p>Introducing Bridge before you have two report types and two formats is speculative generality. Refactor toward it when the class matrix actually starts to grow, not before.</p></div>
         <div class="card"><h4>🕳️ God Implementor interface</h4><p>Cramming every possible primitive into one fat implementor forces every concrete backend to implement operations it does not need. Split responsibilities rather than swelling one interface.</p></div>
         <div class="card"><h4>🔗 Abstraction reaching around the bridge</h4><p>If the abstraction downcasts the implementor or calls backend-specific methods, the decoupling is broken. All communication must go through the declared primitive interface.</p></div>
       </div>
@@ -363,7 +478,7 @@ sequenceDiagram
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Rule of thumb:</strong> reach for Bridge the moment you catch yourself naming a class after two things at once, like <code>SvgCircle</code> or <code>TcpJsonMessage</code>. That compound name is the class explosion warning you, and the bridge is how you split it back apart.</div>
+      <div class="callout"><strong>Rule of thumb:</strong> reach for Bridge the moment you catch yourself naming a class after two things at once, like <code>PdfSalesReport</code> or <code>TcpJsonMessage</code>. That compound name is the class explosion warning you, and the bridge is how you split it back apart.</div>
     </div>
   </section>
 

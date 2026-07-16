@@ -175,52 +175,136 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A realistic implementation in Java</h3>
-      <pre><code>// Abstract products - the client depends only on these
-interface Button   { void render(); }
-interface Checkbox { void toggle(); }
+      <h3>A realistic implementation</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Abstract products - the client depends only on these
+interface Button   { render(): void; }
+interface Checkbox { toggle(): void; }
 
 // Abstract factory - one create method per product kind
 interface GUIFactory {
-    Button   createButton();
-    Checkbox createCheckbox();
+  createButton(): Button;
+  createCheckbox(): Checkbox;
 }
 
 // Family 1: Windows
-class WindowsButton   implements Button   { public void render() { System.out.println("[ Win Button ]"); } }
-class WindowsCheckbox implements Checkbox { public void toggle() { System.out.println("Win check toggled"); } }
+class WindowsButton   implements Button   { render() { console.log("[ Win Button ]"); } }
+class WindowsCheckbox implements Checkbox { toggle() { console.log("Win check toggled"); } }
 class WindowsFactory  implements GUIFactory {
-    public Button   createButton()   { return new WindowsButton(); }
-    public Checkbox createCheckbox() { return new WindowsCheckbox(); }
+  createButton(): Button     { return new WindowsButton(); }
+  createCheckbox(): Checkbox { return new WindowsCheckbox(); }
 }
 
 // Family 2: macOS
-class MacButton   implements Button   { public void render() { System.out.println("( Mac Button )"); } }
-class MacCheckbox implements Checkbox { public void toggle() { System.out.println("Mac check toggled"); } }
+class MacButton   implements Button   { render() { console.log("( Mac Button )"); } }
+class MacCheckbox implements Checkbox { toggle() { console.log("Mac check toggled"); } }
 class MacFactory  implements GUIFactory {
-    public Button   createButton()   { return new MacButton(); }
-    public Checkbox createCheckbox() { return new MacCheckbox(); }
+  createButton(): Button     { return new MacButton(); }
+  createCheckbox(): Checkbox { return new MacCheckbox(); }
 }
 
 // Client - never mentions a concrete product
 class Application {
-    private final Button   button;
-    private final Checkbox checkbox;
-    Application(GUIFactory factory) {          // family injected once
-        this.button   = factory.createButton();
-        this.checkbox = factory.createCheckbox();
-    }
-    void paint() { button.render(); checkbox.toggle(); }
+  private button: Button;
+  private checkbox: Checkbox;
+  constructor(factory: GUIFactory) {      // family injected once
+    this.button   = factory.createButton();
+    this.checkbox = factory.createCheckbox();
+  }
+  paint() { this.button.render(); this.checkbox.toggle(); }
 }
 
-class Main {
-    public static void main(String[] args) {
-        GUIFactory factory = System.getProperty("os.name").startsWith("Mac")
-                ? new MacFactory()
-                : new WindowsFactory();
-        new Application(factory).paint();      // matched family, guaranteed
-    }
-}</code></pre>
+const factory: GUIFactory =
+  process.platform === "darwin" ? new MacFactory() : new WindowsFactory();
+new Application(factory).paint();          // matched family, guaranteed</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+import sys
+
+# Abstract products - the client depends only on these
+class Button(ABC):
+    @abstractmethod
+    def render(self) -> None: ...
+
+class Checkbox(ABC):
+    @abstractmethod
+    def toggle(self) -> None: ...
+
+# Abstract factory - one create method per product kind
+class GUIFactory(ABC):
+    @abstractmethod
+    def create_button(self) -> Button: ...
+    @abstractmethod
+    def create_checkbox(self) -> Checkbox: ...
+
+# Family 1: Windows
+class WindowsButton(Button):
+    def render(self): print("[ Win Button ]")
+class WindowsCheckbox(Checkbox):
+    def toggle(self): print("Win check toggled")
+class WindowsFactory(GUIFactory):
+    def create_button(self) -> Button:     return WindowsButton()
+    def create_checkbox(self) -> Checkbox: return WindowsCheckbox()
+
+# Family 2: macOS
+class MacButton(Button):
+    def render(self): print("( Mac Button )")
+class MacCheckbox(Checkbox):
+    def toggle(self): print("Mac check toggled")
+class MacFactory(GUIFactory):
+    def create_button(self) -> Button:     return MacButton()
+    def create_checkbox(self) -> Checkbox: return MacCheckbox()
+
+# Client - never mentions a concrete product
+class Application:
+    def __init__(self, factory: GUIFactory):   # family injected once
+        self.button   = factory.create_button()
+        self.checkbox = factory.create_checkbox()
+    def paint(self):
+        self.button.render()
+        self.checkbox.toggle()
+
+factory = MacFactory() if sys.platform == "darwin" else WindowsFactory()
+Application(factory).paint()               # matched family, guaranteed</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Abstract products - duck-typed, the client relies only on these methods
+module Button;   def render; raise NotImplementedError; end; end
+module Checkbox; def toggle; raise NotImplementedError; end; end
+
+# Family 1: Windows
+class WindowsButton;   include Button;   def render; puts "[ Win Button ]"; end; end
+class WindowsCheckbox; include Checkbox; def toggle; puts "Win check toggled"; end; end
+class WindowsFactory
+  def create_button   = WindowsButton.new
+  def create_checkbox = WindowsCheckbox.new
+end
+
+# Family 2: macOS
+class MacButton;   include Button;   def render; puts "( Mac Button )"; end; end
+class MacCheckbox; include Checkbox; def toggle; puts "Mac check toggled"; end; end
+class MacFactory
+  def create_button   = MacButton.new
+  def create_checkbox = MacCheckbox.new
+end
+
+# Client - never mentions a concrete product
+class Application
+  def initialize(factory)                  # family injected once
+    @button   = factory.create_button
+    @checkbox = factory.create_checkbox
+  end
+  def paint
+    @button.render
+    @checkbox.toggle
+  end
+end
+
+factory = RUBY_PLATFORM.include?("darwin") ? MacFactory.new : WindowsFactory.new
+Application.new(factory).paint             # matched family, guaranteed</code></pre>
+      </div>
       <p class="muted">Notice that <code>Application</code> never writes <code>new WindowsButton()</code>. It receives a <code>GUIFactory</code> and gets a coherent set. Choosing the family happens once, in <code>main</code>, so the widgets can never be mismatched.</p>
     </div>
   </section>

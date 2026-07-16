@@ -168,53 +168,148 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A realistic Java example</h3>
-      <pre><code>// Product hierarchy
+      <h3>A realistic example</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Product hierarchy
 interface Transport {
-    String deliver(String cargo);
+  deliver(cargo: string): string;
 }
 
 class Truck implements Transport {
-    public String deliver(String cargo) {
-        return "Delivering " + cargo + " by road in a box.";
-    }
+  deliver(cargo: string): string {
+    return `Delivering ${cargo} by road in a box.`;
+  }
 }
 
 class Ship implements Transport {
-    public String deliver(String cargo) {
-        return "Delivering " + cargo + " by sea in a container.";
-    }
+  deliver(cargo: string): string {
+    return `Delivering ${cargo} by sea in a container.`;
+  }
 }
 
 // Creator hierarchy
 abstract class Logistics {
+  // The factory method - subclasses decide the concrete Transport.
+  protected abstract createTransport(): Transport;
 
-    // The factory method - subclasses decide the concrete Transport.
-    protected abstract Transport createTransport();
-
-    // Shared workflow that depends only on the Transport interface.
-    public String planDelivery(String cargo) {
-        Transport t = createTransport();
-        return "Planning route... " + t.deliver(cargo);
-    }
+  // Shared workflow that depends only on the Transport interface.
+  planDelivery(cargo: string): string {
+    const t = this.createTransport();
+    return `Planning route... ${t.deliver(cargo)}`;
+  }
 }
 
 class RoadLogistics extends Logistics {
-    protected Transport createTransport() {
-        return new Truck();
-    }
+  protected createTransport(): Transport {
+    return new Truck();
+  }
 }
 
 class SeaLogistics extends Logistics {
-    protected Transport createTransport() {
-        return new Ship();
-    }
+  protected createTransport(): Transport {
+    return new Ship();
+  }
 }
 
 // Usage: pick the Creator, the workflow stays identical.
-Logistics logistics = new SeaLogistics();
-System.out.println(logistics.planDelivery("electronics"));
+const logistics: Logistics = new SeaLogistics();
+console.log(logistics.planDelivery("electronics"));
 // -> "Planning route... Delivering electronics by sea in a container."</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+
+# Product hierarchy
+class Transport(ABC):
+    @abstractmethod
+    def deliver(self, cargo: str) -> str:
+        ...
+
+class Truck(Transport):
+    def deliver(self, cargo: str) -> str:
+        return f"Delivering {cargo} by road in a box."
+
+class Ship(Transport):
+    def deliver(self, cargo: str) -> str:
+        return f"Delivering {cargo} by sea in a container."
+
+# Creator hierarchy
+class Logistics(ABC):
+    # The factory method - subclasses decide the concrete Transport.
+    @abstractmethod
+    def create_transport(self) -> Transport:
+        ...
+
+    # Shared workflow that depends only on the Transport interface.
+    def plan_delivery(self, cargo: str) -> str:
+        t = self.create_transport()
+        return f"Planning route... {t.deliver(cargo)}"
+
+class RoadLogistics(Logistics):
+    def create_transport(self) -> Transport:
+        return Truck()
+
+class SeaLogistics(Logistics):
+    def create_transport(self) -> Transport:
+        return Ship()
+
+# Usage: pick the Creator, the workflow stays identical.
+logistics: Logistics = SeaLogistics()
+print(logistics.plan_delivery("electronics"))
+# -> "Planning route... Delivering electronics by sea in a container."</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Product hierarchy
+class Transport
+  def deliver(cargo)
+    raise NotImplementedError
+  end
+end
+
+class Truck < Transport
+  def deliver(cargo)
+    "Delivering #{cargo} by road in a box."
+  end
+end
+
+class Ship < Transport
+  def deliver(cargo)
+    "Delivering #{cargo} by sea in a container."
+  end
+end
+
+# Creator hierarchy
+class Logistics
+  # The factory method - subclasses decide the concrete Transport.
+  def create_transport
+    raise NotImplementedError
+  end
+
+  # Shared workflow that depends only on the Transport interface.
+  def plan_delivery(cargo)
+    t = create_transport
+    "Planning route... #{t.deliver(cargo)}"
+  end
+end
+
+class RoadLogistics < Logistics
+  def create_transport
+    Truck.new
+  end
+end
+
+class SeaLogistics < Logistics
+  def create_transport
+    Ship.new
+  end
+end
+
+# Usage: pick the Creator, the workflow stays identical.
+logistics = SeaLogistics.new
+puts logistics.plan_delivery("electronics")
+# -> "Planning route... Delivering electronics by sea in a container."</code></pre>
+      </div>
       <p class="muted">Notice that <code>planDelivery</code> never names <code>Truck</code> or <code>Ship</code>. Adding air freight is a new <code>AirLogistics</code> plus a <code>Plane</code> class, with zero edits to the existing workflow. That is the whole payoff.</p>
 
       <h3>How it differs from a simple or static factory</h3>

@@ -169,59 +169,125 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A working arithmetic interpreter in Java</h3>
-      <pre><code>import java.util.Map;
+      <h3>A working pricing-formula interpreter</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Scenario: evaluate a pricing formula  base + qty * unit  per order row
+type Context = Record&lt;string, number&gt;;
 
 // AbstractExpression: the shared contract
 interface Expression {
-    int interpret(Map&lt;String, Integer&gt; context);
+  interpret(ctx: Context): number;
 }
 
 // TerminalExpression: a literal number, a leaf
 class NumberExpr implements Expression {
-    private final int value;
-    NumberExpr(int value) { this.value = value; }
-    public int interpret(Map&lt;String, Integer&gt; ctx) { return value; }
+  constructor(private readonly value: number) {}
+  interpret(_ctx: Context): number { return this.value; }
 }
 
 // TerminalExpression: a variable looked up in the context
 class VariableExpr implements Expression {
-    private final String name;
-    VariableExpr(String name) { this.name = name; }
-    public int interpret(Map&lt;String, Integer&gt; ctx) {
-        Integer v = ctx.get(name);
-        if (v == null) throw new IllegalStateException("Unbound: " + name);
-        return v;
-    }
+  constructor(private readonly name: string) {}
+  interpret(ctx: Context): number {
+    const v = ctx[this.name];
+    if (v === undefined) throw new Error(`Unbound: ${this.name}`);
+    return v;
+  }
 }
 
 // NonterminalExpression: recurses into its children
 class AddExpr implements Expression {
-    private final Expression left, right;
-    AddExpr(Expression left, Expression right) { this.left = left; this.right = right; }
-    public int interpret(Map&lt;String, Integer&gt; ctx) {
-        return left.interpret(ctx) + right.interpret(ctx);
-    }
+  constructor(private readonly left: Expression, private readonly right: Expression) {}
+  interpret(ctx: Context): number { return this.left.interpret(ctx) + this.right.interpret(ctx); }
 }
 
 class MultiplyExpr implements Expression {
-    private final Expression left, right;
-    MultiplyExpr(Expression left, Expression right) { this.left = left; this.right = right; }
-    public int interpret(Map&lt;String, Integer&gt; ctx) {
-        return left.interpret(ctx) * right.interpret(ctx);
-    }
+  constructor(private readonly left: Expression, private readonly right: Expression) {}
+  interpret(ctx: Context): number { return this.left.interpret(ctx) * this.right.interpret(ctx); }
 }
 
-// Client: build the AST for  x + 4 * 2  and evaluate with x = 3
-class Demo {
-    public static void main(String[] args) {
-        Expression ast = new AddExpr(
-            new VariableExpr("x"),
-            new MultiplyExpr(new NumberExpr(4), new NumberExpr(2))
-        );
-        System.out.println(ast.interpret(Map.of("x", 3))); // prints 11
-    }
-}</code></pre>
+// Client: build the AST for  base + qty * unit  and evaluate one order row
+const ast: Expression = new AddExpr(
+  new VariableExpr("base"),
+  new MultiplyExpr(new VariableExpr("qty"), new VariableExpr("unit"))
+);
+console.log(ast.interpret({ base: 3, qty: 4, unit: 2 })); // prints 11</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Scenario: evaluate a pricing formula  base + qty * unit  per order row
+from abc import ABC, abstractmethod
+
+# AbstractExpression: the shared contract
+class Expression(ABC):
+    @abstractmethod
+    def interpret(self, ctx: dict) -&gt; float: ...
+
+# TerminalExpression: a literal number, a leaf
+class NumberExpr(Expression):
+    def __init__(self, value): self.value = value
+    def interpret(self, ctx): return self.value
+
+# TerminalExpression: a variable looked up in the context
+class VariableExpr(Expression):
+    def __init__(self, name): self.name = name
+    def interpret(self, ctx):
+        if self.name not in ctx:
+            raise KeyError(f"Unbound: {self.name}")
+        return ctx[self.name]
+
+# NonterminalExpression: recurses into its children
+class AddExpr(Expression):
+    def __init__(self, left, right): self.left, self.right = left, right
+    def interpret(self, ctx): return self.left.interpret(ctx) + self.right.interpret(ctx)
+
+class MultiplyExpr(Expression):
+    def __init__(self, left, right): self.left, self.right = left, right
+    def interpret(self, ctx): return self.left.interpret(ctx) * self.right.interpret(ctx)
+
+# Client: build the AST for  base + qty * unit  and evaluate one order row
+ast = AddExpr(
+    VariableExpr("base"),
+    MultiplyExpr(VariableExpr("qty"), VariableExpr("unit")),
+)
+print(ast.interpret({"base": 3, "qty": 4, "unit": 2}))  # prints 11</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Scenario: evaluate a pricing formula  base + qty * unit  per order row
+
+# AbstractExpression: the shared contract (duck-typed interpret)
+class NumberExpr # TerminalExpression: a literal number, a leaf
+  def initialize(value) = @value = value
+  def interpret(_ctx) = @value
+end
+
+# TerminalExpression: a variable looked up in the context
+class VariableExpr
+  def initialize(name) = @name = name
+  def interpret(ctx)
+    raise "Unbound: #{@name}" unless ctx.key?(@name)
+    ctx[@name]
+  end
+end
+
+# NonterminalExpression: recurses into its children
+class AddExpr
+  def initialize(left, right) = (@left, @right = left, right)
+  def interpret(ctx) = @left.interpret(ctx) + @right.interpret(ctx)
+end
+
+class MultiplyExpr
+  def initialize(left, right) = (@left, @right = left, right)
+  def interpret(ctx) = @left.interpret(ctx) * @right.interpret(ctx)
+end
+
+# Client: build the AST for  base + qty * unit  and evaluate one order row
+ast = AddExpr.new(
+  VariableExpr.new(:base),
+  MultiplyExpr.new(VariableExpr.new(:qty), VariableExpr.new(:unit))
+)
+puts ast.interpret(base: 3, qty: 4, unit: 2) # prints 11</code></pre>
+      </div>
       <p class="muted">Notice the tree already encodes precedence: <code>MultiplyExpr</code> is nested <em>inside</em> <code>AddExpr</code>, so it evaluates first. The pattern separates the concern of <em>structure</em> (building the tree, usually a parser's job) from <em>meaning</em> (each node's <code>interpret</code> method).</p>
     </div>
   </section>

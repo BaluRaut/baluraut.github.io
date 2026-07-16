@@ -164,13 +164,19 @@ classDiagram
 </pre>
       </div>
 
-      <h3>A realistic implementation in TypeScript</h3>
-      <pre><code>type Listener&lt;T&gt; = (event: T) =&gt; void;
+      <h3>A realistic implementation</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>type Listener&lt;T&gt; = (event: T) =&gt; void;
 
 class Subject&lt;T&gt; {
   private listeners = new Set&lt;Listener&lt;T&gt;&gt;();
 
-  // subscribe returns an unsubscribe handle - the modern idiom
+  // subscribe returns an unsubscribe handle, the modern idiom
   subscribe(fn: Listener&lt;T&gt;): () =&gt; void {
     this.listeners.add(fn);
     return () =&gt; this.listeners.delete(fn);
@@ -183,7 +189,7 @@ class Subject&lt;T&gt; {
   }
 }
 
-// --- usage ---
+// --- usage: a weather station broadcasting readings ---
 interface Weather { tempC: number; humidity: number }
 const station = new Subject&lt;Weather&gt;();
 
@@ -194,6 +200,70 @@ station.notify({ tempC: 21, humidity: 55 }); // both observers fire
 off();                                        // phone stops listening
 station.notify({ tempC: 22, humidity: 50 }); // only the log fires
 </code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass
+from typing import Callable
+
+@dataclass
+class Weather:
+    temp_c: int
+    humidity: int
+
+class Subject:
+    def __init__(self) -&gt; None:
+        self._listeners: list[Callable[[Weather], None]] = []
+
+    # subscribe returns an unsubscribe handle, the modern idiom
+    def subscribe(self, fn: Callable[[Weather], None]) -&gt; Callable[[], None]:
+        self._listeners.append(fn)
+        return lambda: self._listeners.remove(fn)
+
+    # push model: the changed data travels with the notification
+    def notify(self, event: Weather) -&gt; None:
+        # copy first so an observer unsubscribing mid-notify is safe
+        for fn in list(self._listeners):
+            fn(event)
+
+# --- usage: a weather station broadcasting readings ---
+station = Subject()
+
+off = station.subscribe(lambda w: print(f"Phone: {w.temp_c}C"))
+station.subscribe(lambda w: print(f"Log: humidity {w.humidity}%"))
+
+station.notify(Weather(21, 55))  # both observers fire
+off()                            # phone stops listening
+station.notify(Weather(22, 50))  # only the log fires
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>Weather = Struct.new(:temp_c, :humidity)
+
+class Subject
+  def initialize
+    @listeners = []
+  end
+
+  # subscribe returns an unsubscribe handle, the modern idiom
+  def subscribe(&amp;fn)
+    @listeners &lt;&lt; fn
+    -&gt; { @listeners.delete(fn) }
+  end
+
+  # push model: the changed data travels with the notification
+  def notify(event)
+    # dup first so an observer unsubscribing mid-notify is safe
+    @listeners.dup.each { |fn| fn.call(event) }
+  end
+end
+
+# --- usage: a weather station broadcasting readings ---
+station = Subject.new
+
+off = station.subscribe { |w| puts "Phone: #{w.temp_c}C" }
+station.subscribe { |w| puts "Log: humidity #{w.humidity}%" }
+
+station.notify(Weather.new(21, 55)) # both observers fire
+off.call                            # phone stops listening
+station.notify(Weather.new(22, 50)) # only the log fires
+</code></pre>
+      </div>
       <p class="muted">Returning an unsubscribe function from <code>subscribe</code> is the pattern's most important ergonomic upgrade. It gives every subscriber a matching teardown, which is exactly what prevents the lapsed-listener leak described below.</p>
     </div>
   </section>

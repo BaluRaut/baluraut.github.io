@@ -166,59 +166,180 @@ classDiagram
         </pre>
       </div>
 
-      <h3>A dialog form in Java</h3>
-      <pre><code>// The contract every colleague uses to talk to the hub
+      <h3>A login dialog with a mediator</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// The contract every colleague uses to talk to the hub
 interface Mediator {
-    void notify(Component sender, String event);
+  notify(sender: Component, event: string): void;
 }
 
 // Colleagues know only the mediator, never each other
 abstract class Component {
-    protected Mediator mediator;
-    Component(Mediator mediator) { this.mediator = mediator; }
+  constructor(protected mediator: Mediator) {}
 }
 
 class TextBox extends Component {
-    private String text = "";
-    TextBox(Mediator m) { super(m); }
-    void type(String value) {
-        this.text = value;
-        mediator.notify(this, "changed");   // report upward
-    }
-    String getText() { return text; }
+  private text = "";
+  type(value: string): void {
+    this.text = value;
+    this.mediator.notify(this, "changed"); // report upward
+  }
+  getText(): string {
+    return this.text;
+  }
 }
 
 class Button extends Component {
-    private boolean enabled = false;
-    Button(Mediator m) { super(m); }
-    void setEnabled(boolean e) { this.enabled = e; }
-    boolean isEnabled() { return enabled; }
+  private enabled = false;
+  setEnabled(e: boolean): void {
+    this.enabled = e;
+  }
+  isEnabled(): boolean {
+    return this.enabled;
+  }
 }
 
 // The concrete mediator holds the interaction rules in ONE place
 class LoginDialog implements Mediator {
-    private final TextBox username = new TextBox(this);
-    private final TextBox password = new TextBox(this);
-    private final Button submit = new Button(this);
+  readonly username = new TextBox(this);
+  readonly password = new TextBox(this);
+  readonly submit = new Button(this);
 
-    public void notify(Component sender, String event) {
-        if (event.equals("changed")) {
-            boolean ready = !username.getText().isBlank()
-                         &amp;&amp; password.getText().length() &gt;= 8;
-            submit.setEnabled(ready);       // coordinate the peers
-        }
+  notify(_sender: Component, event: string): void {
+    if (event === "changed") {
+      const ready =
+        this.username.getText().trim() !== "" &amp;&amp;
+        this.password.getText().length &gt;= 8;
+      this.submit.setEnabled(ready); // coordinate the peers
     }
-
-    public TextBox username() { return username; }
-    public TextBox password() { return password; }
-    public Button submit()    { return submit; }
+  }
 }
 
 // Usage
-LoginDialog dialog = new LoginDialog();
-dialog.username().type("ada");
-dialog.password().type("hunter2secret");
+const dialog = new LoginDialog();
+dialog.username.type("ada");
+dialog.password.type("hunter2secret");
 // submit is now enabled - the fields never touched each other</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># The contract every colleague uses to talk to the hub
+from abc import ABC, abstractmethod
+
+
+class Mediator(ABC):
+    @abstractmethod
+    def notify(self, sender, event): ...
+
+
+# Colleagues know only the mediator, never each other
+class Component:
+    def __init__(self, mediator):
+        self._mediator = mediator
+
+
+class TextBox(Component):
+    def __init__(self, mediator):
+        super().__init__(mediator)
+        self._text = ""
+
+    def type(self, value):
+        self._text = value
+        self._mediator.notify(self, "changed")  # report upward
+
+    @property
+    def text(self):
+        return self._text
+
+
+class Button(Component):
+    def __init__(self, mediator):
+        super().__init__(mediator)
+        self.enabled = False
+
+
+# The concrete mediator holds the interaction rules in ONE place
+class LoginDialog(Mediator):
+    def __init__(self):
+        self.username = TextBox(self)
+        self.password = TextBox(self)
+        self.submit = Button(self)
+
+    def notify(self, sender, event):
+        if event == "changed":
+            ready = bool(self.username.text.strip()) and len(self.password.text) &gt;= 8
+            self.submit.enabled = ready  # coordinate the peers
+
+
+# Usage
+dialog = LoginDialog()
+dialog.username.type("ada")
+dialog.password.type("hunter2secret")
+# submit is now enabled - the fields never touched each other</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># The contract every colleague uses to talk to the hub
+module Mediator
+  def notify(sender, event)
+    raise NotImplementedError
+  end
+end
+
+# Colleagues know only the mediator, never each other
+class Component
+  def initialize(mediator)
+    @mediator = mediator
+  end
+end
+
+class TextBox &lt; Component
+  attr_reader :text
+
+  def initialize(mediator)
+    super
+    @text = ""
+  end
+
+  def type(value)
+    @text = value
+    @mediator.notify(self, :changed) # report upward
+  end
+end
+
+class Button &lt; Component
+  attr_accessor :enabled
+
+  def initialize(mediator)
+    super
+    @enabled = false
+  end
+end
+
+# The concrete mediator holds the interaction rules in ONE place
+class LoginDialog
+  include Mediator
+  attr_reader :username, :password, :submit
+
+  def initialize
+    @username = TextBox.new(self)
+    @password = TextBox.new(self)
+    @submit   = Button.new(self)
+  end
+
+  def notify(sender, event)
+    return unless event == :changed
+
+    ready = !@username.text.strip.empty? &amp;&amp; @password.text.length &gt;= 8
+    @submit.enabled = ready # coordinate the peers
+  end
+end
+
+# Usage
+dialog = LoginDialog.new
+dialog.username.type("ada")
+dialog.password.type("hunter2secret")
+# submit is now enabled - the fields never touched each other</code></pre>
+      </div>
       <p class="muted">Notice that <code>TextBox</code> and <code>Button</code> contain no cross-references. The rule "enable submit when both fields are valid" exists only inside <code>LoginDialog.notify</code>, so changing that rule is a one-file edit.</p>
     </div>
   </section>

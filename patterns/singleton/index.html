@@ -152,36 +152,106 @@ classDiagram
         </pre>
       </div>
 
-      <h3>Thread-safe lazy Singleton in Java</h3>
-      <pre><code>public final class Config {
+      <h3>A lazy, single-instance Config in three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Config: exactly one instance, loaded once on first use
+class Config {
+  private static instance: Config | null = null;
+  private readonly settings: Record&lt;string, string&gt;;
 
-    // volatile so the half-built instance is never seen by another thread
-    private static volatile Config instance;
+  // private constructor blocks `new Config()` from outside
+  private constructor() {
+    this.settings = Config.loadFromDisk(); // expensive, do it once
+  }
 
-    private final Map&lt;String, String&gt; settings;
-
-    private Config() {
-        settings = loadFromDisk();      // expensive, do it once
+  // the single global access point
+  static getInstance(): Config {
+    if (Config.instance === null) {        // built on first call only
+      Config.instance = new Config();
     }
+    return Config.instance;
+  }
 
-    public static Config getInstance() {
-        Config result = instance;        // read the volatile field once
-        if (result == null) {            // first check (no lock, fast path)
-            synchronized (Config.class) {
-                result = instance;
-                if (result == null) {    // second check (inside the lock)
-                    instance = result = new Config();
-                }
-            }
-        }
-        return result;
-    }
+  get(key: string): string | undefined {
+    return this.settings[key];
+  }
 
-    public String get(String key) {
-        return settings.get(key);
-    }
-}</code></pre>
-      <p class="muted">This is <strong>double-checked locking</strong>. The first null check skips the lock once the instance exists, so the common path stays fast; the <code>volatile</code> keyword is what makes it correct, because without it another thread could observe a partially constructed object.</p>
+  private static loadFromDisk(): Record&lt;string, string&gt; {
+    return { dbUrl: "postgres://localhost/app", timeout: "30" };
+  }
+}
+
+// exercise it: both calls return the very same object
+const a = Config.getInstance();
+const b = Config.getInstance();
+console.log(a === b);           // true
+console.log(a.get("dbUrl"));    // postgres://localhost/app</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Config: one instance, created lazily and safely under threads
+import threading
+
+
+class Config:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __init__(self):
+        # expensive, do it once
+        self._settings = self._load_from_disk()
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:            # fast path, no lock
+            with cls._lock:                  # guard the create
+                if cls._instance is None:    # re-check inside the lock
+                    cls._instance = cls()
+        return cls._instance
+
+    def get(self, key):
+        return self._settings.get(key)
+
+    @staticmethod
+    def _load_from_disk():
+        return {"db_url": "postgres://localhost/app", "timeout": "30"}
+
+
+# exercise it: both handles are the same object
+a = Config.get_instance()
+b = Config.get_instance()
+print(a is b)             # True
+print(a.get("db_url"))    # postgres://localhost/app</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Config: the stdlib Singleton mixin does the plumbing for you
+require "singleton"
+
+class Config
+  include Singleton   # makes .new private, adds thread-safe .instance
+
+  def initialize
+    @settings = load_from_disk   # expensive, runs exactly once
+  end
+
+  def get(key)
+    @settings[key]
+  end
+
+  private
+
+  def load_from_disk
+    { "db_url" =&gt; "postgres://localhost/app", "timeout" =&gt; "30" }
+  end
+end
+
+# exercise it: .instance always hands back the same object
+a = Config.instance
+b = Config.instance
+puts a.equal?(b)          # true
+puts a.get("db_url")      # postgres://localhost/app</code></pre>
+      </div>
+      <p class="muted">Each language reaches "only one" its own way: TypeScript hides the constructor and caches a static field, Python guards lazy creation with <strong>double-checked locking</strong> around a lock, and Ruby leans on the standard-library <code>Singleton</code> mixin, which makes <code>new</code> private and hands out one thread-safe instance.</p>
     </div>
   </section>
 
