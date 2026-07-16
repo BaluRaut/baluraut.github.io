@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मध्ये कलेक्शन एन्कॅप्सुलेट करणे - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="कलेक्शन एन्कॅप्सुलेट करण्याचे व्यावहारिक मार्गदर्शक: आतील list किंवा map कधीही उघड करू नका, प्रती किंवा read-only view परत करा, invariants राखणाऱ्या methods मधूनच बदल करा, आणि कलेक्शन लीक होण्याचे धोके टाळा. TypeScript, Python आणि Ruby सह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>कलेक्शन एन्कॅप्सुलेट करणे - list राखा, ती हातात देऊ नका</h1>
+      <p class="lede">जो class ऑर्डरच्या line items ची, playlist च्या tracks ची किंवा team च्या members ची यादी बाळगतो, तो त्या यादीबद्दलचे <strong>नियम</strong> देखील बाळगतो. ज्या क्षणी तुम्ही एखाद्या getter मधून raw कलेक्शन परत करता, त्या क्षणी कोणताही caller तुमच्या नकळत त्यात भर घालू शकतो, काढू शकतो किंवा ती रिकामी करू शकतो आणि तुमचे invariants शांतपणे मरतात. कलेक्शन एन्कॅप्सुलेट करणे म्हणजे container नव्हे तर वर्तन उघड करणे: वाचनासाठी प्रती किंवा read-only view परत करा, आणि नियम पाळणाऱ्या methods मधूनच बदल करा.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Read-only views</span>
+        <span class="pill">Defensive copies</span>
+        <span class="pill">Invariant राखणाऱ्या methods</span>
+        <span class="pill">लीक न झालेले references</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>कलेक्शन एन्कॅप्सुलेट करणे म्हणजे काय?</h2>
+      <p class="muted"><strong>कलेक्शन एन्कॅप्सुलेट करणे</strong> म्हणजे आतील list, set किंवा map हा एक private अंमलबजावणीचा तपशील असतो ज्याला बाहेरचे जग कधीही थेट स्पर्श करत नाही. Callers ऑब्जेक्टला गोष्टी <em>करण्यास</em> सांगतात, एखादा line item जोडा, एखादा track काढा, members मोजा, आणि ऑब्जेक्ट uniqueness, बेरीज, मर्यादा आणि क्रम यांसारखे नियम पाळत आपल्याच कलेक्शनमध्ये बदल करतो. वाचन एक <em>प्रत</em> किंवा एक <em>बदल न करता येणारे view</em> परत देते, कधीही जिवंत reference नाही.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Container लपवा</h4>
+          <p>list किंवा map धारण करणारे field private असते. ते परत करणारा कोणताही getter नसतो आणि ते बदलणारा कोणताही setter नसतो. Callers आत पोहोचू शकत नाहीत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">👁️</span> सुरक्षित वाचन उघड करा</h4>
+          <p>वाचनाने एक immutable view किंवा एक ताजी प्रत परत मिळते. Iterate करणे किंवा मोजणे ठीक आहे; परत केलेले मूल्य बदलल्यास मालकाच्या स्थितीला स्पर्श होता कामा नये.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛠️</span> Methods मधूनच बदल करा</h4>
+          <p><code>addItem</code> आणि <code>removeItem</code> हेच आत जाणारे एकमेव दरवाजे आहेत. बदल टिकण्याआधी प्रत्येक जण input तपासतो आणि invariants पुन्हा तपासतो.</p>
+        </div>
+      </div>
+
+      <h3>हलणारे भाग</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>भाग</th><th>तो काय करतो</th><th>ठराविक आकार</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Private backing field</strong></td><td>खरे कलेक्शन धारण करते, कधीही शेअर होत नाही</td><td><code>private items: LineItem[]</code></td></tr>
+            <tr><td><strong>Read accessor</strong></td><td>Iteration साठी प्रत किंवा read-only view परत करते</td><td><code>get lineItems(): readonly ...</code></td></tr>
+            <tr><td><strong>Command methods</strong></td><td>नियम राखत जोडा, काढा आणि update करा</td><td><code>addItem(sku, qty)</code></td></tr>
+            <tr><td><strong>Derived queries</strong></td><td>list लीक न करता प्रश्नांची उत्तरे देतात</td><td><code>total()</code>, <code>count()</code></td></tr>
+            <tr><td><strong>Invariant guards</strong></td><td>ऑब्जेक्ट मोडणारे बदल नाकारतात</td><td>कमाल आकार, uniqueness, अ-ऋण qty</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> आतील कलेक्शन परत करणारा getter हा वेषांतर केलेला public setter असतो. जर एखादा caller reference धरू शकत असेल, तर तो <code>.push()</code>, <code>.clear()</code> कॉल करू शकतो किंवा एखादा element पुन्हा नेमू शकतो, आणि तुमच्या ऑब्जेक्टच्या नियमांना कधीही बोलण्याची संधी मिळत नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>कलेक्शन एन्कॅप्सुलेट का करावे</h2>
+      <p class="muted">कलेक्शन म्हणजे केवळ data नाही; ते म्हणजे data आणि ते वैध ठेवणारे नियम. Container लीक केल्याने नियम आणि data वेगळे होतात आणि codebase मधल्या कुठूनही भ्रष्टाचाराला निमंत्रण मिळते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Invariants खरे राहतात</h4><p>ज्या ऑर्डरची total तिच्या line items च्या बेरजेइतकी असलीच पाहिजे, तिच्यावर तेव्हाच विश्वास ठेवता येतो जेव्हा प्रत्येक add आणि remove ऑर्डरमधूनच जातो. बाहेरून एक थेट <code>push</code> झाला की cached total खोटी ठरते.</p></div>
+        <div class="card"><h4>🧭 नियम बदलण्याची एकच जागा</h4><p>प्रत्येक playlist ला 500 tracks ची मर्यादा हवी आहे, किंवा डुप्लिकेट SKUs रोखायचे आहेत? list ला कधी स्पर्श केलेल्या प्रत्येक caller चे ऑडिट करण्याऐवजी तुम्ही एकाच method मध्ये तपासणी जोडता.</p></div>
+        <div class="card"><h4>🔎 Bugs चा माग लहान असतो</h4><p>जेव्हा स्थिती फक्त नाव असलेल्या methods मधूनच बदलू शकते, तेव्हा भ्रष्ट कलेक्शनमागे संपूर्ण application नव्हे तर मोजके संशयित असतात. तुम्ही भिंतींवर नव्हे तर दरवाज्यांवर breakpoints ठेवता.</p></div>
+        <div class="card"><h4>🔀 Internals बदलण्याचे स्वातंत्र्य</h4><p>ते array आहे यावर कोणीही अवलंबून नसल्याने, एकाही caller ला न मोडता तुम्ही uniqueness साठी set किंवा जलद lookup साठी map वर जाऊ शकता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावून सांगितलेले कलेक्शन एन्कॅप्सुलेशन</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे एक <strong>ग्रंथालय आहे, पुस्तकांचा मुक्त ढीग नाही</strong>. तुम्ही रॅकमध्ये चालत जाऊन कपाटे पुन्हा लावत नाही. तुम्ही काउंटरवर घेण्या-देण्याची विनंती करता, आणि ग्रंथपाल कॅटलॉग सुसंगत ठेवतो.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>getter ने <code>readonly</code> किंवा एक प्रत परत करावी. जिवंत array परत देणे म्हणजे एका private field चे mutable reference परत देण्यासारखे आहे, त्याने <code>private</code> keyword केवळ सजावट बनते आणि प्रत्येक invariant आता ऐच्छिक होतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>बँकेच्या खातेवहीचा</strong> विचार करा. कारकून थेट वहीत खरडत नाहीत; ते व्यवहार दाखल करतात जे system नोंदवते. प्रत्येक नोंद एका नियंत्रित operation मधून जात असल्याने खातेवही ताळेबंद राहते.</p></div>
+        <div class="card"><h4><span class="ico">🎟️</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>पाहुण्यांच्या यादीसह मैफल</strong>. पाहुणे दारात यादी बदलत नाहीत; ते नाव जोडण्यास किंवा काढण्यास यजमानाला विनंती करतात, त्यामुळे क्षमता आणि डुप्लिकेट नेहमी नियंत्रणात राहतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>कोडमध्ये ते कसे चालते</h2>
+      <p class="muted">एक <code>Order</code> घ्या जी आपले line items बाळगते. ती list private आहे. वाचन एक read-only view परत करते. Adds आणि removes अशा methods मधून जातात ज्या तपासणी करतात आणि total प्रामाणिक ठेवतात.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📥</span> लेखनाचे रक्षण करा</h4>
+          <p><code>addItem</code> quantity तपासतो, डुप्लिकेट SKUs एकत्र करतो, आणि बदल committed होण्याआधी कमाल-item मर्यादा पाळतो. काहीही त्याला वळसा घालत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📤</span> वाचन निष्प्रभ करा</h4>
+          <p><code>lineItems</code> एक frozen किंवा read-only क्रम परत करते. Callers loop करू शकतात आणि बेरीज करू शकतात, पण एखादा भरकटलेला <code>push</code> किंवा <code>clear</code> एकतर fail होतो किंवा एका टाकाऊ प्रतीवर आपटतो.</p>
+        </div>
+      </div>
+
+      <h3>Class आकृती</h3>
+      <div class="diagram">
+        <div class="cap">Order LineItem चे एक private कलेक्शन राखते; callers फक्त वर्तन पाहतात</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        -items : LineItem[]
+        -maxItems : int
+        +addItem(sku, name, unitPrice, qty)
+        +removeItem(sku)
+        +changeQuantity(sku, qty)
+        +lineItems() ReadonlyList
+        +total() Money
+        +count() int
+    }
+    class LineItem {
+        +sku : string
+        +name : string
+        +unitPrice : Money
+        +quantity : int
+        +subtotal() Money
+    }
+    class CheckoutService {
+        +place(order) Receipt
+    }
+    Order o-- LineItem : owns
+    CheckoutService ..> Order : reads via methods
+        </pre>
+      </div>
+
+      <h3>आपले कलेक्शन राखणारा class</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>class LineItem {
+  constructor(
+    readonly sku: string,
+    readonly name: string,
+    readonly unitPriceCents: number,
+    readonly quantity: number,
+  ) {}
+  subtotalCents(): number {
+    return this.unitPriceCents * this.quantity;
+  }
+}
+
+class Order {
+  // Private backing collection: no getter returns it, no setter replaces it.
+  private readonly items: LineItem[] = [];
+
+  constructor(private readonly maxItems = 100) {}
+
+  addItem(sku: string, name: string, unitPriceCents: number, qty: number): void {
+    if (qty &lt;= 0) throw new Error("quantity must be positive");
+    if (unitPriceCents &lt; 0) throw new Error("price cannot be negative");
+
+    const existing = this.items.find((i) =&gt; i.sku === sku);
+    if (existing) {
+      this.replace(sku, new LineItem(sku, name, unitPriceCents, existing.quantity + qty));
+      return;
+    }
+    if (this.items.length &gt;= this.maxItems) throw new Error("order is full");
+    this.items.push(new LineItem(sku, name, unitPriceCents, qty));
+  }
+
+  removeItem(sku: string): void {
+    const idx = this.items.findIndex((i) =&gt; i.sku === sku);
+    if (idx === -1) throw new Error(`no line item for ${sku}`);
+    this.items.splice(idx, 1);
+  }
+
+  changeQuantity(sku: string, qty: number): void {
+    if (qty &lt;= 0) { this.removeItem(sku); return; }
+    const cur = this.items.find((i) =&gt; i.sku === sku);
+    if (!cur) throw new Error(`no line item for ${sku}`);
+    this.replace(sku, new LineItem(sku, cur.name, cur.unitPriceCents, qty));
+  }
+
+  // Read-only view: callers can iterate but cannot mutate our state.
+  get lineItems(): readonly LineItem[] {
+    return this.items as readonly LineItem[];
+  }
+
+  totalCents(): number {
+    return this.items.reduce((sum, i) =&gt; sum + i.subtotalCents(), 0);
+  }
+
+  count(): number {
+    return this.items.length;
+  }
+
+  private replace(sku: string, next: LineItem): void {
+    const idx = this.items.findIndex((i) =&gt; i.sku === sku);
+    this.items[idx] = next;
+  }
+}
+
+const order = new Order();
+order.addItem("SKU-APT-12", "Aeropress filter", 899, 2);
+order.addItem("SKU-APT-12", "Aeropress filter", 899, 1); // merges to qty 3
+order.changeQuantity("SKU-APT-12", 4);
+console.log(order.count(), order.totalCents()); // 1  3596
+
+// The leak that never compiles: readonly forbids mutation.
+// order.lineItems.push(...);  // Error: push does not exist on readonly[]
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass
+from typing import Sequence
+
+
+@dataclass(frozen=True)
+class LineItem:
+    sku: str
+    name: str
+    unit_price_cents: int
+    quantity: int
+
+    def subtotal_cents(self) -&gt; int:
+        return self.unit_price_cents * self.quantity
+
+
+class Order:
+    def __init__(self, max_items: int = 100) -&gt; None:
+        # Name-mangled backing list: no accessor returns it directly.
+        self.__items: list[LineItem] = []
+        self.__max_items = max_items
+
+    def add_item(self, sku: str, name: str, unit_price_cents: int, qty: int) -&gt; None:
+        if qty &lt;= 0:
+            raise ValueError("quantity must be positive")
+        if unit_price_cents &lt; 0:
+            raise ValueError("price cannot be negative")
+
+        existing = self.__find(sku)
+        if existing is not None:
+            self.__replace(sku, LineItem(sku, name, unit_price_cents,
+                                         existing.quantity + qty))
+            return
+        if len(self.__items) &gt;= self.__max_items:
+            raise ValueError("order is full")
+        self.__items.append(LineItem(sku, name, unit_price_cents, qty))
+
+    def remove_item(self, sku: str) -&gt; None:
+        item = self.__find(sku)
+        if item is None:
+            raise KeyError(f"no line item for {sku}")
+        self.__items.remove(item)
+
+    def change_quantity(self, sku: str, qty: int) -&gt; None:
+        if qty &lt;= 0:
+            self.remove_item(sku)
+            return
+        cur = self.__find(sku)
+        if cur is None:
+            raise KeyError(f"no line item for {sku}")
+        self.__replace(sku, LineItem(sku, cur.name, cur.unit_price_cents, qty))
+
+    @property
+    def line_items(self) -&gt; Sequence[LineItem]:
+        # Read-only copy: mutating the tuple cannot touch our list.
+        return tuple(self.__items)
+
+    def total_cents(self) -&gt; int:
+        return sum(i.subtotal_cents() for i in self.__items)
+
+    def count(self) -&gt; int:
+        return len(self.__items)
+
+    def __find(self, sku: str) -&gt; LineItem | None:
+        return next((i for i in self.__items if i.sku == sku), None)
+
+    def __replace(self, sku: str, nxt: LineItem) -&gt; None:
+        idx = next(i for i, it in enumerate(self.__items) if it.sku == sku)
+        self.__items[idx] = nxt
+
+
+order = Order()
+order.add_item("SKU-APT-12", "Aeropress filter", 899, 2)
+order.add_item("SKU-APT-12", "Aeropress filter", 899, 1)  # merges to qty 3
+order.change_quantity("SKU-APT-12", 4)
+print(order.count(), order.total_cents())  # 1 3596
+
+# The leak that does nothing: appending to the copy leaves the order intact.
+order.line_items  # a tuple; it has no append at all
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>LineItem = Struct.new(:sku, :name, :unit_price_cents, :quantity) do
+  def subtotal_cents
+    unit_price_cents * quantity
+  end
+end
+
+class Order
+  def initialize(max_items: 100)
+    # Private backing array; no attr_accessor exposes it.
+    @items = []
+    @max_items = max_items
+  end
+
+  def add_item(sku, name, unit_price_cents, qty)
+    raise ArgumentError, "quantity must be positive" if qty &lt;= 0
+    raise ArgumentError, "price cannot be negative"  if unit_price_cents &lt; 0
+
+    existing = find(sku)
+    if existing
+      replace(sku, LineItem.new(sku, name, unit_price_cents,
+                                existing.quantity + qty))
+      return
+    end
+    raise "order is full" if @items.size &gt;= @max_items
+    @items &lt;&lt; LineItem.new(sku, name, unit_price_cents, qty)
+  end
+
+  def remove_item(sku)
+    item = find(sku) or raise KeyError, "no line item for #{sku}"
+    @items.delete(item)
+  end
+
+  def change_quantity(sku, qty)
+    return remove_item(sku) if qty &lt;= 0
+    cur = find(sku) or raise KeyError, "no line item for #{sku}"
+    replace(sku, LineItem.new(sku, cur.name, cur.unit_price_cents, qty))
+  end
+
+  # Frozen copy: callers iterate, but cannot mutate our state.
+  def line_items
+    @items.map(&amp;:dup).freeze
+  end
+
+  def total_cents
+    @items.sum(&amp;:subtotal_cents)
+  end
+
+  def count
+    @items.size
+  end
+
+  private
+
+  def find(sku)
+    @items.find { |i| i.sku == sku }
+  end
+
+  def replace(sku, nxt)
+    idx = @items.index { |i| i.sku == sku }
+    @items[idx] = nxt
+  end
+end
+
+order = Order.new
+order.add_item("SKU-APT-12", "Aeropress filter", 899, 2)
+order.add_item("SKU-APT-12", "Aeropress filter", 899, 1) # merges to qty 3
+order.change_quantity("SKU-APT-12", 4)
+puts "#{order.count} #{order.total_cents}" # 1 3596
+
+# The leak that raises: pushing onto a frozen array is refused.
+# order.line_items &lt;&lt; something  # FrozenError
+</code></pre>
+      </div>
+      <p class="muted">तिन्ही <code>Order</code> ची व्याख्या करतात, एक तयार करतात, आणि तिला फक्त methods मधूनच चालवतात. तोच SKU दोनदा जोडल्यास एक row डुप्लिकेट करण्याऐवजी quantities एकत्र होतात, आणि total नेहमी जिवंत items मधून काढला जातो, कधीही cache करून सडायला सोडला जात नाही. Read accessor caller ला असे काहीतरी परत देते जे तो ऑर्डर भ्रष्ट करण्यासाठी वापरू शकत नाही: TypeScript मध्ये एक <code>readonly</code> type, Python मध्ये एक <code>tuple</code>, Ruby मध्ये एक frozen प्रत.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>ऑब्जेक्ट परस्परक्रिया, टप्प्याटप्प्याने</h2>
+      <p class="muted">तीन दृश्ये: invariants राखणारे संरक्षित लेखन, एक view देणारे सुरक्षित वाचन, आणि तुम्ही रोखत असलेला लीक.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - एक संरक्षित लेखन addItem मधून जाते आणि नियम पुन्हा तपासते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Svc as 🖥️ CartService
+    participant Ord as 📦 Order
+    participant Items as 🔒 items (private)
+
+    Svc->>Ord: addItem("SKU-APT-12", price, qty)
+    Ord->>Ord: validate qty &gt; 0 and price &gt;= 0
+    Ord->>Items: find existing SKU
+    Items-->>Ord: match found
+    Ord->>Items: replace with merged quantity
+    Note over Ord,Items: total stays equal to sum of line items
+    Ord-->>Svc: ok (no reference leaked)
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - एक वाचन जिवंत list नव्हे तर एक read-only view परत करते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Rep as 🧾 ReceiptBuilder
+    participant Ord as 📦 Order
+    participant Items as 🔒 items (private)
+
+    Rep->>Ord: lineItems()
+    Ord->>Items: snapshot / freeze
+    Items-->>Ord: read-only copy
+    Ord-->>Rep: readonly view
+    Rep->>Rep: iterate and sum for receipt
+    Note over Rep,Ord: mutating the view cannot touch the order
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - हे रोखलेला लीक: raw list परत करणारा getter</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Bad as ⚠️ PromoModule
+    participant Ord as 📦 Order (leaky getter)
+    participant Items as 🔓 items (exposed)
+
+    Bad->>Ord: getItems()
+    Ord-->>Bad: live array reference
+    alt collection leaked
+        Bad->>Items: push(freeItem) directly
+        Note over Ord,Items: order never validated it; total now wrong
+    else properly encapsulated
+        Bad->>Ord: addItem(freeItem)
+        Ord->>Items: validated insert
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका भोळ्या उघड केलेल्या list पासून ते पूर्णपणे संरक्षित कलेक्शनपर्यंत, संपूर्ण refactor क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">शोधा</span><h4>लीक करणारा getter शोधा</h4><p>raw array, list किंवा map परत करणारे accessors शोधा. field परत करणारा <code>get items()</code> हा सर्व काही सुरू करणारा वास आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Private करा</span><h4>field private बनवा</h4><p>backing कलेक्शन private म्हणून चिन्हांकित करा आणि संपूर्ण गोष्ट बदलणारा कोणताही setter काढून टाका. बाहेरच्या कोणालाही आता reference मिळत नाही.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">यादी करा</span><h4>Callers ती कशी वापरतात ते नोंदवा</h4><p>प्रत्येक call site grep करा. त्यांना reads (iterate, count, sum) आणि writes (add, remove, clear, reorder) मध्ये गटबद्ध करा. हेच तुमचे method surface बनते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">वाचन</span><h4>एक read-only accessor जोडा</h4><p>एक <code>readonly</code> type, एक tuple किंवा एक frozen प्रत परत करा. Callers iterate करत राहतात; त्यांना जे परत मिळते ते ते फक्त बदलू शकत नाहीत.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Queries</span><h4>Derived प्रश्न आत ढकला</h4><p><code>order.items.length</code> आणि हाताने केलेल्या बेरजा <code>order.count()</code> आणि <code>order.total()</code> ने बदला. Callers विचारतात, ते गणना करत नाहीत.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">लेखन</span><h4>Command methods जोडा</h4><p><code>addItem</code> आणि <code>removeItem</code> तयार करा. प्रत्येक बाहेरचा बदल एका वेळी एक call site याप्रमाणे त्यांच्यात हलवा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Invariants</span><h4>नियम आत लागू करा</h4><p>quantity तपासा, डुप्लिकेट रोखा किंवा एकत्र करा, आकार मर्यादित करा. जे तपासे विखुरलेले होते ते आता एकाच जागी राहतात.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">स्थलांतर करा</span><h4>प्रत्येक caller पुन्हा लिहा</h4><p>थेट <code>push</code>/<code>splice</code> कॉल नव्या methods ने बदला. Compiler आणि fail होणाऱ्या tests तुम्हाला मागे राहिलेल्यांकडे बोट दाखवतात.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">बंद करा</span><h4>raw getter हटवा</h4><p>जिवंत कलेक्शन परत करणारा accessor काढून टाका. आता आत आणि बाहेर जाणारे एकमेव मार्ग तुमच्या नियंत्रणातलेच आहेत.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">सिद्ध करा</span><h4>Guards ची चाचणी करा</h4><p>invariants मोडण्याचा प्रयत्न करणाऱ्या tests लिहा: ऋण quantity, मर्यादेपलीकडे, डुप्लिकेट SKU, आणि परत केलेले view बदलणे. सर्व नाकारले गेले पाहिजेत किंवा निरुपद्रवी असले पाहिजेत.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">विकसित व्हा</span><h4>Internals मुक्तपणे बदला</h4><p>आकारावर कोणीही अवलंबून नसल्याने, uniqueness साठी किंवा जलद lookup साठी array ला set किंवा map मध्ये बदला. Callers ला कधीही कळत नाही.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">कलेक्शन एन्कॅप्सुलेट करणे अर्धवट करणे सोपे आहे. हे असे लीक आहेत जे review मधून निसटतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔓 जिवंत reference परत करणे</h4><p>प्रत नव्हे तर field स्वतःच परत करणारा getter callers ना एक private setter देतो. ते शून्य तपासणीसह तुमची स्थिती <code>push</code>, <code>splice</code> किंवा <code>clear</code> करू शकतात.</p></div>
+        <div class="card"><h4>🪟 उथळ प्रत, mutable elements</h4><p>तुम्ही list ची प्रत करता पण elements अजूनही शेअर केलेले mutable ऑब्जेक्ट्स असतात. एक caller जागच्या जागी <code>item.quantity</code> संपादित करतो आणि तुमची total शांतपणे भरकटते. खोलवर प्रत करा किंवा elements immutable बनवा.</p></div>
+        <div class="card"><h4>🏗️ Constructor मधून लीक</h4><p>caller ने पास केलेली अगदी तीच array साठवणे म्हणजे ते अजूनही ती धरून असतात आणि नंतर तिला बदलू शकतात. येणारी कलेक्शन्स फक्त बाहेर जाताना नव्हे तर आत येतानाच प्रत करा.</p></div>
+        <div class="card"><h4>📊 सडणारी cached total</h4><p>हाताने update केलेले <code>total</code> field तेव्हाच चालते जेव्हा प्रत्येक बदल तुमच्यातूनच जातो. एक थेट संपादन आणि cache खोटे बोलते. ती derive करा, किंवा फक्त संरक्षित methods च्या आत update करा.</p></div>
+        <div class="card"><h4>🧵 Iterator invalidation</h4><p>एक जिवंत iterator किंवा view देऊन नंतर कलेक्शन बदलल्यास loop च्या मध्येच throw होऊ शकते किंवा elements वगळले जाऊ शकतात. उघड करण्याआधी snapshot घ्या, किंवा iteration दरम्यान बदल रोखा.</p></div>
+        <div class="card"><h4>🕳️ रक्तहीन wrapper</h4><p>list ला wrap करणे पण तरीही ती परत करणारा <code>getItems()</code> जोडणे. एन्कॅप्सुलेशन हे केवळ नाटक आहे; वर्तन अजूनही ऑब्जेक्टमध्ये नव्हे तर callers मध्येच राहते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">तुम्ही अभिरुचीची unit-test करू शकत नाही, पण तुम्ही लीक झालेल्या कलेक्शनच्या ठशांवर लक्ष ठेवू शकता.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Getter field परत करतो</strong></td><td>कलेक्शन लीक झाले आहे; कोणताही caller ते बदलू शकतो. हा grep करण्यासारखा प्राथमिक वास आहे.</td></tr>
+            <tr><td><strong>Callers getter च्या निकालावर <code>.push</code>/<code>.add</code> कॉल करतात</strong></td><td>बदलाचे logic मालकाच्या बाहेर राहते, त्यामुळे invariants सुसंगतपणे लागू होत नाहीत.</td></tr>
+            <tr><td><strong>Call sites मध्ये डुप्लिकेट झालेली validation</strong></td><td>तोच "रिकामे नाकारा / N वर मर्यादा" तपास copy-paste केलेला आहे; तो एका command method मध्ये असायला हवा.</td></tr>
+            <tr><td><strong>स्थिती चुकीची पण कोणतीही method दोषी न दिसणारे bugs</strong></td><td>एका लीक झालेल्या reference द्वारे ऑब्जेक्टच्या नकळत कशाने तरी कलेक्शन बदलले.</td></tr>
+            <tr><td><strong>Cached aggregate items शी जुळत नाही</strong></td><td>total किंवा count हाताने राखले जाते तर बदल त्याला वळसा घालतात. लीकचे भक्कम चिन्ह.</td></tr>
+            <tr><td><strong>Data structure बदलणे कठीण</strong></td><td>Callers ते array आहे यावर अवलंबून असतात; set किंवा map बदल त्यांना मोडतो. एन्कॅप्सुलेशनने आकार लपवला असता.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकळमानाचा नियम:</strong> जर तुम्ही मालक class च्या बाहेरील एखाद्या ओळीकडे बोट दाखवू शकत असाल जी तिचे कलेक्शन बदलते, तर ते कलेक्शन एन्कॅप्सुलेट केलेले नाही. वाचन class मधून प्रती किंवा read-only views म्हणून बाहेर पडते; लेखन फक्त नाव असलेल्या methods मधूनच आत येते.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन systems जिथे कलेक्शन राखणे हे बरोबर आणि भ्रष्ट यांच्यातील फरक असतो.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · Checkout: Order आणि तिचे line items</h3><div class="role">Pattern: संरक्षित कलेक्शनमधून काढलेल्या totals</div></div></div>
+        <p class="muted">एका e-commerce ऑर्डरने तिची total, tax आणि discounts तिच्या line items शी नेहमी सुसंगत ठेवली पाहिजे.</p>
+        <ul>
+          <li><code>Order</code> <code>addItem</code>, <code>removeItem</code> आणि <code>changeQuantity</code> उघड करते; list private आहे.</li>
+          <li>अस्तित्वात असलेला SKU जोडल्यास quantities एकत्र होतात त्यामुळे पावतीवर डुप्लिकेट rows दिसत नाहीत.</li>
+          <li>Total items मधून काढला जातो, त्यामुळे ग्राहकाला जे दिसते त्याच्याशी तो कधीही विसंगत होऊ शकत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> दाखवलेला total आकारलेल्या रकमेपासून भरकटणारे pricing bugs नाहीसे होतात, कारण प्रत्येक बदल त्याच सत्याच्या स्रोतातून पुन्हा derive होतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎵</span><div><h3>2 · Music app: Playlist आणि तिचे tracks</h3><div class="role">Pattern: invariants म्हणून क्रम आणि मर्यादा</div></div></div>
+        <p class="muted">एका streaming playlist ने कमाल लांबी पाळली पाहिजे, क्रम जपला पाहिजे, आणि तोच track लगोलग दोनदा रोखला पाहिजे.</p>
+        <ul>
+          <li><code>Playlist.addTrack</code> insert करण्याआधी मर्यादा आणि लगतच्या-डुप्लिकेट-नको नियम तपासतो.</li>
+          <li><code>tracks</code> एक read-only view परत करते जेणेकरून UI ला थेट स्थिती पुनर्क्रमित न करता render करता येते.</li>
+          <li>पुनर्क्रम ही एक method आहे जी एक index हलवते, callers वर विश्वास ठेवण्याऐवजी स्थान वैध ठेवते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> client आणि server track क्रम आणि लांबीच्या मर्यादांवर सहमत होतात, कारण फक्त playlist च आपला क्रम बदलू शकते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">👥</span><div><h3>3 · Collaboration tool: Team आणि तिचे members</h3><div class="role">Pattern: uniqueness आणि role invariants</div></div></div>
+        <p class="muted">एका workspace team मध्ये नेहमी किमान एक owner असला पाहिजे आणि तोच user कधीही दोनदा नोंदवला जाता कामा नये.</p>
+        <ul>
+          <li><code>Team.addMember</code> डुप्लिकेट नाकारतो आणि परवानगी असलेल्या मूल्यांशी role तपासतो.</li>
+          <li><code>removeMember</code> शेवटचा owner काढण्यास नकार देतो, "नेहमी एक owner" invariant चे रक्षण करतो.</li>
+          <li><code>members</code> प्रती परत करते, त्यामुळे permissions UI चुकून कोणालाही न उतरवता iterate करू शकते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> अनाथ teams नाहीत आणि बिलावर डुप्लिकेट seats नाहीत, कारण membership नियम एकाच संरक्षित जागी लागू होतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">कलेक्शन राखणे ही जुनी सोय नाही; concurrency, immutability आणि समृद्ध domain models अंतर्गत आधुनिक systems कशी बरोबर राहतात याचा तो पाया आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Domain-driven aggregates</h4><p>एक aggregate root आपले child कलेक्शन बाळगतो आणि ते बदलण्याचा एकमेव gateway असतो. कलेक्शन एन्कॅप्सुलेट करणे हाच अगदी तो मार्ग आहे ज्याने aggregates आपली सुसंगततेची सीमा सुरक्षित ठेवतात.</p></div>
+        <div class="card"><h4>🧊 Immutability by default</h4><p>Records, frozen dataclasses आणि readonly types elements ना देण्यास सुरक्षित बनवतात. प्रवृत्ती अशा वाचनांकडे आहे जे अक्षरशः बदलताच येत नाहीत.</p></div>
+        <div class="card"><h4>🔁 Concurrency सुरक्षा</h4><p>दोन threads मधून बदललेले लीक झालेले कलेक्शन म्हणजे data race. बदल संरक्षित methods च्या आत ठेवल्याने locking किंवा copy-on-write जोडण्यासाठी तुम्हाला एकच जागा मिळते.</p></div>
+        <div class="card"><h4>🧪 Testability</h4><p>जेव्हा स्थिती फक्त नाव असलेल्या methods मधूनच बदलते, तेव्हा तुम्ही private fields वर नव्हे तर वर्तनावर assert करता. Guards लहान, लक्ष्यित unit tests बनतात.</p></div>
+        <div class="card"><h4>🌐 API आणि DTO सीमा</h4><p>एखादी entity serialize करताना ती जिवंत model उघड न करता एक प्रत प्रक्षेपित करावी. जी शिस्त कलेक्शन राखते तीच wire format राखते.</p></div>
+        <div class="card"><h4>♻️ Event sourcing</h4><p>स्थिती methods मधून events लागू करून पुन्हा बांधली जाते, कधीही कलेक्शनला ढोसून नाही. विश्वासार्ह event log साठी एन्कॅप्सुलेशन ही पूर्वअट आहे.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> कलेक्शन म्हणजे data चा पोशाख घातलेले वर्तन. Container लपवा, प्रती किंवा read-only views द्या, आणि प्रत्येक बदल नियम राखणाऱ्या एका method मधून जाऊ द्या. तसे केले तर तुम्हाला कोण कॉल करते याची पर्वा न करता तुमचे invariants टिकतात.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">कलेक्शन राखणे हे एन्कॅप्सुलेशन कल्पनांच्या कुटुंबात बसते. हे तिच्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔒</span><h4>Encapsulation</h4><p>वर्तनामागे स्थिती लपवणे, ज्यावर हे बांधले आहे तो सिद्धांत.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../tell-dont-ask/"><span class="ico">📣</span><h4>Tell, don't ask</h4><p>मालकाचा data बाहेर काढण्याऐवजी त्याला commands पाठवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../immutability/"><span class="ico">🧊</span><h4>Immutability</h4><p>तुम्ही देत असलेले elements बदलणे अशक्य करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🏗️</span><h4>Construction invariants</h4><p>वैध सुरुवात करणे जेणेकरून संरक्षित methods ना फक्त वैध राहावे लागते.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>कलेक्शन एन्कॅप्सुलेट करणे · Container लपवा · प्रती आणि views परत करा · Methods मधून बदल करा · Invariants राखा</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

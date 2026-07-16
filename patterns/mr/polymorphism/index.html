@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Polymorphism - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंगमधील polymorphism चे सखोल, दृश्य मार्गदर्शक: subtype polymorphism आणि dynamic dispatch, method overriding, ad-hoc विरुद्ध parametric, duck typing, आणि dispatch conditionals ची जागा कशी घेते - TypeScript, Python आणि Ruby सह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Polymorphism - एक कॉल, अनेक वर्तने</h1>
+      <p class="lede">Polymorphism मुळे एकच call site अनेक प्रकारच्या ऑब्जेक्ट्ससोबत काम करू शकते, आणि प्रत्येक ऑब्जेक्ट आपापल्या पद्धतीने प्रतिसाद देतो. एखादी checkout service <strong>charge()</strong> एकदाच कॉल करते; एक card gateway, एक wallet, आणि एक bank transfer प्रत्येकजण स्वतःचे logic चालवतो. कॉल करणाऱ्याला concrete type कोणता आहे हे माहीत नसते, आणि runtime <strong>dynamic dispatch</strong> द्वारे योग्य method निवडतो.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Dynamic dispatch</span>
+        <span class="pill">Method overriding</span>
+        <span class="pill">Duck typing</span>
+        <span class="pill">कमी conditionals</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Polymorphism म्हणजे काय?</h2>
+      <p class="muted"><strong>Polymorphism</strong> म्हणजे "अनेक रूपे": एक interface, अनेक implementations. तुम्ही एका abstract contract विरुद्ध प्रोग्रामिंग करता, उदाहरणार्थ <code>charge()</code> method असलेला <code>PaymentMethod</code>, आणि runtime ला त्या contract चे पालन करणारा कोणताही concrete method त्याच्या जागी वापरता येतो. कॉल करणारा एक message पाठवतो; प्राप्त करणारा ऑब्जेक्ट कसा प्रतिसाद द्यायचा हे ठरवतो. हीच ती यंत्रणा आहे जिच्यामुळे payments सुरू करणारा कोड न बदलता तुम्ही नवीन payment provider जोडू शकता.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Subtype polymorphism</h4>
+          <p>एक <code>StripeCard</code> हा एक <code>PaymentMethod</code> आहे (is-a). जिथे जिथे base type अपेक्षित असतो तिथे कोणताही subtype चालतो. हा classic OO प्रकार आहे, जो dynamic dispatch द्वारे ठरवला जातो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔀</span> Ad-hoc (overloading)</h4>
+          <p>एकच operation चे नाव वेगवेगळ्या argument types ना वेगवेगळ्या कोडने हाताळते, जसे <code>format(amount)</code> विरुद्ध <code>format(amount, currency)</code>. प्रत्येक signature नुसार ठरवले जाते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Parametric (generics)</h4>
+          <p>एकच implementation कोणत्याही type साठी चालते, जसे <code>Repository&lt;T&gt;</code> किंवा generic <code>Cache</code>. Type-agnostic कोड, type नुसार कोणतेही branching नाही.</p>
+        </div>
+      </div>
+
+      <h3>प्रत्यक्षात भेटणारे प्रकार</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>प्रकार</th><th>बंधन कसे होते</th><th>वास्तविक उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Subtype</strong></td><td>Runtime ला, ऑब्जेक्टच्या concrete class नुसार</td><td>एक <code>Notifier.send()</code> कॉल; email, SMS, आणि push प्रत्येकजण तो override करतो</td></tr>
+            <tr><td><strong>Overriding</strong></td><td>Runtime ला, child parent method ची जागा घेतो</td><td><code>RefundableOrder.total()</code> base वर refunds वजा करते</td></tr>
+            <tr><td><strong>Ad-hoc / overloading</strong></td><td>Compile time ला, argument signature नुसार</td><td>reporting API मध्ये <code>export(rows)</code> विरुद्ध <code>export(rows, columns)</code></td></tr>
+            <tr><td><strong>Parametric</strong></td><td>Type parameters, सर्व types साठी एकच body</td><td><code>Queue&lt;Job&gt;</code>, <code>Repository&lt;User&gt;</code>, generic result wrappers</td></tr>
+            <tr><td><strong>Duck typing</strong></td><td>Runtime ला, declared type नव्हे तर क्षमतेनुसार</td><td><code>read()</code> असलेला कोणताही ऑब्जेक्ट stream source म्हणून चालतो</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> "कोणते वर्तन चालेल" हा निर्णय polymorphism <code>switch</code> statement मधून बाहेर काढून type system मध्ये आणते. तुम्ही "ही कोणत्या प्रकारची गोष्ट आहे?" असे विचारणे थांबवता आणि त्याऐवजी त्या गोष्टीला "तुझे काम कर" असे सांगता.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Polymorphism का महत्त्वाचे आहे</h2>
+      <p class="muted">प्रणाली नवीन cases जोडून वाढतात: नवीन payment provider, नवीन export format, नवीन notification channel. Polymorphism शिवाय, प्रत्येक नवीन case आधीपासून असलेल्या प्रत्येक conditional मध्ये बदल करते. त्याच्यासह, नवीन वर्तन एका नवीन class च्या रूपात येते जो जुना कोड कधीच पाहत नाही.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>➕ जोडणीने विस्तारता येते</h4><p>एक <code>ApplePayMethod</code> class जोडा आणि तो register करा. Checkout service, invoices, आणि receipts स्पर्श न करता चालू राहतात. नवीन वर्तन म्हणजे नवीन branches नव्हेत.</p></div>
+        <div class="card"><h4>🧹 Conditional पसारा नष्ट करते</h4><p>संपूर्ण codebase मध्ये पसरलेले प्रचंड <code>if method == "card" ... elif method == "wallet"</code> एका <code>method.charge()</code> मध्ये संकुचित होते. Type च निर्णय वाहून नेतो.</p></div>
+        <div class="card"><h4>🧪 सहजपणे testable</h4><p>कॉल करणारे एका interface वर अवलंबून असल्याने, tests एक बनावट <code>PaymentMethod</code> inject करतात जो कॉल्स नोंदवतो. Network नाही, खरा gateway नाही, monkey-patched globals नाहीत.</p></div>
+        <div class="card"><h4>🔗 Decoupled स्तर</h4><p>Order service ला contract माहीत असतो, vendor नाही. त्याच interface मागे Stripe बदलून Adyen आणा आणि वरच्या बाजूला काहीही बदलत नाही. Dependencies abstractions कडे निर्देश करतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांसह समजावलेले Polymorphism</h2>
+      <p class="muted">एकच कल्पना, ती चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ती पटते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हा एक <strong>universal remote</strong> आहे. तुम्ही "power" एकदाच दाबता; TV, soundbar, आणि projector प्रत्येकजण त्याच signal चा आपापल्या पद्धतीने अर्थ लावतो. एक बटण, अनेक उपकरणे, सर्वत्र योग्य वर्तन.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>तुम्ही एका interface विरुद्ध <code>paymentMethod.charge(amount)</code> कॉल करता. Runtime ला inject केलेला concrete ऑब्जेक्ट ठरवतो की त्याचा अर्थ card authorization, wallet debit, की bank transfer आहे. Call site कधीच type नुसार branch करत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>PDF, HTML, किंवा CSV मध्ये render होणाऱ्या invoice चा</strong> विचार करा. Accounting invoice ला "render" करायला सांगते; format ऑब्जेक्ट तपशील हाताळतो. नवीन format जोडा आणि billing screen बदलत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>wall socket</strong> plug मध्ये बसणारे कोणतेही उपकरण स्वीकारते. Socket ला ते lamp ला वीज देते की laptop charger ला याची पर्वा नसते; ते फक्त वीज पुरवते, आणि प्रत्येक उपकरण आपले काम करते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत यंत्रणा कशी चालते</h2>
+      <p class="muted">Polymorphism दोन गोष्टींवर आधारित आहे: एक सामायिक <strong>contract</strong> (method घोषित करणारा interface किंवा base class), आणि <strong>dynamic dispatch</strong>, म्हणजे runtime lookup जे एका कॉलला base आवृत्तीऐवजी concrete ऑब्जेक्टच्या स्वतःच्या override कडे वळवते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📜</span> Contract</h4>
+          <p>एक abstract <code>PaymentMethod</code> <code>charge(amount): Receipt</code> घोषित करतो. तो काय ते सांगतो, कसे ते कधीच नाही. प्रत्येक concrete method ते पूर्ण करण्याचे वचन देतो, त्यामुळे कॉल करणारे सुरक्षितपणे base type धरून ठेवू शकतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> Dynamic dispatch</h4>
+          <p>जेव्हा तुम्ही <code>m.charge(amount)</code> कॉल करता, तेव्हा runtime <code>m</code> मागील प्रत्यक्ष ऑब्जेक्ट तपासतो आणि त्या class च्या <code>charge</code> कडे उडी मारतो. हे late binding च overriding ला अंमलात आणते.</p>
+        </div>
+      </div>
+
+      <h3>एका दृष्टीक्षेपात classes आणि objects</h3>
+      <div class="diagram">
+        <div class="cap">Class diagram - एक abstract contract, तीन concrete payment methods, एक caller</div>
+        <pre class="mermaid">
+classDiagram
+    class PaymentMethod {
+        &lt;&lt;abstract&gt;&gt;
+        +charge(amount) Receipt
+        +label() string
+    }
+    class CardGateway {
+        +charge(amount) Receipt
+        +label() string
+    }
+    class DigitalWallet {
+        +charge(amount) Receipt
+        +label() string
+    }
+    class BankTransfer {
+        +charge(amount) Receipt
+        +label() string
+    }
+    class CheckoutService {
+        +settle(method, amount) Receipt
+    }
+    PaymentMethod &lt;|-- CardGateway
+    PaymentMethod &lt;|-- DigitalWallet
+    PaymentMethod &lt;|-- BankTransfer
+    CheckoutService ..&gt; PaymentMethod
+        </pre>
+      </div>
+
+      <h3>एक कॉल, तीन वर्तने - तीन भाषांमध्ये</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Shared contract: every payment method honors charge()
+interface Receipt { method: string; amount: number; reference: string; }
+
+abstract class PaymentMethod {
+  abstract charge(amount: number): Receipt;
+  abstract label(): string;
+}
+
+class CardGateway extends PaymentMethod {
+  constructor(private last4: string) { super(); }
+  charge(amount: number): Receipt {
+    // authorize + capture against the card network
+    return { method: this.label(), amount, reference: `auth_${this.last4}` };
+  }
+  label() { return `Card ****${this.last4}`; }
+}
+
+class DigitalWallet extends PaymentMethod {
+  constructor(private walletId: string) { super(); }
+  charge(amount: number): Receipt {
+    // debit the stored wallet balance
+    return { method: this.label(), amount, reference: `wlt_${this.walletId}` };
+  }
+  label() { return `Wallet ${this.walletId}`; }
+}
+
+class BankTransfer extends PaymentMethod {
+  constructor(private iban: string) { super(); }
+  charge(amount: number): Receipt {
+    // initiate an ACH / SEPA pull
+    return { method: this.label(), amount, reference: `sepa_${this.iban.slice(-4)}` };
+  }
+  label() { return `Bank ${this.iban.slice(-4)}`; }
+}
+
+// The caller branches on nothing. Dynamic dispatch does the routing.
+class CheckoutService {
+  settle(method: PaymentMethod, amount: number): Receipt {
+    const receipt = method.charge(amount);
+    console.log(`Settled ${amount} via ${receipt.method} -&gt; ${receipt.reference}`);
+    return receipt;
+  }
+}
+
+const checkout = new CheckoutService();
+const methods: PaymentMethod[] = [
+  new CardGateway("4242"),
+  new DigitalWallet("acct_9f2"),
+  new BankTransfer("DE89370400440532013000"),
+];
+for (const m of methods) checkout.settle(m, 4999);</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+@dataclass
+class Receipt:
+    method: str
+    amount: int
+    reference: str
+
+class PaymentMethod(ABC):
+    @abstractmethod
+    def charge(self, amount: int) -&gt; Receipt: ...
+    @abstractmethod
+    def label(self) -&gt; str: ...
+
+class CardGateway(PaymentMethod):
+    def __init__(self, last4: str):
+        self.last4 = last4
+    def charge(self, amount: int) -&gt; Receipt:
+        # authorize + capture against the card network
+        return Receipt(self.label(), amount, f"auth_{self.last4}")
+    def label(self) -&gt; str:
+        return f"Card ****{self.last4}"
+
+class DigitalWallet(PaymentMethod):
+    def __init__(self, wallet_id: str):
+        self.wallet_id = wallet_id
+    def charge(self, amount: int) -&gt; Receipt:
+        # debit the stored wallet balance
+        return Receipt(self.label(), amount, f"wlt_{self.wallet_id}")
+    def label(self) -&gt; str:
+        return f"Wallet {self.wallet_id}"
+
+class BankTransfer(PaymentMethod):
+    def __init__(self, iban: str):
+        self.iban = iban
+    def charge(self, amount: int) -&gt; Receipt:
+        # initiate an ACH / SEPA pull
+        return Receipt(self.label(), amount, f"sepa_{self.iban[-4:]}")
+    def label(self) -&gt; str:
+        return f"Bank {self.iban[-4:]}"
+
+class CheckoutService:
+    def settle(self, method: PaymentMethod, amount: int) -&gt; Receipt:
+        receipt = method.charge(amount)  # dynamic dispatch, no isinstance checks
+        print(f"Settled {amount} via {receipt.method} -&gt; {receipt.reference}")
+        return receipt
+
+checkout = CheckoutService()
+methods = [
+    CardGateway("4242"),
+    DigitalWallet("acct_9f2"),
+    BankTransfer("DE89370400440532013000"),
+]
+for m in methods:
+    checkout.settle(m, 4999)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>Receipt = Struct.new(:method, :amount, :reference)
+
+class PaymentMethod
+  def charge(amount) = raise NotImplementedError
+  def label = raise NotImplementedError
+end
+
+class CardGateway &lt; PaymentMethod
+  def initialize(last4) = @last4 = last4
+  def charge(amount)
+    # authorize + capture against the card network
+    Receipt.new(label, amount, "auth_#{@last4}")
+  end
+  def label = "Card ****#{@last4}"
+end
+
+class DigitalWallet &lt; PaymentMethod
+  def initialize(wallet_id) = @wallet_id = wallet_id
+  def charge(amount)
+    # debit the stored wallet balance
+    Receipt.new(label, amount, "wlt_#{@wallet_id}")
+  end
+  def label = "Wallet #{@wallet_id}"
+end
+
+class BankTransfer &lt; PaymentMethod
+  def initialize(iban) = @iban = iban
+  def charge(amount)
+    # initiate an ACH / SEPA pull
+    Receipt.new(label, amount, "sepa_#{@iban[-4..]}")
+  end
+  def label = "Bank #{@iban[-4..]}"
+end
+
+class CheckoutService
+  def settle(method, amount)
+    receipt = method.charge(amount) # duck typing: anything with charge works
+    puts "Settled #{amount} via #{receipt.method} -&gt; #{receipt.reference}"
+    receipt
+  end
+end
+
+checkout = CheckoutService.new
+methods = [
+  CardGateway.new("4242"),
+  DigitalWallet.new("acct_9f2"),
+  BankTransfer.new("DE89370400440532013000"),
+]
+methods.each { |m| checkout.settle(m, 4999) }</code></pre>
+      </div>
+      <p class="muted">तिन्ही snippets वर्तनदृष्ट्या एकसारखे आहेत. Binding शैलीतील फरक लक्षात घ्या: TypeScript आणि Python स्पष्ट base contract घोषित करतात, तर Ruby <strong>duck typing</strong> वर अवलंबून असते - <code>settle</code> <code>charge</code> ला प्रतिसाद देणारा कोणताही ऑब्जेक्ट स्वीकारते, सामायिक पूर्वज आवश्यक नाही. प्रत्येक बाबतीत कॉल करणाऱ्याकडे payment type नुसार शून्य branches असतात.</p>
+
+      <h3>आधी आणि नंतर - dispatch conditional ची जागा घेते</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// BEFORE: the caller owns every case. Each new method edits this switch.
+function settle(kind: string, amount: number) {
+  if (kind === "card") {
+    return authorizeCard(amount);
+  } else if (kind === "wallet") {
+    return debitWallet(amount);
+  } else if (kind === "bank") {
+    return initiateTransfer(amount);
+  }
+  throw new Error(`Unknown method ${kind}`);
+}
+
+// AFTER: the object owns its case. New method = new class, caller untouched.
+function settle(method: PaymentMethod, amount: number) {
+  return method.charge(amount);
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># BEFORE: the caller owns every case. Each new method edits this branch.
+def settle(kind: str, amount: int):
+    if kind == "card":
+        return authorize_card(amount)
+    elif kind == "wallet":
+        return debit_wallet(amount)
+    elif kind == "bank":
+        return initiate_transfer(amount)
+    raise ValueError(f"Unknown method {kind}")
+
+# AFTER: the object owns its case. New method = new class, caller untouched.
+def settle(method: PaymentMethod, amount: int):
+    return method.charge(amount)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># BEFORE: the caller owns every case. Each new method edits this case.
+def settle(kind, amount)
+  case kind
+  when "card"   then authorize_card(amount)
+  when "wallet" then debit_wallet(amount)
+  when "bank"   then initiate_transfer(amount)
+  else raise "Unknown method #{kind}"
+  end
+end
+
+# AFTER: the object owns its case. New method = new class, caller untouched.
+def settle(method, amount)
+  method.charge(amount)
+end</code></pre>
+      </div>
+      <p class="muted">हाच तो फायदा. Conditional नाहीसा झाला नाही; तो हलला. प्रत्येक concrete class जुन्या <code>switch</code> ची नेमकी एक branch धरून ठेवते, आणि runtime चे dispatch table तुम्ही पूर्वी हाताने लिहीत असलेल्या manual dispatch ची जागा घेते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: polymorphic charge कॉल, मिश्र collection वरून iterate करणे, आणि fallback सह विविध formats मध्ये invoice rendering.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Dynamic dispatch: एक कॉल, concrete method वर सोडवला गेला</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 Buyer
+    participant CO as 🖥️ CheckoutService
+    participant PM as 📜 PaymentMethod ref
+    participant CG as 💳 CardGateway
+
+    U-&gt;&gt;CO: settle(method, 4999)
+    CO-&gt;&gt;PM: charge(4999)
+    Note over PM,CG: runtime resolves the ref to CardGateway
+    PM-&gt;&gt;CG: dispatch charge(4999)
+    CG--&gt;&gt;CO: Receipt(auth_4242)
+    CO--&gt;&gt;U: Settled via Card ****4242
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - एका heterogeneous collection वर एक loop, प्रत्येक ऑब्जेक्ट स्वतःचे वर्तन</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant CO as 🖥️ CheckoutService
+    participant W as 👛 DigitalWallet
+    participant B as 🏦 BankTransfer
+
+    Note over CO: methods = [wallet, bank]
+    loop for each method
+        CO-&gt;&gt;W: charge(4999)
+        W--&gt;&gt;CO: Receipt(wlt_acct_9f2)
+        CO-&gt;&gt;B: charge(4999)
+        B--&gt;&gt;CO: Receipt(sepa_3000)
+    end
+    Note over CO: no type checks, same call site
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Invoice rendering: तोच render() कॉल, format ठरवते, असमर्थित असल्यास fallback</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant AC as 🧾 Billing
+    participant INV as 📄 Invoice
+    participant R as 🎨 Renderer
+
+    AC-&gt;&gt;INV: render(format)
+    INV-&gt;&gt;R: emit(invoiceData)
+    alt format supported
+        R--&gt;&gt;INV: bytes (PDF or HTML or CSV)
+        INV--&gt;&gt;AC: rendered document
+    else unknown format
+        R--&gt;&gt;INV: raise UnsupportedFormat
+        INV--&gt;&gt;AC: fall back to HTML
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">Hardcoded conditional पासून स्वच्छ polymorphic dispatch पर्यंत, आणि caller ला स्पर्श न करता अगदी नवीन payment method जोडणे.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">वास</span><h4>वाढणारा switch ओळखा</h4><p>Payments एका पसरलेल्या <code>if kind == "card" ... elif "wallet"</code> मधून जातात. प्रत्येक provider जोडणे म्हणजे हा block तसेच receipt आणि refund मार्ग संपादित करणे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Contract</span><h4>सामायिक वर्तनाला नाव द्या</h4><p>सर्व methods ना काय करावे लागते ते नोंदवा: <code>charge(amount)</code> आणि <code>label()</code>. ते एक abstract base class किंवा interface म्हणून घोषित करा, म्हणजे <code>PaymentMethod</code> contract.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Model</span><h4>प्रत्येक case ला एक class द्या</h4><p><code>CardGateway</code>, <code>DigitalWallet</code>, आणि <code>BankTransfer</code> तयार करा, प्रत्येकजण contract अंमलात आणतो. जुन्या switch ची एक branch प्रत्येक class मध्ये हलते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Override</span><h4>प्रत्येक class मध्ये charge() अंमलात आणा</h4><p>प्रत्येक subtype <code>charge()</code> ला स्वतःच्या logic ने override करतो: card authorize करा, wallet debit करा, transfer pull करा. तेच signature, वेगळ्या bodies.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Depend</span><h4>Caller ला base वर type करा</h4><p><code>CheckoutService.settle</code> आता string नव्हे तर <code>PaymentMethod</code> स्वीकारते. ते abstraction वर अवलंबून असते, कधीच concrete provider वर नाही.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Dispatch</span><h4>Switch ची जागा एका कॉलने घ्या</h4><p>Conditional हटवा. Body <code>method.charge(amount)</code> बनते. Dynamic dispatch runtime ला योग्य override कडे वळवते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Construct</span><h4>Type किनाऱ्यावर निवडा</h4><p>कोणीतरी अजूनही concrete class निवडलीच पाहिजे, सहसा checkout request वाचणारा एक factory. ती निवड एका सीमेवर राहते, सर्वत्र विखुरलेली नाही.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Iterate</span><h4>मिश्र collections एकसमानपणे हाताळा</h4><p>विविध <code>PaymentMethod</code> ऑब्जेक्ट्सची एक यादी एका call site मधून loop होते. Retries, split payments, आणि receipts त्यांना एकसारखे वागवतात.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Extend</span><h4>वरच्या बाजूला शून्य बदल करून ApplePay जोडा</h4><p>Contract अंमलात आणणारा <code>ApplePayMethod</code> लिहा आणि तो factory मध्ये register करा. Checkout, refunds, आणि reporting न बदलता compile आणि चालतात.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>एक बनावट method inject करा</h4><p>Tests amount नोंदवणारा एक stub <code>PaymentMethod</code> पास करतात. Polymorphic seam मुळे कोणत्याही खऱ्या gateway शिवाय service testable होते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>वर्तन branches ने नव्हे तर classes ने scale होते</h4><p>Codebase आता conditionals रुंद करून नव्हे तर types जोडून वाढते. नवीन वर्तन additive, वेगळे, आणि deploy करण्यास सुरक्षित असते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">निष्काळजीपणे केलेले polymorphism तेच coupling पुन्हा निर्माण करते जे काढून टाकण्यासाठी ते होते. या गोष्टींकडे लक्ष द्या.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔎 Abstraction चे type-checking</h4><p>Caller मध्ये <code>if (method instanceof CardGateway)</code> लिहिणे मुख्य हेतूलाच हरवते. जर तुम्हाला एखाद्या ऑब्जेक्टला त्याचा concrete type विचारावाच लागत असेल, तर ते वर्तन ऑब्जेक्टवर आणखी एका method म्हणून असले पाहिजे.</p></div>
+        <div class="card"><h4>⚠️ Liskov substitution चे उल्लंघन</h4><p>जिथे base ने receipt चे वचन दिले तिथे throw करणारे <code>BankTransfer.charge()</code> contract वर विश्वास ठेवणाऱ्या callers ना तोडते. Subtypes ने base च्या हमी पाळल्या पाहिजेत, त्या कमकुवत करू नयेत.</p></div>
+        <div class="card"><h4>🧩 Fat interfaces</h4><p><code>charge</code>, <code>refund</code>, <code>tokenize</code>, आणि <code>threeDSecure</code> असलेला contract प्रत्येक method ला जे करता येत नाही ते stub करण्यास भाग पाडतो. त्याऐवजी केंद्रित roles मध्ये विभागा.</p></div>
+        <div class="card"><h4>🪜 खोल inheritance साखळ्या</h4><p>कोड सामायिक करण्यासाठी <code>PaymentMethod</code> subclasses चे पाच स्तर overrides चा माग काढणे अशक्य करतात. उंच hierarchies पेक्षा composition आणि लहान mixins ला प्राधान्य द्या.</p></div>
+        <div class="card"><h4>🕳️ मूक default cases</h4><p>जे हाताळत नाही त्या case साठी शांतपणे <code>null</code> किंवा रिकामे receipt परत करणारे overridden method bugs लपवते. मोठ्याने अपयशी व्हा किंवा गहाळ वर्तन type मध्ये स्पष्ट करा.</p></div>
+        <div class="card"><h4>🎭 तपासणीशिवाय duck typing</h4><p>Dynamic भाषांमध्ये, <code>charge</code> नसलेला ऑब्जेक्ट पास केल्यास तो सीमेवर नव्हे तर production मध्ये खोलवर अपयशी होतो. आवश्यक methods किनाऱ्यावरच validate करा, किंवा protocols वापरा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मोजमापे</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">तुम्ही polymorphism dashboard वर टाकू शकत नाही, पण हे कोड संकेत तुम्हाला सांगतात की ते मदत करत आहे की गहाळ आहे.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Type-switch मोजणी</strong></td><td>त्याच kinds च्या संचावर पुनरावृत्त <code>switch</code> किंवा <code>instanceof</code> गहाळ polymorphic hierarchy दर्शवतो. प्रत्येक duplicate ही अशी जागा आहे जिथे नवीन case विसरला जाईल.</td></tr>
+            <tr><td><strong>प्रत्येक feature मागे shotgun surgery</strong></td><td>जर एक payment method जोडणे अनेक files ना स्पर्श करत असेल, तर dispatch अजूनही manual आहे. चांगले polymorphism ते एकच नवीन class बनवते.</td></tr>
+            <tr><td><strong>Callers ची cyclomatic complexity</strong></td><td>Service स्तरात जास्त branching बहुधा असे logic दर्शवते जे ऑब्जेक्ट्सवर असले पाहिजे. Dispatch ने हे आकडे सपाट करावेत.</td></tr>
+            <tr><td><strong>Override सुसंगतता</strong></td><td>सर्व subtypes तेच inputs स्वीकारतात आणि तोच आकार परत करतात का? भिन्न signatures leaky contract आणि Liskov धोक्याचा इशारा देतात.</td></tr>
+            <tr><td><strong>Test double ची सुलभता</strong></td><td>जर एखादे dependency बनावट करण्यासाठी implementation पास करण्याऐवजी internals patch करावे लागत असतील, तर तुमचे seams पुरेसे polymorphic नाहीत.</td></tr>
+            <tr><td><strong>Open-closed पालन</strong></td><td>नवीन वर्तन जोडलेल्या classes च्या रूपात येते की अस्तित्वात असलेल्या files मधील बदललेल्या conditionals च्या रूपात ते मागोवा घ्या. पहिले हे निरोगी pattern आहे.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जर तुम्ही स्वतःला त्याच types च्या संचावर तोच <code>if</code>-ladder दोनपेक्षा जास्त ठिकाणी लिहिताना आढळलात, तर type system एका polymorphic method ची मागणी करत आहे. Branch ऑब्जेक्टवर हलवा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>वास्तविक जगातील उदाहरणे</h2>
+      <p class="muted">तीन production-शैलीच्या प्रणाली जिथे polymorphism भार वाहतो.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · providers मधील payment orchestration</h3><div class="role">Pattern: एक charge() कॉल, अनेक gateways</div></div></div>
+        <p class="muted">एक marketplace buyer च्या प्रदेश आणि method नुसार Stripe, Adyen, आणि स्थानिक bank rails मार्गे payments वळवते.</p>
+        <ul>
+          <li>प्रत्येक provider एक सामायिक <code>PaymentMethod.charge()</code> अंमलात आणतो, त्यामुळे checkout flow provider-agnostic असतो.</li>
+          <li>Request सीमेवरील एक factory concrete gateway निवडतो; downstream काहीही त्यावर branch करत नाही.</li>
+          <li>नवीन प्रादेशिक provider जोडणे म्हणजे एक class अधिक एक factory नोंद, आणि refunds आणि receipts अस्पर्शित राहतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> नवीन बाजारपेठा classes जोडून सुरू होतात, आणि मुख्य settlement मार्ग स्थिर आणि जोरदार tested राहतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📣</span><div><h3>2 · Multi-channel notification service</h3><div class="role">Pattern: email, SMS, push वर एक send()</div></div></div>
+        <p class="muted">एक platform एकाच dispatch loop मधून email, SMS, push, आणि in-app channels वर transactional alerts पाठवते.</p>
+        <ul>
+          <li>प्रत्येक channel हा एक <code>Notifier</code> आहे जो <code>send(message, recipient)</code> ला स्वतःच्या transport ने override करतो.</li>
+          <li>User preferences channel ऑब्जेक्ट्सची यादी देतात; dispatcher iterate करतो आणि <code>send</code> एकसमानपणे कॉल करतो.</li>
+          <li>एक नवीन WhatsApp channel त्याच contract अंमलात आणणारा एक class म्हणून समाविष्ट होतो, dispatcher मध्ये बदल नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Channels स्वतंत्रपणे विकसित होतात आणि fan-out engine कधीच नवीन <code>if</code> branch शिकत नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>3 · Report आणि invoice export pipeline</h3><div class="role">Pattern: PDF, HTML, CSV साठी एक render()</div></div></div>
+        <p class="muted">एक billing system तीच invoice ग्राहकांसाठी PDF, web view साठी HTML, आणि accounting imports साठी CSV मध्ये export करते.</p>
+        <ul>
+          <li>प्रत्येक format हा एक <code>Renderer</code> आहे जो <code>render(invoice)</code> override करतो; invoice डेटा धरून ठेवते, renderer रूप.</li>
+          <li>Export endpoint विनंती केलेला format एका renderer ऑब्जेक्टवर सोडवते आणि एक method कॉल करते.</li>
+          <li>एक नवीन XLSX export invoice model किंवा endpoint चा dispatch कोड न बदलता जोडले जाते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Output formats मुक्तपणे वाढतात तर invoice domain model स्वच्छ आणि एकल-उद्देशीय राहते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Polymorphism हा classic OO चा अवशेष नाही; आधुनिक typed आणि dynamic भाषा वर्तन कसे रचतात याचा तो पाया आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Protocols आणि traits</h4><p>Swift protocols, Rust traits, आणि Go interfaces हे inheritance शिवाय polymorphism आहेत: वर्तन क्षमतेनुसार बांधले जाते, जे compile time ला structural आणि duck typing चे प्रतिध्वनी आहे.</p></div>
+        <div class="card"><h4>🔤 Structural typing</h4><p>TypeScript नावांशी नव्हे तर आकारांशी जुळते. योग्य methods असलेली कोणतीही गोष्ट एका interface चे समाधान करते, जे static सुरक्षितता आणि duck-typed लवचिकता यांचे मिश्रण आहे.</p></div>
+        <div class="card"><h4>🧬 Bounded generics</h4><p>Constraints सह parametric polymorphism, जसे <code>&lt;T extends PaymentMethod&gt;</code>, हमी टिकवून ठेवत अनेक types साठी चालणारी एक implementation देते.</p></div>
+        <div class="card"><h4>🧩 Sum types आणि pattern match</h4><p>Functional भाषा आणि आधुनिक Rust व Scala बंद sum types ला exhaustive matching सोबत जोडतात, जो खुल्या subtype dispatch चा एक हेतुपुरस्सर पर्याय आहे.</p></div>
+        <div class="card"><h4>🔌 Plugin architectures</h4><p>Extensions, adapters, आणि drivers सर्वजण एका सामायिक interface वर अवलंबून असतात जेणेकरून तिसरे पक्ष core फोर्क न करता वर्तन जोडतात, तोच open-closed फायदा.</p></div>
+        <div class="card"><h4>🌐 Polyglot service contracts</h4><p>gRPC आणि OpenAPI एक contract परिभाषित करतात ज्याचे अनेक भाषा implementations समाधान करतात, म्हणजे process आणि network सीमांपलीकडे ताणलेले subtype substitution.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Polymorphism हा तो मार्ग आहे ज्याने तुम्ही कोड नवीन cases साठी खुला आणि बदलासाठी बंद बनवता. Class, interface, protocol, किंवा generic द्वारे असो, उद्दिष्ट कायम असते: एका गोष्टीला कॉल करा, type ला वर्तन ठरवू द्या, आणि संपादन करण्याऐवजी जोडून वाढा.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Polymorphism OOP कल्पनांच्या जाळ्यात बसते. या त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../inheritance/"><span class="ico">🧬</span><h4>Inheritance</h4><p>Method overriding शक्य करणारे is-a नाते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">🦆</span><h4>Interfaces आणि duck typing</h4><p>Contracts आणि क्षमता-आधारित substitution.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../abstraction/"><span class="ico">🎚️</span><h4>Abstraction</h4><p>एका contract विरुद्ध प्रोग्रामिंग, कसे ते लपवणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../open-closed/"><span class="ico">🔓</span><h4>Open-closed तत्त्व</h4><p>विस्तारासाठी खुले, बदलासाठी बंद.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Polymorphism चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · उदाहरणे · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

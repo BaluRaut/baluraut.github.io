@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Immutability - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="OOP मधील Immutability चे सखोल, दृश्य मार्गदर्शन: बांधणीनंतर कधीही न बदलणारे objects, thread safety, सुरक्षित sharing आणि caching, functional updates, आणि TypeScript, Python व Ruby मधील readonly किंवा frozen fields." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Immutability - बांधणीनंतर कधीही न बदलणारे objects</h1>
+      <p class="lede">Immutable object हे त्याच्या constructor कडून पूर्णपणे तयार होते आणि पुन्हा कधीही बदलले जात नाही. प्रत्येक field एकदाच सेट होते आणि आधीच तपासले जाते, त्यामुळे object नेहमी वैध स्थितीत असते. जेव्हा तुम्हाला एखादी वेगळी आवृत्ती हवी असते, तेव्हा तुम्ही त्याला बदलत नाही - तुम्ही एक <strong>नवीन</strong> object तयार करता आणि मूळ object तसेच ठेवता.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Readonly fields</span>
+        <span class="pill">Functional updates</span>
+        <span class="pill">Thread safety</span>
+        <span class="pill">सुरक्षित sharing</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Immutability म्हणजे काय?</h2>
+      <p class="muted"><strong>Immutable object</strong> असे कोणतेही operation उघड करत नाही जे त्याची दृश्यमान स्थिती बदलेल. Money, एखादी date range, किंवा एखादे application config एकदाच तयार होते, एकदाच तपासले जाते, आणि त्यानंतर ते फक्त-वाचनासाठी (read-only) राहते. ज्यांना वेगळे मूल्य हवे असते ते callers एखाद्या method कडून <em>ताज्या</em> object ची मागणी करतात; receiver कधीही जागच्या जागी पुन्हा लिहिले जात नाही. तो एकच नियम bugs चा एक संपूर्ण वर्ग नाहीसा करतो आणि सुरक्षित sharing शक्य करतो.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧱</span> बांधणीच्या वेळी एकदाच सेट</h4>
+          <p>सर्व fields constructor मध्ये नेमली जातात आणि तिथेच तपासली जातात. ऋण minor-unit रक्कम असलेले किंवा जुळत नसलेले currency असलेले <code>Money</code> अस्तित्वातच येऊ शकत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> कोणतेही mutators नाहीत</h4>
+          <p>कोणतेही setters नाहीत आणि fields ला पुन्हा नेमणाऱ्या कोणत्याही methods नाहीत. सार्वजनिक पृष्ठभाग म्हणजे queries आणि नवीन instances परत करणारी शुद्ध (pure) रूपांतरे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">➕</span> Functional updates</h4>
+          <p><code>add</code> किंवा <code>withCurrency</code> सारखी operations एक अगदी नवीन object परत करतात. मूळ object जसेच्या तसे राहते, त्यामुळे जुन्या references ना अचानक झालेले बदल कधीही दिसत नाहीत.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>सामान्य यंत्रणा</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Readonly fields</strong></td><td>बांधणीनंतर पुनर्नेमणूक रोखते</td><td>TS <code>readonly</code>, Python frozen dataclass, Ruby <code>freeze</code></td></tr>
+            <tr><td><strong>तपासणी करणारा constructor</strong></td><td>प्रत्येक instance आधीच वैध असल्याची हमी देतो</td><td>चुकीच्या input वर throw करणारी guard clauses</td></tr>
+            <tr><td><strong>Functional update</strong></td><td>बदललेली प्रत तयार करते, मूळ अखंड</td><td><code>add()</code>, <code>with(...)</code>, <code>replace()</code></td></tr>
+            <tr><td><strong>Value equality</strong></td><td>समान fields असलेली दोन instances समान असतात</td><td>Field-by-field <code>equals</code> / <code>__eq__</code></td></tr>
+            <tr><td><strong>Deep freeze</strong></td><td>आतील collections संपादित होण्यापासून थांबवते</td><td>Frozen tuples, frozen arrays, वाचताना प्रती</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> immutable object हे एक <em>value</em> आहे, <em>slot</em> नाही. <code>5</code> चा अर्थ तुम्ही कधीही बदलत नाही, आणि दिलेल्या <code>Money(499, "USD")</code> चा अर्थही तुम्ही कधीही बदलत नाही. वेगळे मूल्य मिळवण्यासाठी तुम्ही एक नवीन तयार करता; मूळ कायमस्वरूपी असते आणि sharing साठी सुरक्षित असते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Immutability का अस्तित्वात आहे</h2>
+      <p class="muted">Mutable shared state हे बहुतेक concurrency bugs आणि aliasing च्या आश्चर्यांचे मूळ आहे. जेव्हा एखादे object तुमच्या नकळत बदलू शकते, तेव्हा त्याकडील प्रत्येक reference एक धोका बनतो. Immutability थोडेसे copying देऊन मोठ्या प्रमाणात निश्चितता मिळवते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧵 विनासायास thread safety</h4><p>जर कोणताही thread एखादे object बदलू शकत नसेल, तर ते वाचण्यासाठी कोणत्याही thread ला lock ची गरज नाही. Immutable <code>Money</code> आणि <code>Config</code> कोणत्याही synchronization शिवाय request pool मध्ये shared करता येतात.</p></div>
+        <div class="card"><h4>🔗 सुरक्षित sharing आणि caching</h4><p>तुम्ही तेच instance अनेक callers ना देऊ शकता, ते cache करू शकता, आणि hash-map key म्हणून वापरू शकता, याची भीती न बाळगता की खालच्या बाजूला कोणीतरी ते बदलेल आणि बाकीच्या सर्वांची प्रत बिघडवेल.</p></div>
+        <div class="card"><h4>🐛 Aliasing bugs नाहीत</h4><p>एकाच object कडे निर्देश करणारी दोन variables अनपेक्षितपणे कधीही वेगळी होऊ शकत नाहीत, कारण object कधीही बदलत नाही. ते एखाद्या function ला दिल्याने caller ला आश्चर्य वाटत नाही.</p></div>
+        <div class="card"><h4>🧭 समजायला सोपे</h4><p>State फक्त constructors मध्येच दिसते, त्यामुळे तुम्ही एकाच ठिकाणी शुद्धतेचे लेखापरीक्षण करता. जुनी मूल्ये अजूनही अस्तित्वात असल्याने Undo, retries, आणि time-travel debugging क्षुल्लक होतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांसह समजावलेले Immutability</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती लगेच समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे <strong>पेनाने लिहिलेल्या परीक्षेच्या उत्तरासारखे</strong> आहे. एकदा लिहून झाले की तुम्ही ते पुसत नाही; जर तुमचे मत बदलले तर तुम्ही एक नवीन, दुरुस्त केलेली प्रत लिहिता. जुनी शीट जशीच्या तशी राहते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>बहुतेक भाषांमधील <strong>string चा विचार करा</strong>. <code>"hello".toUpperCase()</code> मूळ बदलत नाही; ते एक नवीन string परत करते. Immutable domain objects अगदी त्याच प्रकारे वागतात.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>स्वाक्षरी केलेल्या कराराप्रमाणे</strong>. अंमलात आलेल्या दस्तऐवजावर तुम्ही कधीही खरडत नाही; तुम्ही एक नवीन आवृत्तीबद्ध दस्तऐवज म्हणून सुधारणा जारी करता. काय ठरले याचा दाखला म्हणून मूळ दस्तऐवज तसाच राहतो.</p></div>
+        <div class="card"><h4><span class="ico">🧾</span> दैनंदिन आवृत्ती</h4><p>एक <strong>छापलेली पावती</strong>. एखादे शुल्क दुरुस्त करण्यासाठी दुकान तुमची पावती पुन्हा लिहीत नाही; ते एक नवीन पावती छापते. दोन्ही चिठ्ठ्या अस्तित्वात राहतात, आणि इतिहास प्रामाणिक राहतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आतमध्ये हे कसे कार्य करते</h2>
+      <p class="muted">Immutability म्हणजे एकत्र काम करणाऱ्या दोन शिस्ती: <strong>fields ला कुलूप लावा</strong> जेणेकरून त्यांना काहीही पुन्हा नेमू शकणार नाही, आणि objects ला संपादित करण्याऐवजी <strong>संपूर्ण objects बदला</strong>. भाषा तुम्हाला कुलूप देते; तुम्ही functional-update methods पुरवता.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔐</span> Fields ला कुलूप लावा</h4>
+          <p>प्रत्येक field ला type पातळीवर read-only म्हणून चिन्हांकित करा. TypeScript <code>readonly</code> वापरते, Python <code>frozen=True</code> dataclass वापरते, आणि Ruby constructor मध्ये <code>freeze</code> बोलावते. पुन्हा नेमण्याचा कोणताही प्रयत्न ही compile error किंवा runtime error असते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> नवीन objects परत करा</h4>
+          <p>प्रत्येक "बदल" ही एक method असते जी सध्याची fields वाचते, पुढील मूल्ये मोजते, आणि एक ताजे instance तयार करते. Caller त्यांचे variable पुन्हा बांधतो; जुने object अस्पर्श आणि अजूनही वैध राहते.</p>
+        </div>
+      </div>
+
+      <h3>class एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">एक Money value object - कोणतेही setters नाहीत, फक्त queries आणि नवीन Money परत करणारी functional updates</div>
+        <pre class="mermaid">
+classDiagram
+    class Money {
+        +readonly amount int
+        +readonly currency string
+        +add(other Money) Money
+        +scale(factor int) Money
+        +withCurrency(code string) Money
+        +equals(other Money) bool
+        +format() string
+    }
+    class Currency {
+        &lt;&lt;enumeration&gt;&gt;
+        USD
+        EUR
+        INR
+    }
+    class Cart {
+        +total() Money
+    }
+    Money --> Currency : denominated in
+    Cart ..> Money : produces new
+    note for Money "Immutable: every op returns a fresh Money, the receiver never changes"
+        </pre>
+      </div>
+
+      <h3>तीन भाषांमध्ये तीच immutable class</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money as an immutable value object. Amount is in minor units (cents).
+class Money {
+  constructor(
+    public readonly amount: number,
+    public readonly currency: string,
+  ) {
+    if (!Number.isInteger(amount)) throw new Error("amount must be integer minor units");
+    if (currency.length !== 3) throw new Error("currency must be an ISO code");
+    Object.freeze(this); // lock the instance at runtime too
+  }
+
+  // Functional update: returns a NEW Money, never mutates `this`.
+  add(other: Money): Money {
+    if (other.currency !== this.currency) throw new Error("currency mismatch");
+    return new Money(this.amount + other.amount, this.currency);
+  }
+
+  scale(factor: number): Money {
+    return new Money(Math.round(this.amount * factor), this.currency);
+  }
+
+  equals(other: Money): boolean {
+    return this.amount === other.amount && this.currency === other.currency;
+  }
+
+  format(): string {
+    return `${(this.amount / 100).toFixed(2)} ${this.currency}`;
+  }
+}
+
+const price = new Money(1999, "USD");
+const shipping = new Money(500, "USD");
+const total = price.add(shipping);   // -> new Money(2499, "USD")
+console.log(price.format());         // "19.99 USD" (unchanged)
+console.log(total.format());         // "24.99 USD"</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Money as an immutable value object using a frozen dataclass.
+from dataclasses import dataclass, replace
+
+@dataclass(frozen=True)          # frozen -> fields cannot be reassigned
+class Money:
+    amount: int                  # minor units (cents)
+    currency: str
+
+    def __post_init__(self):
+        if not isinstance(self.amount, int):
+            raise ValueError("amount must be integer minor units")
+        if len(self.currency) != 3:
+            raise ValueError("currency must be an ISO code")
+
+    # Functional update: returns a NEW Money, never mutates self.
+    def add(self, other: "Money") -> "Money":
+        if other.currency != self.currency:
+            raise ValueError("currency mismatch")
+        return replace(self, amount=self.amount + other.amount)
+
+    def scale(self, factor: float) -> "Money":
+        return replace(self, amount=round(self.amount * factor))
+
+    def format(self) -> str:
+        return f"{self.amount / 100:.2f} {self.currency}"
+
+price = Money(1999, "USD")
+shipping = Money(500, "USD")
+total = price.add(shipping)      # -> Money(amount=2499, currency='USD')
+print(price.format())            # "19.99 USD" (unchanged)
+print(total.format())            # "24.99 USD"
+# price.amount = 0              # FrozenInstanceError</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Money as an immutable value object. freeze locks the instance.
+class Money
+  attr_reader :amount, :currency   # readers only, no writers
+
+  def initialize(amount, currency)
+    raise ArgumentError, "amount must be integer minor units" unless amount.is_a?(Integer)
+    raise ArgumentError, "currency must be an ISO code" unless currency.length == 3
+    @amount = amount
+    @currency = currency.freeze
+    freeze                          # no ivar can be reassigned after this
+  end
+
+  # Functional update: returns a NEW Money, never mutates self.
+  def add(other)
+    raise ArgumentError, "currency mismatch" unless other.currency == @currency
+    Money.new(@amount + other.amount, @currency)
+  end
+
+  def scale(factor)
+    Money.new((@amount * factor).round, @currency)
+  end
+
+  def ==(other)
+    other.is_a?(Money) &amp;&amp; amount == other.amount &amp;&amp; currency == other.currency
+  end
+
+  def format
+    format_amount = (@amount / 100.0)
+    "%.2f %s" % [format_amount, @currency]
+  end
+end
+
+price = Money.new(1999, "USD")
+shipping = Money.new(500, "USD")
+total = price.add(shipping)       # -> new Money(2499, "USD")
+puts price.format                 # "19.99 USD" (unchanged)
+puts total.format                 # "24.99 USD"
+# price.instance_variable_set(:@amount, 0)  # FrozenError</code></pre>
+      </div>
+      <p class="muted">तिन्हीमध्ये, <code>add</code> receiver वाचते, पुढील रक्कम मोजते, आणि एक <em>नवीन</em> <code>Money</code> परत देते. बेरजेनंतरही मूळ <code>price</code> अजूनही <code>19.99</code> असे format होते. Frozen किंवा readonly घोषणा हीच ती गोष्ट आहे जी त्या हमीला केवळ एक परंपरा न ठेवता अंमलात आणण्याजोगी बनवते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - अनुक्रम आकृत्या</div>
+      <h2>सविस्तर अनुक्रम आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: नवीन object परत करणारे functional update, threads मध्ये सुरक्षित sharing, आणि बांधणीच्या वेळी अवैध mutation नाकारणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Functional update: add एक नवीन Money परत करते, मूळ अस्पर्श राहते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cart as 🛒 Cart
+    participant Price as 💵 price Money
+    participant New as 🆕 total Money
+
+    Cart->>Price: add(shipping)
+    Price->>Price: validate same currency
+    Price->>New: new Money(amount + shipping.amount, currency)
+    New-->>Price: fresh instance
+    Price-->>Cart: return total (new object)
+    Note over Price,New: price still holds 1999, total holds 2499
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - सुरक्षित sharing: दोन request threads कोणत्याही locks शिवाय एकच Money वाचतात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T1 as 🧵 Thread A
+    participant T2 as 🧵 Thread B
+    participant M as 💵 shared Money
+
+    par no synchronization needed
+        T1->>M: format()
+        M-->>T1: "19.99 USD"
+    and
+        T2->>M: scale(2)
+        M-->>T2: new Money(3998, USD)
+    end
+    Note over T1,T2: neither thread changed M, so no lock and no race
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - बांधणी guard: एक अवैध Money नाकारले जाते, कधीही अर्धवट बांधले जात नाही</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑‍💻 Caller
+    participant Ctor as 🏗️ Money constructor
+    participant Obj as 💵 Money
+
+    Caller->>Ctor: new Money(-5, "US")
+    Ctor->>Ctor: check amount and currency
+    alt invalid input
+        Ctor-->>Caller: throw ValidationError
+    else valid input
+        Ctor->>Obj: assign fields then freeze
+        Obj-->>Caller: immutable Money
+    end
+    Note over Ctor,Obj: no setter exists, so a valid object can never become invalid later
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका value ची रचना करण्यापासून ते जिवंत system मध्ये ते सुरक्षितपणे sharing करण्यापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>एक value ओळखा</h4><p>पूर्णपणे त्याच्या data द्वारे परिभाषित होणारी संकल्पना शोधा, जसे Money, एखादी DateRange, किंवा app Config. immutability साठी ही उमेदवार असतात कारण इथे identity ला महत्त्व नाही, फक्त fields ला असते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Fields</span><h4>Read-only fields घोषित करा</h4><p>किमान fields ची यादी करा आणि त्यांना read-only म्हणून चिन्हांकित करा: TS <code>readonly</code>, Python frozen dataclass, किंवा Ruby instance variables ज्यांना तुम्ही freeze कराल.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Validate</span><h4>Constructor मध्ये guard ठेवा</h4><p>चुकीचा input आधीच नाकारा - non-integer रकमा, अज्ञात currency, अशी range जिचा शेवट सुरुवातीच्या आधी येतो. बांधलेले object नेहमी वैध असते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Freeze</span><h4>Instance ला कुलूप लावा</h4><p>Immutability अंतिम करा: <code>Object.freeze(this)</code>, frozen dataclass यंत्रणा, किंवा constructor ची शेवटची ओळ म्हणून <code>freeze</code>.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Query</span><h4>Read-only methods उघड करा</h4><p><code>format()</code>, <code>contains(date)</code>, किंवा <code>isEnabled(flag)</code> सारख्या शुद्ध queries जोडा ज्या काहीही न बदलता fields वरून मोजतात.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Update</span><h4>Functional updates जोडा</h4><p><code>add</code>, <code>withCurrency</code>, किंवा <code>extendTo(date)</code> लिहा जे receiver ला बदलण्याऐवजी एक नवीन instance तयार करून परत करतात.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Equality</span><h4>Value द्वारे तुलना करा</h4><p>Field-by-field equality आणि जुळणारे hash लागू करा जेणेकरून दोन समान मूल्ये परस्पर बदलण्याजोगी आणि map keys म्हणून वापरण्याजोगी असतील.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Nesting</span><h4>Collections ला guard ठेवा</h4><p>आतील arrays किंवा maps देखील frozen किंवा बचावात्मकरीत्या copy केलेली असल्याची खात्री करा, जेणेकरून shared आतील list mutability बाहेर पाडू शकणार नाही.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Share</span><h4>मुक्तपणे द्या, locks नाहीत</h4><p>तेच instance अनेक callers आणि threads ना द्या. ते कधीही बदलत नसल्याने, ते वाचण्यासाठी कोणत्याही synchronization ची गरज नाही.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Cache</span><h4>सुरक्षितपणे cache आणि key करा</h4><p>निकाल memoize करा आणि value ला cache key म्हणून वापरा. खालच्या बाजूला काहीही cached नोंद बदलून तिला बिघडवू शकत नाही.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Evolve</span><h4>नवीन objects द्वारे आवृत्ती करा</h4><p>जेव्हा आवश्यकता बदलतात, तेव्हा नवीन स्थितींसाठी नवीन instances तयार करा. जुनी मूल्ये टिकून राहतात, undo, audit trails, आणि सोप्या तर्काला बळ देतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Immutability घोषित करणे सोपे आहे आणि चुकून तोडणेही सोपे आहे. हे नेहमीचे गळती-बिंदू आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Shallow freeze</h4><p>Object ला read-only चिन्हांकित करणे पण आतील array किंवा map mutable ठेवणे. Callers आतील collection संपादित करतात आणि "immutable" object शांतपणे बदलते. आतील state देखील freeze किंवा copy करा.</p></div>
+        <div class="card"><h4>🚪 अंतर्गत references बाहेर पडणे</h4><p>Getter मधून प्रत्यक्ष अंतर्गत list परत केल्याने callers ना ती थेट बदलता येते. जिवंत reference ऐवजी एक copy, एक frozen view, किंवा एक iterator परत करा.</p></div>
+        <div class="card"><h4>🔧 लपलेले setters</h4><p>"फक्त याच वेळी" एखादे field पुन्हा नेमणारी सोयीस्कर method जोडल्याने प्रत्येक हमी नष्ट होते. जर कोणताही code path state बदलत असेल, तर ते immutable नाही. पृष्ठभाग फक्त-query ठेवा.</p></div>
+        <div class="card"><h4>🐢 Hot loops मध्ये copy ची गर्दी</h4><p>हजारो मूल्यांची बेरीज करताना प्रत्येक फेरीला एक नवीन object तयार केल्याने भरपूर allocation होऊ शकते. एक builder वापरा किंवा primitives जमा करा, मग एक अंतिम immutable निकाल तयार करा.</p></div>
+        <div class="card"><h4>🎭 Identity द्वारे equality</h4><p>Value equality विसरल्याने दोन समान Money instances वेगळी दिसतात, ज्यामुळे sets, cache keys, आणि deduplication तुटते. Immutable मूल्यांना field-आधारित equals आणि hash आवश्यक असते.</p></div>
+        <div class="card"><h4>🧨 Mutable default arguments</h4><p>Python मध्ये list सारखा एक mutable default instances मध्ये शेअर केल्याने objects दरम्यान state गळते. प्रत्येक instance स्वतंत्र राहावे यासाठी immutable defaults किंवा एक factory वापरा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">Codebase मध्ये आणि runtime वर काही संकेतांचे निरीक्षण करून immutability खरी आहे की केवळ आकांक्षा आहे हे तुम्ही सांगू शकता.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>ते तुम्हाला काय सांगते</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Value types वरील setter संख्या</strong></td><td>शून्य setters किंवा field पुनर्नेमणुका म्हणजे object खरोखर immutable आहे, केवळ तसे लेबल केलेले नाही.</td></tr>
+            <tr><td><strong>Freeze / readonly व्याप्ती</strong></td><td>किती value classes प्रत्यक्षात frozen किंवा readonly fields घोषित करतात, आणि किती फक्त परंपरेवर अवलंबून आहेत.</td></tr>
+            <tr><td><strong>Defensive-copy लेखापरीक्षण</strong></td><td>Getters copies किंवा frozen views परत करतात का; बाहेर पडलेली जिवंत references लपलेली mutability उघड करतात.</td></tr>
+            <tr><td><strong>Shared state भोवतीचे locks</strong></td><td>जसजशी अधिक shared objects immutable होतात तसतसे कमी locks लागतात - एक थेट concurrency-सोपेपणाचा संकेत.</td></tr>
+            <tr><td><strong>Aliasing bug दर</strong></td><td>एखादे type immutable केल्यानंतर "value अनपेक्षितपणे बदलले" या दोषांमधील घट.</td></tr>
+            <tr><td><strong>Allocation profile</strong></td><td>Hot paths मध्ये functional updates मुळे होणारी object गर्दी, जी तुम्हाला सांगते की builder किंवा batching कुठे उपयुक्त आहे.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> जर तुम्हाला अशी एकही कोड ओळ सापडली जी बांधणीनंतर value object वरील एखादे field पुन्हा नेमते, तर ते अजून immutable नाही. लेबलवर विश्वास ठेवण्याआधी setters आणि field writes साठी grep करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरण अभ्यास</div>
+      <h2>वास्तविक जगातील उदाहरण अभ्यास</h2>
+      <p class="muted">तीन production-शैलीतील systems जिथे immutability भार-वाहक आहे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payments ledger मधील Money</h3><div class="role">Pattern: रकमांसाठी immutable value object</div></div></div>
+        <p class="muted">एक payments platform प्रत्येक रक्कम integer minor units मध्ये immutable Money म्हणून दर्शवते, जी pricing, tax, आणि settlement मध्ये shared असते.</p>
+        <ul>
+          <li>रकमा कधीही बदलत नाहीत: एक discount एक नवीन Money तयार करते, त्यामुळे मूळ line price audit साठी जपली जाते.</li>
+          <li>Currency जुळत नसताना बेरीज करणे अशक्य असते, हे खालच्या बाजूच्या report ऐवजी operation च्या वेळीच पकडले जाते.</li>
+          <li>Ledger नोंदी cache आणि reconcile करण्यासाठी सुरक्षित असतात कारण कोणताही code path पोस्ट केलेली रक्कम पुन्हा लिहू शकत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> कमी rounding आणि currency दोष, आणि एक स्वच्छ audit trail कारण ऐतिहासिक रकमा बांधणीमुळेच कायमस्वरूपी असतात.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📅</span><div><h3>2 · Bookings engine मधील DateRange</h3><div class="role">Pattern: functional updates सह immutable interval</div></div></div>
+        <p class="muted">एक reservations service उपलब्धतेच्या windows ना immutable DateRange म्हणून दर्शवते, अशी तपासलेली की शेवट कधीही सुरुवातीच्या आधी येत नाही.</p>
+        <ul>
+          <li>मुक्काम वाढवल्याने एक नवीन DateRange परत येते, ज्यामुळे मूळ booking window change log साठी अखंड राहते.</li>
+          <li>Overlap आणि contains तपासण्या शुद्ध queries आहेत, अनेक availability workers मध्ये concurrently चालवण्यासाठी सुरक्षित.</li>
+          <li>Ranges pricing साठी cache keys म्हणून वापरल्या जातात, जे फक्त तेव्हाच शक्य होते कारण त्या value द्वारे तुलना करतात आणि कधीही बदलत नाहीत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Concurrency-सुरक्षित availability तपासण्या आणि प्रत्येक reservation window कशी विकसित झाली याचा विश्वासार्ह इतिहास.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎛️</span><div><h3>3 · सुरुवातीला immutable app Config</h3><div class="role">Pattern: सर्वत्र shared केलेले frozen configuration</div></div></div>
+        <p class="muted">एक backend service आपले configuration एकदाच एका immutable Config object मध्ये load करते जे प्रत्येक request handler आणि thread वाचतो.</p>
+        <ul>
+          <li>Config boot च्या वेळी तपासले आणि frozen केले जाते, त्यामुळे कोणतीही request मध्येच चुकून एखादे flag बदलू शकत नाही.</li>
+          <li>Config reload एक संपूर्ण नवीन Config तयार करते आणि reference अणुरूपात (atomically) बदलते, जिवंत Config कधीही संपादित न करता.</li>
+          <li>ते कधीही बदलत नसल्याने, हजारो एकाच वेळी होणाऱ्या reads ना कोणत्याही locks किंवा बचावात्मक copying ची गरज नसते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> प्रत्येक deploy मागे निर्धारक (deterministic) वर्तन, reference बदलाद्वारे सुरक्षित hot reloads, आणि सर्वात व्यस्त read path वर कोणतीही lock स्पर्धा नाही.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Immutability हा functional programming चा अवशेष नाही; आधुनिक concurrent आणि reactive systems कशी बरोबर राहतात याच्या केंद्रस्थानी तो आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚛️ Reactive UI state</h4><p>React सारखी frameworks immutable state वर अवलंबून असतात जेणेकरून change detection ही एक स्वस्त reference तुलना बनते. नवीन state म्हणजे एक नवीन object, कधीही जागच्या जागी संपादन नाही.</p></div>
+        <div class="card"><h4>🧵 Locks शिवाय concurrency</h4><p>जसजशी core संख्या वाढते, तसतसे mutable data ला locks ने राखण्यापेक्षा immutable data sharing करणे चांगले ठरते. Value objects threads आणि actors मध्ये सुरक्षितपणे पास होतात.</p></div>
+        <div class="card"><h4>🗃️ Event sourcing</h4><p>Immutable events हे सत्याचे स्रोत असतात; state म्हणजे इतिहासावरील एक fold. काहीही overwrite होत नाही, त्यामुळे audit आणि replay अंगभूतच असतात.</p></div>
+        <div class="card"><h4>📦 Persistent data structures</h4><p>Structural sharing immutable maps आणि lists ना जवळपास mutable कामगिरी देते, त्यामुळे functional updates मोठ्या प्रमाणातही स्वस्त राहतात.</p></div>
+        <div class="card"><h4>🧊 भाषा समर्थन</h4><p>Java मधील Records, Kotlin मधील data classes, Python मधील frozen dataclasses, आणि TypeScript मधील <code>readonly</code> immutability ला एक first-class, कमी-सोपस्कार default बनवतात.</p></div>
+        <div class="card"><h4>🔎 Caching आणि CDNs</h4><p>Immutable, content-addressed मूल्ये सहजपणे cacheable असतात, तोच गुणधर्म जो hashed asset URLs ना कायमस्वरूपी ठेवण्यास सुरक्षित बनवतो.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> Immutability shared state ला धोक्यातून मालमत्तेत बदलते. कधीही न बदलणारी objects तयार करा, बदलण्याऐवजी बदला (replace) करा, आणि concurrency व aliasing bugs चे संपूर्ण वर्ग घडणेच बंद होतात.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Immutability संबंधित OOP कल्पनांच्या जाळ्याशेजारी वसते. या तिच्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">🧩</span><h4>Value objects विरुद्ध entities</h4><p>identity ला महत्त्व कधी असते आणि फक्त fields ला कधी.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../equality-identity/"><span class="ico">⚖️</span><h4>Equality आणि identity</h4><p>Value द्वारे तुलना, immutability चा नैसर्गिक जोडीदार.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🏗️</span><h4>Construction आणि invariants</h4><p>State ला guard ठेवणे जेणेकरून प्रत्येक object वैध सुरू होते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔒</span><h4>Encapsulation</h4><p>State लपवणे जेणेकरून फक्त सुरक्षित operations त्याला स्पर्श करतात.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Immutability चे एक दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · उदाहरण अभ्यास · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

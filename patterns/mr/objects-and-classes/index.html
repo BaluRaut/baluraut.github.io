@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Objects आणि Classes - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="OOP मधील objects आणि classes साठी एक सखोल, दृश्य मार्गदर्शक: blueprint म्हणून class विरुद्ध instance म्हणून object, state आणि behavior आणि identity, constructors आणि this/self, instance विरुद्ध static members, TypeScript, Python आणि Ruby मधील वास्तविक कोडसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">प्रकरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Objects आणि Classes - blueprints आणि त्यांतून तयार होणारी instances</h1>
+      <p class="lede">एक <strong>class</strong> म्हणजे blueprint: object कोणता डेटा साठवतो आणि तो काय करू शकतो हे ती जाहीर करते. एक <strong>object</strong> म्हणजे त्या blueprint मधून बनवलेली जिवंत instance, जिचे स्वतःचे state आणि स्वतःची identity असते. हा फरक नीट समजला की OOP मधले बाकी सगळे - encapsulation, inheritance, polymorphism - आपोआप जागी बसते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">State आणि fields</span>
+        <span class="pill">Behavior आणि methods</span>
+        <span class="pill">Identity</span>
+        <span class="pill">Constructors</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Objects आणि classes म्हणजे काय?</h2>
+      <p class="muted">एक <strong>class</strong> एक प्रकार (type) व्याख्यायित करते: प्रत्येक instance जी fields बाळगेल आणि प्रत्येक instance जी methods चालवू शकेल. एक <strong>object</strong> म्हणजे त्या type ची एक ठोस instance, जी runtime ला तयार होते. एका shopping <code>Cart</code> class चा विचार करा जी "एका cart मध्ये line items असतात आणि ती त्यांना जोडू किंवा त्यांची बेरीज करू शकते" असे वर्णन करते, आणि दुसरीकडे Ada सध्या भरत असलेली प्रत्यक्ष cart जिच्यात तीन items आहेत.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📐</span> Class = blueprint</h4>
+          <p>एकदाच लिहिलेला साचा. ती fields आणि methods यांना नाव देते पण स्वतः कोणताही जिवंत डेटा बाळगत नाही. <code>class Cart { ... }</code> ही एक योजना आहे, खरेदी नव्हे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛒</span> Object = instance</h4>
+          <p>blueprint मधून <code>new</code> ने बनवलेली एक ठोस गोष्ट. एकाच class पासून बनवलेल्या दोन carts म्हणजे स्वतंत्र आशयाची दोन वेगळी objects.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🆔</span> Identity</h4>
+          <p>प्रत्येक object चा स्वतःचा reference असतो. एकसारखे items असलेल्या दोन carts तरीही वेगळी objects असतात; आशयाची समानता म्हणजे तेच object असणे नव्हे.</p>
+        </div>
+      </div>
+
+      <h3>एक object ज्या तीन गोष्टी एकत्र बांधतो</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>त्याचा अर्थ</th><th>Cart उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>State (fields)</strong></td><td>एका instance कडे सध्या असलेला डेटा</td><td><code>items</code>, <code>currency</code>, <code>customerId</code></td></tr>
+            <tr><td><strong>Behavior (methods)</strong></td><td>object आपल्या state वर करू शकणाऱ्या क्रिया</td><td><code>addItem()</code>, <code>removeItem()</code>, <code>total()</code></td></tr>
+            <tr><td><strong>Identity</strong></td><td>हे object इतर सर्वांपासून वेगळे करणारा एक वेगळा reference</td><td>एकसारखी items असलेल्या दोन carts तरीही एकच cart नव्हेत</td></tr>
+            <tr><td><strong>Constructor</strong></td><td>नव्या instance चे state सुरुवातीला ठरवणारा कोड</td><td><code>new Cart("USD")</code> currency आणि एक रिकामी यादी ठरवते</td></tr>
+            <tr><td><strong>Static member</strong></td><td>class च्या मालकीचा, सर्व instances नी वाटून घेतलेला डेटा किंवा behavior</td><td><code>Cart.MAX_ITEMS</code>, <code>Cart.fromOrder()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> class म्हणजे कुकी कटर आणि objects म्हणजे कुकीज. कटर आकार एकदाच ठरवतो; प्रत्येक कुकी ही स्वतःच्या शिंपल्यांसह स्वतःची भौतिक गोष्ट असते. एका कुकीत बदल केल्याने कटर किंवा इतर कुकीज कधीच बदलत नाहीत.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Classes आणि objects का अस्तित्वात आहेत</h2>
+      <p class="muted">संबंधित डेटा आणि त्यावर काम करणाऱ्या क्रिया एकत्र बांधल्याने प्रणाली वाढत असतानाही ती समजण्याजोगी राहते. सर्वत्र फिरणाऱ्या सैल dictionaries ऐवजी तुम्हाला नावे असलेली types मिळतात जी स्वतःचे नियम स्वतः जपतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 डोमेनचे प्रतिरूप</h4><p>Classes मुळे कोड व्यवसायाचे प्रतिबिंब बनतो: एक <code>Account</code>, एक <code>Cart</code>, एक <code>Invoice</code>. वाचणारे कच्चे maps आणि tuples उलगडण्याऐवजी संकल्पना थेट types शी जोडतात.</p></div>
+        <div class="card"><h4>🔒 Invariants एकाच ठिकाणी</h4><p>फक्त <code>Account</code> च्या methods त्याला हात लावू शकत असतील तर balance कधीच ऋण होऊ शकत नाही. संहितेत सर्वत्र तपासण्या विखुरण्याऐवजी class स्वतःच्या नियमांची एकमेव रक्षक बनते.</p></div>
+        <div class="card"><h4>♻️ copy-paste शिवाय पुनर्वापर</h4><p>blueprint एकदाच व्याख्यायित करा आणि हजारो instances तयार करा. प्रत्येक cart तेच तपासलेले behavior वाटून घेते; तुम्ही bug एकाच ठिकाणी दुरुस्त करता, प्रत्येक प्रतीत नव्हे.</p></div>
+        <div class="card"><h4>🧩 पुढे बांधण्यासाठी शब्दसंग्रह</h4><p>Objects आणि classes हा पाया आहे ज्यावर बाकीचे स्तंभ उभे असतात: encapsulation fields लपवते, inheritance blueprints वाटून घेते, polymorphism सामायिक type मागे instances बदलते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>Objects आणि Classes उपमांसह समजावून</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असलात तरी ती लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Class म्हणजे <strong>अभ्यासक्रम (syllabus)</strong>; object म्हणजे <strong>तुम्ही नोंदणी केलेली तुकडी</strong>. अभ्यासक्रम कोर्समध्ये काय आहे ते सांगतो; तुमच्या तुकडीत खरे विद्यार्थी, खरी खोली आणि स्वतःची हजेरी असते. अनेक तुकड्या, एकच अभ्यासक्रम.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>Class म्हणजे <strong>एक struct आणि त्यावर काम करणारी functions</strong>, एकत्र जोडलेली. Constructor ही factory function आहे जी initialized मूल्य परत करते; methods म्हणजे अशा functions ज्यांचा पहिला छुपा argument म्हणजे instance स्वतः.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>Class म्हणजे <strong>नोकरीचे वर्णन (job description)</strong>; object म्हणजे <strong>त्या भूमिकेत नेमलेली व्यक्ती</strong>. वर्णन जबाबदाऱ्या आणि डेटा (पदनाम, वेतनश्रेणी) ठरवते; प्रत्येक नेमणूक हे काम करणारी एक वेगळी व्यक्ती असते.</p></div>
+        <div class="card"><h4><span class="ico">🏦</span> रोजच्या जीवनातील रूप</h4><p>बँकेचा <strong>खाते-उघडण्याचा अर्ज</strong> म्हणजे class: कोणती fields असतील आणि तुम्ही काय करू शकता हे तो ठरवतो. स्वतःचा क्रमांक आणि balance असलेले <strong>तुमचे प्रत्यक्ष खाते</strong> म्हणजे त्या अर्जातून तयार झालेले object.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत ते कसे चालते</h2>
+      <p class="muted">एक class व्याख्यायित केल्याने एक type नोंदवला जातो. Constructor कॉल केल्याने एक नवीन object वाटप होते, त्याची fields ठरवण्यासाठी initializer चालतो आणि एक reference परत मिळतो. मग method कॉल्स त्या reference मधून instance च्या स्वतःच्या state पर्यंत पोहोचण्यासाठी <code>this</code> किंवा <code>self</code> वापरून dispatch होतात.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🏗️</span> Instance members</h4>
+          <p>प्रत्येक object च्या मालकीच्या fields आणि methods. <code>this.balance</code> प्रत्येक instance साठी वेगळे असते; प्रत्येक <code>Account</code> कडे स्वतःचे असते. Methods ज्या विशिष्ट object वर कॉल झाल्या त्याचेच state वाचतात आणि बदलतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📌</span> Static / class members</h4>
+          <p>class च्या स्वतःच्या मालकीचा, सर्व instances मध्ये वाटलेला डेटा आणि behavior: <code>Account.MIN_BALANCE</code> सारखे constants, counters, किंवा <code>Account.open()</code> सारख्या factory methods ज्या नवीन objects बनवून परत करतात.</p>
+        </div>
+      </div>
+
+      <h3>Class आणि तिची objects एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">एक Cart class, तिचे instance आणि static members, आणि तिच्यातून तयार झालेली दोन जिवंत objects</div>
+        <pre class="mermaid">
+classDiagram
+    class Cart {
+        -String currency
+        -List items
+        +int MAX_ITEMS$
+        +addItem(sku, qty, price) void
+        +removeItem(sku) void
+        +total() Money
+        +fromOrder(order) Cart$
+    }
+    class LineItem {
+        -String sku
+        -int qty
+        -Money unitPrice
+        +subtotal() Money
+    }
+    Cart o-- LineItem : holds
+    note for Cart "MAX_ITEMS and fromOrder are static (class-level)"
+    Cart ..> adaCart : instance of
+    Cart ..> liamCart : instance of
+</pre>
+      </div>
+
+      <h3>तीन भाषांमध्ये खरी class, एक object आणि तिच्या methods</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// A bank Account: state, behavior, identity, and a static factory.
+class Account {
+  // static/class member: shared by every instance
+  static readonly MIN_BALANCE = 0;
+  private static nextId = 1;
+
+  // instance state (fields)
+  readonly id: number;
+  private balance: number;
+
+  // constructor: initializes a fresh instance
+  constructor(private readonly owner: string, opening: number) {
+    if (opening &lt; Account.MIN_BALANCE) {
+      throw new Error("Opening balance cannot be negative");
+    }
+    this.id = Account.nextId++;   // identity, assigned once
+    this.balance = opening;
+  }
+
+  // behavior: methods act on this instance's state via `this`
+  deposit(amount: number): void {
+    this.balance += amount;
+  }
+
+  withdraw(amount: number): void {
+    if (amount &gt; this.balance) throw new Error("Insufficient funds");
+    this.balance -= amount;
+  }
+
+  getBalance(): number {
+    return this.balance;
+  }
+
+  // static factory method: builds and returns a new object
+  static open(owner: string): Account {
+    return new Account(owner, 0);
+  }
+}
+
+// create objects (instances) from the blueprint
+const ada = new Account("Ada Lovelace", 100);
+const liam = Account.open("Liam Reyes");
+
+// call methods on each independent object
+ada.deposit(50);
+ada.withdraw(30);
+
+console.log(ada.id, ada.getBalance());   // 1 120
+console.log(liam.id, liam.getBalance()); // 2 0
+console.log(ada === liam);               // false: distinct identities
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># A bank Account: state, behavior, identity, and a static factory.
+class Account:
+    # class member: shared by every instance
+    MIN_BALANCE = 0
+    _next_id = 1
+
+    # constructor: initializes a fresh instance
+    def __init__(self, owner: str, opening: float):
+        if opening &lt; Account.MIN_BALANCE:
+            raise ValueError("Opening balance cannot be negative")
+        self.id = Account._next_id      # identity, assigned once
+        Account._next_id += 1
+        self._owner = owner
+        self._balance = opening         # instance state (fields)
+
+    # behavior: methods act on this instance via `self`
+    def deposit(self, amount: float) -&gt; None:
+        self._balance += amount
+
+    def withdraw(self, amount: float) -&gt; None:
+        if amount &gt; self._balance:
+            raise ValueError("Insufficient funds")
+        self._balance -= amount
+
+    def get_balance(self) -&gt; float:
+        return self._balance
+
+    # classmethod factory: builds and returns a new object
+    @classmethod
+    def open(cls, owner: str) -&gt; "Account":
+        return cls(owner, 0)
+
+
+# create objects (instances) from the blueprint
+ada = Account("Ada Lovelace", 100)
+liam = Account.open("Liam Reyes")
+
+# call methods on each independent object
+ada.deposit(50)
+ada.withdraw(30)
+
+print(ada.id, ada.get_balance())    # 1 120
+print(liam.id, liam.get_balance())  # 2 0
+print(ada is liam)                  # False: distinct identities
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># A bank Account: state, behavior, identity, and a static factory.
+class Account
+  MIN_BALANCE = 0            # class-level constant, shared by all
+  @next_id = 1              # class-level state
+
+  class &lt;&lt; self
+    attr_accessor :next_id   # class member accessors
+  end
+
+  attr_reader :id            # expose identity, keep balance private
+
+  # constructor: initializes a fresh instance
+  def initialize(owner, opening)
+    raise ArgumentError, "Opening balance cannot be negative" if opening &lt; MIN_BALANCE
+
+    @id = self.class.next_id           # identity, assigned once
+    self.class.next_id += 1
+    @owner = owner
+    @balance = opening                 # instance state (fields)
+  end
+
+  # behavior: methods act on this instance via `self`/@ivars
+  def deposit(amount)
+    @balance += amount
+  end
+
+  def withdraw(amount)
+    raise "Insufficient funds" if amount &gt; @balance
+
+    @balance -= amount
+  end
+
+  def balance
+    @balance
+  end
+
+  # class method factory: builds and returns a new object
+  def self.open(owner)
+    new(owner, 0)
+  end
+end
+
+# create objects (instances) from the blueprint
+ada  = Account.new("Ada Lovelace", 100)
+liam = Account.open("Liam Reyes")
+
+# call methods on each independent object
+ada.deposit(50)
+ada.withdraw(30)
+
+puts "#{ada.id} #{ada.balance}"    # 1 120
+puts "#{liam.id} #{liam.balance}"  # 2 0
+puts ada.equal?(liam)              # false: distinct identities
+</code></pre>
+      </div>
+      <p class="muted">तिन्ही एकच blueprint व्याख्यायित करतात, दोन स्वतंत्र objects तयार करतात, आणि प्रत्येकाचे खाजगी balance त्याच्या स्वतःच्या methods मधून बदलतात. लक्षात घ्या की <code>this</code> (TypeScript), <code>self</code> (Python), आणि instance variables (Ruby) हे सर्व method ज्या विशिष्ट object वर चालते त्याकडे निर्देश करतात, तर <code>MIN_BALANCE</code> आणि <code>open</code> factory class वर राहतात, प्रत्येक instance नी वाटून घेतलेले.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - क्रम आकृत्या</div>
+      <h2>सविस्तर क्रम आकृत्या (sequence diagrams)</h2>
+      <p class="muted">तीन दृश्ये: एक object तयार करणे, एक invariant जपणारे behavior कॉल करणे, आणि static factory विरुद्ध थेट constructor वापरणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - बांधणी: `new` पासून identity असलेल्या initialized instance पर्यंत</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Class as 📐 Account class
+    participant Obj as 🏦 Account instance
+
+    Caller-&gt;&gt;Class: new Account("Ada", 100)
+    Class-&gt;&gt;Class: validate opening &gt;= MIN_BALANCE
+    Class-&gt;&gt;Obj: allocate fresh object
+    Class-&gt;&gt;Obj: run constructor (set id, balance)
+    Note over Class,Obj: id taken from class counter, then incremented
+    Obj--&gt;&gt;Class: initialized instance
+    Class--&gt;&gt;Caller: reference to the new object
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Behavior: एक method स्वतःचे state बदलते आणि एक invariant जपते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Ada as 🏦 ada (instance)
+
+    Caller-&gt;&gt;Ada: deposit(50)
+    Ada-&gt;&gt;Ada: this.balance += 50
+    Ada--&gt;&gt;Caller: ok
+    Caller-&gt;&gt;Ada: withdraw(30)
+    alt amount &gt; balance
+        Ada--&gt;&gt;Caller: throw Insufficient funds
+    else enough funds
+        Ada-&gt;&gt;Ada: this.balance -= 30
+        Ada--&gt;&gt;Caller: ok
+    end
+    Caller-&gt;&gt;Ada: getBalance()
+    Ada--&gt;&gt;Caller: 120
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Static factory विरुद्ध थेट constructor वेगळी objects तयार करतात</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Class as 📐 Account class
+    participant A1 as 🏦 ada
+    participant A2 as 🏦 liam
+
+    Caller-&gt;&gt;Class: new Account("Ada", 100)
+    Class-&gt;&gt;A1: construct (id = 1)
+    A1--&gt;&gt;Caller: ada
+    Caller-&gt;&gt;Class: Account.open("Liam")
+    Note over Class: static factory calls the constructor with 0
+    Class-&gt;&gt;A2: construct (id = 2)
+    A2--&gt;&gt;Caller: liam
+    Note over A1,A2: two references, two identities, independent state
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका संकल्पनेला नाव देण्यापासून ते स्वतःचे नियम जपणारे एक जिवंत, कार्यरत object हातात असण्यापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>type योग्य ठरणारी संकल्पना ओळखा</h4><p>तुमच्या लक्षात येते की डोमेनमध्ये "एक cart" किंवा "एक account" वारंवार येत आहे. डेटा आणि नियमांसह येणारे ते वारंवार नाम म्हणजे संभाव्य class.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Fields</span><h4>State ठरवा</h4><p>प्रत्येक instance ने काय लक्षात ठेवायचे याची यादी करा: एका cart ची items आणि currency, एका account चा owner आणि balance. ही instance fields बनतात.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Behavior</span><h4>Methods ठरवा</h4><p>object आपल्या स्वतःच्या state वर काय करू शकते याची यादी करा: <code>addItem</code>, <code>total</code>, <code>deposit</code>, <code>withdraw</code>. Behavior ते स्पर्श करत असलेल्या डेटासोबतच राहते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Invariants</span><h4>नियमांना नाव द्या</h4><p>नेहमी काय खरे असले पाहिजे ते लिहा: balance कधीच ऋण नाही, quantity नेहमी धन. class हे लागू करेल जेणेकरून कोणताही caller ते मोडू शकणार नाही.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Blueprint</span><h4>class जाहीर करा</h4><p>तिच्या fields आणि method signatures सह <code>class Account { ... }</code> लिहा. अजून काहीही चालत नाही; तुम्ही फक्त type व्याख्यायित केला आहे.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Constructor</span><h4>Initializer लिहा</h4><p>नवीन instance स्वतःला कसे तयार करते ते व्याख्यायित करा: inputs तपासा, एक identity द्या, सुरुवातीचे state पेरा. वैध object पर्यंत हा एकमेव प्रवेश बिंदू आहे.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Instantiate</span><h4>एक object तयार करा</h4><p><code>new Account("Ada", 100)</code> कॉल करा. Memory वाटप होते, constructor चालतो, आणि तुम्हाला एका जिवंत instance चा reference परत मिळतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Identity</span><h4>object ही स्वतःची गोष्ट आहे</h4><p>प्रत्येक instance एक वेगळा reference बाळगते. तेवढेच balance असलेले दुसरे account तरीही एक वेगळे object असते; डेटाची समानता म्हणजे identity ची समानता नव्हे.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Invoke</span><h4>तिच्या methods कॉल करा</h4><p>संदेश पाठवा: <code>ada.deposit(50)</code>. आत, <code>this</code>/<code>self</code> <em>याच</em> object कडे निर्देश करते, म्हणून फक्त ada चे balance बदलते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Static</span><h4>class-पातळीच्या members कडे वळा</h4><p>सामायिक constants आणि factories वापरा: <code>Account.MIN_BALANCE</code>, <code>Account.open(...)</code>. ही class ची मालमत्ता असते, कोणत्याही एका instance ची नव्हे.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Compose</span><h4>Objects एकत्र काम करतात</h4><p>Instances इतर instances बाळगतात आणि कॉल करतात - एक cart line items बाळगते, एक order एका account चा संदर्भ देते. या blueprints मधून तुम्ही संपूर्ण प्रणाली उभी करता.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Objects आणि classes शी संबंधित बहुतेक अडचणी blueprint/instance ची सीमा अस्पष्ट केल्याने किंवा class ने जपायला हवे असे state गळू दिल्याने येतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🩹 अशक्त (anemic) classes</h4><p>फक्त सार्वजनिक fields असलेली आणि कोणतेही behavior नसलेली class म्हणजे वेषांतरातील struct. मग logic प्रत्येक caller मध्ये गळते, आणि invariants जपले जात नाहीत. methods डेटा जिथे राहतो तिथे ठेवा.</p></div>
+        <div class="card"><h4>🌐 Global बदलणारे statics</h4><p>प्रत्येक request चा डेटा static fields मध्ये साठवल्याने सर्व instances तो वाटून घेतात, ज्यामुळे users मध्ये गोंधळ होतो. Statics constants आणि factories साठी असतात, instance state बाळगण्यासाठी नव्हे.</p></div>
+        <div class="card"><h4>🪢 this/self चा गैरवापर</h4><p>TypeScript मध्ये एखादी method उघड callback म्हणून पाठवल्याने तिचे <code>this</code> binding हरवते; कॉलच्या वेळी instance गायब होते. Bind करा किंवा arrow methods वापरा जेणेकरून behavior आपले object जपते.</p></div>
+        <div class="card"><h4>🧨 खूप काही करणारे constructors</h4><p>Network कॉल्स किंवा जड काम करणारा constructor objects बांधणे आणि तपासणे कठीण करतो. तो फक्त inputs तपासणे आणि state ठरवणे यापुरता ठेवा; side effects factory किंवा उघड method कडे हलवा.</p></div>
+        <div class="card"><h4>🎭 equality आणि identity यांचा गोंधळ</h4><p>"तेच instance" असे म्हणायचे असताना <code>==</code> ने objects तुलना करणे, किंवा "तेच मूल्य" असे म्हणायचे असताना reference-तुलना करणे, सूक्ष्म bugs निर्माण करते. तुम्हाला काय हवे ते ठरवा आणि जाणीवपूर्वक अंमलात आणा.</p></div>
+        <div class="card"><h4>🏰 God objects</h4><p>संपूर्ण डोमेनचे प्रतिरूप करणारी एकच class - एक <code>Cart</code> जी payments, shipping आणि email सुद्धा करते - बदलण्याजोगी राहत नाही. जबाबदाऱ्या केंद्रित, एकत्र काम करणाऱ्या classes मध्ये विभागा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजायचे</h2>
+      <p class="muted">तुम्ही "objects" ला क्वचितच थेट गुण देता, पण हे संकेत तुम्हाला सांगतात की तुमच्या classes आपला भार उचलत आहेत की नाही.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रति class methods विरुद्ध सार्वजनिक fields</strong></td><td>भरपूर उघड fields आणि कमी methods म्हणजे अशक्त, behavior-रहित classes जी logic callers कडे गळू देतात.</td></tr>
+            <tr><td><strong>Production पर्यंत पोहोचणारी invariant उल्लंघने</strong></td><td>अवैध objects (ऋण balances, रिकामी आवश्यक fields) runtime ला अस्तित्वात असतील, तर बांधणी किंवा methods state जपत नाहीत.</td></tr>
+            <tr><td><strong>object च्या fields थेट बदलणाऱ्या जागा</strong></td><td>एका field वर अनेक बाह्य लिहिणारे म्हणजे encapsulation मोडले आहे आणि class यापुढे स्वतःच्या state ची मालक नाही.</td></tr>
+            <tr><td><strong>Constructor ची गुंतागुंत / side effects</strong></td><td>जड किंवा effect असलेले constructors दर्शवतात की objects वेगळेपणाने तयार करणे आणि तपासणे कठीण आहे.</td></tr>
+            <tr><td><strong>Runtime ला बदलणारे static state</strong></td><td>Constants पलीकडचे बदलणारे statics छुपे सामायिक state आणि संभाव्य concurrency bugs चे संकेत देतात.</td></tr>
+            <tr><td><strong>Class चा आकार आणि जबाबदाऱ्या</strong></td><td>वाढणारी ओळींची संख्या आणि अनेक असंबंधित methods विभागायला हव्या अशा god object कडे इशारा करतात.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> एक निरोगी class फक्त वैध state मध्येच तयार करता येते आणि फक्त तिच्या स्वतःच्या methods मधूनच बदलता येते. callers जर तुटलेली instance बांधू शकत असतील किंवा तिच्या fields ना थेट हात लावू शकत असतील, तर blueprint आपले काम करत नाही.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - प्रकरण अभ्यास</div>
+      <h2>वास्तविक जगातील प्रकरण अभ्यास</h2>
+      <p class="muted">तीन production-शैलीच्या प्रणाली जिथे class/object हा फरक खरे काम करतो.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · e-commerce backend मधील checkout carts</h3><div class="role">Pattern: एक class, लाखो स्वतंत्र instances</div></div></div>
+        <p class="muted">एक retail platform प्रत्येक ग्राहकाची cart एकाच <code>Cart</code> class ची instance म्हणून प्रतिरूपित करते जी एकाच वेळी वाहतूक हाताळते.</p>
+        <ul>
+          <li>प्रत्येक सक्रिय session स्वतःचे <code>Cart</code> object खाजगी line items आणि totals सह बाळगते; instances कधीच state वाटून घेत नाहीत.</li>
+          <li><code>addItem</code> आणि <code>applyCoupon</code> quantity आणि stock invariants class च्या आत लागू करतात, controllers मध्ये नव्हे.</li>
+          <li>एक static <code>Cart.fromSavedOrder</code> factory साठवलेल्या order मधून cart पुन्हा उभी करते, बांधणीचे नियम एकाच ठिकाणी ठेवत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> हजारो एकाच वेळी चालणाऱ्या carts वेगळ्या आणि सुसंगत राहतात, कारण प्रत्येक हे स्वतःचा आशय जपणारे एक वेगळे object असते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>2 · banking core मधील ledger accounts</h3><div class="role">Pattern: identity आणि invariants प्रथम-श्रेणीच्या चिंता म्हणून</div></div></div>
+        <p class="muted">एक payments प्रणाली प्रत्येक ग्राहकाचे balance ledger भर स्थिर identity असलेले <code>Account</code> object म्हणून दर्शवते.</p>
+        <ul>
+          <li>प्रत्येक account ला बांधणीच्या वेळी दिलेला अपरिवर्तनीय id असतो; transfers accounts ना identity ने संदर्भित करतात, balances जुळवून कधीच नाही.</li>
+          <li><code>debit</code> आणि <code>credit</code> हेच balance बदलणारे एकमेव मार्ग आहेत, म्हणून "कधीच overdraw नाही" हा नियम सर्वत्र टिकतो.</li>
+          <li>class-पातळीचे constants (किमान balance, currency ची अचूकता) प्रत्येक account नी वाटून घेतलेले static members म्हणून राहतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> पैशाच्या हालचाली तपासण्याजोग्या आणि अचूक राहतात कारण identity आणि invariants object स्वतः लागू करते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔔</span><div><h3>3 · delivery service मधील notification messages</h3><div class="role">Pattern: factories नी तयार केलेली मूल्य-वाहक objects</div></div></div>
+        <p class="muted">एक notifications platform email, SMS आणि push वरील प्रत्येक बाहेर जाणाऱ्या संदेशासाठी एक <code>Notification</code> object बनवते.</p>
+        <ul>
+          <li>प्रत्येक संदेश स्वतःचा recipient, channel आणि payload असलेली एक instance असते; class आपल्या constructor मध्ये आवश्यक fields तपासते.</li>
+          <li><code>Notification.forPasswordReset</code> सारख्या static factories सामान्य घटनांसाठी योग्य आकाराची instances जुळवतात.</li>
+          <li><code>render</code> आणि <code>markSent</code> सारखे behavior फक्त त्या instance च्या state वर <code>this</code> द्वारे काम करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> लाखो स्वतंत्र message objects pipeline मधून वाहतात, प्रत्येक स्वयंपूर्ण आणि अर्धवट तयार करणे अशक्य.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Functional आणि data-केंद्रित शैलींच्या मध्येही, class/object हा फरक state आणि behavior रचण्याचा एक मूलभूत मार्ग राहतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 अपरिवर्तनीय (immutable) objects आणि records</h4><p>आधुनिक भाषा अशी objects पसंत करतात जी तुम्ही वैध बनवता आणि कधीच बदलत नाही. blueprint ची कल्पना टिकते; तुम्ही जागेवरच्या बदलांऐवजी नवीन instances तयार करता.</p></div>
+        <div class="card"><h4>🧬 Data classes आणि case classes</h4><p>Python, Kotlin आणि Scala मधील संक्षिप्त class वाक्यरचना type आणि त्याचा डेटा ठेवते पण boilerplate कमी करते, ज्यामुळे छोटी value objects व्याख्यायित करणे स्वस्त होते.</p></div>
+        <div class="card"><h4>🧭 Domain-driven design</h4><p>Entities (identity महत्त्वाची) विरुद्ध value objects (फक्त डेटा महत्त्वाचा) हा नेमका class/object/identity चा फरक खऱ्या डोमेनवर लागू केलेला आहे.</p></div>
+        <div class="card"><h4>⚙️ service सीमांवरील objects</h4><p>Functional cores सुद्धा I/O आणि connections - clients, sessions, repositories - objects म्हणून गुंडाळतात, कारण ते नैसर्गिकरित्या state आणि behavior बाळगतात.</p></div>
+        <div class="card"><h4>🧰 खोल पदानुक्रमांपेक्षा composition</h4><p>संघ आता लांब inheritance साखळ्यांऐवजी छोटे सहकारी एकत्र करून objects बांधतात, पण composition चे एकक अजूनही class च आहे.</p></div>
+        <div class="card"><h4>🔎 Type systems चांगल्या classes ना बक्षीस देतात</h4><p>समृद्ध types आणि pattern matching नीट व्याख्यायित classes अधिक सुरक्षित आणि अभिव्यक्तिशील करतात, compile वेळीच अवैध instances पकडतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> classes आणि objects म्हणजे OOP ची मुळाक्षरे. blueprint-विरुद्ध-instance हा फरक, state/behavior/identity ही त्रयी, आणि instance-विरुद्ध-static हे विभाजन नीट समजून घ्या, म्हणजे प्रत्येक उच्च pattern त्यांतून बनलेले एक नैसर्गिक वाक्य होते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Objects आणि classes हा पाया आहे ज्यावर बाकीचे स्तंभ उभे राहतात. हे त्यांच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔒</span><h4>Encapsulation</h4><p>object च्या fields त्याच्या स्वतःच्या methods मागे लपवणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../abstraction/"><span class="ico">🎚️</span><h4>Abstraction</h4><p>class काय करते ते दाखवणे, ते कसे करते ते लपवणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../inheritance/"><span class="ico">🧬</span><h4>Inheritance</h4><p>अस्तित्वात असलेल्यांतून नवीन blueprints घडवणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">🧭</span><h4>Value objects vs entities</h4><p>identity कधी महत्त्वाची आणि फक्त डेटा कधी महत्त्वाचा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>Objects आणि Classes साठी एक दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · प्रकरण अभ्यास · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

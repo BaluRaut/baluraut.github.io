@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Inheritance - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंगमधील inheritance ची सखोल, दृश्य मार्गदर्शिका: is-a नाते, subclassing, method overriding आणि super, protected members, fragile base class ची समस्या, ते कधी योग्य ठरते, आकृत्या, TypeScript, Python आणि Ruby मधील कोड, आणि केस स्टडीज." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Inheritance - is-a चे मॉडेलिंग आणि वर्तनाचा सुरक्षित पुनर्वापर</h1>
+      <p class="lede">Inheritance मुळे एक class दुसऱ्या class ला extend करू शकते, जेणेकरून एक subtype हे base type च्या डेटा आणि वर्तनाचा पुनर्वापर करते आणि त्याला विशेष रूप देते. योग्य वापरल्यास ते खरे <strong>is-a</strong> नाते टिपते, जसे की एक ईमेल notification हे एक notification आहे. निष्काळजीपणे वापरल्यास ते classes ना एकत्र जोडून टाकते आणि fragile base class चा सापळा तयार करते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Is-a नाते</span>
+        <span class="pill">Method overriding</span>
+        <span class="pill">super calls</span>
+        <span class="pill">Protected members</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Inheritance म्हणजे काय?</h2>
+      <p class="muted"><strong>Inheritance</strong> ही अशी यंत्रणा आहे जिथे एक subclass हे एका base class पासून तयार होते आणि आपोआप त्याचे fields व methods मिळवते. Subclass नवीन वर्तन जोडू शकते, वारसाहक्काने मिळालेल्याचा पुनर्वापर करू शकते, किंवा methods override करून त्यांना विशेष रूप देऊ शकते. डिझाइनची कसोटी म्हणजे <em>is-a</em> हा प्रश्न: एक SMS notification हे एक notification आहे, एक पगारी कर्मचारी हा एक कर्मचारी आहे. जर हे वाक्य चुकीचे वाटत असेल, तर inheritance हे चुकीचे साधन आहे.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Base class</h4>
+          <p>सामायिक contract आणि state धारण करते, जसे की recipient, retry policy, आणि प्रत्येक channel साठी समान असणारी delivery routine असलेले एक Notification.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📨</span> Subclass</h4>
+          <p>Base ला extend करून त्याला विशेष रूप देते, जसे की retry आणि logging लॉजिकचा पुनर्वापर करत EmailNotification मध्ये subject आणि HTML body जोडणे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Override + super</h4>
+          <p>एक subclass base method ला स्वतःच्या आवृत्तीने बदलते, आणि त्याचाच भाग म्हणून base implementation चालवण्यासाठी <code>super</code> ला कॉल करू शकते.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>notification प्रणालीतील उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Base class</strong></td><td>सामायिक state आणि default वर्तन ठरवते</td><td><code>send()</code> आणि retry लॉजिक असलेले <code>Notification</code></td></tr>
+            <tr><td><strong>Subclass (extends)</strong></td><td>Base चा वारसा घेते आणि त्याला विशेष करते</td><td><code>EmailNotification</code>, <code>SmsNotification</code></td></tr>
+            <tr><td><strong>Method override</strong></td><td>एका subtype साठी base method बदलते</td><td><code>formatBody()</code> प्रत्येक channel नुसार वेगळे</td></tr>
+            <tr><td><strong>super</strong></td><td>Override मधून base ची आवृत्ती चालवते</td><td>subclass validate करते, नंतर <code>super.send()</code> कॉल करते</td></tr>
+            <tr><td><strong>Protected member</strong></td><td>Subclasses ना दिसते पण बाहेरील callers ना नाही</td><td>subtypes सोबत सामायिक असलेले <code>protected recipient</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> inheritance म्हणजे कोड शेअर करण्यासाठी कोड शेअर करणे नव्हे, ते subtyping आहे. एक subclass हे असे वचन आहे की जिथे base अपेक्षित आहे तिथे त्याची instances वापरता येतील. जर एखादी subtype हे वचन मोडते, तर तुमच्याकडे सुरक्षिततेशिवाय coupling असते, जे fragile base class समस्येचे बीज आहे.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Inheritance का अस्तित्वात आहे</h2>
+      <p class="muted">जेव्हा types चे एक कुटुंब खरोखर एक contract आणि वर्तनाचा मोठा भाग सामायिक करते, तेव्हा inheritance आपली जागा मिळवते. ते डुप्लिकेशन काढून टाकते, hierarchy थेट व्यक्त करते, आणि सामायिक लॉजिक बदलण्यासाठी एकच जागा देते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>♻️ copy-paste शिवाय पुनर्वापर</h4><p>Retry, logging, आणि validation base मध्ये एकदाच राहतात. प्रत्येक channel subtype त्यांचा वारसा घेते, ईमेल, SMS आणि push senders मध्ये नाजूक boilerplate डुप्लिकेट करण्याऐवजी.</p></div>
+        <div class="card"><h4>🗂️ खरी hierarchy मॉडेल करते</h4><p>जेव्हा डोमेनमध्ये खरोखरच एक is-a वृक्ष असतो, जसे की payroll मधील कर्मचाऱ्यांचे प्रकार, तेव्हा class आलेख व्यवसायाच्या भाषेचे प्रतिबिंब दाखवतो आणि नवागतांना स्पष्ट वाचता येतो.</p></div>
+        <div class="card"><h4>🎯 polymorphism सक्षम करते</h4><p>Base type स्वीकारणारा कोड कोणत्याही subclass सोबत चालतो. एक dispatcher notifications वर लूप करते आणि ठोस channel न जाणता <code>send()</code> कॉल करते.</p></div>
+        <div class="card"><h4>🧩 extend करण्यासाठी एकच जागा</h4><p>नवीन channel जोडणे म्हणजे एक नवीन subclass, switch statement मध्ये विखुरलेले बदल नव्हे. Base contract तुम्हाला नेमके काय अंमलात आणायचे ते सांगतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Inheritance समजावून</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटकन उमजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Inheritance म्हणजे <strong>फरकांसह एक मूळ पाककृती</strong>. मुख्य कणीक एकदाच लिहिली जाते; sourdough आणि focaccia आवृत्त्या त्या पायऱ्यांचा वारसा घेतात आणि फक्त त्यांना वेगळे करणारे तेवढेच बदलतात.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हे <strong>extends अधिक override</strong> आहे. एक <code>PaymentGateway</code> base <code>charge()</code> ठरवते; <code>StripeGateway</code> retry loop चा पुनर्वापर करते आणि फक्त provider-विशिष्ट कॉल override करते, सामायिक भागांसाठी <code>super</code> ला बोलावते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>विभागीय पुरवण्यांसह कंपनी धोरण</strong> असे समजा. प्रत्येक टीम कॉर्पोरेट हँडबुकचा वारसा घेते; प्रत्येक विभाग काही कलमे override करतो. स्पष्टपणे विशेष केल्याशिवाय मूळ नियम लागू राहतात.</p></div>
+        <div class="card"><h4><span class="ico">🏛️</span> रोजच्या जीवनातील आवृत्ती</h4><p>कायदेशीर पूर्वदाखला: एक <strong>सामान्य कायदा</strong> सर्वांना लागू होतो, आणि एक विशिष्ट निकाल एका प्रकरणासाठी त्यात सुधारणा करतो. विशिष्ट निकाल तरीही खालील सामान्य कायद्यावर अवलंबून असतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>Inheritance आतून कसे काम करते</h2>
+      <p class="muted">एक subclass जाहीर करते की ते एका base ला <strong>extend</strong> करते, base members मिळवते, आणि methods <strong>override</strong> करू शकते. कॉलच्या वेळी runtime ऑब्जेक्टचा खरा प्रकार वापरून method निवडते, आणि <code>super</code> मुळे एक override ला base आवृत्तीचा पुनर्वापर करता येतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Subclassing आणि constructors</h4>
+          <p>Subclass constructor प्रथम base constructor (<code>super(...)</code>) ला कॉल करते जेणेकरून वारसाहक्काने मिळालेली state सुरू होते, नंतर स्वतःची fields सेट करते. तो कॉल वगळला तर वारसाहक्काने मिळालेल्या invariants कधीच प्रस्थापित होत नाहीत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> Protected members</h4>
+          <p>Protected चिन्हांकित केलेली fields subclasses ना पोहोचता येतात पण बाहेरील callers पासून लपलेली असतात, त्यामुळे subtypes अंतर्गत state ला public API म्हणून उघड न करता त्यावर बांधकाम करू शकतात.</p>
+        </div>
+      </div>
+
+      <h3>Class hierarchy एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">Email आणि SMS subclasses formatBody override करणारा Notification base</div>
+        <pre class="mermaid">
+classDiagram
+    class Notification {
+        &lt;&lt;abstract&gt;&gt;
+        #recipient String
+        #retries int
+        +send() bool
+        +formatBody() String
+        #log(msg) void
+    }
+    class EmailNotification {
+        -subject String
+        +formatBody() String
+    }
+    class SmsNotification {
+        -senderId String
+        +formatBody() String
+    }
+    class NotificationDispatcher {
+        +dispatch(items) void
+    }
+    Notification &lt;|-- EmailNotification
+    Notification &lt;|-- SmsNotification
+    NotificationDispatcher o-- Notification
+        </pre>
+      </div>
+
+      <h3>एक class ठरवा, एक object तयार करा, त्याच्या methods ला कॉल करा</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Base class: shared delivery contract for every channel
+abstract class Notification {
+  protected retries = 3;
+
+  constructor(protected recipient: string) {}
+
+  // Subclasses MUST specialize how the body is rendered
+  abstract formatBody(): string;
+
+  protected log(msg: string): void {
+    console.log(`[notify] ${msg}`);
+  }
+
+  // Template behavior reused by all subtypes
+  send(): boolean {
+    const body = this.formatBody();
+    for (let attempt = 1; attempt &lt;= this.retries; attempt++) {
+      this.log(`attempt ${attempt} -&gt; ${this.recipient}`);
+      if (this.transmit(body)) return true;
+    }
+    return false;
+  }
+
+  protected transmit(_body: string): boolean {
+    return true; // pretend the carrier accepted it
+  }
+}
+
+class EmailNotification extends Notification {
+  constructor(recipient: string, private subject: string) {
+    super(recipient); // initialize inherited state first
+  }
+
+  formatBody(): string {
+    return `Subject: ${this.subject}\n&lt;html&gt;Hello&lt;/html&gt;`;
+  }
+}
+
+class SmsNotification extends Notification {
+  constructor(recipient: string, private senderId: string) {
+    super(recipient);
+    this.retries = 2; // SMS carriers are stricter, override default
+  }
+
+  formatBody(): string {
+    return `From ${this.senderId}: your code is 4821`;
+  }
+
+  // Override that reuses the base via super
+  send(): boolean {
+    this.log("checking SMS opt-in");
+    return super.send();
+  }
+}
+
+const outbox: Notification[] = [
+  new EmailNotification("ana@shop.io", "Order shipped"),
+  new SmsNotification("+15550100", "SHOPIO"),
+];
+
+for (const n of outbox) {
+  n.send(); // dynamic dispatch picks the right formatBody + send
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+
+class Notification(ABC):
+    """Base class: shared delivery contract for every channel."""
+
+    def __init__(self, recipient: str) -> None:
+        self._recipient = recipient   # protected by convention
+        self._retries = 3
+
+    @abstractmethod
+    def format_body(self) -&gt; str:
+        ...
+
+    def _log(self, msg: str) -&gt; None:
+        print(f"[notify] {msg}")
+
+    def _transmit(self, body: str) -&gt; bool:
+        return True  # pretend the carrier accepted it
+
+    def send(self) -&gt; bool:
+        body = self.format_body()
+        for attempt in range(1, self._retries + 1):
+            self._log(f"attempt {attempt} -&gt; {self._recipient}")
+            if self._transmit(body):
+                return True
+        return False
+
+
+class EmailNotification(Notification):
+    def __init__(self, recipient: str, subject: str) -&gt; None:
+        super().__init__(recipient)   # initialize inherited state
+        self._subject = subject
+
+    def format_body(self) -&gt; str:
+        return f"Subject: {self._subject}\n&lt;html&gt;Hello&lt;/html&gt;"
+
+
+class SmsNotification(Notification):
+    def __init__(self, recipient: str, sender_id: str) -&gt; None:
+        super().__init__(recipient)
+        self._sender_id = sender_id
+        self._retries = 2             # override the default
+
+    def format_body(self) -&gt; str:
+        return f"From {self._sender_id}: your code is 4821"
+
+    def send(self) -&gt; bool:           # override that reuses super
+        self._log("checking SMS opt-in")
+        return super().send()
+
+
+outbox = [
+    EmailNotification("ana@shop.io", "Order shipped"),
+    SmsNotification("+15550100", "SHOPIO"),
+]
+
+for n in outbox:
+    n.send()  # dynamic dispatch picks the right format_body + send</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Base class: shared delivery contract for every channel
+class Notification
+  def initialize(recipient)
+    @recipient = recipient   # instance vars are protected by design
+    @retries = 3
+  end
+
+  # Subclasses must specialize this
+  def format_body
+    raise NotImplementedError, "subclass must implement format_body"
+  end
+
+  def send
+    body = format_body
+    (1..@retries).each do |attempt|
+      log("attempt #{attempt} -&gt; #{@recipient}")
+      return true if transmit(body)
+    end
+    false
+  end
+
+  protected
+
+  def log(msg)
+    puts "[notify] #{msg}"
+  end
+
+  def transmit(_body)
+    true # pretend the carrier accepted it
+  end
+end
+
+class EmailNotification &lt; Notification
+  def initialize(recipient, subject)
+    super(recipient)   # initialize inherited state first
+    @subject = subject
+  end
+
+  def format_body
+    "Subject: #{@subject}\n&lt;html&gt;Hello&lt;/html&gt;"
+  end
+end
+
+class SmsNotification &lt; Notification
+  def initialize(recipient, sender_id)
+    super(recipient)
+    @sender_id = sender_id
+    @retries = 2       # override the default
+  end
+
+  def format_body
+    "From #{@sender_id}: your code is 4821"
+  end
+
+  def send             # override that reuses super
+    log("checking SMS opt-in")
+    super
+  end
+end
+
+outbox = [
+  EmailNotification.new("ana@shop.io", "Order shipped"),
+  SmsNotification.new("+15550100", "SHOPIO")
+]
+
+outbox.each(&amp;:send) # dynamic dispatch picks the right format_body + send</code></pre>
+      </div>
+      <p class="muted">तिन्ही snippets एक base contract ठरवतात, दोन subclasses जोडतात, आणि सामायिक <code>send</code> routine मधून जाणारे खरे objects तयार करतात. लक्षात घ्या की <code>SmsNotification</code> हे <code>send</code> override करते पण तरीही <code>super</code> ला कॉल करते, त्यामुळे ते retry loop पुन्हा अंमलात न आणता एक opt-in तपासणी जोडते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="eyebrow">04 - Sequence Diagrams</div>
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एक polymorphic dispatch, super ला कॉल करणारे एक override, आणि base कडे chaining करणारा एक subclass constructor.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Dispatcher एका base reference वर send कॉल करतो, runtime subclass निवडते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Disp as 🗂️ Dispatcher
+    participant Base as 🧬 Notification.send
+    participant Sub as 📨 EmailNotification
+    participant Carrier as 📡 Carrier
+
+    Disp->>Base: send() on an EmailNotification
+    Base->>Sub: formatBody() overridden
+    Sub-->>Base: rendered email body
+    Base->>Carrier: transmit(body)
+    Carrier-->>Base: accepted
+    Base-->>Disp: true
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Override एक तपासणी जोडते, नंतर super कडे सोपवते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ Caller
+    participant Sms as 📱 SmsNotification.send
+    participant Base as 🧬 Notification.send
+    participant Carrier as 📡 Carrier
+
+    App->>Sms: send()
+    Sms->>Sms: log opt-in check
+    Sms->>Base: super.send()
+    loop up to retries
+        Base->>Carrier: transmit(body)
+        Carrier-->>Base: result
+    end
+    Base-->>Sms: delivered
+    Sms-->>App: true
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Constructor chaining प्रथम वारसाहक्काने मिळालेली state सुरू करते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑‍💻 new EmailNotification
+    participant Sub as 📨 Email constructor
+    participant Base as 🧬 Notification constructor
+
+    Client->>Sub: new(recipient, subject)
+    Sub->>Base: super(recipient)
+    Base->>Base: set recipient and retries
+    Base-->>Sub: base state ready
+    Sub->>Sub: set subject
+    Sub-->>Client: fully built object
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी दर पायरी</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एक सामायिक contract ओळखण्यापासून ते एक सुरक्षित hierarchy शिप करण्यापर्यंत, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>पुनरावृत्ती होणारे वर्तन शोधा</h4><p>ईमेल, SMS, आणि push senders सर्व एकाच पद्धतीने retry, log, आणि validate करतात. एका खऱ्या type कुटुंबातील डुप्लिकेशन हा base class विचारात घेण्याचा संकेत आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">तपासा</span><h4>is-a प्रश्न विचारा</h4><p>मोठ्याने म्हणा: एक SMS notification हे एक notification आहे. जर वाक्य खरे आणि स्थिर असेल, तर inheritance बसते. जर ते जबरदस्तीचे वाटले, तर composition ला प्राधान्य द्या.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">काढा</span><h4>Base class ठरवा</h4><p>सामायिक state आणि समान routine <code>Notification</code> मध्ये खेचा. प्रत्येक subtype ने पुरवायचे भाग abstract म्हणून चिन्हांकित करा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Subclass</span><h4>extends जाहीर करा</h4><p><code>EmailNotification</code> आणि <code>SmsNotification</code> तयार करा जे base ला extend करतात आणि त्याचे members आपोआप वारसाहक्काने घेतात.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">जोडा</span><h4>constructors मध्ये super कॉल करा</h4><p>प्रत्येक subclass constructor प्रथम <code>super(...)</code> कॉल करते जेणेकरून subtype-विशिष्ट सेटअप चालण्यापूर्वी वारसाहक्काने मिळालेली fields आणि invariants सेट होतात.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Override</span><h4>methods ना विशेष करा</h4><p>प्रत्येक channel साठी <code>formatBody()</code> override करा. जिथे तुम्हाला फक्त वर्तन जोडायचे आहे, तिथे override करा आणि base आवृत्तीचा पुनर्वापर करण्यासाठी <code>super</code> कॉल करा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">संरक्षित करा</span><h4>सामायिक state ला मर्यादित करा</h4><p>fields protected म्हणून चिन्हांकित करा जेणेकरून subclasses त्यांचा वापर करू शकतील पण बाहेरील callers नाही, यामुळे public पृष्ठभाग लहान राहतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Dispatch</span><h4>Base type ला प्रोग्राम करा</h4><p>Dispatcher <code>Notification</code> ची यादी धरतो आणि <code>send()</code> कॉल करतो. Dynamic dispatch runtime ला योग्य override निवडते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">रक्षण करा</span><h4>Base contract चा आदर करा</h4><p>प्रत्येक override ने base वचन पाळले पाहिजे: जिथे base परत करते तिथे throw करू नका, preconditions अधिक कडक करू नका. यामुळे substitution सुरक्षित राहते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">लक्ष द्या</span><h4>खोली आणि coupling मर्यादित करा</h4><p>वृक्ष उथळ ठेवा. Base बदलाने subclasses शांतपणे मोडता कामा नये. खोल hierarchies मध्येच fragile base class समस्या चावा घेते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>subclasses जोडून extend करा</h4><p>एक नवीन channel म्हणजे contract अंमलात आणणारे एक नवीन subclass, विद्यमान senders मध्ये कोणतेही बदल न करता. ही एका स्वच्छ hierarchy ची फळे आहेत.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">जेव्हा inheritance खऱ्या subtype नात्यासाठी न वापरता पुनर्वापरासाठी वापरले जाते, तेव्हा ते सर्वात मोठ्याने अपयशी ठरते. हे नेहमीचे गुन्हेगार आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🏚️ Fragile base class</h4><p>Base मधील निरुपद्रवी दिसणारा बदल, जसे की अंतर्गत कॉल्सचा क्रम बदलणे, जुन्या प्रवाहावर अवलंबून असणाऱ्या subclasses ना शांतपणे मोडतो. वृक्ष जितका खोल, तितका स्फोटाचा परीघ मोठा.</p></div>
+        <div class="card"><h4>🧱 फक्त पुनर्वापरासाठी वारसा</h4><p>फक्त methods उसन्या घेण्यासाठी <code>ArrayList</code> ला subclass करणे, जेव्हा तुमचा type खरोखर list नसतो, तेव्हा तुम्ही पाळू न शकणारा API सोबत ओढून आणते. जर ते is-a नसेल, तर composition वापरा.</p></div>
+        <div class="card"><h4>🚫 substitution मोडणे</h4><p>जिथे base परत करते तिथे throw करणारे, किंवा स्वीकारलेले inputs अरुंद करणारे एक override हे base contract चे उल्लंघन करते. Base reference धरणाऱ्या callers ना runtime वेळी आश्चर्य वाटते.</p></div>
+        <div class="card"><h4>🕳️ खोल hierarchies</h4><p>पाच पातळ्यांचे extends म्हणजे वर्तन संपूर्ण साखळीवर पसरलेले असते. एक method समजण्यासाठी संपूर्ण वंशावळ वाचावी लागते, आणि प्रत्येक बदल खाली लाटा उठवतो.</p></div>
+        <div class="card"><h4>🔓 गळणारी protected state</h4><p>खूप जास्त protected fields उघड केल्याने internals एका अनधिकृत API मध्ये बदलतात. Subclasses त्यांच्यावर घट्ट पकड घेतात, आणि तुम्ही यापुढे base मुक्तपणे refactor करू शकत नाही.</p></div>
+        <div class="card"><h4>🧨 constructors मध्ये overridable methods कॉल करणे</h4><p>Subclass ने आपली fields सुरू करण्यापूर्वी base constructor एक overridden method कॉल करते, त्यामुळे override अर्धवट-बांधलेल्या state विरुद्ध चालते आणि गैरवर्तन करते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मेट्रिक्स</div>
+      <h2>संकेत आणि कसे मोजायचे</h2>
+      <p class="muted">निरोगी inheritance उथळ राहते, आपल्या contracts चा आदर करते, आणि क्वचितच base बदल भाग पाडते. ऱ्हास लवकर पकडण्यासाठी या संकेतांवर लक्ष ठेवा.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Hierarchy खोली</strong></td><td>दोन किंवा तीन पातळ्यांपेक्षा खोल साखळ्या सहसा असे दर्शवतात की वर्तनाचा माग काढणे कठीण आहे आणि flattening किंवा composition साठी हा उमेदवार आहे.</td></tr>
+            <tr><td><strong>Base बदलाच्या लाटा</strong></td><td>Base बदलल्यावर किती subclasses मोडतात. जास्त लाटा म्हणजे आकड्यांत मांडलेली fragile base class समस्या.</td></tr>
+            <tr><td><strong>Override बंधन</strong></td><td>एका subclass ने अंमलात आणायच्या abstract methods ची संख्या. खूप जास्त असल्यास base coupling चे समर्थन करण्यासाठी फारच कमी करत आहे.</td></tr>
+            <tr><td><strong>Liskov उल्लंघने</strong></td><td>Base वर पास होणाऱ्या पण subclass वर अपयशी ठरणाऱ्या tests हे दर्शवतात की एक subtype खरोखर substitutable नाही.</td></tr>
+            <tr><td><strong>Protected पृष्ठभागाचा आकार</strong></td><td>मोठा protected member संच म्हणजे subclasses internals वर अवलंबून असतात, ज्यामुळे refactor करण्याचे तुमचे स्वातंत्र्य आकुंचन पावते.</td></tr>
+            <tr><td><strong>super-call गुणोत्तर</strong></td><td>super ला कधीच कॉल न करणारी overrides extend करण्याऐवजी बदलत असतील, जे base abstraction चुकीचे असल्याचे सूचित करते.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जर base class मधील बदल नियमितपणे subclasses मध्ये बदल भाग पाडतो किंवा tests मोडतो, तर hierarchy नाजूक आहे. उथळ वृक्ष, लहान protected पृष्ठभाग, आणि नाते is-a ऐवजी has-a असेल तेव्हा composition ला प्राधान्य द्या.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन प्रातिनिधिक प्रणाली जिथे inheritance एक खरी type hierarchy मॉडेल करते.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment gateway adapters</h3><div class="role">Pattern: base charge प्रवाह, provider-विशिष्ट overrides</div></div></div>
+        <p class="muted">एक checkout service अनेक payment providers एकत्र करते जे एक lifecycle सामायिक करतात पण प्रत्यक्ष API कॉलमध्ये भिन्न असतात.</p>
+        <ul>
+          <li>एक <code>PaymentGateway</code> base validation, idempotency keys, आणि retry loop यांचा मालक असतो.</li>
+          <li><code>StripeGateway</code> आणि <code>AdyenGateway</code> फक्त provider request override करतात, सामायिक हाताळणीसाठी <code>super</code> कॉल करतात.</li>
+          <li>Order service base type ला प्रोग्राम करते, त्यामुळे एक provider जोडणे म्हणजे एक नवीन subclass.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> नवीन processors checkout ला हात न लावता शिप होतात, आणि सामायिक सुरक्षा लॉजिक नेमके एकाच ठिकाणी राहते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>2 · Payroll employee types</h3><div class="role">Pattern: pay गणनेसाठी is-a hierarchy</div></div></div>
+        <p class="muted">एक payroll engine पगारी, तासिक, आणि commission कर्मचाऱ्यांसाठी pay मोजते जे identity आणि tax हाताळणी सामायिक करतात.</p>
+        <ul>
+          <li>एक <code>Employee</code> base tax withholding आणि pay-stub formatting धारण करतो.</li>
+          <li><code>SalariedEmployee</code>, <code>HourlyEmployee</code>, आणि <code>CommissionEmployee</code> हे <code>calculateGrossPay()</code> override करतात.</li>
+          <li>Run loop प्रत्येक कामगाराला एक <code>Employee</code> म्हणून वागवते आणि कधीच type वर branch करत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एक नवीन कामगार वर्गीकरण जोडणे म्हणजे एक subclass आणि pay run अस्पर्शित व अचूक राहतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖼️</span><div><h3>3 · UI component frameworks</h3><div class="role">Pattern: base widget, विशेष controls</div></div></div>
+        <p class="muted">एक component toolkit controls ला एक hierarchy म्हणून मॉडेल करते जिथे प्रत्येक widget layout आणि event plumbing सामायिक करते.</p>
+        <ul>
+          <li>एक base <code>View</code> किंवा <code>Component</code> measure, layout, आणि render lifecycle हाताळते.</li>
+          <li>Buttons, text fields, आणि lists हे त्याला extend करतात आणि <code>render</code> व event hooks override करतात.</li>
+          <li>Framework base references चा एक वृक्ष चालवते आणि सर्व काही सामायिक lifecycle मधून चालवते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Widget लेखक संपूर्ण lifecycle चा पुनर्वापर करतात आणि फक्त त्यांच्या control ला खरोखर विशिष्ट असणारे तेवढेच अंमलात आणतात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Inheritance हा सुरुवातीच्या OOP मध्ये होता तसा default हातोडा राहिलेला नाही, पण तो खऱ्या is-a hierarchies आणि शिस्तबद्ध framework डिझाइनसाठी योग्य साधन राहतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 आधी composition</h4><p>आधुनिक मार्गदर्शन पुनर्वापरासाठी composition ला अनुकूल करते आणि inheritance खऱ्या subtyping साठी राखून ठेवते. दोन्ही एका निरोगी codebase मध्ये आहेत, वेगवेगळ्या कामांसाठी वापरले जातात.</p></div>
+        <div class="card"><h4>🧭 खोल वृक्षांपेक्षा interfaces</h4><p>Teams state न ओढता contracts सामायिक करण्यासाठी interfaces आणि लहान traits वर विसंबतात, ज्यामुळे hierarchies उथळ आणि लवचिक राहतात.</p></div>
+        <div class="card"><h4>🏛️ Frameworks अजूनही यावर विसंबतात</h4><p>UI toolkits, ORMs, आणि test frameworks तुम्ही extend करता अशी base classes उघड करतात. Inheritance lifecycles साठी ergonomic विस्तार बिंदू राहतो.</p></div>
+        <div class="card"><h4>🔐 sealed आणि final</h4><p>भाषा sealed आणि final जोडतात जेणेकरून लेखक hierarchies ला मर्यादित करू शकतील, कोण extend करू शकते हे नियंत्रित करून fragile base class समस्या आटोक्यात आणतात.</p></div>
+        <div class="card"><h4>📐 रक्षक म्हणून Liskov</h4><p>Substitution तत्त्व हे एक subclass प्रामाणिक आहे की नाही याची कसोटी आहे. ते inheritance ला केवळ सोयीस्कर न ठेवता सुरक्षित ठेवते.</p></div>
+        <div class="card"><h4>🧬 Mixins आणि traits</h4><p>Ruby modules आणि तत्सम यंत्रणा single-inheritance मर्यादांशिवाय लक्ष्यित वर्तन सामायिकरण देतात, पुनर्वापराला स्वच्छ contracts सोबत मिसळतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> inheritance कडे तेव्हाच वळा जेव्हा एक subtype खरोखर एक base type is-a असते आणि त्याचा contract सामायिक करते. वृक्ष उथळ ठेवा, substitution चा आदर करा, आणि साध्या पुनर्वापरासाठी composition ला प्राधान्य द्या. तसे केल्यास, inheritance एक coupling सापळ्याऐवजी एक अचूक मॉडेलिंग साधन राहते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Inheritance संबंधित OOP कल्पनांच्या जाळ्यात बसते. या त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../polymorphism/"><span class="ico">🎭</span><h4>Polymorphism</h4><p>Overridden methods खऱ्या type वर कशा dispatch होतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧩</span><h4>Composition over inheritance</h4><p>पुनर्वापरासाठी has-a कधी is-a ला मात देते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../liskov-substitution/"><span class="ico">📐</span><h4>Liskov substitution</h4><p>subclasses ना प्रामाणिक ठेवणारा नियम.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../abstraction/"><span class="ico">🪧</span><h4>Abstraction</h4><p>contracts म्हणून base classes आणि interfaces.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Inheritance ची एक दृश्य मार्गदर्शिका · काय · का · कसे · आकृत्या · प्रवाह · धोके · संकेत · केसेस · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

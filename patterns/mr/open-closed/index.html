@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Open/Closed तत्त्व - काय, का, कसे, TypeScript, Python आणि Ruby उदाहरणांसह</title>
+  <meta name="description" content="Open/Closed तत्त्वाचे (OCP) दृश्य मार्गदर्शक: विस्तारासाठी खुले, बदलासाठी बंद. Polymorphism आणि strategy pattern, switch-on-type च्या जागी नवीन subtype वापरणे, आणि खूप लवकर जास्त abstraction करण्याचा खर्च, TypeScript, Python आणि Ruby उदाहरणांसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Open/Closed तत्त्व - जे आधीच काम करते ते न बदलता नवीन वर्तन जोडा</h1>
+      <p class="lede">सॉफ्टवेअर घटक <strong>विस्तारासाठी खुले</strong> पण <strong>बदलासाठी बंद</strong> असावेत. जेव्हा एखादा नवीन सवलतीचा नियम, शिपिंग कॅरियर, किंवा पेमेंट पद्धत येते, तेव्हा तुम्ही एक नवीन class जोडता, स्थिर फाइल पुन्हा उघडून वाढत्या <code>switch</code> ला आणखी एक शाखा जोडत नाही. Polymorphism ही तीच यंत्रणा आहे जी हे शक्य करते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">बदलापेक्षा विस्तार</span>
+        <span class="pill">Strategy आणि polymorphism</span>
+        <span class="pill">switch-on-type नाही</span>
+        <span class="pill">स्थिर गाभा</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Open/Closed तत्त्व म्हणजे काय?</h2>
+      <p class="muted"><strong>Open/Closed तत्त्व</strong> (SOLID मधील O) असे सांगते की एखाद्या module चे वर्तन त्याचा source कोड बदलल्याशिवाय विस्तारता आले पाहिजे. हे तुम्ही एका <em>abstraction</em> वर, म्हणजे एका स्थिर interface वर अवलंबून राहून साध्य करता, आणि नवीन वर्तन त्या abstraction च्या नवीन implementation च्या रूपात येऊ देता. काम पार पाडणाऱ्या कोडला किती implementation अस्तित्वात आहेत हे कधीच माहीत असण्याची गरज नसते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔓</span> विस्तारासाठी खुले</h4>
+          <p>नवीन गरजा अस्तित्वातील करार पूर्ण करणाऱ्या नवीन class जोडून पूर्ण होतात, त्यामुळे प्रणाली तिच्या कडांवर वाढते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> बदलासाठी बंद</h4>
+          <p>चाचणी झालेला, पाठवलेला कोड अस्पर्शित राहतो. आणखी एक कॅरियर जोडण्यासाठी तुम्ही checkout गणकातील regression चा धोका पत्करत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧩</span> कराराने बांधलेले</h4>
+          <p>एक interface किंवा abstract base ती जोडणी-रेषा ठरवते. कॉलर त्या रेषेशी प्रोग्राम करतात, कधीच एखाद्या ठोस type शी नाही.</p>
+        </div>
+      </div>
+
+      <h3>switch-on-type कसे subtype च्या संचात बदलते</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>जुन्या रचनेतील लक्षण</th><th>OCP त्याच्या जागी काय आणते</th><th>नवीन प्रकरण आल्यावर परिणाम</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>प्रत्येक पद्धतीसाठी एक शाखा असलेले <code>switch (payment.type)</code></td><td>प्रत्येक पद्धतीसाठी एक class असलेले <code>PaymentMethod</code> interface</td><td>एक class जोडा, नोंदणी करा, पाठवा. switch कधीच वाढत नाही.</td></tr>
+            <tr><td><code>if carrier == "ups" ... elif "fedex"</code></td><td>प्रत्येक कॅरियरसाठी एक <code>ShippingRate</code> strategy</td><td>नवीन कॅरियर म्हणजे नवीन फाइल, गणक अपरिवर्तित राहतो.</td></tr>
+            <tr><td>flag आणि तारखांसह आत लिहिलेले सवलतीचे गणित</td><td>क्रमाने लागू केलेल्या <code>DiscountRule</code> वस्तूंची यादी</td><td>Marketing एक rule वस्तू जोडते, गाभ्यात कोणताही बदल नाही.</td></tr>
+            <tr><td>Enum आणि एक अवाढव्य formatter पद्धत</td><td>प्रत्येक export स्वरूपासाठी polymorphic <code>render()</code></td><td>exporter पुन्हा न उघडता नवीन स्वरूप जोडले जाते.</td></tr>
+            <tr><td>प्रत्येक नवीन प्रकरण त्याच 400 ओळींच्या फाइलला स्पर्श करते</td><td>registry द्वारे सापडणारे छोटे class</td><td>Merge conflict आणि परिणाम-व्याप्ती एका फाइलपुरती आकुंचित होते.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>महत्त्वाचे मानसिक मॉडेल:</strong> OCP म्हणजे कोड कधीच बदलत नाही असे नाही. याचा अर्थ <em>नवीन प्रकाराचा</em> बदल हा नवीन कोड म्हणून येतो, आधीच काम करणाऱ्या आणि आधीच चाचणी झालेल्या तर्कावर केलेली शस्त्रक्रियेसारखी दुरुस्ती म्हणून नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>OCP का महत्त्वाचे आहे</h2>
+      <p class="muted">प्रत्येक वेळी तुम्ही शाखा जोडण्यासाठी एक काम करणारी फाइल पुन्हा उघडता, तेव्हा तिथे आधीच असलेल्या शाखा बिघडवण्याचा धोका तुम्ही पत्करता. OCP तो धोका मुख्य मार्गावरून काढून वेगळ्या, जोडणाऱ्या एककांमध्ये हलवते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ कमी regression</h4><p>जेव्हा प्रत्येक नियम स्वतःच्या चाचण्यांसह स्वतःचा class असतो, तेव्हा दहावा सवलत नियम जोडल्याने बाकीचे नऊ बिघडू शकत नाहीत. स्थिर गाभ्याला कधीच स्पर्श होत नाही.</p></div>
+        <div class="card"><h4>🔀 छोटे merge conflict</h4><p>दोन पेमेंट पद्धती जोडणारे दोन संघ त्याच वाढत्या switch विधानावरून भांडण्याऐवजी दोन वेगवेगळ्या फाइल संपादित करतात.</p></div>
+        <div class="card"><h4>🧪 स्वतंत्रपणे चाचणीयोग्य</h4><p>प्रत्येक strategy ही एक छोटी वस्तू आहे जिची तुम्ही थेट unit चाचणी करू शकता, एका शाखेपर्यंत पोहोचण्यासाठी संपूर्ण checkout चालू न करता.</p></div>
+        <div class="card"><h4>🔌 Plugin-अनुकूल</h4><p>कॅरियर, gateway आणि स्वरूप हे registry द्वारे runtime ला सापडवता येतात, त्यामुळे विस्तार गाभ्याच्या पुनर्तैनातीशिवाय पाठवता येतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Open/Closed चे स्पष्टीकरण</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, त्यामुळे तुम्ही कोणीही असाल तरी ती लक्षात येते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>हे एका <strong>बहुपर्यायी उत्तरपत्रिकेसारखे</strong> आहे. आणखी एक शक्य उत्तर जोडणे म्हणजे आणखी एक गोल छापणे, संपूर्ण प्रश्न आणि प्रत्येक अस्तित्वातील पर्याय पुन्हा टाइप करणे नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>एका <strong>plugin रचनेचा</strong> विचार करा. होस्ट interface एकदाच ठरवतो आणि गोठलेला राहतो; प्रत्येक plugin तो interface अंमलात आणून क्षमता जोडतो, आणि होस्टला त्यांची नावेही कधी कळत नाहीत.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>व्यवस्थित चालणारा <strong>मंजुरी workflow</strong>: नवीन मंजूरदार भूमिका जोडणे म्हणजे प्रणालीला आधीच समजणारा एक फॉर्म भरणे, routing engine पुन्हा लिहिणे नाही.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> रोजच्या जीवनातील रूप</h4><p>एक <strong>पॉवर स्ट्रिप</strong>. नवीन उपकरणाला वीज देण्यासाठी तुम्ही अस्तित्वातील सॉकेटमध्ये प्लग लावता. प्रत्येक वेळी उपकरण विकत घेतल्यावर तुम्ही भिंतीतील वायरिंग पुन्हा करत नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>तुम्ही ते प्रत्यक्षात कसे साध्य करता</h2>
+      <p class="muted">बदलाचा अक्ष शोधा, त्याला interface म्हणून नाव द्या, आणि orchestrator ला फक्त त्या interface वर अवलंबून राहू द्या. मग नवीन वर्तन हा एक नवीन class असतो ज्याचे नाव orchestrator ला कधीच माहीत असण्याची गरज नसते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🎯</span> abstraction ला नाव द्या</h4>
+          <p>जिथे प्रकार वेगळे होतात ती जोडणी-रेषा ठरवा. checkout साठी ती रेषा म्हणजे <code>PaymentMethod.charge(amount)</code>. कॉलर interface धरतात, ठोस gateway नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">➕</span> class जोडून विस्तार करा</h4>
+          <p>एक नवीन पद्धत, PayPal, Klarna, किंवा गिफ्ट कार्ड, हा तोच करार अंमलात आणणारा एक नवीन class असतो. Processor पद्धतींवरून polymorphic पद्धतीने फिरतो आणि type वर कधीच शाखा करत नाही.</p>
+        </div>
+      </div>
+
+      <h3>class मधील संबंध</h3>
+      <div class="diagram">
+        <div class="cap">एक गोठलेला processor PaymentMethod abstraction वर अवलंबून असतो; नवीन पद्धती त्याचा विस्तार करतात</div>
+        <pre class="mermaid">
+classDiagram
+    class PaymentMethod {
+        &lt;&lt;interface&gt;&gt;
+        +charge(amountCents) Receipt
+        +name() string
+    }
+    class CardPayment {
+        +charge(amountCents) Receipt
+        +name() string
+    }
+    class PayPalPayment {
+        +charge(amountCents) Receipt
+        +name() string
+    }
+    class GiftCardPayment {
+        +charge(amountCents) Receipt
+        +name() string
+    }
+    class CheckoutProcessor {
+        +pay(order, method) Receipt
+    }
+    PaymentMethod &lt;|.. CardPayment
+    PaymentMethod &lt;|.. PayPalPayment
+    PaymentMethod &lt;|.. GiftCardPayment
+    CheckoutProcessor ..&gt; PaymentMethod
+        </pre>
+      </div>
+
+      <h3>बदलाशिवाय विस्तार, तीन भाषांमध्ये</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// The stable contract. The processor depends only on this.
+interface PaymentMethod {
+  name(): string;
+  charge(amountCents: number): Receipt;
+}
+interface Receipt { method: string; amountCents: number; ref: string; }
+
+// The orchestrator is CLOSED: it never changes when methods are added.
+class CheckoutProcessor {
+  pay(order: { totalCents: number }, method: PaymentMethod): Receipt {
+    if (order.totalCents &lt;= 0) throw new Error("empty order");
+    return method.charge(order.totalCents);
+  }
+}
+
+// Shipped, tested, frozen.
+class CardPayment implements PaymentMethod {
+  constructor(private last4: string) {}
+  name() { return `card ****${this.last4}`; }
+  charge(amountCents: number): Receipt {
+    return { method: this.name(), amountCents, ref: `ch_${Date.now()}` };
+  }
+}
+
+// NEW requirement -> NEW class. Nothing above is edited.
+class GiftCardPayment implements PaymentMethod {
+  constructor(private code: string) {}
+  name() { return `gift ${this.code.slice(0, 4)}`; }
+  charge(amountCents: number): Receipt {
+    return { method: this.name(), amountCents, ref: `gc_${this.code}` };
+  }
+}
+
+const processor = new CheckoutProcessor();
+const order = { totalCents: 4999 };
+console.log(processor.pay(order, new CardPayment("4242")));
+console.log(processor.pay(order, new GiftCardPayment("HOLIDAY25")));</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from time import time
+
+@dataclass
+class Receipt:
+    method: str
+    amount_cents: int
+    ref: str
+
+# The stable contract.
+class PaymentMethod(ABC):
+    @abstractmethod
+    def name(self) -&gt; str: ...
+    @abstractmethod
+    def charge(self, amount_cents: int) -&gt; Receipt: ...
+
+# The orchestrator is CLOSED: unchanged as methods are added.
+class CheckoutProcessor:
+    def pay(self, order, method: PaymentMethod) -&gt; Receipt:
+        if order["total_cents"] &lt;= 0:
+            raise ValueError("empty order")
+        return method.charge(order["total_cents"])
+
+# Shipped, tested, frozen.
+class CardPayment(PaymentMethod):
+    def __init__(self, last4: str):
+        self.last4 = last4
+    def name(self) -&gt; str:
+        return f"card ****{self.last4}"
+    def charge(self, amount_cents: int) -&gt; Receipt:
+        return Receipt(self.name(), amount_cents, f"ch_{int(time())}")
+
+# NEW requirement -> NEW class. Nothing above is edited.
+class GiftCardPayment(PaymentMethod):
+    def __init__(self, code: str):
+        self.code = code
+    def name(self) -&gt; str:
+        return f"gift {self.code[:4]}"
+    def charge(self, amount_cents: int) -&gt; Receipt:
+        return Receipt(self.name(), amount_cents, f"gc_{self.code}")
+
+processor = CheckoutProcessor()
+order = {"total_cents": 4999}
+print(processor.pay(order, CardPayment("4242")))
+print(processor.pay(order, GiftCardPayment("HOLIDAY25")))</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>Receipt = Struct.new(:method, :amount_cents, :ref)
+
+# The stable contract, expressed by duck-typed method names.
+module PaymentMethod
+  def name = raise NotImplementedError
+  def charge(amount_cents) = raise NotImplementedError
+end
+
+# The orchestrator is CLOSED: unchanged as methods are added.
+class CheckoutProcessor
+  def pay(order, method)
+    raise ArgumentError, "empty order" if order[:total_cents] &lt;= 0
+    method.charge(order[:total_cents])
+  end
+end
+
+# Shipped, tested, frozen.
+class CardPayment
+  include PaymentMethod
+  def initialize(last4) = @last4 = last4
+  def name = "card ****#{@last4}"
+  def charge(amount_cents)
+    Receipt.new(name, amount_cents, "ch_#{Time.now.to_i}")
+  end
+end
+
+# NEW requirement -> NEW class. Nothing above is edited.
+class GiftCardPayment
+  include PaymentMethod
+  def initialize(code) = @code = code
+  def name = "gift #{@code[0, 4]}"
+  def charge(amount_cents)
+    Receipt.new(name, amount_cents, "gc_#{@code}")
+  end
+end
+
+processor = CheckoutProcessor.new
+order = { total_cents: 4999 }
+puts processor.pay(order, CardPayment.new("4242")).inspect
+puts processor.pay(order, GiftCardPayment.new("HOLIDAY25")).inspect</code></pre>
+      </div>
+
+      <p class="muted"><code>CheckoutProcessor</code> हा बंद भाग आहे: तो एकदाच लिहिला गेला आणि गिफ्ट कार्ड आधार देण्यासाठी कधीच संपादित झाला नाही. <code>GiftCardPayment</code> हा खुला भाग आहे: एक अगदी नवीन type जो त्याच करारात बसतो. तीच असमानता, एक फाइल गोठलेली असताना प्रणाली मात्र वाढत राहणे, हाच संपूर्ण मुद्दा आहे.</p>
+
+      <h3>आधी आणि नंतर: switch-on-type संपवणे</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// BEFORE: every new rule reopens this method (violates OCP).
+function priceWithDiscount(subtotal: number, kind: string): number {
+  switch (kind) {
+    case "none":    return subtotal;
+    case "loyalty": return subtotal * 0.9;
+    case "coupon":  return subtotal - 500;
+    // add "student", "bundle", "flash"... edit here forever
+    default:        return subtotal;
+  }
+}
+
+// AFTER: each rule is a class; the pipeline is closed.
+interface DiscountRule { apply(subtotalCents: number): number; }
+class LoyaltyDiscount implements DiscountRule {
+  apply(s: number) { return Math.round(s * 0.9); }
+}
+class CouponDiscount implements DiscountRule {
+  constructor(private offCents: number) {}
+  apply(s: number) { return Math.max(0, s - this.offCents); }
+}
+function priceWith(subtotal: number, rules: DiscountRule[]): number {
+  return rules.reduce((acc, r) =&gt; r.apply(acc), subtotal);
+}
+// New rule = new class passed into the array. No edit above.</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># BEFORE: every new rule reopens this function (violates OCP).
+def price_with_discount(subtotal, kind):
+    if kind == "none":
+        return subtotal
+    elif kind == "loyalty":
+        return round(subtotal * 0.9)
+    elif kind == "coupon":
+        return subtotal - 500
+    # add "student", "bundle", "flash"... edit here forever
+    return subtotal
+
+# AFTER: each rule is a class; the pipeline is closed.
+from typing import Protocol
+
+class DiscountRule(Protocol):
+    def apply(self, subtotal_cents: int) -&gt; int: ...
+
+class LoyaltyDiscount:
+    def apply(self, s: int) -&gt; int:
+        return round(s * 0.9)
+
+class CouponDiscount:
+    def __init__(self, off_cents: int):
+        self.off_cents = off_cents
+    def apply(self, s: int) -&gt; int:
+        return max(0, s - self.off_cents)
+
+def price_with(subtotal, rules):
+    total = subtotal
+    for rule in rules:
+        total = rule.apply(total)
+    return total
+# New rule = new class passed into the list. No edit above.</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># BEFORE: every new rule reopens this method (violates OCP).
+def price_with_discount(subtotal, kind)
+  case kind
+  when "none"    then subtotal
+  when "loyalty" then (subtotal * 0.9).round
+  when "coupon"  then subtotal - 500
+  # add "student", "bundle", "flash"... edit here forever
+  else subtotal
+  end
+end
+
+# AFTER: each rule is a class; the pipeline is closed.
+class LoyaltyDiscount
+  def apply(s) = (s * 0.9).round
+end
+
+class CouponDiscount
+  def initialize(off_cents) = @off_cents = off_cents
+  def apply(s) = [0, s - @off_cents].max
+end
+
+def price_with(subtotal, rules)
+  rules.reduce(subtotal) { |acc, rule| rule.apply(acc) }
+end
+# New rule = new class passed into the array. No edit above.</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - क्रम आकृत्या</div>
+      <h2>तपशीलवार क्रम आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: polymorphic पद्धतीने पैसे भरणे, गाभ्यात कोणताही बदल न करता एक प्रकार जोडणे, आणि runtime ला registry द्वारे एक strategy निवडणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Checkout switch द्वारे नाही तर interface द्वारे पाठवते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Client
+    participant P as ⚙️ CheckoutProcessor
+    participant M as 💳 PaymentMethod
+    participant G as 🏦 Gateway
+
+    C->>P: pay(order, giftCardMethod)
+    P->>P: validate order total
+    Note over P,M: processor holds the interface, not a concrete type
+    P->>M: charge(amountCents)
+    M->>G: authorize + capture
+    G-->>M: transaction ref
+    M-->>P: Receipt
+    P-->>C: Receipt
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - नवीन पेमेंट पद्धत जोडल्याने अस्तित्वातील कोणत्याही कोडला स्पर्श होत नाही</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 👩‍💻 Engineer
+    participant New as 🆕 KlarnaPayment
+    participant P as ⚙️ CheckoutProcessor
+    participant T as ✅ Test suite
+
+    Dev->>New: implement PaymentMethod contract
+    Note over Dev,P: CheckoutProcessor source is never opened
+    Dev->>T: add unit tests for KlarnaPayment only
+    T-->>Dev: green, existing methods untouched
+    Dev->>P: pass KlarnaPayment where a method is expected
+    P-->>Dev: charges polymorphically, no branch added
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - strategy registry द्वारे runtime निवड</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Client
+    participant R as 🗂️ RateRegistry
+    participant S as 🚚 ShippingRate
+    participant P as ⚙️ ShippingCalculator
+
+    C->>P: quote(order, "fedex")
+    P->>R: lookup("fedex")
+    alt carrier registered
+        R-->>P: FedExRate strategy
+        P->>S: price(order.weight, order.zone)
+        S-->>P: cost cents
+        P-->>C: quote
+    else unknown carrier
+        R-->>P: not found
+        P-->>C: error, no default branch to edit
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी-पायरीने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">वाढत्या switch विधानापासून ते नवीन वर्तन तरीही स्वीकारणाऱ्या बंद गाभ्यापर्यंत, संपूर्ण refactor क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">वास</span><h4>वाढणारा switch ओळखा</h4><p>एक पद्धत type-टॅगवर शाखा करते, आणि प्रत्येक नवीन गरज म्हणजे आणखी एक <code>case</code>. ती फाइल प्रत्येक feature वर संपादित होते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">अक्ष</span><h4>बदलाच्या अक्षाला नाव द्या</h4><p>काय बदलते ते ओळखा: पेमेंट पद्धत, कॅरियर, सवलत नियम. तो बदल हेच तुमचे भविष्यातील abstraction आहे.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">करार</span><h4>interface ठरवा</h4><p>जोडणी-रेषा एकदाच लिहा: <code>charge(amount)</code>, <code>price(weight, zone)</code>. ती कमीत कमी आणि वर्तन-केंद्रित ठेवा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">काढणे</span><h4>प्रत्येक शाखा एका class मध्ये हलवा</h4><p>प्रत्येक <code>case</code> चा भाग करार अंमलात आणणारा एक छोटा class होतो. वर्तन जपले जाते, फक्त जागा बदलते.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">उलटवणे</span><h4>abstraction वर अवलंबून राहा</h4><p>orchestrator आता interface ला parameter म्हणून स्वीकारतो आणि एक polymorphic पद्धत कॉल करतो. switch काढून टाकला जातो.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">चाचणी</span><h4>प्रत्येक strategy ची unit चाचणी करा</h4><p>प्रत्येक class ला नेमक्या चाचण्या मिळतात. एका शाखेची कसोटी घेण्यासाठी तुम्हाला यापुढे संपूर्ण pipeline ची गरज नाही.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">नोंदणी</span><h4>निवड कडेला जोडा</h4><p>एक registry किंवा factory input ला योग्य class शी एकाच ठिकाणी जोडते, त्यामुळे runtime निवड ही data असते, control flow नाही.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">गोठवा</span><h4>गाभा बंद करा</h4><p>orchestrator पूर्ण झाला. अकरावा प्रकार आल्यावर तो संपादित होणार नाही. हा "बंद" अर्धा भाग आहे.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">विस्तार</span><h4>पुढचा प्रकार जोडा</h4><p>नवीन कॅरियर म्हणजे एक नवीन class आणि एक registry नोंद. अस्तित्वातील कोणतीही फाइल उघडली जात नाही. हा "खुला" अर्धा भाग आहे.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">सावधानी</span><h4>अति-abstraction पासून सावध राहा</h4><p>जे अक्ष कधीच बदलत नाहीत त्यांच्यासाठी interface जोडू नका. दोन स्थिर प्रकरणे क्वचितच plugin framework चे समर्थन करतात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पाठवा</span><h4>कडांवर वाढा</h4><p>आता features जोडणाऱ्या class च्या रूपात येतात. प्रत्येक बदलाची परिणाम-व्याप्ती एक नवीन फाइल असते, आणि चाचणी झालेला गाभा हिरवा राहतो.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि विरोधी-नमुने</h2>
+      <p class="muted">OCP अति करणे सोपे आहे आणि बनावट दाखवणेही सोपे आहे. हे नेहमीचे अपयश आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔮 काल्पनिक abstraction</h4><p>"आणखी जोडल्यास" म्हणून एकाच पेमेंट पद्धतीसाठी plugin प्रणाली बनवणे. अकाली interface कोणताही फायदा न देता अप्रत्यक्षपणा जोडतात आणि हीच सर्वात सामान्य OCP चूक आहे.</p></div>
+        <div class="card"><h4>🕵️ लपलेला switch-on-type</h4><p>processor च्या आत switch च्या जागी <code>if isinstance(m, CardPayment)</code> ठेवणे. तुम्ही शाखा हलवली, ती काढली नाही. गाभा अजूनही बंद नाही.</p></div>
+        <div class="card"><h4>🧱 गळका interface</h4><p>पेमेंट करारावरील <code>getStripeToken()</code> सारखे ठोस तपशील उघड करणारे abstraction कॉलरना विशेष प्रकरण हाताळायला भाग पाडते आणि जोडणी-रेषा निष्फळ करते.</p></div>
+        <div class="card"><h4>💥 जाडजूड base class</h4><p>abstract base मध्ये सामायिक तर्क इतका भरणे की subclass ला त्यातील अर्धा override करावा लागतो. त्या coupling चा अर्थ नवीन प्रकार अजूनही सामायिक कोड संपादित करतात.</p></div>
+        <div class="card"><h4>🚪 मागच्या दाराने बदल</h4><p>वर्तन दुभंगवण्यासाठी अस्तित्वातील class ला एक boolean flag जोडणे. हा बदल आहे, विस्तार नाही, आणि तो संयोगात्मकपणे वाढतो.</p></div>
+        <div class="card"><h4>🗺️ संपादित करावा लागणारा registry</h4><p>जर प्रत्येक नवीन class साठी एक मध्यवर्ती नकाशा हाताने संपादित करावा लागत असेल, तर तो नकाशा हाच नवीन switch बनतो. स्वयं-नोंदणी किंवा dependency injection ला प्राधान्य द्या.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजायचे</h2>
+      <p class="muted">तुम्ही OCP वर एकच आकडा लावू शकत नाही, पण हे संकेत तुम्हाला सांगतात की एखादे module खरोखर बदलासाठी बंद आहे का.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रत्येक नवीन प्रकारासाठी स्पर्श झालेल्या फाइल</strong></td><td>जर कॅरियर जोडल्याने गणक संपादित होतो, तर गाभा बंद नाही. आदर्शतः तो एक नवीन फाइल आणि एक जोडणी ओळ असावी.</td></tr>
+            <tr><td><strong>orchestrator वरील churn</strong></td><td>"स्थिर असावी" अशा dispatch फाइलवर वारंवार commit होणे हे वाढत राहणाऱ्या switch कडे निर्देश करते.</td></tr>
+            <tr><td><strong>dispatch ची cyclomatic complexity</strong></td><td>एका पद्धतीत वाढणारी शाखांची संख्या हे संख्यात्मक रूपातील switch-on-type चा वास आहे.</td></tr>
+            <tr><td><strong>गाभ्यातील type तपासण्या</strong></td><td>orchestration कोडमधील <code>instanceof</code> / <code>isinstance</code> / <code>is_a?</code> मोजा. शून्यापेक्षा जास्त म्हणजे सहसा abstraction गळते.</td></tr>
+            <tr><td><strong>चाचणीची परिणाम-व्याप्ती</strong></td><td>जर नवीन प्रकारामुळे अस्तित्वातील चाचण्या संपादित कराव्या लागत असतील, तर वर्तन खरोखर वेगळे केलेले नव्हते.</td></tr>
+            <tr><td><strong>एकच implementation असलेले interface</strong></td><td>अनेक एकल-वापर abstraction हे अति-अभियांत्रिकीचे संकेत देतात: कोणीही न वापरणाऱ्या विस्तार-बिंदूंसाठी तुम्ही पैसे मोजले.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> एखादा अक्ष खरोखर बदलतो त्या पहिल्या वेळी नाही तर <em>दुसऱ्या</em> किंवा तिसऱ्या वेळी OCP लागू करा. डुप्लिकेशन हे चुकीच्या abstraction पेक्षा स्वस्त असते; बदल अंदाजित नसून सिद्ध झाल्यावर जोडणी-रेषा जोडा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरण अभ्यास</div>
+      <h2>वास्तविक जगातील उदाहरण अभ्यास</h2>
+      <p class="muted">तीन उत्पादन-शैलीच्या प्रणाली जिथे बदलाशिवाय विस्तार ही भार पेलणारी रचना आहे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · plug करण्यायोग्य पेमेंट पद्धतींसह checkout</h3><div class="role">नमुना: स्थिर processor मागे strategy</div></div></div>
+        <p class="muted">एक marketplace कार्ड, wallet, buy-now-pay-later, आणि store credit आधार देते, आणि नवीन पद्धती अनेकदा जोडते.</p>
+        <ul>
+          <li>प्रत्येक पद्धत <code>charge</code> आणि <code>refund</code> सह <code>PaymentMethod</code> करार अंमलात आणते.</li>
+          <li>checkout processor आणि order state machine गोठलेले असतात; ते फक्त interface बोलतात.</li>
+          <li>Klarna जोडणे म्हणजे एक नवीन class आणि एक registry नोंद, checkout ला स्पर्श न करता पाठवलेले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> नवीन पेमेंट पद्धती वेगळे, चाचणी झालेले class म्हणून उत्पादनात पोहोचतात, आणि गाभ्यातील checkout कित्येक महिन्यांत regression साठी पुन्हा उघडले गेले नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🚚</span><div><h3>2 · कॅरियरांमधील शिपिंग-खर्च गणक</h3><div class="role">नमुना: प्रत्येक कॅरियरसाठी rate strategy</div></div></div>
+        <p class="muted">एक लॉजिस्टिक्स प्लॅटफॉर्म अनेक कॅरियरांकडून दर देते, प्रत्येकाचे स्वतःचे वजन, झोन, आणि अधिभार नियम असतात.</p>
+        <ul>
+          <li>एक <code>ShippingRate</code> interface <code>price(weight, zone)</code> उघड करते; प्रत्येक कॅरियर हा एक implementation आहे.</li>
+          <li>quoting engine नोंदणी झालेल्या दरांवरून फिरते आणि सर्वात स्वस्त निवडते, प्रत्येक कॅरियरसाठी शाखा न करता.</li>
+          <li>एका प्रादेशिक courier ला engine startup ला सापडणारा एक class टाकून सामील केले जाते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> कॅरियर एकत्रीकरणे संघांमध्ये समांतर करता आली, कारण प्रत्येक एक सामायिक गणकातील बदल नसून जोडणारी strategy आहे.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏷️</span><div><h3>3 · plug करण्यायोग्य सवलत आणि प्रचार नियम</h3><div class="role">नमुना: जोडता येणारी rule pipeline</div></div></div>
+        <p class="muted">एक किरकोळ प्लॅटफॉर्म एकावर एक प्रचार चालवते: loyalty स्तर, coupon, bundle सौदे, आणि flash sale.</p>
+        <ul>
+          <li>प्रत्येक प्रचार हा चालू subtotal वर क्रमाने लागू केलेला एक <code>DiscountRule</code> आहे.</li>
+          <li>Marketing कोणते नियम सक्रिय आहेत हे data म्हणून ठरवते; pricing गाभा कधीच बदलत नाही.</li>
+          <li>हंगामी नियम एक class म्हणून जोडला जातो आणि config ने सक्रिय केला जातो, नंतर मोहीम संपल्यावर स्वच्छपणे काढला जातो.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> मोहिमा pricing तर्कात अभियांत्रिकी बदलाशिवाय marketing च्या वेगाने पाठवल्या जातात, आणि कालबाह्य प्रचार switch मध्ये कोणतीही जखम न ठेवता काढले जातात.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">OCP आजच्या बहुतांश stack च्या आधीचे आहे, पण जिथे विस्तारक्षमता हे एक feature आहे तिथे त्याचा आकार सर्वत्र दिसतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 Plugin परिसंस्था</h4><p>Editor, CI runner, आणि पेमेंट SDK एक interface उघड करतात आणि तिसऱ्या पक्षांना होस्ट fork न करता वर्तन विस्तारू देतात.</p></div>
+        <div class="card"><h4>🎛️ Feature flag आणि strategy</h4><p>flag मागे algorithm अदलाबदल करणे हे प्रत्यक्षात OCP आहे: कॉलर बंद असतो, strategy जोडणीसाठी खुल्या असतात.</p></div>
+        <div class="card"><h4>🧩 Dependency injection</h4><p>Framework implementation ला runtime ला एका स्थिर गाभ्यात जोडतात, त्यामुळे विस्तार म्हणजे configuration असते, कोड शस्त्रक्रिया नाही.</p></div>
+        <div class="card"><h4>☁️ Serverless handler</h4><p>नवीन event type म्हणजे एका स्थिर router विरुद्ध नोंदणी झालेला एक नवीन handler, मध्यवर्ती dispatch फंक्शनमधील बदल नाही.</p></div>
+        <div class="card"><h4>🤖 tool वापरणारे agent</h4><p>agent ला नवीन क्षमता देणे म्हणजे एका निश्चित कॉलिंग प्रोटोकॉल विरुद्ध आणखी एक tool नोंदवणे, हा थेट OCP आकार आहे.</p></div>
+        <div class="card"><h4>⚖️ YAGNI ची प्रतिशक्ती</h4><p>आधुनिक पद्धत OCP ला "you are not gonna need it" शी जोडते: जोडणी-रेषा हुंकाराने नाही तर बदल खरा असल्यावर जोडा.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> OCP हा सर्वत्र लागू करण्याचा नियम नाही; तो खरोखर बदलणाऱ्या अक्षांसाठीचे साधन आहे. तिथे वापरल्यास, तो एका प्रणालीला तिचा चाचणी झालेला गाभा पुन्हा न उघडता वर्षानुवर्षे वाढू देतो. सर्वत्र वापरल्यास, तो तुम्हाला कोणालाही न लागणाऱ्या interface मध्ये बुडवतो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">OCP कल्पनांच्या एका छोट्या कुटुंबावर विसंबते. हे त्याच्यासोबत नैसर्गिकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../polymorphism/"><span class="ico">🎭</span><h4>Polymorphism</h4><p>विस्तार शक्य करणारी dispatch यंत्रणा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">🦆</span><h4>Interface आणि duck typing</h4><p>विस्तार जोडणी-रेषा ठरवणारे करार.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../dependency-inversion/"><span class="ico">🔄</span><h4>Dependency inversion</h4><p>ठोस गोष्टींवर नाही तर abstraction वर अवलंबून राहणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single responsibility</h4><p>बदलण्याचे एकच कारण जोडणी-रेषा स्वच्छ ठेवते.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Open/Closed तत्त्वाचे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · उदाहरण अभ्यास · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

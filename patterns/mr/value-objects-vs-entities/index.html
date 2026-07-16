@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मध्ये Value Objects विरुद्ध Entities - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="Value Objects विरुद्ध Entities चे सखोल, दृश्य मार्गदर्शन: identity आणि lifecycle विरुद्ध attribute-आधारित equality आणि immutability, payments आणि orders domain मधील Money, Email, Address, Order आणि Customer उदाहरणांसह, diagrams, 0-100 flow आणि case studies सह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Value Objects विरुद्ध Entities - identity आणि equality चे मॉडेलिंग</h1>
+      <p class="lede">payments आणि orders प्रणालीत, काही गोष्टी त्या ज्या गोष्टींनी बनल्या आहेत, त्याच <strong>असतात</strong>, तर काही गोष्टी त्या जे कोण आहेत, त्यावरून <strong>असतात</strong>. Money किंवा Email सारखे <strong>value object</strong> पूर्णपणे त्याच्या attributes वरून ठरते आणि कधीही बदलत नाही. Order किंवा Customer सारख्या <strong>entity</strong> ला एक स्थिर identity असते आणि एक lifecycle असते जी कोणत्याही एका field values च्या संचापेक्षा जास्त काळ टिकते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा</a>
+        <a class="btn ghost" href="#diagrams">diagrams कडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Identity</span>
+        <span class="pill">Immutability</span>
+        <span class="pill">Structural equality</span>
+        <span class="pill">Lifecycle</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>value objects आणि entities म्हणजे काय?</h2>
+      <p class="muted">domain design मधील हा सर्वात परिणामकारक मॉडेलिंग निर्णय आहे. <strong>entity</strong> म्हणजे एक विशिष्ट identity असलेली गोष्ट जी बदलामधून टिकून राहते: <code>Order</code> हा तोच order असतो, मग तो pending असो, paid असो, किंवा shipped असो. <strong>value object</strong> म्हणजे केवळ त्याच्या attributes वरून ठरणारी गोष्ट: 25.00 USD चे दोन <code>Money</code> instances परस्पर बदलण्याजोगे असतात, आणि दोघांपैकी कोणाचीही अशी काही कहाणी नसते जिचा मागोवा ठेवण्यासारखे असेल.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🆔</span> Entity</h4>
+          <p>याला एक identity (एक id) असते जी स्थिर राहते तर त्याचे attributes काळानुसार बदलतात. <code>Order</code>, <code>Customer</code> आणि <code>Payment</code> प्रत्येकाची मागोवा ठेवण्यासारखी lifecycle असते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">💠</span> Value object</h4>
+          <p>याला id नसते. ते पूर्णपणे त्याच्या fields वरून वर्णन केले जाते आणि immutable असते. <code>Money</code>, <code>Email</code> आणि <code>Address</code> ची तुलना content वरून केली जाते, reference वरून नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚖️</span> Equality चा भेद</h4>
+          <p>entities समान असतात जेव्हा त्यांच्या ids जुळतात. value objects समान असतात जेव्हा प्रत्येक attribute जुळते. हे चुकल्यास caches, sets आणि lookups बिघडतात.</p>
+        </div>
+      </div>
+
+      <h3>Entity विरुद्ध value object एका दृष्टीक्षेपात</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>वैशिष्ट्य</th><th>Entity</th><th>Value object</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Identity</strong></td><td>वेगळी id, एकदाच नेमली जाते</td><td>काहीही नाही; content हीच identity</td></tr>
+            <tr><td><strong>Equality</strong></td><td>समान id म्हणजे समान entity</td><td>समान attributes म्हणजे समान</td></tr>
+            <tr><td><strong>Mutability</strong></td><td>attributes lifecycle मध्ये बदलतात</td><td>Immutable; बदलांतून नवीन instance तयार होते</td></tr>
+            <tr><td><strong>Lifecycle</strong></td><td>तयार, मागोवा, संग्रहित, हटवली</td><td>मुक्तपणे तयार आणि टाकून दिली, मागोवा नाही</td></tr>
+            <tr><td><strong>उदाहरणे</strong></td><td>Order, Customer, Payment, Shipment</td><td>Money, Email, Address, DateRange</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक मॉडेल:</strong> स्वतःला विचारा "यांपैकी दोघांची सर्व fields एकसारखी असती, तरीही कोण कोण आहे याची मला पर्वा असेल का?" जर होय, तर ते entity आहे आणि त्याला id हवी. जर नाही, तर ते value object आहे आणि ते immutable असावे व content वरून तुलना केली जावी.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>हा भेद का महत्त्वाचा आहे</h2>
+      <p class="muted">या दोन श्रेणी एकत्र मिसळणे हे संपूर्ण एका प्रकारच्या bugs चे मूळ आहे: mutable रकमा ज्या हळूहळू बदलतात, fields वरून तुलना केल्या जाणाऱ्या entities ज्या गुपचूप duplicate होतात, आणि equality जी set मध्ये आणि <code>if</code> मध्ये वेगळी वागते. श्रेणी आधीच नाव देऊन ठेवल्यास correctness हा default बनतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Immutability shared-state bugs दूर करते</h4><p>बदलू न शकणारे <code>Money</code> checkout च्या एका भागाकडून बदलले जाऊ शकत नाही तर दुसरा भाग ते वाचत असतो. defensive copies शिवाय तुम्ही value objects मुक्तपणे इकडे-तिकडे पाठवता.</p></div>
+        <div class="card"><h4>🎯 योग्य equality collections ला बळ देते</h4><p>content वरून समान असलेली value objects sets मध्ये योग्यरित्या deduplicate होतात, विश्वासार्ह map keys म्हणून काम करतात, आणि duplicates गळू देण्याऐवजी caches ला hit होऊ देतात.</p></div>
+        <div class="card"><h4>🧭 Identity खरी गोष्ट मागोवा ठेवते</h4><p>एक <code>Order</code> cart पासून delivery पर्यंत एकच id राखते. प्रत्येक state transition, event आणि audit row त्या स्थिर identity वर अवलंबून असते, त्याच्या fields च्या snapshot वर नाही.</p></div>
+        <div class="card"><h4>🧱 समृद्ध types primitive गोंधळाची जागा घेतात</h4><p>एक <code>Email</code> किंवा <code>Money</code> type construction च्या वेळी एकदाच validate होते, त्यामुळे प्रणालीचा उर्वरित भाग सर्वत्र raw strings आणि floats पुन्हा तपासण्याऐवजी value वर विश्वास ठेवतो.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Value objects विरुद्ध entities चे स्पष्टीकरण</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ती लक्षात येते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एक <strong>विद्यार्थी id क्रमांक</strong> ही entity आहे: तुम्ही तुमचे नाव, पत्ता किंवा शाखा बदलली तरी ती अजूनही तुम्हीच असता. एक <strong>दहा डॉलरची नोट</strong> हे value object आहे: कोणतीही दहा डॉलरची नोट अगदी सारखीच खर्च होते, त्यामुळे तुमच्याकडे कोणती आहे याचा कोणीही मागोवा ठेवत नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>primary key असलेली database row ही entity आहे; तुम्ही तिचे columns अपडेट करता पण key कधीही हलत नाही. <code>Color(255, 0, 0)</code> किंवा <code>Money(25, "USD")</code> हे value object आहे: fields वरून समान, edit करण्याऐवजी बदलले जाते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एक <strong>customer account</strong> ही entity आहे जिचा तुमचा व्यवसाय प्रत्येक order मध्ये वर्षानुवर्षे मागोवा ठेवतो. एका order वर छापलेला <strong>shipping address</strong> हे value object आहे: fields चा एक snapshot, स्वतःपुरता वैध, स्वतःची अशी काही कहाणी नसलेली गोष्ट.</p></div>
+        <div class="card"><h4><span class="ico">🏦</span> रोजच्या जीवनातील आवृत्ती</h4><p>तुमचे <strong>बँक खाते</strong> ही entity आहे: balance वाढत-कमी होत असताना खाते क्रमांक तोच राहतो. एक <strong>नोट</strong> हे value object आहे: एकाच चलनाच्या दोन वीसच्या नोटा परस्पर बदलण्याजोग्या असतात, केवळ त्यांच्या मूल्यावरून ठरतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>प्रत्येकाचे मॉडेलिंग कसे करावे</h2>
+      <p class="muted">value object त्याच्या constructor मध्ये validate करते, read-only fields उघड करते, आणि कोणत्याही operation मधून नवीन instances परत करते. entity एक id वाहते, स्वतःच्या state transitions चे रक्षण करते, आणि equality केवळ id वरून ठरवते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">💠</span> value object तयार करणे</h4>
+          <p>fields freeze करा, एकदाच validate करा, आणि content वरून तुलना करा. दोन <code>Money</code> values जोडण्यासारखे arithmetic कोणत्याही operand ला बदलण्याऐवजी नवीन <code>Money</code> परत करते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🆔</span> entity तयार करणे</h4>
+          <p>निर्मितीच्या वेळी एक id नेमा, ती स्थिर ठेवा, आणि methods ना lifecycle चालवू द्या. एक <code>Order</code> त्याच्या total आणि address साठी value objects धारण करते तर त्याची status विकसित होत जाते.</p>
+        </div>
+      </div>
+
+      <h3>classes आणि त्यांचा परस्पर संबंध</h3>
+      <div class="diagram">
+        <div class="cap">एक Order entity Money आणि Address value objects बनवते; equality श्रेणीनुसार वेगळी असते</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        +OrderId id
+        +CustomerId customerId
+        +Money total()
+        +addLine(sku, qty, price)
+        +pay(payment) void
+        +equals(other) bool
+    }
+    class Customer {
+        +CustomerId id
+        +Email email
+        +equals(other) bool
+    }
+    class Money {
+        +int amountCents
+        +string currency
+        +add(other) Money
+        +equals(other) bool
+    }
+    class Email {
+        +string address
+        +equals(other) bool
+    }
+    class Address {
+        +string street
+        +string city
+        +string postalCode
+        +equals(other) bool
+    }
+    class Identifiable {
+        &lt;&lt;interface&gt;&gt;
+        +id
+    }
+    Identifiable &lt;|-- Order
+    Identifiable &lt;|-- Customer
+    Order o-- Money
+    Order o-- Address
+    Customer o-- Email
+    Order --> Customer
+        </pre>
+      </div>
+
+      <h3>तीन भाषांमध्ये तेच मॉडेल</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money: a value object - immutable, equal by attributes
+class Money {
+  constructor(
+    readonly amountCents: number,
+    readonly currency: string,
+  ) {
+    if (!Number.isInteger(amountCents)) throw new Error("amount must be whole cents");
+    Object.freeze(this);
+  }
+
+  add(other: Money): Money {
+    if (other.currency !== this.currency) throw new Error("currency mismatch");
+    return new Money(this.amountCents + other.amountCents, this.currency);
+  }
+
+  equals(other: Money): boolean {
+    return this.amountCents === other.amountCents && this.currency === other.currency;
+  }
+}
+
+// Order: an entity - equal by identity, mutable lifecycle
+class Order {
+  private lines: Money[] = [];
+  status: "pending" | "paid" = "pending";
+
+  constructor(readonly id: string, readonly customerId: string) {}
+
+  addLine(price: Money): void {
+    this.lines.push(price); // attributes change; id does not
+  }
+
+  total(): Money {
+    return this.lines.reduce((sum, m) => sum.add(m), new Money(0, "USD"));
+  }
+
+  pay(): void {
+    this.status = "paid";
+  }
+
+  equals(other: Order): boolean {
+    return this.id === other.id; // identity, not fields
+  }
+}
+
+const order = new Order("ord_1001", "cus_42");
+order.addLine(new Money(1999, "USD"));
+order.addLine(new Money(500, "USD"));
+console.log(order.total().equals(new Money(2499, "USD"))); // true
+order.pay();
+console.log(order.status); // "paid"</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass, field
+
+# Money: a value object - frozen and equal by attributes
+@dataclass(frozen=True)
+class Money:
+    amount_cents: int
+    currency: str
+
+    def add(self, other: "Money") -> "Money":
+        if other.currency != self.currency:
+            raise ValueError("currency mismatch")
+        return Money(self.amount_cents + other.amount_cents, self.currency)
+
+# frozen dataclass gives __eq__ by fields and __hash__ for free
+
+# Order: an entity - equal by identity, mutable lifecycle
+class Order:
+    def __init__(self, id: str, customer_id: str):
+        self.id = id
+        self.customer_id = customer_id
+        self._lines: list[Money] = []
+        self.status = "pending"
+
+    def add_line(self, price: Money) -> None:
+        self._lines.append(price)  # attributes change; id does not
+
+    def total(self) -> Money:
+        total = Money(0, "USD")
+        for line in self._lines:
+            total = total.add(line)
+        return total
+
+    def pay(self) -> None:
+        self.status = "paid"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Order) and self.id == other.id  # identity
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
+order = Order("ord_1001", "cus_42")
+order.add_line(Money(1999, "USD"))
+order.add_line(Money(500, "USD"))
+print(order.total() == Money(2499, "USD"))  # True
+order.pay()
+print(order.status)  # "paid"</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Money: a value object - immutable and equal by attributes
+class Money
+  attr_reader :amount_cents, :currency
+
+  def initialize(amount_cents, currency)
+    raise ArgumentError, "amount must be whole cents" unless amount_cents.is_a?(Integer)
+    @amount_cents = amount_cents
+    @currency = currency
+    freeze
+  end
+
+  def add(other)
+    raise ArgumentError, "currency mismatch" unless other.currency == currency
+    Money.new(amount_cents + other.amount_cents, currency)
+  end
+
+  def ==(other)
+    other.is_a?(Money) && amount_cents == other.amount_cents && currency == other.currency
+  end
+  alias eql? ==
+
+  def hash
+    [amount_cents, currency].hash
+  end
+end
+
+# Order: an entity - equal by identity, mutable lifecycle
+class Order
+  attr_reader :id, :customer_id
+  attr_accessor :status
+
+  def initialize(id, customer_id)
+    @id = id
+    @customer_id = customer_id
+    @lines = []
+    @status = :pending
+  end
+
+  def add_line(price)
+    @lines << price # attributes change; id does not
+  end
+
+  def total
+    @lines.reduce(Money.new(0, "USD")) { |sum, m| sum.add(m) }
+  end
+
+  def pay
+    @status = :paid
+  end
+
+  def ==(other)
+    other.is_a?(Order) && id == other.id # identity, not fields
+  end
+end
+
+order = Order.new("ord_1001", "cus_42")
+order.add_line(Money.new(1999, "USD"))
+order.add_line(Money.new(500, "USD"))
+puts order.total == Money.new(2499, "USD") # true
+order.pay
+puts order.status # paid</code></pre>
+      </div>
+      <p class="muted">हा भेद लक्षात घ्या: <code>Money</code> frozen आहे आणि त्याच्या fields वरून equality ठरवते, त्यामुळे तुमच्याकडे कोणतेही instance असो, 2499 cents हे 2499 cents च्या समान असते. <code>Order</code> एक स्थिर id राखते, त्याच्या lines आणि status बदलते, आणि फक्त id वरून तुलना करते, त्यामुळे paid केलेला order अजूनही तो एकेकाळी असलेल्या pending order च्या समानच असतो.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: एक validated value object तयार करणे, एका entity ला त्याच्या lifecycle मधून बदलणे, आणि प्रत्येक श्रेणीसाठी equality वेगळी कशी वागते.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - एक immutable Money value object तयार करणे</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🖥️ Checkout code
+    participant Money as 💠 Money
+    participant Guard as 🛡️ Invariant check
+
+    Client->>Money: new Money(1999, "USD")
+    Money->>Guard: validate whole cents and currency
+    alt invalid input
+        Guard-->>Money: raise error
+        Money-->>Client: construction fails
+    else valid
+        Guard-->>Money: ok
+        Money->>Money: freeze fields
+        Money-->>Client: immutable instance
+    end
+    Client->>Money: add(new Money(500, "USD"))
+    Money-->>Client: new Money(2499, "USD")
+    Note over Client,Money: original instances are never mutated
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - एक Order entity त्याच्या lifecycle मधून जाताना</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User as 👤 Shopper
+    participant Order as 🆔 Order entity
+    participant Money as 💠 Money
+    participant Repo as 🗄️ Order repository
+
+    User->>Order: new Order(ord_1001, cus_42)
+    Order-->>User: id fixed, status pending
+    User->>Order: addLine(Money 1999 USD)
+    Order->>Money: total() adds line values
+    Money-->>Order: Money 1999 USD
+    User->>Order: pay(payment)
+    Order->>Order: status becomes paid
+    Order->>Repo: save(order by id)
+    Repo-->>User: same id, new state persisted
+    Note over Order,Repo: id is stable across every transition
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Equality: entities साठी identity, value objects साठी attributes</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Test as 🧪 Comparison
+    participant A as 🆔 Order A
+    participant B as 🆔 Order B
+    participant M1 as 💠 Money 2499 USD
+    participant M2 as 💠 Money 2499 USD
+
+    Test->>A: equals(B) where ids match
+    A-->>Test: true even if fields differ
+    Test->>M1: equals(M2) where amounts match
+    M1-->>Test: true because attributes match
+    Note over Test,M2: same id equals same entity; same fields equal same value
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 flow</h2>
+      <p class="muted">एका न-मॉडेल केलेल्या संकल्पनेपासून orders domain मध्ये entities आणि value objects च्या स्वच्छ विभागणीपर्यंत, क्रमवार.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">शोधा</span><h4>domain मधील nouns सूचीबद्ध करा</h4><p>checkout मधील प्रत्येक संकल्पना लिहून काढा: order, customer, money, email, address, payment, line item. हे तुमचे उमेदवार आहेत.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">विचारा</span><h4>याला identity हवी का?</h4><p>प्रत्येक noun साठी विचारा की एकसारखी fields असलेली त्यांपैकी दोन गोष्टी अजूनही वेगळ्या गोष्टी आहेत का ज्यांचा तुम्हाला मागोवा ठेवावा लागेल. जर होय, तर ते entity आहे.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">वर्गीकरण</span><h4>दोन गटांत विभागा</h4><p>Order, Customer आणि Payment entities बनतात. Money, Email आणि Address त्यांच्या attributes वरून ठरणारी value objects बनतात.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Freeze</span><h4>value objects immutable करा</h4><p>value objects ना read-only fields द्या म्हणजे तयार झाल्यानंतर कोणताही caller एखादी shared रक्कम किंवा address बदलू शकणार नाही.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Validate</span><h4>constructor मध्ये invariants चे रक्षण करा</h4><p>construction च्या वेळीच एक ऋण अपूर्णांक cent, एक चुकीचा email, किंवा रिकामे currency नाकारा म्हणजे प्रत्येक विद्यमान value आधीच वैध असते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Equality</span><h4>fields वरून value equality ठरवा</h4><p>सर्व attributes वर equals आणि hash अंमलात आणा म्हणजे दोन समान Money values sets मध्ये आणि map keys म्हणून एकसारख्या वागतात.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Identity</span><h4>entity ids नेमा</h4><p>निर्मितीच्या वेळी प्रत्येक entity ला एक id द्या आणि entities ची तुलना केवळ त्या id वरून करा, त्यांच्या सध्याच्या field values वरून कधीही नाही.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Compose</span><h4>entities च्या आत values समाविष्ट करा</h4><p>Order ला एक Money total आणि एक Address धारण करू द्या, आणि Customer ला एक Email धारण करू द्या. entities value objects च्या मालक असतात, उलट नाही.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Transition</span><h4>methods ने lifecycle चालवा</h4><p>Order ला नियम लागू करणाऱ्या methods द्वारे pending पासून paid पर्यंत आणि shipped पर्यंत हलवा, तर id संपूर्ण वेळ स्थिर राहते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Persist</span><h4>entities id वरून, values inline साठवा</h4><p>entities त्यांच्या id वर keyed करून साठवा आणि त्यांची value objects columns किंवा embedded documents म्हणून inline करा, कारण values ना साठवण्यासारखी identity नसते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">विश्वास</span><h4>आत्मविश्वासाने विचार करा</h4><p>प्रणालीचा उर्वरित भाग आता विश्वास ठेवतो की values वैध आणि immutable आहेत आणि entities स्थिर identity वरून मागोवा ठेवल्या जातात, ज्यामुळे संपूर्ण एका प्रकारच्या bugs नष्ट होतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतांश identity bugs दोन श्रेणी एकत्र मिसळण्यापर्यंत मागे जातात. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧨 Mutable value objects</h4><p>Money किंवा Address ला setter जोडणे म्हणजे एक caller एक shared instance बदलू शकतो आणि इतरत्र एका order total ला गुपचूप बदलू शकतो. value objects freeze केलेली आणि बदलली जाणारी असावीत, edit केलेली नाही.</p></div>
+        <div class="card"><h4>🪞 entities ची fields वरून तुलना करणे</h4><p>सर्व attributes ची तुलना करण्यासाठी entity equality overriding केल्याने एकाच नावाचे दोन customers समान दिसतात, records duplicate होतात आणि lookups बिघडतात. entities ची तुलना फक्त id वरून होते.</p></div>
+        <div class="card"><h4>🆔 value object वर identity</h4><p>Money किंवा Email वर एक database id चिकटवणे साध्या value ला कोणालाही नको असलेल्या मागोवा ठेवलेल्या row मध्ये बदलते, schema गोंधळवते आणि जे समान असायला हवे होते ते अपघाती duplicates आमंत्रित करते.</p></div>
+        <div class="card"><h4>💵 money साठी floats</h4><p>रकमा floating point म्हणून साठवणे rounding drift आमंत्रित करते जिथे 0.1 अधिक 0.2 हे 0.3 नसते. value object च्या आत integer cents किंवा decimal type वर Money चे मॉडेलिंग करा.</p></div>
+        <div class="card"><h4>🧵 Primitive obsession</h4><p>email साठी raw strings आणि रकमांसाठी raw numbers पाठवणे validation सर्वत्र विखुरते आणि एक currency string एका email field मध्ये पडू देते. त्यांना typed value objects मध्ये गुंडाळा.</p></div>
+        <div class="card"><h4>♻️ equals सह hash विसरणे</h4><p>value equality ठरवणे पण जुळणारे hash न ठरवणे म्हणजे समान Money values वेगवेगळ्या set buckets मध्ये पडतात, त्यामुळे deduplication आणि caching गुपचूप फसतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि मोजमाप कसे करावे</h2>
+      <p class="muted">तुम्हाला हा भेद कोडच्या आकारातच जाणवतो. हे संकेत तुम्हाला सांगतात की सीमा योग्यरित्या आखली आहे का.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>value type वर setters</strong></td><td>एक गळणारी abstraction; value object mutable आहे आणि shared-state bugs निर्माण करेल</td></tr>
+            <tr><td><strong>entity equals fields वाचते</strong></td><td>Identity content सोबत गोंधळली जात आहे, त्यामुळे वेगळे records समान म्हणून तुलना होऊ शकतात</td></tr>
+            <tr><td><strong>समान values साठी duplicate rows</strong></td><td>एका value object ला त्याला नको असलेली id दिली गेली, नैसर्गिक deduplication बिघडवत आहे</td></tr>
+            <tr><td><strong>call sites वर validation पुनरावृत्ती</strong></td><td>एक गहाळ value object; तीच तपासणी एका constructor ऐवजी अनेक ठिकाणी राहते</td></tr>
+            <tr><td><strong>Set किंवा map keys विचित्र वागणे</strong></td><td>एका value object वर equals आणि hash एकमेकांशी जुळत नाहीत</td></tr>
+            <tr><td><strong>lifecycle दरम्यान id बदलणे</strong></td><td>entity ची सीमा चुकीची आहे; identity निर्मितीपासून हटवण्यापर्यंत स्थिर असावी</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अनुभवाचा नियम:</strong> जर एका type ला setter असेल, तर त्याला id नसावी; जर एका type ला id असेल, तर त्याच्या equality ने फक्त ती id वाचावी. जेव्हा त्या नियमाचे दोन्ही अर्धे संपूर्ण मॉडेलमध्ये टिकतात, तेव्हा entity आणि value ची सीमा स्वच्छ असते.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>वास्तविक जगातील case studies</h2>
+      <p class="muted">तीन production-शैलीच्या प्रणाली जिथे entity आणि value object ची विभागणी भार वाहणारी आहे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Money value object सह payments ledger</h3><div class="role">Pattern: immutable रकमा, मागोवा ठेवलेले transactions</div></div></div>
+        <p class="muted">एका payments platform ला एकही cent न गमावता किंवा shared state न बदलता रकमा जोडणे, विभागणे आणि रूपांतरित करणे आवश्यक असते.</p>
+        <ul>
+          <li>Money हे integer minor units अधिक एक currency code वरचे एक frozen value object आहे, content वरून समान.</li>
+          <li>प्रत्येक Transaction ही एक स्थिर id, एक immutable Money रक्कम, आणि एक status lifecycle असलेली entity आहे.</li>
+          <li>Arithmetic नवीन Money instances परत करते, त्यामुळे reports मध्ये पुन्हा वापरल्यावर ledger entries कधीही बदलत नाहीत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Reconciliation cent पर्यंत जुळते कारण रकमा immutable values आहेत तर प्रत्येक transaction id वरून स्वतंत्रपणे मागोवा ठेवला जातो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📦</span><div><h3>2 · E-commerce orders आणि addresses</h3><div class="role">Pattern: value snapshots वरची entity lifecycle</div></div></div>
+        <p class="muted">एका online store ला एक order edits आणि shipping मधून टिकून राहणे आवश्यक आहे तर ज्या नेमक्या address सह तो दिला गेला तो जपणे आवश्यक आहे.</p>
+        <ul>
+          <li>Order आणि Customer entities आहेत; shipping Address आणि line prices value objects आहेत.</li>
+          <li>checkout च्या वेळी नोंदवलेला Address हा एक frozen snapshot आहे, त्यामुळे नंतरचे profile edits कधीही जुने orders पुन्हा लिहीत नाहीत.</li>
+          <li>Order id cart पासून delivery पर्यंत स्थिर राहते तर त्याची status आणि lines विकसित होतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> ऐतिहासिक orders त्यांचे मूळ addresses आणि totals जपतात, तर live customer entity एका identity खाली विकसित होत राहते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📧</span><div><h3>3 · Email value object सह accounts आणि auth</h3><div class="role">Pattern: एका entity चे रक्षण करणारी validated values</div></div></div>
+        <p class="muted">एका user-accounts सेवेने email ला एक validated, तुलनायोग्य value म्हणून वागवावे तर account स्वतः एक दीर्घकाळ टिकणारी entity असते.</p>
+        <ul>
+          <li>Email हे एक value object आहे जे construction च्या वेळी त्याचा address एकदाच normalize आणि validate करते.</li>
+          <li>Customer ही एक user id वर keyed entity आहे, त्यामुळे email बदलल्याने customer कोण आहे हे कधीही बदलत नाही.</li>
+          <li>समान Email values एकसारख्या तुलना आणि hash होतात, uniqueness तपासण्या आणि lookups ला बळ देतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Duplicate-email तपासण्या विश्वासार्ह असतात आणि account identity स्थिर असते, कारण value validate केलेली असते आणि entity id वरून मागोवा ठेवली जाते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">entity आणि value object ची विभागणी आधुनिक frameworks च्या आधीची आहे आणि भाषा immutable data ला first-class समर्थन जोडत असताना ती अधिकाधिक उपयुक्त होत जाते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Records आणि frozen data</h4><p>TypeScript readonly, Python frozen dataclasses, Kotlin data classes, आणि Java records value objects ला एका ओळीचे बनवतात, त्यामुळे mutable value types साठी कोणतेही निमित्त नाही.</p></div>
+        <div class="card"><h4>🏗️ Domain-driven design</h4><p>DDD बरोबर याच विभागणीतून aggregates बांधते: identity असलेल्या entities एका aggregate ला अँकर करतात तर value objects त्याची measurements आणि descriptions व्यक्त करतात.</p></div>
+        <div class="card"><h4>🔗 Event sourcing</h4><p>Events ही immutable value objects आहेत; entity म्हणजे त्यांची पुनरावृत्ती करून पुनर्रचित केलेले aggregate, जे identity-विरुद्ध-content ही रेषा स्पष्ट करते.</p></div>
+        <div class="card"><h4>🧪 सोपे testing</h4><p>Immutable value objects ना setup किंवा teardown ची गरज नसते आणि ती content वरून तुलना करतात, त्यामुळे assertions स्वच्छ वाचली जातात आणि tests cases दरम्यान state गळू देत नाहीत.</p></div>
+        <div class="card"><h4>🧵 Concurrency सुरक्षा</h4><p>Immutable values locks शिवाय threads आणि async tasks मध्ये सामायिक करणे सुरक्षित असते, जे सेवा अधिक concurrent होत असताना महत्त्वाचे आहे.</p></div>
+        <div class="card"><h4>🗃️ ORM mapping</h4><p>आधुनिक ORMs value objects ना embedded किंवा owned types म्हणून आणि entities ला keys असलेल्या tables मध्ये map करतात, हा भेद थेट persistence layer मध्ये encode करतात.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> entity विरुद्ध value object ठरवणे हा तुम्ही घेतलेला पहिला खरा मॉडेलिंग निर्णय आहे, आणि त्याचा फायदा सर्वत्र होतो: योग्य equality, सुरक्षित सामायिकीकरण, स्वच्छ persistence, आणि जे म्हणते तेच सांगणारा कोड.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">हा भेद संबंधित OOP कल्पनांच्या जाळ्यात बसतो. या याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../immutability/"><span class="ico">🧊</span><h4>Immutability</h4><p>value objects construction नंतर कधीही का बदलत नाहीत.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../equality-identity/"><span class="ico">⚖️</span><h4>Equality आणि identity</h4><p>content वरून तुलना विरुद्ध id वरून तुलना.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🛡️</span><h4>Construction आणि invariants</h4><p>एका value ला एकदाच validate करणे म्हणजे ती नेहमी वैध असते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../objects-and-classes/"><span class="ico">🧱</span><h4>Objects आणि classes</h4><p>ज्या building blocks पासून या श्रेणी बनलेल्या आहेत.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Value Objects विरुद्ध Entities चे दृश्य मार्गदर्शन · काय · का · कसे · Diagrams · Flow · Case Studies · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

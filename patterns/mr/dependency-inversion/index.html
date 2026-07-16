@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Dependency Inversion Principle (DIP) - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="Dependency Inversion Principle चे सखोल, दृश्य मार्गदर्शक: high-level आणि low-level modules दोन्ही abstractions वर का अवलंबून असावेत, dependency चा बाण कसा उलटतो, ports आणि adapters, आणि DIP हे dependency injection पेक्षा कसे वेगळे आहे - TypeScript, Python, आणि Ruby कोडसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Dependency Inversion Principle - आपला कोड abstractions कडे रोखा, vendors कडे नाही</h1>
+      <p class="lede">Dependency Inversion Principle सांगते की <strong>high-level policy ने low-level detail वर अवलंबून राहू नये; दोन्ही एका abstraction वर अवलंबून असावेत</strong>. ग्राहकांकडून पैसे आकारणारी <code>OrderService</code> ही थेट Stripe SDK शी नव्हे तर एका <code>PaymentGateway</code> interface शी बोलली पाहिजे. बाण उलटा करा आणि तुमच्या business rules ना त्यांच्या मागे कोणता vendor आहे याची पर्वा राहणार नाही.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Abstractions</span>
+        <span class="pill">Ports आणि adapters</span>
+        <span class="pill">उलटलेला बाण</span>
+        <span class="pill">Testable policy</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Dependency Inversion Principle म्हणजे काय?</h2>
+      <p class="muted"><strong>DIP</strong> हे SOLID मधील "D" आहे. याचे दोन भाग आहेत: high-level modules ने low-level modules वर अवलंबून राहू नये, आणि दोन्ही abstractions वर अवलंबून असावेत; आणि abstractions ने details वर अवलंबून राहू नये, details ने abstractions वर अवलंबून असावेत. प्रत्यक्षात याचा अर्थ असा की तुमचा <em>policy</em> कोड (काय करायचे) एक interface परिभाषित करतो, आणि तुमचा <em>mechanism</em> कोड (कसे करायचे, Stripe SDK, एक SMTP client, एक Postgres driver) तो interface implement करतो. सामान्यतः policy पासून खाली detail कडे रोखणारा dependency चा बाण उलटला जातो, त्यामुळे आता दोन्ही abstraction कडे रोखतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🏛️</span> High-level module</h4>
+          <p>Business policy, जसे की <code>OrderService.checkout()</code>. हा rules ला मालकीचा असतो आणि त्याला काय हवे ते interface म्हणून जाहीर करतो. याने vendor SDK import करू नये.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Abstraction</h4>
+          <p><code>PaymentGateway</code> interface: <code>charge(amount, token)</code>. स्थिर, vendor-neutral, आणि ती वापरणाऱ्या policy सोबतच मालकीची.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Low-level module</h4>
+          <p><code>StripeGateway</code> सारखा एक ठोस adapter जो Stripe SDK ला गुंडाळतो आणि interface पूर्ण करतो. तो abstraction वर अवलंबून असतो, उलट नाही.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय आहे</th><th>checkout उदाहरणात</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>High-level module</strong></td><td>Business policy आणि rules चा मालक</td><td><code>OrderService</code>, <code>CheckoutHandler</code></td></tr>
+            <tr><td><strong>Port (abstraction)</strong></td><td>Policy ज्या interface वर अवलंबून असते</td><td><code>PaymentGateway</code>, <code>Receipts</code></td></tr>
+            <tr><td><strong>Adapter (low-level)</strong></td><td>Port implement करणारा ठोस class</td><td><code>StripeGateway</code>, <code>AdyenGateway</code></td></tr>
+            <tr><td><strong>Vendor detail</strong></td><td>Adapter मागील third-party SDK</td><td>Stripe SDK, Adyen SDK, एक sandbox stub</td></tr>
+            <tr><td><strong>Composition root</strong></td><td>जिथे ठोस adapter निवडला आणि जोडला जातो</td><td><code>main()</code>, app bootstrap</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> DIP हे <em>interface चा मालक कोण</em> याबद्दल आहे. High-level policy contract परिभाषित करते; low-level detail त्याचे पालन करते. मालकी policy कडे "वर" रोखणे हेच dependency उलटवते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>DIP का अस्तित्वात आहे</h2>
+      <p class="muted">Inversion शिवाय, तुमचे business rules ठोस vendors import करतात, त्यामुळे Stripe च्या जागी Adyen, किंवा Stripe च्या जागी एक test stub आणणे म्हणजे तुमचे money logic धारण करणारा कोड बदलणे. DIP अस्थिर details ला कडेला ठेवते आणि तुमची स्थिर policy गाभ्याला ठेवते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔄 Policy ला हात न लावता vendors बदला</h4><p><code>PaymentGateway</code> implement करणारा <code>AdyenGateway</code> जोडा आणि composition root पुन्हा जोडा. <code>OrderService</code> कधीच बदलत नाही कारण त्याला फक्त interface माहीत होती.</p></div>
+        <div class="card"><h4>🧪 Policy चे स्वतंत्रपणे परीक्षण करा</h4><p>कॉल्स नोंदवणारा आणि ठरलेला निकाल परत करणारा एक fake gateway पास करा. तुम्ही network शिवाय, Stripe keys शिवाय, आणि अस्थिर sandbox शिवाय refunds आणि partial captures चे unit-test करू शकता.</p></div>
+        <div class="card"><h4>🛡️ गाभ्याला बदलांपासून वाचवा</h4><p>SDKs signatures बदलतात, methods deprecate करतात, आणि fields ची नावे बदलतात. परिणामाचे क्षेत्र adapter पर्यंतच थांबते, त्यामुळे vendors खालून हलत असतानाही तुमचा domain layer स्थिर राहतो.</p></div>
+        <div class="card"><h4>🧭 Clean architecture सीमा लागू करा</h4><p>"domain code ने infrastructure import करू नये" हा नियम तपासण्याजोगा होतो. सर्व dependencies आतल्या बाजूला abstractions कडे रोखतात, ज्यामुळे system वाढत असतानाही layering प्रामाणिक राहते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Dependency Inversion चे स्पष्टीकरण</h2>
+      <p class="muted">एकच कल्पना, कल्पना करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती डोक्यात बसते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>तुम्ही तुमचा निबंध एका विशिष्ट शिक्षकासाठी नव्हे तर <strong>assignment rubric</strong> नुसार लिहिता. rubric पाळणारा कोणताही परीक्षक तो तपासू शकतो. rubric ही तुम्ही आणि परीक्षक दोघेही मान्य केलेली abstraction आहे.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>तुमची <code>OrderService</code> <code>interface PaymentGateway { charge(...) }</code> जाहीर करते आणि फक्त त्यावर अवलंबून असते. <code>StripeGateway</code> हा socket मध्ये बसणारा एक plug आहे. तुम्ही तो काढून service ला पुन्हा न जोडता एक fake लावू शकता.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>कंपनी एका नामांकित व्यक्तीसाठी नव्हे तर <strong>job description</strong> नुसार भरती करते. spec पूर्ण करणारा कोणीही ती भूमिका भरू शकतो. भूमिका भरणाऱ्या व्यक्ती बदलत असतानाही भूमिकेची व्याख्या स्थिर राहते.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> रोजची आवृत्ती</h4><p>भिंतीतील socket हा एक standard port आहे. तुमचा laptop charger, एक दिवा, एक kettle - सर्व त्याचे पालन करतात. भिंत तुमच्या विशिष्ट उपकरणावर अवलंबून नसते; दोन्ही socket standard वर अवलंबून असतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>हे आतून कसे काम करते</h2>
+      <p class="muted">ज्या policy ला त्याची गरज आहे तिच्या शेजारी port परिभाषित करा, कडेला adapters implement करा, आणि composition root वर एकदाच ठोस adapter निवडा. Policy फक्त interface विरुद्धच compile आणि test केली जाते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🏛️</span> Policy port ची मालक</h4>
+          <p><code>OrderService</code> <code>PaymentGateway</code> जाहीर आणि import करते. ती <code>gateway.charge(...)</code> कॉल करते आणि domain निकालाबद्दल विचार करते, कधीही HTTP status codes किंवा Stripe error आकारांबद्दल नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚙️</span> Adapter port पूर्ण करतो</h4>
+          <p><code>StripeGateway</code> Stripe SDK import करतो, एका domain <code>charge</code> चे SDK कॉल मध्ये भाषांतर करतो, आणि vendor प्रतिसाद पुन्हा domain <code>ChargeResult</code> मध्ये रूपांतरित करतो.</p>
+        </div>
+      </div>
+
+      <h3>Objects आणि messages एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">OrderService ही PaymentGateway port वर अवलंबून असते; adapters ती implement करतात आणि दोन्ही abstraction कडे रोखतात</div>
+        <pre class="mermaid">
+classDiagram
+    class OrderService {
+        -gateway PaymentGateway
+        +checkout(order Order) Receipt
+    }
+    class PaymentGateway {
+        &lt;&lt;interface&gt;&gt;
+        +charge(amountCents int, token string) ChargeResult
+        +refund(chargeId string) RefundResult
+    }
+    class StripeGateway {
+        -sdk StripeClient
+        +charge(amountCents int, token string) ChargeResult
+        +refund(chargeId string) RefundResult
+    }
+    class AdyenGateway {
+        -client AdyenClient
+        +charge(amountCents int, token string) ChargeResult
+        +refund(chargeId string) RefundResult
+    }
+    OrderService ..> PaymentGateway : depends on
+    PaymentGateway <|.. StripeGateway : implements
+    PaymentGateway <|.. AdyenGateway : implements
+    StripeGateway ..> StripeClient : wraps
+        </pre>
+      </div>
+
+      <h3>तीन भाषांमध्ये तोच checkout</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// PORT: the abstraction the policy depends on
+interface ChargeResult { ok: boolean; chargeId: string; }
+
+interface PaymentGateway {
+  charge(amountCents: number, token: string): ChargeResult;
+}
+
+// HIGH-LEVEL MODULE: knows only the port, never Stripe
+class OrderService {
+  constructor(private readonly gateway: PaymentGateway) {}
+
+  checkout(order: { id: string; totalCents: number; cardToken: string }): string {
+    const result = this.gateway.charge(order.totalCents, order.cardToken);
+    if (!result.ok) throw new Error(`Payment failed for order ${order.id}`);
+    return `Order ${order.id} paid, charge ${result.chargeId}`;
+  }
+}
+
+// LOW-LEVEL MODULE: adapter that wraps the vendor SDK
+class StripeGateway implements PaymentGateway {
+  constructor(private readonly sdk: StripeClient) {}
+
+  charge(amountCents: number, token: string): ChargeResult {
+    const c = this.sdk.charges.create({ amount: amountCents, source: token });
+    return { ok: c.status === "succeeded", chargeId: c.id };
+  }
+}
+
+// COMPOSITION ROOT: pick the concrete adapter once, inject it
+const service = new OrderService(new StripeGateway(new StripeClient(process.env.STRIPE_KEY!)));
+console.log(service.checkout({ id: "A-1007", totalCents: 4999, cardToken: "tok_visa" }));
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+# PORT: the abstraction the policy depends on
+@dataclass
+class ChargeResult:
+    ok: bool
+    charge_id: str
+
+class PaymentGateway(ABC):
+    @abstractmethod
+    def charge(self, amount_cents: int, token: str) -> ChargeResult: ...
+
+# HIGH-LEVEL MODULE: knows only the port, never Stripe
+class OrderService:
+    def __init__(self, gateway: PaymentGateway) -> None:
+        self._gateway = gateway
+
+    def checkout(self, order: dict) -> str:
+        result = self._gateway.charge(order["total_cents"], order["card_token"])
+        if not result.ok:
+            raise RuntimeError(f"Payment failed for order {order['id']}")
+        return f"Order {order['id']} paid, charge {result.charge_id}"
+
+# LOW-LEVEL MODULE: adapter that wraps the vendor SDK
+class StripeGateway(PaymentGateway):
+    def __init__(self, sdk) -> None:
+        self._sdk = sdk
+
+    def charge(self, amount_cents: int, token: str) -> ChargeResult:
+        c = self._sdk.charges.create(amount=amount_cents, source=token)
+        return ChargeResult(ok=c.status == "succeeded", charge_id=c.id)
+
+# COMPOSITION ROOT: pick the concrete adapter once, inject it
+service = OrderService(StripeGateway(StripeClient(os.environ["STRIPE_KEY"])))
+print(service.checkout({"id": "A-1007", "total_cents": 4999, "card_token": "tok_visa"}))
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>ChargeResult = Struct.new(:ok, :charge_id)
+
+# PORT: the abstraction the policy depends on (a duck-typed contract)
+module PaymentGateway
+  def charge(amount_cents, token)
+    raise NotImplementedError
+  end
+end
+
+# HIGH-LEVEL MODULE: knows only the port, never Stripe
+class OrderService
+  def initialize(gateway)
+    @gateway = gateway
+  end
+
+  def checkout(order)
+    result = @gateway.charge(order[:total_cents], order[:card_token])
+    raise "Payment failed for order #{order[:id]}" unless result.ok
+    "Order #{order[:id]} paid, charge #{result.charge_id}"
+  end
+end
+
+# LOW-LEVEL MODULE: adapter that wraps the vendor SDK
+class StripeGateway
+  include PaymentGateway
+
+  def initialize(sdk)
+    @sdk = sdk
+  end
+
+  def charge(amount_cents, token)
+    c = @sdk.charges.create(amount: amount_cents, source: token)
+    ChargeResult.new(c.status == "succeeded", c.id)
+  end
+end
+
+# COMPOSITION ROOT: pick the concrete adapter once, inject it
+service = OrderService.new(StripeGateway.new(StripeClient.new(ENV.fetch("STRIPE_KEY"))))
+puts service.checkout(id: "A-1007", total_cents: 4999, card_token: "tok_visa")
+</code></pre>
+      </div>
+
+      <p class="muted">तिन्हीमध्ये, <code>OrderService</code> कधीही Stripe चा उल्लेख करत नाही. तिला एक <code>PaymentGateway</code> मिळते आणि ती त्याला <code>charge</code> message पाठवते. Stripe चे ज्ञान संपूर्णपणे adapter मध्ये राहते, त्यामुळे एक test एक fake gateway पास करू शकते आणि production मध्ये Adyen कडे बदलणे हे composition root वरील एक ओळ आहे.</p>
+
+      <h3>बाण उलटवण्याआधी आणि नंतर</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// BEFORE: policy depends directly on the vendor detail (arrow points down)
+class OrderService {
+  private stripe = new StripeClient(process.env.STRIPE_KEY!); // hard-wired vendor
+  checkout(order: Order): string {
+    const c = this.stripe.charges.create({ amount: order.totalCents, source: order.cardToken });
+    return c.id; // cannot test without real Stripe; cannot swap vendors
+  }
+}
+
+// AFTER: policy depends on an abstraction it owns (arrow inverted)
+class OrderService {
+  constructor(private readonly gateway: PaymentGateway) {}
+  checkout(order: Order): string {
+    return this.gateway.charge(order.totalCents, order.cardToken).chargeId;
+  }
+}
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># BEFORE: policy depends directly on the vendor detail (arrow points down)
+class OrderService:
+    def __init__(self) -> None:
+        self._stripe = StripeClient(os.environ["STRIPE_KEY"])  # hard-wired vendor
+
+    def checkout(self, order) -> str:
+        c = self._stripe.charges.create(amount=order.total_cents, source=order.card_token)
+        return c.id  # cannot test without real Stripe; cannot swap vendors
+
+# AFTER: policy depends on an abstraction it owns (arrow inverted)
+class OrderService:
+    def __init__(self, gateway: PaymentGateway) -> None:
+        self._gateway = gateway
+
+    def checkout(self, order) -> str:
+        return self._gateway.charge(order.total_cents, order.card_token).charge_id
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># BEFORE: policy depends directly on the vendor detail (arrow points down)
+class OrderService
+  def initialize
+    @stripe = StripeClient.new(ENV.fetch("STRIPE_KEY")) # hard-wired vendor
+  end
+
+  def checkout(order)
+    c = @stripe.charges.create(amount: order[:total_cents], source: order[:card_token])
+    c.id # cannot test without real Stripe; cannot swap vendors
+  end
+end
+
+# AFTER: policy depends on an abstraction it owns (arrow inverted)
+class OrderService
+  def initialize(gateway)
+    @gateway = gateway
+  end
+
+  def checkout(order)
+    @gateway.charge(order[:total_cents], order[:card_token]).charge_id
+  end
+end
+</code></pre>
+      </div>
+      <p class="muted">"after" class ही लहान आहे, तिच्यात कोणतीही secrets नाहीत, आणि ती एकच गोष्ट करते: order policy लागू करणे. dependency उलटवण्याचा हाच फायदा आहे, vendor detail आता नियमाला जोडलेला नाही.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: port मार्गे एक सामान्य charge, policy ला हात न लावणारा vendor swap, आणि fake adapter inject करणारा एक unit test.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Checkout: policy port ला एक message पाठवते, adapter Stripe शी बोलतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Caller
+    participant OS as 🏛️ OrderService
+    participant PG as 🔌 PaymentGateway
+    participant SA as ⚙️ StripeGateway
+    participant SDK as 💳 Stripe SDK
+
+    C->>OS: checkout(order)
+    OS->>PG: charge(totalCents, cardToken)
+    Note over OS,PG: OrderService knows only the port
+    PG->>SA: dispatch to concrete adapter
+    SA->>SDK: charges.create(amount, source)
+    SDK-->>SA: charge succeeded, id
+    SA-->>OS: ChargeResult ok, chargeId
+    OS-->>C: Receipt for order
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Vendor बदला: फक्त composition root बदलतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Root as 🧭 Composition root
+    participant OS as 🏛️ OrderService
+    participant AA as ⚙️ AdyenGateway
+    participant ASDK as 🏦 Adyen SDK
+
+    Root->>AA: new AdyenGateway(adyenClient)
+    Root->>OS: new OrderService(adyenGateway)
+    Note over Root,OS: OrderService source code is unchanged
+    OS->>AA: charge(totalCents, cardToken)
+    AA->>ASDK: payments(amount, paymentMethod)
+    ASDK-->>AA: authorised, pspReference
+    AA-->>OS: ChargeResult ok, chargeId
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Unit test: fake adapter inject करा, policy वर assert करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as 🧪 Test
+    participant OS as 🏛️ OrderService
+    participant FG as 🎭 FakeGateway
+
+    T->>FG: new FakeGateway(returns ok)
+    T->>OS: new OrderService(fakeGateway)
+    T->>OS: checkout(order)
+    OS->>FG: charge(totalCents, cardToken)
+    FG-->>OS: ChargeResult ok, ch_test_1
+    OS-->>T: Receipt for order
+    alt gateway returns failure
+        FG-->>OS: ChargeResult not ok
+        OS-->>T: throws Payment failed
+    end
+    Note over T,FG: no network, no Stripe keys
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 &rarr; 100 प्रवाह</h2>
+      <p class="muted">एका vendor-coupled service पासून उलटलेल्या, testable policy पर्यंत - संपूर्ण refactor क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">शोधा</span><h4>थेट vendor import शोधा</h4><p><code>OrderService</code> एक <code>StripeClient</code> तयार करते आणि inline <code>charges.create</code> कॉल करते. Policy आणि mechanism एकत्र जोडलेले आहेत.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">नाव द्या</span><h4>Vendor ला नव्हे तर क्षमतेला नाव द्या</h4><p>Service ला "Stripe" नव्हे तर "कार्ड आकारण्याची क्षमता" हवी आहे. संकल्पनेला नाव द्या: <code>charge</code> operation असलेला एक payment gateway.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">परिभाषित करा</span><h4>Port जाहीर करा</h4><p><code>interface PaymentGateway { charge(amountCents, token): ChargeResult }</code> तयार करा, जिचा मालक ती वापरणाऱ्या policy शेजारीच असावा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">आकार द्या</span><h4>एक domain result type रचा</h4><p>एका raw Stripe object ऐवजी एक neutral <code>ChargeResult</code> परत करा, जेणेकरून vendor चा आकार policy कोडमध्ये कधीही झिरपणार नाही.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">जुळवा</span><h4>Stripe adapter बनवा</h4><p><code>StripeGateway implements PaymentGateway</code> लिहा. तो SDK धरतो, कॉलचे भाषांतर करतो, आणि प्रतिसाद <code>ChargeResult</code> मध्ये रूपांतरित करतो.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">उलटवा</span><h4>Abstraction वर अवलंबून रहा</h4><p><code>OrderService</code> ला त्याच्या constructor मध्ये एक <code>PaymentGateway</code> स्वीकारण्यासाठी बदला आणि त्यातून Stripe चा प्रत्येक उल्लेख काढून टाका.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">जोडा</span><h4>Composition root वर inject करा</h4><p><code>main()</code> मध्ये, एक <code>StripeGateway</code> बनवा आणि तो <code>OrderService</code> मध्ये पास करा. ठोस निवड माहीत असलेली हीच एकमेव जागा आहे.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">पडताळा</span><h4>खरा मार्ग शेवटपर्यंत चालवा</h4><p>Object graph काम करते याची खात्री करा: caller <code>checkout</code> कॉल करतो, message Stripe पर्यंत पोहोचतो, एक खरा charge id परत येतो.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">बनावट</span><h4>एक test double जोडा</h4><p>तीच port implement करणारा <code>FakeGateway</code> लिहा. network शिवाय success आणि failure शाखा चालवण्यासाठी त्याला tests मध्ये inject करा.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">विस्तारा</span><h4>दुसरा vendor जोडा</h4><p>तीच port विरुद्ध <code>AdyenGateway</code> implement करा. Policy byte-for-byte तशीच राहते, बाण खरोखर उलटला आहे हे सिद्ध होते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">रक्षण करा</span><h4>सीमा लागू करा</h4><p>एक lint किंवा architecture नियम जोडा जेणेकरून domain layer पुन्हा कधीही एक vendor SDK import करू शकणार नाही. Inversion आता केवळ नीटनेटके नव्हे तर संरचनात्मक आहे.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">DIP चुकीच्या पद्धतीने लागू करणे सोपे आहे. या अशा गंध आहेत ज्यांचा अर्थ तुम्ही label उलटवले पण dependency नाही.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎭 झिरपणारे abstraction</h4><p>एक <code>PaymentGateway</code> जिची method एक raw <code>Stripe.Charge</code> परत करते किंवा <code>Stripe.CardError</code> throw करते. Vendor अजूनही policy मध्ये झिरपतो, त्यामुळे खरोखर काहीही उलटले नाही.</p></div>
+        <div class="card"><h4>🪆 चुकीच्या बाजूने मालकीचे interface</h4><p>Port ला infrastructure package मध्ये ठेवणे जेणेकरून domain ला ते पाहण्यासाठी infrastructure import करावे लागते. Abstraction ने त्यावर अवलंबून असलेल्या policy सोबतच राहावे.</p></div>
+        <div class="card"><h4>🧱 प्रत्येक class ला एक interface, यांत्रिकपणे</h4><p>प्रत्येक class ला कधीही न बदलणाऱ्या एकाच implementer असलेल्या interface मध्ये गुंडाळणे seam शिवाय केवळ औपचारिकता वाढवते. <em>अस्थिर</em> details वर dependencies उलटवा, स्थिर details वर नाही.</p></div>
+        <div class="card"><h4>🏗️ Policy आतच New करणे</h4><p>जी <code>OrderService</code> तिच्या constructor मध्ये <code>new StripeGateway()</code> करते तिच्याकडे abstract type आहे पण concrete dependency आहे. तरीही ती test किंवा swap करता येत नाही.</p></div>
+        <div class="card"><h4>🌊 SDK चे प्रतिबिंब पाडणारे interface</h4><p><code>createPaymentIntent</code>, <code>confirmIntent</code>, <code>capture</code> असलेली port - अगदी Stripe चा पृष्ठभाग. ते म्हणजे जास्तीच्या पायऱ्यांसह Stripe; port ला तुमच्या domain गरजांभोवती रचा.</p></div>
+        <div class="card"><h4>📦 देव abstraction</h4><p>वीस methods असलेली एक प्रचंड <code>PaymentSystem</code> port प्रत्येक adapter ला न पेलणाऱ्या operations implement करण्यास भाग पाडते. Ports लहान आणि भूमिकाकेंद्रित ठेवा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">तुम्ही DIP ला dashboard वर ठेवू शकत नाही, पण हे निरीक्षणीय संकेत तुम्हाला सांगतात की तुमच्या dependencies खरोखर abstractions कडे रोखतात का.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Domain layer मधील vendor imports</strong></td><td><code>stripe</code>, <code>adyen</code>, SDK नावांसाठी domain package grep करा. कोणतीही जुळवणी म्हणजे बाण अजूनही detail कडे खाली रोखतो.</td></tr>
+            <tr><td><strong>Unit tests ना खरी credentials लागतात</strong></td><td><code>checkout</code> तपासण्यासाठी जर live Stripe key किंवा sandbox लागत असेल, तर policy ही mechanism पासून वेगळी झालेली नाही.</td></tr>
+            <tr><td><strong>प्रति port adapters ची संख्या</strong></td><td>दोन किंवा अधिक खऱ्या implementations (Stripe, Adyen, एक fake) हे सिद्ध करतात की seam खरा आहे, केवळ सजावटीचा नाही.</td></tr>
+            <tr><td><strong>SDK upgrade चे परिणाम क्षेत्र</strong></td><td>Vendor version bump ने फक्त adapter file बदलली पाहिजे. Domain classes पर्यंत पोहोचणारे diffs एक झिरपती दर्शवतात.</td></tr>
+            <tr><td><strong><code>new StripeGateway</code> कुठे दिसतो</strong></td><td>Concrete रचना फक्त composition root वरच घडली पाहिजे. विखुरलेली instantiation लपलेले coupling दर्शवते.</td></tr>
+            <tr><td><strong>Policy classes मधील cyclomatic बदल</strong></td><td>जर vendor बदलल्यावर <code>OrderService</code> सतत बदलत असेल, तर abstraction ती जी अस्थिरता शोषून घ्यायला हवी ती घेत नाही.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> जर तुम्ही एक fake पास करून तुमच्या business rule साठी एक जलद unit test लिहू शकत असाल, आणि vendor बदलणे नेमके एका file ला स्पर्श करत असेल, तर dependency खरोखर उलटलेली आहे. यापैकी एकही खोटे असेल, तर तुमच्याकडे केवळ नावापुरते abstraction आहे.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरण अभ्यास</div>
+      <h2>वास्तविक जगातील उदाहरण अभ्यास</h2>
+      <p class="muted">तीन production-शैलीच्या systems जिथे dependency उलटवण्याचा फायदा झाला.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Checkout payment providers बदलणे</h3><div class="role">Pattern: policy एका PaymentGateway port वर अवलंबून</div></div></div>
+        <p class="muted">एक marketplace पूर्णपणे Stripe वर चालत होता, नंतर युरोपियन settlement आणि काही प्रदेशांत कमी fees साठी Adyen ची गरज पडली.</p>
+        <ul>
+          <li><code>OrderService</code> आधीच एका <code>PaymentGateway</code> port वर अवलंबून होती, त्यामुळे domain कोडला शून्य बदल लागले.</li>
+          <li>एक नवीन <code>AdyenGateway</code> adapter लिहिला गेला आणि composition root वर प्रति प्रदेश निवडला गेला.</li>
+          <li>एका <code>FakeGateway</code> मुळे team ला संपूर्ण migration दरम्यान unit tests जलद आणि offline ठेवता आले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Provider बदल एक adapter आणि एक wiring नियम जोडून पाठवला गेला, money-handling policy अस्पर्शित आणि पूर्णपणे tested राहिली.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📣</span><div><h3>2 · Email, SMS, आणि push वरील notifications</h3><div class="role">Pattern: अनेक adapters असलेली एक Notifier port</div></div></div>
+        <p class="muted">एक booking platform फक्त SendGrid मार्गे email ने confirmations पाठवत होते, नंतर Twilio मार्गे SMS आणि mobile push ची गरज पडली.</p>
+        <ul>
+          <li><code>ReservationService</code> ला एका <code>send(message)</code> operation असलेल्या <code>Notifier</code> port वर अवलंबून राहण्यासाठी refactor केले गेले.</li>
+          <li><code>SendGridNotifier</code>, <code>TwilioNotifier</code>, आणि <code>PushNotifier</code> प्रत्येकाने कडेला port implement केली.</li>
+          <li>एका composite adapter ने किती अस्तित्वात आहेत हे service ला न कळवता एक domain event सर्व channels वर पसरवला.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> नवीन channels म्हणजे नवीन adapters झाले. Reservation policy ला Twilio message id किंवा APNs token काय आहे हे कधीच कळले नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>3 · Hexagonal service मधील repository ports</h3><div class="role">Pattern: domain persistence abstraction ची मालक</div></div></div>
+        <p class="muted">एक inventory service एका ORM शी घट्ट बांधलेली होती, ज्यामुळे warehouse logic ची चाचणी घेणे मंद आणि ORM पासून हलवणे कठीण होते.</p>
+        <ul>
+          <li>Domain ने <code>reserve(sku, qty)</code> सारख्या हेतू-प्रकट करणाऱ्या methods असलेली एक <code>InventoryRepository</code> port परिभाषित केली.</li>
+          <li>एका <code>PostgresInventoryRepository</code> adapter ने ती implement केली, SQL आणि driver ला domain बाहेर ठेवले.</li>
+          <li>एका in-memory repository ने team ला reservation आणि backorder rules वर millisecond unit tests दिले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Domain tests database शिवाय चालले, आणि नंतरचा storage बदल port मागील adapter मध्येच बंदिस्त राहिला.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगतता</div>
+      <h2>आधुनिक सुसंगतता</h2>
+      <p class="muted">DIP दशकांपासून जुनी आहे, पण आधुनिक services testable, portable, आणि त्यांच्या सीमांबद्दल प्रामाणिक कशा राहतात याचा तो पाया आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛠️ Hexagonal आणि clean architecture</h4><p>Ports-and-adapters हे संपूर्ण-application मांडणीत बनवलेले DIP आहे: केंद्रातील domain ports परिभाषित करते, आणि प्रत्येक framework, database, आणि vendor कडेला एक adapter म्हणून बसतो.</p></div>
+        <div class="card"><h4>🧩 AI आणि vendor SDKs साठी ports</h4><p>एका LLM provider ला एका <code>CompletionClient</code> port मागे गुंडाळणे तुमच्या app ला prompt-orchestration policy पुन्हा न लिहिता providers बदलण्यास किंवा A/B करण्यास मोकळे ठेवते.</p></div>
+        <div class="card"><h4>☁️ Cloud portability</h4><p>S3, GCS, आणि Azure adapters असलेली एक <code>BlobStorage</code> port deploy targets बदलण्याजोगे ठेवते आणि local dev ला filesystem stub विरुद्ध चालवू देते.</p></div>
+        <div class="card"><h4>🧪 Contract testing</h4><p>Adapters एक port सामायिक करत असल्याने, एक सामायिक test suite प्रत्येक implementation तोच contract पूर्ण करते हे पडताळू शकते, vendors मधील घसरण पकडते.</p></div>
+        <div class="card"><h4>🔬 जलद, deterministic tests</h4><p>उलटलेल्या dependencies चा अर्थ बहुतांश suite memory मधील fakes विरुद्ध चालते, त्यामुळे business rules ची network वर नव्हे तर milliseconds मध्ये चाचणी होते.</p></div>
+        <div class="card"><h4>🧱 Modular monoliths आणि microservices</h4><p>Ports ही अशी seams बनतात ज्यांच्या बाजूने एक monolith नंतर विभागला जाऊ शकतो. जो in-process adapter होता तो policy मध्ये बदल न करता network adapter बनतो.</p></div>
+      </div>
+      <div class="callout"><strong>निष्कर्ष:</strong> DIP ही तुमच्या स्थिर business rules ना तुमच्या मालकीच्या abstractions कडे रोखण्याची आणि अस्थिर vendors आणि frameworks ना त्यांचे पालन करू देण्याची शिस्त आहे. बाण बरोबर मिळवा आणि पुढील सर्व काही - testing, बदलणे, scaling - स्वस्त होते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">DIP संबंधित design कल्पनांच्या जाळ्यात बसते. या तिच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../dependency-injection/"><span class="ico">💉</span><h4>Dependency injection</h4><p>DIP ज्या ठोस adapter ची मागणी करते तो पुरवणारी यंत्रणा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">🦆</span><h4>Interfaces आणि duck typing</h4><p>Port contract भाषांमध्ये कसा व्यक्त केला जातो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../abstraction/"><span class="ico">🎚️</span><h4>Abstraction</h4><p>दोन्ही बाजूंनी अवलंबून राहण्यासाठी योग्य संकल्पना निवडणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../open-closed/"><span class="ico">🚪</span><h4>Open-closed principle</h4><p>ती वापरणाऱ्या policy मध्ये बदल न करता adapters जोडा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Dependency Inversion Principle चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · उदाहरण अभ्यास · सुसंगतता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

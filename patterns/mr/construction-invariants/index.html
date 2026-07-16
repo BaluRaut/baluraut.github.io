@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Construction आणि Invariants - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="OOP मधील construction आणि invariants चे सखोल, दृश्य मार्गदर्शन: पहिल्या ओळीपासूनच वैध असणारे objects, नियम लागू करणारे constructors, guard clauses, static factories, अर्धवट बांधलेले objects टाळणे, आणि सुरक्षित setters, TypeScript, Python आणि Ruby कोडसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Construction आणि Invariants - पहिल्या ओळीपासूनच वैध असणारे objects</h1>
+      <p class="lede">एखादा object अस्तित्वात येताच त्याच्यावर विश्वास ठेवता आला पाहिजे. जेव्हा constructor <strong>invariants लागू करतो</strong> - किमान एक line item असलेला Order, खरोखर पत्ता असणारा Email, कधीही ऋण न होणारा Money - तेव्हा उर्वरित system ने पुन्हा पुन्हा तपासणी करणे थांबवून तो object थेट वापरता येतो. याला पर्याय म्हणजे अर्धवट बांधलेल्या objects आणि सर्वत्र पसरणाऱ्या defensive null checks नी भरलेला codebase.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Guard clauses</span>
+        <span class="pill">Static factories</span>
+        <span class="pill">अर्धवट objects नाहीत</span>
+        <span class="pill">सुरक्षित setters</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Construction आणि invariants म्हणजे काय?</h2>
+      <p class="muted"><strong>Invariant</strong> म्हणजे असा नियम जो object च्या संपूर्ण आयुष्यभर नेहमी खरा असला पाहिजे: <code>Order</code> कडे नेहमी किमान एक line item असते, <code>Money</code> मूल्य नेहमी एक currency बाळगते, <code>ShippingAddress</code> कडे नेहमी रिक्त नसलेला postal code असतो. <strong>Construction</strong> हा तो क्षण आहे जिथे तुम्ही हे नियम हमी देऊ शकता. जर constructor असे काहीही बांधण्यास नकार देत असेल जे या नियमांचे उल्लंघन करेल, तर पुढील प्रत्येक method वैध object गृहीत धरू शकते आणि पुन्हा कधीही validation करावी लागत नाही.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧱</span> पहिल्या ओळीपासून वैध</h4>
+          <p>Constructor एकतर पूर्णपणे वैध object परत करतो किंवा throw करतो. असा कोणताही क्षण नसतो ज्यात caller कडे अर्धवट initialize झालेला, नियम मोडणारा instance असेल.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚧</span> सुरुवातीलाच Guard clauses</h4>
+          <p>Constructor आधी preconditions तपासतो आणि कोणतेही field नियुक्त करण्यापूर्वीच चुकीचे input तात्काळ नाकारतो. लवकर अपयशी व्हा, चुकीच्या स्रोताच्या जवळ.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏭</span> Static factory methods</h4>
+          <p><code>Order.forCustomer(...)</code> किंवा <code>Money.fromCents(...)</code> सारखे नावाचे builders उद्देश स्पष्ट करतात, validation करतात, आणि cached किंवा subtype instances परत करू शकतात.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Invariant</strong></td><td>Object साठी नेहमी खरा असला पाहिजे असा नियम</td><td>Order कडे &ge; 1 line item; total &ge; 0</td></tr>
+            <tr><td><strong>Constructor</strong></td><td>Invariants प्रस्थापित करणारा एकमेव नियंत्रण बिंदू</td><td>रिक्त item list throw करून नाकारतो</td></tr>
+            <tr><td><strong>Guard clause</strong></td><td>चुकीचे input नाकारणारी सुरुवातीची precondition तपासणी</td><td><code>if (items.length === 0) throw ...</code></td></tr>
+            <tr><td><strong>Static factory</strong></td><td><code>new</code> ला नावाचा पर्याय जो validation करतो आणि उद्देश स्पष्ट करतो</td><td><code>Email.parse("a@b.com")</code></td></tr>
+            <tr><td><strong>Encapsulated state</strong></td><td>Private fields आणि उद्देश दर्शवणाऱ्या methods, कच्चे setters नव्हे</td><td><code>order.addItem(...)</code>, <code>order.items = ...</code> नव्हे</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> constructor हा gatekeeper आहे, data-loader नव्हे. त्याचे काम arguments ना fields मध्ये copy करणे नसून, कधीही अवैध होऊ शकेल असा object तयार करण्यास नकार देणे हे आहे. Validation ला निर्मितीच्या क्षणी ढकला आणि संपूर्ण system defensive checks लिहिणे थांबवते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Construction च्या वेळी invariants का लागू करावेत</h2>
+      <p class="muted">चुकीचा data नाकारण्यासाठी सर्वात स्वस्त जागा म्हणजे तुमच्या object model मध्ये तो जिथे प्रवेश करतो ती सीमा. Constructor मध्ये तुम्ही लागू करणारा प्रत्येक नियम म्हणजे असा नियम जो कोणत्याही caller, service, किंवा database ला पुन्हा कधीही तपासावा लागत नाही.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ विश्वास ठेवण्याची एकच जागा</h4><p>जर <code>Order</code> फक्त वैध line items सहच अस्तित्वात येऊ शकतो, तर checkout, invoicing, आणि shipping कोडला रिक्त order पासून कधीही रक्षण करावे लागत नाही. Invariant एकदाच, जन्माच्या वेळी सिद्ध होतो.</p></div>
+        <div class="card"><h4>💥 लवकर अपयश, जवळ अपयश</h4><p>Guard clause नेमक्या त्याच call site वर throw करते जिथून चुकीचे input आले, स्पष्ट संदेशासह. Bugs निर्मितीच्या वेळी समोर येतात, तीन services नंतर एका गूढ null म्हणून नव्हे.</p></div>
+        <div class="card"><h4>🧹 कमी defensive गोंधळ</h4><p>Invariants शिवाय, प्रत्येक method <code>if (this.items == null)</code> तपासण्यांनी सुरू होते. त्या एकदाच लागू करा आणि तो विखुरलेला defensive कोड फक्त नाहीसा होतो.</p></div>
+        <div class="card"><h4>🔐 टिकणारे encapsulation</h4><p>Public setters कोणत्याही caller ला नंतर object एका अवैध स्थितीत टाकू देतात. Invariants पुन्हा तपासणाऱ्या उद्देश-दर्शवणाऱ्या methods object ला त्याच्या संपूर्ण आयुष्यभर प्रामाणिक ठेवतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले Construction आणि invariants</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती लक्षात येते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>प्रत्येक आवश्यक field भरेपर्यंत <strong>submit न होणाऱ्या form</strong> सारखे हे आहे. नियम पूर्ण होईपर्यंत तुम्ही record तयारच करू शकत नाही, त्यामुळे अर्धवट-वैध submission इकडेतिकडे फिरत राहण्याचा प्रश्नच येत नाही.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>Constructor म्हणजे एक <strong>validating parser</strong>: कच्चे input आत जाते, आणि एकतर हमी-वैध object बाहेर येतो किंवा तो throw करतो. त्या ओळीनंतर, तुम्ही त्या object साठी पुन्हा कधीही <code>if valid</code> तपासणी लिहित नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>बँक खाते उघडते</strong> तसे विचार करा. Account number जारी करण्यापूर्वी ओळख, किमान ठेव, आणि सह्या पडताळल्या जातात. तपासण्या टाळलेले कोणतेही सक्रिय खाते नसते.</p></div>
+        <div class="card"><h4><span class="ico">🏗️</span> रोजच्या जीवनातील आवृत्ती</h4><p>इमारतीला तपासणीत उत्तीर्ण झाल्यावरच <strong>certificate of occupancy</strong> मिळते. तुम्ही कुटुंबांना अर्धवट बांधलेल्या इमारतीत नेऊन नंतर तपासणी करत नाही, तर उघडण्यापूर्वीच नियमांवर नियंत्रण ठेवता.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>Construction मध्ये invariants कसे लागू करावेत</h2>
+      <p class="muted">दोन कृती आहेत. पहिली, constructor ला guard clauses सह कोणतीही अवैध गोष्ट नाकारायला लावा. दुसरी, invariant पुन्हा तपासणाऱ्या उद्देश-दर्शवणाऱ्या methods उघड करून object कालांतराने वैध ठेवा, ते तोडू शकणारे कच्चे setters कधीही नको.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🚪</span> निर्मितीच्या वेळी नियंत्रण</h4>
+          <p>Guard clauses आधी चालतात: रिक्त item lists, ऋण रकमा, चुकीचे emails नाकारा. प्रत्येक precondition उत्तीर्ण झाल्यावरच fields नियुक्त करा, जेणेकरून object कधीही अर्धवट बांधलेला नसतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> आयुष्यभर जपणूक</h4>
+          <p>बदल <code>addItem</code> किंवा <code>applyDiscount</code> सारख्या methods मधून वाहतो ज्या invariant पुन्हा प्रस्थापित करतात. कोणताही public setter शांतपणे order रिक्त किंवा total ऋण ठेवू शकत नाही.</p>
+        </div>
+      </div>
+
+      <h3>वर्ग एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">Validate केलेल्या value objects नी बनलेला Order, static factory मधून बांधलेला</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        -id: string
+        -customerId: string
+        -items: LineItem[]
+        -status: string
+        +forCustomer(customerId, items)$ Order
+        +addItem(item) void
+        +removeItem(sku) void
+        +total() Money
+    }
+    class LineItem {
+        -sku: string
+        -quantity: int
+        -unitPrice: Money
+        +subtotal() Money
+    }
+    class Money {
+        -amountCents: int
+        -currency: string
+        +fromCents(cents, currency)$ Money
+        +add(other) Money
+        +isNegative() bool
+    }
+    class Email {
+        -value: string
+        +parse(raw)$ Email
+    }
+    Order o-- LineItem
+    LineItem *-- Money
+    Order ..> Email
+    note for Order "Constructor throws if items is empty"
+        </pre>
+      </div>
+
+      <h3>आपले invariants लागू करणारा एक खरा वर्ग</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money: a value object that can never be malformed
+class Money {
+  private constructor(
+    readonly amountCents: number,
+    readonly currency: string,
+  ) {}
+
+  // Static factory: validate, then build
+  static fromCents(cents: number, currency: string): Money {
+    if (!Number.isInteger(cents)) throw new Error("amount must be whole cents");
+    if (!/^[A-Z]{3}$/.test(currency)) throw new Error("currency must be ISO 4217");
+    return new Money(cents, currency);
+  }
+
+  add(other: Money): Money {
+    if (other.currency !== this.currency) throw new Error("currency mismatch");
+    return new Money(this.amountCents + other.amountCents, this.currency);
+  }
+}
+
+class LineItem {
+  constructor(
+    readonly sku: string,
+    readonly quantity: number,
+    readonly unitPrice: Money,
+  ) {
+    // Guard clauses run before the object is usable
+    if (!sku.trim()) throw new Error("sku is required");
+    if (!Number.isInteger(quantity) || quantity < 1)
+      throw new Error("quantity must be at least 1");
+  }
+
+  subtotal(): Money {
+    return Money.fromCents(this.unitPrice.amountCents * this.quantity, this.unitPrice.currency);
+  }
+}
+
+class Order {
+  private readonly items: LineItem[];
+
+  // Private: the ONLY way in is the validated factory below
+  private constructor(readonly id: string, readonly customerId: string, items: LineItem[]) {
+    if (items.length === 0) throw new Error("an order needs at least one line item");
+    this.items = [...items]; // defensive copy, no shared mutable reference
+  }
+
+  static forCustomer(customerId: string, items: LineItem[]): Order {
+    if (!customerId.trim()) throw new Error("customerId is required");
+    return new Order(crypto.randomUUID(), customerId, items);
+  }
+
+  // Intent-revealing mutation, NOT a public setter
+  addItem(item: LineItem): void {
+    this.items.push(item);
+  }
+
+  removeItem(sku: string): void {
+    if (this.items.length === 1 && this.items[0].sku === sku)
+      throw new Error("cannot remove the last line item"); // invariant preserved
+    const next = this.items.filter((i) =&gt; i.sku !== sku);
+    this.items.length = 0;
+    this.items.push(...next);
+  }
+
+  total(): Money {
+    return this.items
+      .map((i) =&gt; i.subtotal())
+      .reduce((sum, s) =&gt; sum.add(s));
+  }
+}
+
+// Usage: object is valid the instant it exists
+const order = Order.forCustomer("cust_42", [
+  new LineItem("SKU-BOOK-1", 2, Money.fromCents(1999, "USD")),
+]);
+order.addItem(new LineItem("SKU-PEN-9", 5, Money.fromCents(150, "USD")));
+console.log(order.total().amountCents); // 4748
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from __future__ import annotations
+from dataclasses import dataclass
+from functools import reduce
+import re
+import uuid
+
+
+@dataclass(frozen=True)
+class Money:  # value object: immutable, always well-formed
+    amount_cents: int
+    currency: str
+
+    @staticmethod
+    def from_cents(cents: int, currency: str) -&gt; "Money":
+        if not isinstance(cents, int):
+            raise ValueError("amount must be whole cents")
+        if not re.fullmatch(r"[A-Z]{3}", currency):
+            raise ValueError("currency must be ISO 4217")
+        return Money(cents, currency)
+
+    def add(self, other: "Money") -&gt; "Money":
+        if other.currency != self.currency:
+            raise ValueError("currency mismatch")
+        return Money(self.amount_cents + other.amount_cents, self.currency)
+
+
+class LineItem:
+    def __init__(self, sku: str, quantity: int, unit_price: Money) -&gt; None:
+        # Guard clauses run before any field is trusted
+        if not sku.strip():
+            raise ValueError("sku is required")
+        if not isinstance(quantity, int) or quantity &lt; 1:
+            raise ValueError("quantity must be at least 1")
+        self.sku = sku
+        self.quantity = quantity
+        self.unit_price = unit_price
+
+    def subtotal(self) -&gt; Money:
+        return Money.from_cents(self.unit_price.amount_cents * self.quantity,
+                                self.unit_price.currency)
+
+
+class Order:
+    # Private constructor convention: build via for_customer()
+    def __init__(self, id: str, customer_id: str, items: list[LineItem]) -&gt; None:
+        if len(items) == 0:
+            raise ValueError("an order needs at least one line item")
+        self._id = id
+        self._customer_id = customer_id
+        self._items = list(items)  # defensive copy
+
+    @classmethod
+    def for_customer(cls, customer_id: str, items: list[LineItem]) -&gt; "Order":
+        if not customer_id.strip():
+            raise ValueError("customer_id is required")
+        return cls(str(uuid.uuid4()), customer_id, items)
+
+    def add_item(self, item: LineItem) -&gt; None:  # intent-revealing, not a setter
+        self._items.append(item)
+
+    def remove_item(self, sku: str) -&gt; None:
+        if len(self._items) == 1 and self._items[0].sku == sku:
+            raise ValueError("cannot remove the last line item")  # invariant held
+        self._items = [i for i in self._items if i.sku != sku]
+
+    def total(self) -&gt; Money:
+        return reduce(lambda acc, i: acc.add(i.subtotal()),
+                      self._items[1:], self._items[0].subtotal())
+
+
+# Usage: valid from the first line
+order = Order.for_customer("cust_42", [
+    LineItem("SKU-BOOK-1", 2, Money.from_cents(1999, "USD")),
+])
+order.add_item(LineItem("SKU-PEN-9", 5, Money.from_cents(150, "USD")))
+print(order.total().amount_cents)  # 4748
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>require "securerandom"
+
+# Value object: frozen and always well-formed
+class Money
+  attr_reader :amount_cents, :currency
+
+  def self.from_cents(cents, currency)
+    raise ArgumentError, "amount must be whole cents" unless cents.is_a?(Integer)
+    raise ArgumentError, "currency must be ISO 4217" unless currency.match?(/\A[A-Z]{3}\z/)
+    new(cents, currency)
+  end
+
+  def initialize(amount_cents, currency)
+    @amount_cents = amount_cents
+    @currency = currency
+    freeze
+  end
+
+  def add(other)
+    raise ArgumentError, "currency mismatch" unless other.currency == currency
+    Money.new(amount_cents + other.amount_cents, currency)
+  end
+end
+
+class LineItem
+  attr_reader :sku, :quantity, :unit_price
+
+  def initialize(sku, quantity, unit_price)
+    # Guard clauses reject bad input at construction
+    raise ArgumentError, "sku is required" if sku.to_s.strip.empty?
+    raise ArgumentError, "quantity must be at least 1" unless quantity.is_a?(Integer) &amp;&amp; quantity &gt;= 1
+    @sku = sku
+    @quantity = quantity
+    @unit_price = unit_price
+  end
+
+  def subtotal
+    Money.from_cents(unit_price.amount_cents * quantity, unit_price.currency)
+  end
+end
+
+class Order
+  attr_reader :id, :customer_id
+
+  # Prefer the factory; initialize enforces the core invariant
+  def initialize(id, customer_id, items)
+    raise ArgumentError, "an order needs at least one line item" if items.empty?
+    @id = id
+    @customer_id = customer_id
+    @items = items.dup # defensive copy
+  end
+  private_class_method :new
+
+  def self.for_customer(customer_id, items)
+    raise ArgumentError, "customer_id is required" if customer_id.to_s.strip.empty?
+    allocate.tap { |o| o.send(:initialize, SecureRandom.uuid, customer_id, items) }
+  end
+
+  def add_item(item) # intent-revealing method, not a setter
+    @items.push(item)
+  end
+
+  def remove_item(sku)
+    if @items.size == 1 &amp;&amp; @items.first.sku == sku
+      raise ArgumentError, "cannot remove the last line item" # invariant preserved
+    end
+    @items.reject! { |i| i.sku == sku }
+  end
+
+  def total
+    @items.map(&amp;:subtotal).reduce { |sum, s| sum.add(s) }
+  end
+end
+
+# Usage: the object is valid the moment it is born
+order = Order.for_customer("cust_42", [
+  LineItem.new("SKU-BOOK-1", 2, Money.from_cents(1999, "USD")),
+])
+order.add_item(LineItem.new("SKU-PEN-9", 5, Money.from_cents(150, "USD")))
+puts order.total.amount_cents # 4748
+</code></pre>
+      </div>
+      <p class="muted">काय गहाळ आहे ते लक्षात घ्या: इथे <code>setItems</code> नाही, रिक्त order बांधण्याचा कोणताही मार्ग नाही, आणि guard clauses उत्तीर्ण होण्यापूर्वी fields नियुक्त करणारा कोणताही मार्ग नाही. Constructor private आहे आणि एकमेव public प्रवेश बिंदू, static factories, आधी validation करतात. बदल <code>addItem</code> आणि <code>removeItem</code> मधून होतो, ज्या दोन्ही "किमान एक item" नियमाचे रक्षण करतात.</p>
+
+      <h3>आधी आणि नंतर: गळकी आवृत्ती</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// ANTI-PATTERN: anemic object with public setters
+class Order {
+  id = "";
+  customerId = "";
+  items: LineItem[] = []; // starts empty and invalid
+  status = "";
+}
+
+// Half-built and rule-breaking, yet the type system is happy
+const order = new Order();
+order.customerId = "cust_42"; // did anyone set items? who knows
+checkout(order);              // may explode on an empty order deep in the call stack
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># ANTI-PATTERN: anemic object, no invariants
+class Order:
+    def __init__(self):
+        self.id = ""
+        self.customer_id = ""
+        self.items = []   # empty and invalid
+        self.status = ""
+
+# Half-built object escapes into the system
+order = Order()
+order.customer_id = "cust_42"   # items never set
+checkout(order)                 # blows up later, far from the mistake
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># ANTI-PATTERN: attr_accessor exposes every field
+class Order
+  attr_accessor :id, :customer_id, :items, :status
+end
+
+# Nothing stops an empty, half-built order
+order = Order.new
+order.customer_id = "cust_42"   # items still nil
+checkout(order)                 # fails somewhere downstream
+</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: factory मधून यशस्वी construction, लवकर अपयशी होणारे नाकारलेले construction, आणि invariant न तोडणारा एक बदल.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - वैध construction: factory validation करते, मग बांधते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Checkout code
+    participant F as 🏭 Order.forCustomer
+    participant Ctor as 🚪 Order constructor
+    participant O as 📦 Order
+
+    C->>F: forCustomer("cust_42", [item])
+    F->>F: guard: customerId not blank
+    F->>Ctor: new Order(id, customerId, items)
+    Ctor->>Ctor: guard: items not empty
+    Ctor->>Ctor: defensive copy of items
+    Ctor-->>F: valid Order
+    F-->>C: valid Order
+    Note over C,O: Object is usable immediately, no re-checks needed
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - अवैध input: guard clause call site वर लवकर अपयशी होते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Checkout code
+    participant F as 🏭 Order.forCustomer
+    participant Ctor as 🚪 Order constructor
+
+    C->>F: forCustomer("cust_42", [])
+    F->>F: guard: customerId not blank
+    F->>Ctor: new Order(id, customerId, [])
+    Ctor->>Ctor: guard: items is empty
+    alt items empty
+        Ctor-->>F: throw "needs at least one line item"
+        F-->>C: exception bubbles up here
+    else items present
+        Ctor-->>F: valid Order
+    end
+    Note over C,Ctor: No half-built object ever escapes the factory
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - बदल: एक method object च्या आयुष्यभर invariant जपते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Cart service
+    participant O as 📦 Order
+    participant I as 🧾 items list
+
+    C->>O: removeItem("SKU-BOOK-1")
+    O->>I: how many items remain?
+    I-->>O: this is the last one
+    alt removing the last item
+        O-->>C: throw "cannot remove the last line item"
+    else more than one item
+        O->>I: drop matching sku
+        I-->>O: updated list
+        O-->>C: ok, still valid
+    end
+    Note over O,I: The "at least one item" rule holds after every mutation
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">कच्च्या input पासून हमी-वैध object पर्यंत जो वैधच राहतो, संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">परिभाषित करा</span><h4>Invariants नमूद करा</h4><p>नेहमी खरे असले पाहिजेत असे नियम लिहून काढा: order कडे किमान एक line item असते, money कधीही ऋण नसते, email पत्त्याच्या आकाराशी जुळते. हे object चे contract बनतात.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">लपवा</span><h4>Constructor private करा</h4><p>Validation टाळू शकतील अशा मनमानी <code>new</code> calls रोखा. Callers ना तुमच्या नियंत्रणातील नावाच्या प्रवेश बिंदूमधूनच जावे लागते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">उघड करा</span><h4>Static factory method जोडा</h4><p><code>Order.forCustomer(...)</code> किंवा <code>Email.parse(...)</code> द्या जेणेकरून उद्देश स्पष्ट होतो आणि निर्मितीचा एकच validate केलेला मार्ग असतो.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">रक्षण करा</span><h4>Preconditions आधी तपासा</h4><p>वरच्या guard clauses कोणतेही field नियुक्त करण्यापूर्वी रिक्त ids, रिक्त item lists, आणि चुकीची मूल्ये नाकारतात. स्पष्ट संदेशासह लवकर अपयशी व्हा.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">नाकारा</span><h4>उल्लंघनावर throw करा</h4><p>कोणताही नियम मोडला गेला तर, चुकीचे input पुरवणाऱ्या call site वर तात्काळ throw करा, जेणेकरून bug जिथे झाला तिथेच समोर येतो, तीन थर दूर नव्हे.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Copy करा</span><h4>Inputs ची defensive copy करा</h4><p>येणाऱ्या collections ची clone करा जेणेकरून caller नंतर अंतर्गत list बदलून बाहेरून शांतपणे invariant तोडू शकत नाही.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">नियुक्त करा</span><h4>वैध असतानाच fields सेट करा</h4><p>प्रत्येक guard उत्तीर्ण झाल्यावरच तुम्ही state साठवता. Object थेट "तयार न झालेल्या" वरून "पूर्णपणे वैध" वर जातो, अर्धवट मधली स्थिती नसते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">परत करा</span><h4>विश्वासार्ह object परत द्या</h4><p>Factory असा instance परत करते ज्यावर प्रत्येक method अवलंबून राहू शकते. पुढील कोड कोणतीही defensive null किंवा रिक्तपणाची तपासणी बाळगत नाही.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Encapsulate करा</span><h4>उद्देश-दर्शवणाऱ्या methods उघड करा</h4><p>Setters ऐवजी, <code>addItem</code>, <code>applyDiscount</code>, <code>cancel</code> द्या. प्रत्येक एक खरे operation दर्शवते आणि invariant पुन्हा तपासते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">जपा</span><h4>बदलावर नियम पुन्हा प्रस्थापित करा</h4><p>Order रिक्त किंवा balance ऋण ठेवणारी method नकार देते. Invariant फक्त जन्माच्या वेळीच नव्हे तर object च्या संपूर्ण आयुष्यभर टिकतो.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">रचना करा</span><h4>वैध भागांतून मोठे objects बांधा</h4><p>प्रत्येक value object स्वतः-validate होत असल्याने, <code>Money</code> च्या <code>LineItem</code> चा <code>Order</code> construction ने बरोबर असतो, अगदी वरपर्यंत.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतेक invariant bugs objects दोन टप्प्यांत तयार केल्याने, किंवा callers ना आत पोहोचून state बदलू दिल्याने येतात. हे नेहमीचे दोषी आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧟 Anemic objects</h4><p>वर्तन नसलेल्या आणि नियम नसलेल्या public fields ची पिशवी. रिक्त order किंवा ऋण money ला काहीही रोखत नाही, त्यामुळे प्रत्येक consumer ला त्याऐवजी validation करावी लागते. Object स्वतःचे रक्षण करू शकत नाही.</p></div>
+        <div class="card"><h4>🪣 रिक्त-मग-भरा हा नमुना</h4><p>कोरा object तयार करून नंतर fields सेट केल्याने असा एक क्षण तयार होतो जिथे तो अवैध असतो. कोणीतरी त्या क्षणी तो वापरेल, किंवा एखादे field पूर्णपणे विसरेल.</p></div>
+        <div class="card"><h4>🔓 सर्वत्र public setters</h4><p><code>attr_accessor</code>, auto-properties, किंवा उघड fields कोणत्याही caller ला नंतर object एका अवैध स्थितीत टाकू देतात. नियम टाळणारे setters constructor चे काम पुसून टाकतात.</p></div>
+        <div class="card"><h4>🕳️ अंतर्गत collections गळणे</h4><p>Caller ची list copy न करता परत करणे किंवा साठवणे बाहेरील कोडला थेट internals बदलू देते, त्यामुळे "किमान एक item" नियमाचे दुरून उल्लंघन होऊ शकते.</p></div>
+        <div class="card"><h4>🤐 गप्प coercion</h4><p>ऋण रक्कम शांतपणे शून्यावर आणणे किंवा चुकीच्या currency ला default देणे caller च्या चुका लपवते. Guard clauses ने नाकारावे आणि समजावावे, अवैध input झाकून टाकू नये.</p></div>
+        <div class="card"><h4>🏗️ वेगळ्या टप्प्यात validation</h4><p>तुम्हाला बोलावणे लक्षात ठेवावे लागणारी <code>order.validate()</code> method म्हणजे कोणीतरी ती बोलावण्यापूर्वी अवैध objects वापरले जाऊ शकतात आणि जातीलच. Validation construction मध्ये असावी, ऐच्छिक विचारानंतर नव्हे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापके</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">Codebase मध्ये कमकुवत invariants सिद्ध करण्यापूर्वीच तुम्हाला ते जाणवू शकतात. हे संकेत तुम्हाला सांगतात की construction आपले काम करत आहे का.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रति method defensive तपासण्या</strong></td><td>Business methods मध्ये अनेक <code>if x == null</code> किंवा रिक्तपणाचे guards म्हणजे constructor invariants प्रस्थापित करत नाही. तपासण्या पुढे स्थलांतरित झाल्या.</td></tr>
+            <tr><td><strong>Setter संख्या विरुद्ध method संख्या</strong></td><td>बहुतांश getters आणि setters असणारा वर्ग anemic आहे. निरोगी domain object कडे कमी किंवा कोणतेही setters नसतात आणि अनेक उद्देश-दर्शवणाऱ्या methods असतात.</td></tr>
+            <tr><td><strong>Construction मार्गांची संख्या</strong></td><td>जर object पाच वेगवेगळ्या प्रकारे बांधता येत असेल, तर पाचही validation करतात याची हमी देणे कठीण आहे. एका factory मधून वाहून हमी घट्ट होते.</td></tr>
+            <tr><td><strong>Production मधील अवैध-स्थिती bugs</strong></td><td>Null pointer आणि "रिक्त order" घटना objects अर्धवट बांधलेल्या स्थितीत निर्मितीतून सुटल्याकडे निर्देश करतात. असा प्रत्येक bug म्हणजे एक गहाळ guard clause.</td></tr>
+            <tr><td><strong>Test setup ची गुंतागुंत</strong></td><td>जर test मध्ये वैध object बांधायला अनेक ओळी आणि manual field-setting लागत असेल, तर construction आपले नियम नीट encapsulate करत नाही.</td></tr>
+            <tr><td><strong>कारणापासून crash पर्यंतचे अंतर</strong></td><td>ज्या bugs त्यांना कारणीभूत कोडपासून दूर समोर येतात ते उशीरा validation चे संकेत देतात. Fail-fast constructors ते अंतर शून्यावर आणतात.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जर तुम्ही object वैध असल्याशिवाय तो बांधूच शकत नसाल, तर तो वैध आहे का हे तपासण्याची कधीही गरज नाही. Constructors बाहेरील runtime guards मोजा; एखादा constructor घट्ट केल्यानंतर तुम्ही जो प्रत्येक guard हटवू शकता तो पुरावा आहे की invariant आता योग्य ठिकाणी राहतो.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>वास्तविक जगातील उदाहरणे</h2>
+      <p class="muted">तीन production-शैलीच्या systems जिथे constructor ने लागू केलेल्या invariants चे खरे महत्त्व आहे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payments: एक Money value object</h3><div class="role">नमुना: validate केलेला value object, floats नाहीत</div></div></div>
+        <p class="muted">Payments platform ला अशा रकमा हव्या असतात ज्या कधीही अचूकता गमावत नाहीत आणि कधीही currencies मिसळत नाहीत. Money हा integer cents आणि एक ISO currency code म्हणून model केला जातो.</p>
+        <ul>
+          <li>Static factory non-integer cents आणि वैध ISO 4217 code नसलेली कोणतीही currency नाकारते.</li>
+          <li><code>add</code> सारखे arithmetic दोन वेगळ्या currencies एकत्र करण्यास नकार देते, शांतपणे रूपांतर करण्याऐवजी throw करते.</li>
+          <li>Object immutable आहे, त्यामुळे shared Money instance कधीही अवैध रकमेत बदलता येत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> rounding आणि currency-मिसळण्याच्या bugs चे संपूर्ण प्रकार अशक्य होतात, कारण अवैध Money बांधताच येत नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>2 · E-commerce: Order aggregate</h3><div class="role">नमुना: आयुष्यभराच्या invariant सह aggregate root</div></div></div>
+        <p class="muted">Checkout service Order ला असा aggregate मानते ज्याकडे नेहमी किमान एक line item आणि सुसंगत total असला पाहिजे.</p>
+        <ul>
+          <li>Private constructor आणि <code>Order.forCustomer(...)</code> कोणताही order रिक्त तयार होणार नाही याची हमी देतात.</li>
+          <li><code>removeItem</code> शेवटची line item हटवण्यास नकार देते, बदलादरम्यान invariant जपते.</li>
+          <li>Line items आणि money हे स्वतः validate केलेले value objects आहेत, त्यामुळे संपूर्ण aggregate construction ने बरोबर असते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> पुढील invoicing, tax, आणि fulfillment कोड आपले रिक्त-order guards सोडून देतो आणि मिळणाऱ्या प्रत्येक Order वर विश्वास ठेवतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📧</span><div><h3>3 · Notifications: parse केलेला Email पत्ता</h3><div class="role">नमुना: parse करा, validate-आणि-आशा-करा नको</div></div></div>
+        <p class="muted">Notifications service email, SMS, आणि push पाठवते. Email पत्ते signup forms, imports, आणि webhooks मधून येतात, सर्व अविश्वासार्ह.</p>
+        <ul>
+          <li><code>Email.parse(raw)</code> सीमेवर एकदाच normalize आणि validate करते, typed Email परत करते किंवा throw करते.</li>
+          <li>पुढील प्रत्येक function <code>string</code> नव्हे तर <code>Email</code> घेते, त्यामुळे "हा वैध पत्ता आहे का" या प्रश्नाचे उत्तर type देते.</li>
+          <li>मूल्य immutable असल्याने, normalize केलेला पत्ता नंतर न पाठवता येणाऱ्या string मध्ये भ्रष्ट होऊ शकत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> चुकीच्या पत्त्यांमुळे होणारे bounce rates घटतात, आणि validation logic senders मध्ये विखुरण्याऐवजी नेमक्या एकाच ठिकाणी राहते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगतता</div>
+      <h2>आधुनिक सुसंगतता</h2>
+      <p class="muted">Constructor ने लागू केलेले invariants ही जुनी OOP सवय नाही, आधुनिक type-driven आणि domain-driven systems कशा बरोबर राहतात याचा तो आधार आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Domain-driven design</h4><p>Aggregates आणि value objects ते जे invariants रक्षतात त्यावरून परिभाषित होतात. Construction च्या वेळी नियम लागू करणे हीच ती यंत्रणा आहे जी aggregate ला खरी consistency boundary बनवते.</p></div>
+        <div class="card"><h4>🔒 Parse करा, validate नको</h4><p>असंरचित input ला सीमेवर typed, नेहमी-वैध मूल्यात रूपांतरित करण्याची functional-programming ची कल्पना म्हणजे नेमके एक validating constructor किंवा factory.</p></div>
+        <div class="card"><h4>🧊 Immutability by default</h4><p>Records, frozen dataclasses, आणि readonly fields असे objects बनवतात जे एकदाच validate होतात आणि कधीही अवैध स्थितीत बदलत नाहीत, हे मजबूत construction शी नैसर्गिकरित्या जुळते.</p></div>
+        <div class="card"><h4>🏭 new पेक्षा factories</h4><p>नावाचे static factories आधुनिक libraries मध्ये सर्वसामान्य आहेत कारण ते उद्देश स्पष्ट करतात, subtype निवडी लपवतात, आणि validation ला एकच घर देतात.</p></div>
+        <div class="card"><h4>🛠️ Type-state आणि smart constructors</h4><p>भाषा आता type system ला "हा object आपल्या तपासण्या उत्तीर्ण झाला" हे encode करू देत आहेत, त्यामुळे अवैध instance फक्त अशक्य नव्हे तर अप्रस्तुत होतो.</p></div>
+        <div class="card"><h4>🌐 सुरक्षित API सीमा</h4><p>JSON ला validating factories मधून समृद्ध objects मध्ये deserialize केल्याने चुकीचा बाह्य data कधीही वैध दिसणारा instance म्हणून domain मध्ये प्रवेश करत नाही.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> अवैध स्थिती अशक्य करण्याचा सर्वात विश्वासार्ह मार्ग म्हणजे त्या बांधण्यास नकार देणे. तुमचे नियम constructor आणि factory मध्ये ठेवा, objects immutable ठेवा किंवा फक्त invariant जपणाऱ्या methods मधूनच बदला, आणि उर्वरित तुमची system फुकटातच सोपी आणि सुरक्षित होते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Construction आणि invariants संबंधित OOP कल्पनांच्या जाळ्यात बसतात. हे त्यांच्याशी नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔐</span><h4>Encapsulation</h4><p>State लपवणे जेणेकरून फक्त invariant जपणाऱ्या methods तो बदलू शकतील.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">🧭</span><h4>Value objects विरुद्ध entities</h4><p>Money आणि Email काय आहेत, आणि Order साठी identity का महत्त्वाची.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../immutability/"><span class="ico">🧊</span><h4>Immutability</h4><p>एकदाच validate करा, मग object ला कधीही अवैध स्थितीत बदलू देऊ नका.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../errors-as-objects/"><span class="ico">🚨</span><h4>Errors as objects</h4><p>Guard clause throw करणाऱ्या अपयशांना first-class types म्हणून model करणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>Construction आणि Invariants चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · उदाहरणे · सुसंगतता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

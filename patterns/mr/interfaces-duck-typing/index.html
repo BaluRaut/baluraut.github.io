@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Interfaces आणि Duck Typing - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="Interfaces आणि duck typing यांची सखोल, दृश्य मार्गदर्शिका: protocols म्हणून contracts, structural विरुद्ध nominal typing, TypeScript interfaces, Python Protocols, Ruby duck typing, आणि interface ला अनुसरून प्रोग्रामिंग - एका PaymentGateway उदाहरणासह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">प्रकरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Interfaces आणि duck typing - class ला नव्हे तर contract ला अनुसरून कोड लिहिणे</h1>
+      <p class="lede">Interface म्हणजे एक <strong>contract</strong>: methods चा असा संच ज्यावर caller अवलंबून राहू शकतो, त्यामागचा concrete type माहीत नसतानाही. भाषा तो contract नावाने (nominal) तपासो की आकाराने (structural), फायदा एकच असतो - तुमचा checkout कोड एका <strong>PaymentGateway</strong> शी बोलतो, आणि caller ची एकही ओळ न बदलता Stripe किंवा PayPal अदलाबदल करता येते.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Contracts</span>
+        <span class="pill">Structural विरुद्ध nominal</span>
+        <span class="pill">Protocols</span>
+        <span class="pill">Interface ला अनुसरून प्रोग्रामिंग</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Interfaces आणि duck typing म्हणजे काय?</h2>
+      <p class="muted">एक <strong>interface</strong> (किंवा <em>protocol</em>) methods चा संच आणि त्यांच्या signatures नाव देतो, पण ते कसे काम करतात हे सांगत नाही. जो कोणताही object त्या methods पुरवतो तो contract पूर्ण करतो. <strong>Duck typing</strong> हे याच्या तार्किक टोकापर्यंत नेते: जर एखादा object <em>बदकासारखा चालतो आणि बदकासारखा quack करतो</em>, तर runtime त्याला बदक मानतो, कोणतेही घोषित interface लागत नाही. दोन्हीही calling कोडला <em>object काय करू शकतो</em> यावर अवलंबून ठेवतात, <em>तो कोणता class आहे</em> यावर नव्हे.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📜</span> Contract</h4>
+          <p>Interface सांगतो की एका collaborator ने कोणत्या methods उघड्या ठेवल्या पाहिजेत, जसे <code>charge(amount, token)</code> आणि <code>refund(chargeId)</code>. Caller आकारावर विश्वास ठेवतो, स्रोतावर नव्हे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏷️</span> Nominal typing</h4>
+          <p>Type तेव्हाच अनुरूप ठरतो जेव्हा तो स्पष्टपणे नावाने तसे घोषित करतो. Java आणि C# अशाच पद्धतीने चालतात: class ला <code>implements PaymentGateway</code> असे म्हणावे लागते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🦆</span> Structural / duck typing</h4>
+          <p>Type ला योग्य आकार असेल तर तो अनुरूप ठरतो, कोणतीही घोषणा लागत नाही. TypeScript compile time ला structure तपासतो; Ruby आणि Python ते call time ला तपासतात.</p>
+        </div>
+      </div>
+
+      <h3>मूलभूत घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>तो काय करतो</th><th>उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Interface / Protocol</strong></td><td>आवश्यक method signatures घोषित करतो</td><td><code>PaymentGateway</code> ज्यात <code>charge</code>, <code>refund</code></td></tr>
+            <tr><td><strong>Implementation</strong></td><td>Contract पूर्ण करणारा concrete class</td><td><code>StripeGateway</code>, <code>PayPalGateway</code></td></tr>
+            <tr><td><strong>Consumer</strong></td><td>Interface वर अवलंबून असणारा कोड, class वर नव्हे</td><td>कोणतेही gateway घेणारा <code>CheckoutService</code></td></tr>
+            <tr><td><strong>Conformance check</strong></td><td>Contract पाळला जातो का हे भाषा कशी पडताळते</td><td>Compile-time (TS) किंवा runtime (Ruby, Python)</td></tr>
+            <tr><td><strong>Substitutability</strong></td><td>एका implementation च्या जागी दुसरे सुरक्षितपणे बदलणे</td><td>Production मध्ये Stripe, tests मध्ये बनावट gateway</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>महत्त्वाचे मानसिक चित्र:</strong> interface म्हणजे वर्तनाबद्दलचे एक वचन. Nominal typing ते वचन एका स्वाक्षरी केलेल्या घोषणेने पडताळते; duck typing ते object प्रत्यक्षात पाळताना पाहून पडताळते. दोन्ही मार्गांनी, consumer ला concrete class कधीच माहीत असण्याची गरज नसते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Interfaces का अस्तित्वात आहेत</h2>
+      <p class="muted">Concrete classes कोडला विशिष्ट तपशिलांशी जोडून टाकतात. Interfaces तुम्हाला फक्त गरजेचे वर्तन नाव देऊ देतात, त्यामुळे implementations अदलाबदल करण्यायोग्य, testable आणि सुरक्षितपणे विकसित करण्यायोग्य बनतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 अदलाबदल करण्यायोग्य implementations</h4><p>कोणतेही <code>PaymentGateway</code> स्वीकारणारा <code>CheckoutService</code> स्वतःच्या logic ला हात न लावता Stripe वरून PayPal कडे जाऊ शकतो, किंवा दोन्ही चालवू शकतो. Contract हाच जोडबिंदू आहे.</p></div>
+        <div class="card"><h4>🧪 वेगळेपणाने testable</h4><p>Consumer interface वर अवलंबून असल्याने, tests खऱ्या payment API ला न मारता calls नोंदवणारे बनावट gateway inject करतात. वेगवान, निश्चित, network नाही.</p></div>
+        <div class="card"><h4>🧱 विलग modules</h4><p>Teams contract वर एकमत करतात, मग दोन्ही बाजू स्वतंत्रपणे बांधतात. Billing team आणि checkout team कधीच concrete types सामायिक करत नाहीत, फक्त interface.</p></div>
+        <div class="card"><h4>🔭 स्पष्ट अपेक्षा</h4><p>Interface नेमके सांगतो की collaborator ने काय पुरवले पाहिजे. नवीन engineers contract वाचतात आणि class ची उलट-अभियांत्रिकी न करता काय implement करायचे हे समजतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>Interfaces आणि duck typing उपमांसह समजावले</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असलात तरी ती पटकन समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Interface म्हणजे <strong>परीक्षेतील प्रश्नपत्रिका</strong>. ती सांगते की कोणत्या प्रश्नांची उत्तरे द्यावीत; तुमचे नेमके शब्द ती ठरवत नाही. ज्याची उत्तरे प्रत्येक प्रश्न व्यापतात तो विद्यार्थी उत्तीर्ण होतो, तो कसाही मांडणी करो.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हा एक <strong>प्रकारचा plug socket</strong> आहे. तुमचा checkout कोड <code>PaymentGateway</code> आकाराचा socket उघड करतो; Stripe आणि PayPal हे जुळणारे plugs असलेली उपकरणे आहेत. भिंतीला कोणता brand जोडता याची पर्वा नसते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>job description</strong> चा विचार करा. ती एका भूमिकेने पार पाडायच्या कर्तव्यांची यादी देते. तुम्ही अंतर्गत team ठेवा की एजन्सी, जो कोणी ती कर्तव्ये करू शकतो तो ती भूमिका भरतो. Org chart भूमिकेवर अवलंबून असते, व्यक्तीवर नव्हे.</p></div>
+        <div class="card"><h4><span class="ico">🎫</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक theme park <strong>वैध तिकीट म्हणून scan होणारी कोणतीही गोष्ट</strong> स्वीकारते. कागदाचा तुकडा, फोनवरचा barcode, किंवा wristband - turnstile वर्तन तपासतो (ते scan होते का), साहित्य नव्हे. तेच द्वारावरचे duck typing.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अंतर्गत हे कसे चालते</h2>
+      <p class="muted">तुम्ही एक <strong>PaymentGateway</strong> contract परिभाषित करता, दोन concrete implementations लिहिता, आणि consumer ला फक्त contract वर अवलंबून ठेवता. Conformance कसे तपासले जाते हे भाषा ठरवते: घोषणेने, structure ने, किंवा call time च्या वर्तनाने.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧾</span> Contract परिभाषित करा</h4>
+          <p>Consumer ला हव्या असलेल्या methods ना नाव द्या: <code>charge(amountCents, token)</code> एक result परत करते, <code>refund(chargeId)</code> तो उलटवते. HTTP, keys, किंवा vendors याबद्दल काहीही आत झिरपत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Interface ला अनुसरून प्रोग्रामिंग</h4>
+          <p><code>CheckoutService</code> एक <code>PaymentGateway</code> reference धरतो. Runtime ला तो <code>StripeGateway</code> किंवा <code>PayPalGateway</code> असतो, configuration ने निवडलेला, आणि service कधीच कोणता ते विचारत नाही.</p>
+        </div>
+      </div>
+
+      <h3>Class नाती एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">CheckoutService हा PaymentGateway contract वर अवलंबून असतो; Stripe आणि PayPal तो पूर्ण करतात</div>
+        <pre class="mermaid">
+classDiagram
+    class PaymentGateway {
+        &lt;&lt;interface&gt;&gt;
+        +charge(amountCents, token) ChargeResult
+        +refund(chargeId) RefundResult
+    }
+    class StripeGateway {
+        +charge(amountCents, token) ChargeResult
+        +refund(chargeId) RefundResult
+    }
+    class PayPalGateway {
+        +charge(amountCents, token) ChargeResult
+        +refund(chargeId) RefundResult
+    }
+    class CheckoutService {
+        -gateway PaymentGateway
+        +pay(order) ChargeResult
+    }
+    PaymentGateway &lt;|.. StripeGateway
+    PaymentGateway &lt;|.. PayPalGateway
+    CheckoutService o-- PaymentGateway
+        </pre>
+      </div>
+
+      <h3>तोच contract तीन भाषांमध्ये</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// TypeScript: a nominal-looking interface checked structurally at compile time.
+interface ChargeResult { id: string; ok: boolean; }
+
+interface PaymentGateway {
+  charge(amountCents: number, token: string): ChargeResult;
+  refund(chargeId: string): boolean;
+}
+
+class StripeGateway implements PaymentGateway {
+  constructor(private apiKey: string) {}
+  charge(amountCents: number, token: string): ChargeResult {
+    // POST https://api.stripe.com/v1/charges
+    return { id: `ch_${token.slice(0, 6)}`, ok: amountCents &gt; 0 };
+  }
+  refund(chargeId: string): boolean {
+    return chargeId.startsWith("ch_");
+  }
+}
+
+class PayPalGateway implements PaymentGateway {
+  charge(amountCents: number, token: string): ChargeResult {
+    return { id: `PAYID-${token.slice(0, 6)}`, ok: amountCents &gt; 0 };
+  }
+  refund(chargeId: string): boolean {
+    return chargeId.startsWith("PAYID");
+  }
+}
+
+// CheckoutService is programmed to the interface, not a concrete gateway.
+class CheckoutService {
+  constructor(private gateway: PaymentGateway) {}
+  pay(amountCents: number, token: string): ChargeResult {
+    const result = this.gateway.charge(amountCents, token);
+    if (!result.ok) throw new Error("Payment declined");
+    return result;
+  }
+}
+
+const checkout = new CheckoutService(new StripeGateway("sk_live_123"));
+console.log(checkout.pay(4999, "tok_visa")); // { id: "ch_tok_vi", ok: true }
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Python: a Protocol gives structural typing; conformance is by shape, no inheritance.
+from dataclasses import dataclass
+from typing import Protocol
+
+@dataclass
+class ChargeResult:
+    id: str
+    ok: bool
+
+class PaymentGateway(Protocol):
+    def charge(self, amount_cents: int, token: str) -&gt; ChargeResult: ...
+    def refund(self, charge_id: str) -&gt; bool: ...
+
+class StripeGateway:  # note: no explicit base class needed
+    def __init__(self, api_key: str) -&gt; None:
+        self.api_key = api_key
+    def charge(self, amount_cents: int, token: str) -&gt; ChargeResult:
+        return ChargeResult(id=f"ch_{token[:6]}", ok=amount_cents &gt; 0)
+    def refund(self, charge_id: str) -&gt; bool:
+        return charge_id.startswith("ch_")
+
+class PayPalGateway:
+    def charge(self, amount_cents: int, token: str) -&gt; ChargeResult:
+        return ChargeResult(id=f"PAYID-{token[:6]}", ok=amount_cents &gt; 0)
+    def refund(self, charge_id: str) -&gt; bool:
+        return charge_id.startswith("PAYID")
+
+class CheckoutService:
+    def __init__(self, gateway: PaymentGateway) -&gt; None:
+        self.gateway = gateway  # any object matching the Protocol shape
+    def pay(self, amount_cents: int, token: str) -&gt; ChargeResult:
+        result = self.gateway.charge(amount_cents, token)
+        if not result.ok:
+            raise RuntimeError("Payment declined")
+        return result
+
+checkout = CheckoutService(StripeGateway("sk_live_123"))
+print(checkout.pay(4999, "tok_visa"))  # ChargeResult(id='ch_tok_vi', ok=True)
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Ruby: pure duck typing. No interface declaration; the object just responds to the methods.
+ChargeResult = Struct.new(:id, :ok)
+
+class StripeGateway
+  def initialize(api_key)
+    @api_key = api_key
+  end
+  def charge(amount_cents, token)
+    ChargeResult.new("ch_#{token[0, 6]}", amount_cents > 0)
+  end
+  def refund(charge_id)
+    charge_id.start_with?("ch_")
+  end
+end
+
+class PayPalGateway
+  def charge(amount_cents, token)
+    ChargeResult.new("PAYID-#{token[0, 6]}", amount_cents > 0)
+  end
+  def refund(charge_id)
+    charge_id.start_with?("PAYID")
+  end
+end
+
+# CheckoutService accepts any object that quacks like a payment gateway.
+class CheckoutService
+  def initialize(gateway)
+    @gateway = gateway
+  end
+  def pay(amount_cents, token)
+    result = @gateway.charge(amount_cents, token)
+    raise "Payment declined" unless result.ok
+    result
+  end
+end
+
+checkout = CheckoutService.new(StripeGateway.new("sk_live_123"))
+puts checkout.pay(4999, "tok_visa").inspect # #&lt;struct ChargeResult id="ch_tok_vi", ok=true&gt;
+</code></pre>
+      </div>
+      <p class="muted">तिन्ही snippets वर्तनाच्या दृष्टीने एकसारखे आहेत, पण <em>contract</em> वेगवेगळ्या ठिकाणी राहतो. TypeScript तो compile time ला तपासला जाणारा स्पष्ट <code>interface</code> म्हणून लिहितो. Python तो एक <code>Protocol</code> म्हणून सांगतो जो classes structurally पूर्ण करतात, कोणताही base class न लागता. Ruby कोणताही contract लिहीतच नाही - gateway फक्त <code>charge</code> आणि <code>refund</code> ला प्रतिसाद देतो, आणि जो कोणताही object तसे करतो तो त्याच्या जागी उभा राहू शकतो.</p>
+
+      <h3>Nominal विरुद्ध structural: तोच class, दोन तपासण्या</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Structural: a plain object with the right shape is accepted, even without `implements`.
+const sandboxGateway = {
+  charge(amountCents: number, token: string) {
+    return { id: `test_${token}`, ok: true };
+  },
+  refund(chargeId: string) { return true; },
+};
+
+// No class, no `implements PaymentGateway`, yet it type-checks as one:
+const testCheckout = new CheckoutService(sandboxGateway);
+console.log(testCheckout.pay(100, "tok_test")); // accepted by structure alone
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Structural: a bare object satisfies the Protocol if it has the methods.
+class SandboxGateway:
+    def charge(self, amount_cents: int, token: str) -&gt; ChargeResult:
+        return ChargeResult(id=f"test_{token}", ok=True)
+    def refund(self, charge_id: str) -&gt; bool:
+        return True
+
+# CheckoutService never asked for a base class, only the shape:
+test_checkout = CheckoutService(SandboxGateway())
+print(test_checkout.pay(100, "tok_test"))  # accepted by structure
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Duck typing: conformance is decided at the moment charge is actually called.
+sandbox_gateway = Object.new
+def sandbox_gateway.charge(amount_cents, token)
+  ChargeResult.new("test_#{token}", true)
+end
+def sandbox_gateway.refund(charge_id)
+  true
+end
+
+test_checkout = CheckoutService.new(sandbox_gateway)
+puts test_checkout.pay(100, "tok_test").inspect # works: it responds to charge
+</code></pre>
+      </div>
+      <p class="muted">हाच फरक एका पडद्यावर. TypeScript आणि Python sandbox object स्वीकारतात कारण त्याचे <em>structure</em> contract शी जुळते, प्रोग्राम चालण्याआधीच तपासले जाते. Ruby तो स्वीकारते कारण, जेव्हा <code>pay</code> हे <code>charge</code> ला बोलावते, तेव्हा object योगायोगाने प्रतिसाद देतो, चालताना तपासले जाते. Java सारखी nominal भाषा तिन्हीही नाकारेल, जोपर्यंत ते <code>implements PaymentGateway</code> असे म्हणत नाहीत.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: contract मधून एक सामान्य charge, runtime ला duck-typing अपयश, आणि एक test जे बनावट gateway अदलाबदल करते.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Consumer ला vendor माहीत नसताना एक charge interface मधून वाहते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 CheckoutService
+    participant G as 📜 PaymentGateway
+    participant S as 💳 StripeGateway
+    participant API as 🌐 Stripe API
+
+    C->>G: charge(4999, token)
+    Note over C,G: C holds the interface, not the class
+    G->>S: dispatch to concrete impl
+    S->>API: POST /v1/charges
+    API-->>S: 200 charge succeeded
+    S-->>C: ChargeResult(id, ok=true)
+    C->>C: order marked paid
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Duck typing: विसंगती फक्त call time लाच सापडते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 CheckoutService
+    participant O as 🦆 Some object
+    participant Err as ⚠️ Runtime
+
+    C->>O: charge(4999, token)
+    alt object responds to charge
+        O-->>C: ChargeResult(id, ok=true)
+        C->>C: proceed with order
+    else missing method
+        O-->>Err: NoMethodError charge
+        Err-->>C: crash at runtime
+        Note over C,Err: no compiler caught this earlier
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Testing: तोच contract पूर्ण करणारे बनावट gateway inject करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as 🧪 Test
+    participant C as 🛒 CheckoutService
+    participant F as 🎭 FakeGateway
+
+    T->>F: new FakeGateway()
+    T->>C: new CheckoutService(fake)
+    T->>C: pay(4999, token)
+    C->>F: charge(4999, token)
+    F-->>C: ChargeResult(id, ok=true)
+    C-->>T: return result
+    T->>F: assert charge was called once
+    F-->>T: recorded call confirmed
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">Contract ला नाव देण्यापासून ते production मध्ये vendors अदलाबदल करण्यापर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">गरज</span><h4>बदलणारा collaborator ओळखा</h4><p>Checkout ला payments घ्यावी लागतात, पण vendor हा बदलणारा तपशील आहे. तोच बदल Stripe hardcode करण्याऐवजी contract परिभाषित करण्याचा संकेत आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">नाव</span><h4>Interface परिभाषित करा</h4><p><code>charge</code> आणि <code>refund</code> सह <code>PaymentGateway</code> लिहा. फक्त consumer ला जे लागते तेच पकडा, signature मध्ये keys किंवा transport नाही.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">अवलंबन</span><h4>Consumer ला त्याला अनुसरून प्रोग्राम करा</h4><p><code>CheckoutService</code> त्याच्या constructor मध्ये एक <code>PaymentGateway</code> स्वीकारतो आणि फक्त contract च्या methods ला बोलावतो, कधीही concrete type ला नाही.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Implement</span><h4>StripeGateway लिहा</h4><p>पहिला concrete class Stripe API भोवती wrap करून contract पूर्ण करतो. तो <code>charge</code> ला खऱ्या HTTP call शी जोडतो आणि एक <code>ChargeResult</code> परत करतो.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">पडताळणी</span><h4>Conformance ची खात्री करा</h4><p>TypeScript मध्ये compiler आकार तपासतो; Python मध्ये type checker Protocol पडताळतो; Ruby मध्ये methods चालवण्यासाठी तुम्ही tests वर अवलंबून राहता.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Inject</span><h4>Composition time ला जोडा</h4><p>App root एक <code>StripeGateway</code> तयार करतो आणि तो <code>CheckoutService</code> मध्ये पाठवतो. Service त्या निवडीबद्दल अनभिज्ञ राहतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">चालवा</span><h4>खरा payment घ्या</h4><p>एक ग्राहक checkout करतो, <code>pay</code> हे interface मधून <code>charge</code> ला बोलावते, Stripe त्यावर प्रक्रिया करते, आणि order paid म्हणून चिन्हांकित होते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Test</span><h4>बनावट अदलाबदल करा</h4><p>Unit tests तोच contract पूर्ण करणारे आणि calls नोंदवणारे <code>FakeGateway</code> inject करतात, त्यामुळे checkout logic network शिवाय तपासली जाते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">विस्तार</span><h4>PayPalGateway जोडा</h4><p>दुसरा vendor येतो. विद्यमान contract विरुद्ध नवीन class लिहा; <code>CheckoutService</code> ची एकही ओळ बदलत नाही.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Route</span><h4>Runtime ला निवडा</h4><p>एक factory प्रत्येक प्रदेशानुसार किंवा ग्राहकानुसार Stripe किंवा PayPal निवडते. Consumer एक <code>PaymentGateway</code> धरतो आणि त्याला कोणता मिळाला हे सांगू शकत नाही.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">विकास</span><h4>Vendors सुरक्षितपणे बदला</h4><p>Gateways दरम्यान रहदारी स्थलांतरित करा, एक deprecate करा, किंवा तिसरा जोडा. Contract हा बदल शोषून घेतो तर उर्वरित प्रणाली स्थिर राहते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Interfaces घोषित करणे सोपे आहे आणि त्यांचा गैरवापर करणेही सोपे. या वारंवार होणाऱ्या चुका आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧿 Leaky abstractions</h4><p><code>PaymentGateway</code> interface वर <code>stripeCustomerId</code> किंवा HTTP status ठेवल्याने vendor तपशील contract मध्ये ओढला जातो, त्यामुळे PayPal ते स्वच्छपणे implement करू शकत नाही आणि abstraction मोडते.</p></div>
+        <div class="card"><h4>🗑️ Fat interfaces</h4><p>वीस methods असलेले gateway प्रत्येक implementation ला ते न पेलणाऱ्या methods stub करण्यास भाग पाडते. Contracts अरुंद ठेवा जेणेकरून implementers फक्त consumers प्रत्यक्षात बोलावतात तेच पुरवतील.</p></div>
+        <div class="card"><h4>🔎 सर्वत्र isinstance तपासण्या</h4><p>जर <code>CheckoutService</code> हे <code>if gateway is StripeGateway</code> विचारून शाखा करत असेल, तर तुम्ही interface फेकून दिले आहे. वर्तन implementation मध्ये असावे, type सुंघण्यात नव्हे.</p></div>
+        <div class="card"><h4>💥 शांत duck-typing तफावती</h4><p>Ruby किंवा Python मध्ये, गहाळ <code>refund</code> production मध्ये बोलावले जाईपर्यंत पकडले जात नाही. प्रत्येक method चालवणाऱ्या tests शिवाय, structural विसंगती अगदी वाईट क्षणापर्यंत लपून राहतात.</p></div>
+        <div class="card"><h4>🎯 Contract चा विरोधाभास</h4><p>नाकारलेल्या कार्डावर <code>ok=true</code> परत करणारे implementation तांत्रिकदृष्ट्या आकाराशी जुळते पण वचन मोडते. Signatures शी अनुरूप असणे म्हणजे वर्तन पाळणे नव्हे.</p></div>
+        <div class="card"><h4>🏗️ एकाच impl साठी interface</h4><p>फक्त Stripe कधीही अस्तित्वात असेल तेव्हा <code>PaymentGateway</code> काढणे कोणत्याही फायद्याविना indirection जोडते. दुसरे implementation किंवा test double खरे असेल तेव्हाच contract आणा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">तुम्ही "चांगली रचना" unit-test करू शकत नाही, पण हे निरीक्षणीय संकेत तुम्हाला सांगतात की तुमचे interfaces त्यांचे मोल कमावत आहेत का.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रति interface implementations</strong></td><td>दोन किंवा अधिक (test doubles सह) म्हणजे contract हा खरा जोडबिंदू आहे; कायमचा नेमका एकच असणे अकाली abstraction सुचवते.</td></tr>
+            <tr><td><strong>Consumer कडून concrete types चे imports</strong></td><td>जर <code>CheckoutService</code> हे <code>StripeGateway</code> import करत असेल, तर interface प्रत्यक्षात काहीही decouple करत नाही. शून्याचे लक्ष्य ठेवा.</td></tr>
+            <tr><td><strong>Type-narrowing शाखा</strong></td><td>Implementations विरुद्ध <code>isinstance</code> / <code>is_a?</code> तपासण्या मोजल्याने polymorphism caller मध्ये कुठे परत झिरपले हे दिसते.</td></tr>
+            <tr><td><strong>प्रति interface methods</strong></td><td>लहान, सुसंगत interfaces (2-5 methods) implement करणे सोपे असते; फुगणारी method संख्या फोडण्यासाठी एक fat contract दर्शवते.</td></tr>
+            <tr><td><strong>Test double चा प्रयत्न</strong></td><td>Test मध्ये interface बनावट करणे क्षुल्लक असेल तर contract स्वच्छ आहे; ते databases किंवा HTTP ओढून आणत असेल तर abstraction leaky आहे.</td></tr>
+            <tr><td><strong>Runtime NoMethodError दर</strong></td><td>Duck-typed कोडमध्ये, production मधील method-missing त्रुटी compiler ने पकडल्या असत्या अशा structural तफावती उघड करतात.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> निरोगी interface ला थोड्या methods, किमान दोन implementations, आणि त्याच्या consumers मध्ये शून्य concrete imports असतात. जर एखादा consumer त्याला कोणता class मिळाला हे कधी तपासत असेल, तर abstraction आधीच अपयशी झाले आहे.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - प्रकरण अभ्यास</div>
+      <h2>वास्तविक जगातील प्रकरण अभ्यास</h2>
+      <p class="muted">Interface ला अनुसरून प्रोग्रामिंग भोवती बांधलेल्या तीन production प्रणाली.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · अनेक gateways वरून marketplace payments</h3><div class="role">Pattern: एक PaymentGateway contract, अनेक vendors</div></div></div>
+        <p class="muted">एका marketplace ला US मध्ये Stripe, Europe मध्ये PayPal, आणि Brazil मध्ये स्थानिक processor लागतो, प्रत्येक प्रदेशासाठी checkout पुन्हा न लिहिता.</p>
+        <ul>
+          <li>Checkout फक्त <code>PaymentGateway.charge</code> आणि <code>refund</code> वर अवलंबून असतो, कधीही vendor SDK वर नाही.</li>
+          <li>एक factory request time ला प्रत्येक खरेदीदाराच्या प्रदेशानुसार concrete gateway निवडते.</li>
+          <li>Brazilian processor जोडणे म्हणजे विद्यमान contract implement करणारा एक नवीन class.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> नवीन payment vendors विलग classes म्हणून येतात, आणि checkout logic अस्पर्श राहते व बनावट gateway वापरून tests ने पूर्णपणे व्यापली जाते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📣</span><div><h3>2 · चॅनेलांवरून notification वितरण</h3><div class="role">Pattern: email, SMS, आणि push साठी एक Notifier protocol</div></div></div>
+        <p class="muted">एक product email, SMS, आणि push वरून order updates पाठवते, आणि sending कोडला त्रास न देता नंतर Slack जोडू इच्छिते.</p>
+        <ul>
+          <li>एक <code>Notifier</code> protocol एक method घोषित करतो, <code>send(recipient, message)</code>.</li>
+          <li><code>EmailNotifier</code>, <code>SmsNotifier</code>, आणि <code>PushNotifier</code> प्रत्येक तो structurally पूर्ण करतात.</li>
+          <li>Dispatcher notifiers च्या यादीवर फिरतो, contract ला बोलावतो, चॅनेलबद्दल अनभिज्ञ.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> <code>send</code> ला प्रतिसाद देणारा एक class लिहून Slack channel जोडली जाते, dispatcher मध्ये कोणताही बदल न करता.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>3 · Ruby app मधील pluggable file storage</h3><div class="role">Pattern: local disk आणि S3 वरून duck-typed Storage</div></div></div>
+        <p class="muted">एक Rails app development मध्ये local disk वर आणि production मध्ये S3 वर user uploads साठवते, config ने ठरवलेले.</p>
+        <ul>
+          <li>Upload कोड त्याला दिलेल्या कोणत्याही object वर <code>store.put(key, io)</code> आणि <code>store.url(key)</code> बोलावतो.</li>
+          <li><code>DiskStorage</code> आणि <code>S3Storage</code> त्याच methods ला प्रतिसाद देतात; कोणीही interface घोषित करत नाही.</li>
+          <li>Tests त्याच पद्धतीने quack करणारे in-memory storage double inject करतात, त्यामुळे disk किंवा network ला स्पर्श होत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> storage backend हा एक config switch आहे, आणि duck typing disk, S3, आणि test double या सर्वांत upload path एकसारखा ठेवते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगतता</div>
+      <h2>आधुनिक सुसंगतता</h2>
+      <p class="muted">Interfaces आणि structural typing हे आधुनिक भाषा व साधने कशी विकसित होतात याच्या केंद्रस्थानी शांतपणे आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Structural typing मुख्य प्रवाहात</h4><p>TypeScript ने structural typing लाखो लोकांना परिचित केले; Go च्या implicit interfaces ने backend वर तेच केले. घोषणेने नव्हे तर आकाराने अनुरूप होणे ही आता default अपेक्षा आहे.</p></div>
+        <div class="card"><h4>🐍 Dynamic भाषांमध्ये gradual typing</h4><p>Python चे <code>Protocol</code> आणि Ruby चे RBS व Sorbet duck-typed कोडला ऐच्छिक static contracts आणतात, लवचिकता न सोडता runtime आधी structural तफावती पकडतात.</p></div>
+        <div class="card"><h4>🔗 Service सीमांवर contracts</h4><p>तीच प्रवृत्ती मोठ्या प्रमाणात वाढते: OpenAPI आणि gRPC schemas हे services दरम्यानचे interfaces आहेत, teams ना concrete server ऐवजी contract विरुद्ध बांधू देतात.</p></div>
+        <div class="card"><h4>🧪 Test doubles default म्हणून</h4><p>Interface ला अनुसरून प्रोग्रामिंग हेच वेगवान, विलग tests शक्य करते. Suites वाढल्यावर, contract विरुद्ध बनावट inject करणे ही चैन नव्हे तर प्रमाणित प्रथा आहे.</p></div>
+        <div class="card"><h4>🧱 Ports आणि adapters</h4><p>Hexagonal architecture खालपर्यंत interfaces च आहे: domain ports परिभाषित करते, आणि PaymentGateway सारखे adapters कडेला जोडले जातात, business logic vendor-मुक्त ठेवतात.</p></div>
+        <div class="card"><h4>🤖 Agents साठी tool contracts</h4><p>LLM tool-calling देखील एका घोषित schema वर अवलंबून असते, एक interface ज्याविरुद्ध agent प्रोग्राम करतो, त्यामुळे आकाराशी जुळणारे कोणतेही tool special-casing शिवाय बोलावता येते.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> भाषा नावाने तपासो, आकाराने तपासो, की call time ला तपासो, contract ला अनुसरून कोड लिहिणे हेच software अदलाबदल करण्यायोग्य, testable, आणि विकसित होण्यास मुक्त ठेवते. Interfaces आणि duck typing ही एकाच चिरंतन प्रश्नाची दोन उत्तरे आहेत - concrete types वर नव्हे, तर वर्तनावर अवलंबून राहा.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Interfaces हे OOP कल्पनांच्या समूहाच्या हृदयस्थानी आहेत. या त्यासोबत नैसर्गिकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../abstraction/"><span class="ico">🎭</span><h4>Abstraction</h4><p>Contract मागे तपशील लपवणे हेच interface करतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../polymorphism/"><span class="ico">🔀</span><h4>Polymorphism</h4><p>एका interface ला उत्तर देणाऱ्या अनेक implementations, runtime ला निवडल्या जातात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../dependency-inversion/"><span class="ico">🔃</span><h4>Dependency Inversion</h4><p>High-level कोड concrete classes वर नव्हे तर interfaces वर अवलंबून असतो.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../liskov-substitution/"><span class="ico">🧬</span><h4>Liskov Substitution</h4><p>Implementations ने contract चे वर्तन पाळले पाहिजे, फक्त त्याचा आकार नव्हे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Interfaces आणि Duck Typing ची दृश्य मार्गदर्शिका · काय · का · कसे · आकृत्या · प्रवाह · प्रकरण अभ्यास · सुसंगतता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

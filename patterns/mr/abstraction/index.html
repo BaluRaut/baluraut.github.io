@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Abstraction - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंगमधील abstraction साठी एक व्यावहारिक मार्गदर्शक: गुंतागुंत साध्या interface मागे लपवणे, abstract classes विरुद्ध interfaces आणि protocols, फक्त आवश्यक गोष्टींचे मॉडेलिंग, आणि abstraction हे encapsulation पेक्षा कसे वेगळे आहे - TypeScript, Python आणि Ruby मधील खरा PaymentProcessor कोड सह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Abstraction - गुंतागुंत लपवा, हेतू उघड करा</h1>
+      <p class="lede">Abstraction ही एक कला आहे जी एखादा घटक <strong>काय</strong> करतो हे उघड करते आणि तो ते <strong>कसे</strong> करतो हे लपवते. एका checkout स्क्रीनने पैसे Stripe, PayPal, की बँक फाइलमधून जातात हे न जाणता <code>processor.charge(order)</code> ला call करावे. आवश्यक interface एकदाच व्याख्या करा, आणि प्रत्येक concrete provider त्याच्या मागे बसतो.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">स्थिर interfaces</span>
+        <span class="pill">Abstract classes</span>
+        <span class="pill">Protocols</span>
+        <span class="pill">आवश्यक गोष्टींचे मॉडेल</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Abstraction म्हणजे काय?</h2>
+      <p class="muted"><strong>Abstraction</strong> म्हणजे एखाद्या गोष्टीचे कोणते तपशील दिलेल्या उद्देशासाठी महत्त्वाचे आहेत हे ठरवणे आणि बाकीचे साध्या, स्थिर interface मागे लपवणे. एक <code>PaymentProcessor</code> abstraction म्हणते "तुम्ही पैसे <em>authorize</em>, <em>capture</em>, आणि <em>refund</em> करू शकता" - HTTP calls, retry logic, किंवा provider-विशिष्ट field नावे उघड न करता. Callers हे contract नुसार प्रोग्रॅम करतात; गोंधळलेले आंतरिक तपशील नजरेआड राहतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🪟</span> एक साधा पृष्ठभाग</h4>
+          <p>सार्वजनिक interface लहान आणि हेतू-दर्शवणारा असतो. Callers ना <code>charge</code>, <code>refund</code>, <code>void</code> दिसतात, sockets, timeouts, किंवा JSON payloads नाहीत.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧱</span> फक्त आवश्यक गोष्टी</h4>
+          <p>तुम्ही caller ला हव्या असलेल्या फक्त त्याच संकल्पनांचे मॉडेल बनवता. चलन आणि रक्कम <code>Money</code> प्रकारात असावी; gateway चा आंतरिक transaction id नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> मागे बदलण्याजोगे</h4>
+          <p>Contract निश्चित असल्यामुळे, कोणताही concrete provider - Stripe, Adyen, एक mock - तो implement करू शकतो आणि मुक्तपणे बदलला जाऊ शकतो.</p>
+        </div>
+      </div>
+
+      <h3>Abstraction ची शब्दावली</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संज्ञा</th><th>त्याचा अर्थ</th><th>Payments उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abstract type</strong></td><td>पूर्ण implementation नसलेला contract</td><td><code>PaymentProcessor</code> interface</td></tr>
+            <tr><td><strong>Concrete type</strong></td><td>Contract ची पूर्ण implementation</td><td><code>StripeProcessor</code>, <code>PaypalProcessor</code></td></tr>
+            <tr><td><strong>Abstract method</strong></td><td>शरीर नसलेली नामांकित operation, subclasses द्वारे भरली जाणारी</td><td><code>authorize(order)</code></td></tr>
+            <tr><td><strong>Template method</strong></td><td>abstract steps ला call करणारे base मधील सामायिक logic</td><td><code>charge()</code> जे <code>authorize</code> + <code>capture</code> चालवते</td></tr>
+            <tr><td><strong>Leaky abstraction</strong></td><td>आंतरिक तपशील interface मधून बाहेर झिरपणे</td><td>Callers एक कच्चा Stripe error code तपासणे</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक मॉडेल:</strong> abstraction हे <em>काय</em> बद्दलचे वचन आहे, जाणीवपूर्वक <em>कसे</em> बद्दल गप्प असते. चांगली abstractions तुम्हाला एकही caller न बदलता प्रत्येक आंतरिक तपशील बदलू देतात.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Abstraction का महत्त्वाचे आहे</h2>
+      <p class="muted">सॉफ्टवेअर सतत बदलत असते: providers बदलले जातात, APIs चे versions होतात, गरजा बदलतात. Abstraction तो बदल आवरून ठेवते जेणेकरून तो तुमच्या संपूर्ण codebase मध्ये पसरत नाही.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 गुंतागुंत हाताळते</h4><p>Callers हजारो ओळींच्या gateway कोडऐवजी मूठभर methods बद्दल विचार करतात. सिस्टम वाढत असतानाही समजण्याजोगी राहते.</p></div>
+        <div class="card"><h4>🔌 बदल शक्य करते</h4><p>Contract पूर्ण करणारा एक class लिहून नवीन payment provider जोडा. वरच्या बाजूला काहीही बदलत नाही, आणि tests तोच interface implement करणारा एक fake वापरतात.</p></div>
+        <div class="card"><h4>🛡️ बदल वेगळा ठेवते</h4><p>जेव्हा एखादा provider एखादे field पुन्हा नाव देतो किंवा नवीन API version पाठवतो, तेव्हा त्याचा परिणाम फक्त एका adapter पुरता मर्यादित असतो, प्रत्येक checkout call site नाही.</p></div>
+        <div class="card"><h4>🤝 डिझाइन चर्चा तीक्ष्ण करते</h4><p>आवश्यक operations ना नाव देणे domain बद्दल स्पष्टता आणण्यास भाग पाडते. एक चांगला abstract type ही संपूर्ण टीम वापरू शकणारी सामायिक शब्दावली असते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या भाषेत</div>
+      <h2>उपमांसह Abstraction चे स्पष्टीकरण</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती पटकन समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Abstraction म्हणजे एका कल्पनेचे <strong>स्टिअरिंग व्हील</strong>. तुम्ही rack-and-pinion gears चा अभ्यास न करता "डावीकडे वळा, उजवीकडे वळा" शिकता. साधे नियंत्रण म्हणजे abstraction; यंत्रणा लपलेली पण खरी आहे.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>हा एक <strong>interface असतो ज्याविरुद्ध तुम्ही कोड करता</strong>. तुम्ही <code>processor.refund(payment)</code> ला call करता आणि contract वर विश्वास ठेवता; तो Stripe ला जातो की sandbox mock ला हा दुसऱ्या कुणाचा प्रश्न आहे, जो कोणता object inject केला यावर ठरतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>वीज सॉकेट</strong> चा विचार करा. प्रत्येक उपकरण त्याच आकारात plug होते आणि 230 volts मिळवते. भिंतीमागील ग्रीड - कोळसा, सौर, अणु - पूर्णपणे बदलू शकते आणि तुमच्या केटलीला त्याची कधीच जाणीव होत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏧</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>ATM</strong> तुम्हाला "withdraw", "deposit", "balance" दाखवते. तुम्हाला ledger अपडेट्स, fraud checks, किंवा interbank settlement कधीच दिसत नाही. बटणे म्हणजे आवश्यक गोष्टी; बँकिंग यंत्रणा लपलेली आहे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>कोडमध्ये abstraction कसे काम करते</h2>
+      <p class="muted">तुम्ही एक contract हा <strong>abstract class</strong> किंवा <strong>interface/protocol</strong> म्हणून व्यक्त करता, नंतर तो पूर्ण करणारे concrete classes लिहिता. Callers फक्त abstract type वर अवलंबून असतात, म्हणून providers परस्पर बदलण्याजोगे असतात.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📜</span> Interface किंवा protocol</h4>
+          <p>एक शुद्ध contract: method नावे आणि signatures, कोणतेही वर्तन नाही. जेव्हा implementations फक्त आकाराशिवाय <em>काहीही</em> सामायिक करत नाहीत तेव्हा हे वापरा - एक <code>PaymentProcessor</code> जो Stripe आणि PayPal दोघेही पूर्ण करतात.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏗️</span> Abstract class</h4>
+          <p>एक अंशिक implementation: सामायिक logic अधिक subclasses ने भरण्यासाठी काही abstract भोके. जेव्हा providers खरे वर्तन सामायिक करतात तेव्हा हे वापरा, जसे एक <code>charge()</code> जे नेहमी authorize करते मग capture करते.</p>
+        </div>
+      </div>
+
+      <h3>Class मॉडेल</h3>
+      <div class="diagram">
+        <div class="cap">परस्पर बदलण्याजोग्या concrete providers सह एक स्थिर abstract contract</div>
+        <pre class="mermaid">
+classDiagram
+    class PaymentProcessor {
+        &lt;&lt;interface&gt;&gt;
+        +authorize(order) Authorization
+        +capture(auth) Receipt
+        +refund(payment) Refund
+    }
+    class BaseProcessor {
+        &lt;&lt;abstract&gt;&gt;
+        +charge(order) Receipt
+        #authorize(order) Authorization
+        #capture(auth) Receipt
+    }
+    class StripeProcessor {
+        +authorize(order) Authorization
+        +capture(auth) Receipt
+        +refund(payment) Refund
+    }
+    class PaypalProcessor {
+        +authorize(order) Authorization
+        +capture(auth) Receipt
+        +refund(payment) Refund
+    }
+    class CheckoutService {
+        +pay(order) Receipt
+    }
+    PaymentProcessor &lt;|.. BaseProcessor
+    BaseProcessor &lt;|-- StripeProcessor
+    BaseProcessor &lt;|-- PaypalProcessor
+    CheckoutService o-- PaymentProcessor
+        </pre>
+      </div>
+
+      <h3>Contract व्याख्या करा, object तयार करा, त्याच्या methods ला call करा</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// The abstraction: what a processor does, never how.
+interface Money { amount: number; currency: string; }
+interface Order { id: string; total: Money; }
+interface Receipt { paymentId: string; provider: string; }
+
+interface PaymentProcessor {
+  authorize(order: Order): string;         // returns an auth token
+  capture(authToken: string): Receipt;
+  refund(paymentId: string): void;
+}
+
+// A concrete provider hides all Stripe-specific detail behind the contract.
+class StripeProcessor implements PaymentProcessor {
+  constructor(private apiKey: string) {}
+
+  authorize(order: Order): string {
+    // real impl: POST /v1/payment_intents with this.apiKey, idempotency key, retries...
+    return `pi_${order.id}_auth`;
+  }
+  capture(authToken: string): Receipt {
+    // real impl: POST /v1/payment_intents/{id}/capture
+    return { paymentId: authToken.replace("_auth", ""), provider: "stripe" };
+  }
+  refund(paymentId: string): void {
+    // real impl: POST /v1/refunds { payment_intent: paymentId }
+  }
+}
+
+// The caller depends on the abstraction, not on Stripe.
+class CheckoutService {
+  constructor(private processor: PaymentProcessor) {}
+  pay(order: Order): Receipt {
+    const auth = this.processor.authorize(order);
+    return this.processor.capture(auth);
+  }
+}
+
+const checkout = new CheckoutService(new StripeProcessor("sk_live_..."));
+const receipt = checkout.pay({ id: "ord_918", total: { amount: 4999, currency: "USD" } });
+console.log(receipt.provider, receipt.paymentId); // stripe pi_ord_918
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+@dataclass
+class Money:
+    amount: int
+    currency: str
+
+@dataclass
+class Order:
+    id: str
+    total: Money
+
+@dataclass
+class Receipt:
+    payment_id: str
+    provider: str
+
+# The abstraction: an abstract base class stating what a processor must do.
+class PaymentProcessor(ABC):
+    @abstractmethod
+    def authorize(self, order: Order) -> str: ...
+    @abstractmethod
+    def capture(self, auth_token: str) -> Receipt: ...
+    @abstractmethod
+    def refund(self, payment_id: str) -> None: ...
+
+# A concrete provider fills in the hidden "how".
+class StripeProcessor(PaymentProcessor):
+    def __init__(self, api_key: str) -> None:
+        self._api_key = api_key
+
+    def authorize(self, order: Order) -> str:
+        # real impl: POST /v1/payment_intents with idempotency key + retries
+        return f"pi_{order.id}_auth"
+
+    def capture(self, auth_token: str) -> Receipt:
+        return Receipt(payment_id=auth_token.replace("_auth", ""), provider="stripe")
+
+    def refund(self, payment_id: str) -> None:
+        ...  # POST /v1/refunds
+
+# The caller only knows the contract.
+class CheckoutService:
+    def __init__(self, processor: PaymentProcessor) -> None:
+        self._processor = processor
+
+    def pay(self, order: Order) -> Receipt:
+        auth = self._processor.authorize(order)
+        return self._processor.capture(auth)
+
+checkout = CheckoutService(StripeProcessor("sk_live_..."))
+receipt = checkout.pay(Order("ord_918", Money(4999, "USD")))
+print(receipt.provider, receipt.payment_id)  # stripe pi_ord_918
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>Money   = Struct.new(:amount, :currency)
+Order   = Struct.new(:id, :total)
+Receipt = Struct.new(:payment_id, :provider)
+
+# The abstraction: a base class that declares the contract and refuses toy calls.
+class PaymentProcessor
+  def authorize(order)   = raise NotImplementedError, "#{self.class}#authorize"
+  def capture(auth_token) = raise NotImplementedError, "#{self.class}#capture"
+  def refund(payment_id)  = raise NotImplementedError, "#{self.class}#refund"
+end
+
+# A concrete provider hides the Stripe details.
+class StripeProcessor &lt; PaymentProcessor
+  def initialize(api_key)
+    @api_key = api_key
+  end
+
+  def authorize(order)
+    # real impl: POST /v1/payment_intents with idempotency key + retries
+    "pi_#{order.id}_auth"
+  end
+
+  def capture(auth_token)
+    Receipt.new(auth_token.sub("_auth", ""), "stripe")
+  end
+
+  def refund(payment_id)
+    # POST /v1/refunds
+  end
+end
+
+# The caller depends on the abstraction only.
+class CheckoutService
+  def initialize(processor)
+    @processor = processor
+  end
+
+  def pay(order)
+    auth = @processor.authorize(order)
+    @processor.capture(auth)
+  end
+end
+
+checkout = CheckoutService.new(StripeProcessor.new("sk_live_..."))
+receipt  = checkout.pay(Order.new("ord_918", Money.new(4999, "USD")))
+puts "#{receipt.provider} #{receipt.payment_id}" # stripe pi_ord_918
+</code></pre>
+      </div>
+      <p class="muted">लक्षात घ्या की <code>CheckoutService</code> Stripe चा कधीही उल्लेख करत नाही. Tests साठी एक <code>PaypalProcessor</code> किंवा in-memory <code>FakeProcessor</code> बदलण्यासाठी caller मध्ये शून्य बदल लागतात, कारण दोघेही तोच abstract contract पूर्ण करतात.</p>
+
+      <h3>Abstract class विरुद्ध interface: खरे वर्तन सामायिक करणे</h3>
+      <p class="muted">जेव्हा प्रत्येक provider authorize करतो मग capture करतो, तेव्हा त्या orchestration ला एका abstract base मध्ये (एक template method) वर आणा आणि फक्त provider-विशिष्ट steps abstract ठेवा.</p>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Abstract base: shared charge() logic, provider-specific holes.
+abstract class BaseProcessor implements PaymentProcessor {
+  // Template method - stable orchestration every provider reuses.
+  charge(order: Order): Receipt {
+    const auth = this.authorize(order);
+    return this.capture(auth);
+  }
+  abstract authorize(order: Order): string;
+  abstract capture(authToken: string): Receipt;
+  abstract refund(paymentId: string): void;
+}
+
+class PaypalProcessor extends BaseProcessor {
+  authorize(order: Order): string { return `PAY-${order.id}`; }
+  capture(authToken: string): Receipt {
+    return { paymentId: authToken, provider: "paypal" };
+  }
+  refund(paymentId: string): void { /* POST /v2/payments/refund */ }
+}
+
+const receipt = new PaypalProcessor().charge(
+  { id: "ord_918", total: { amount: 4999, currency: "USD" } }
+);
+console.log(receipt.provider); // paypal
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Abstract base: shared charge() logic, provider-specific holes.
+class BaseProcessor(PaymentProcessor):
+    # Template method - stable orchestration every provider reuses.
+    def charge(self, order: Order) -> Receipt:
+        auth = self.authorize(order)
+        return self.capture(auth)
+
+class PaypalProcessor(BaseProcessor):
+    def authorize(self, order: Order) -> str:
+        return f"PAY-{order.id}"
+    def capture(self, auth_token: str) -> Receipt:
+        return Receipt(payment_id=auth_token, provider="paypal")
+    def refund(self, payment_id: str) -> None:
+        ...  # POST /v2/payments/refund
+
+receipt = PaypalProcessor().charge(Order("ord_918", Money(4999, "USD")))
+print(receipt.provider)  # paypal
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Abstract base: shared charge logic, provider-specific holes.
+class BaseProcessor &lt; PaymentProcessor
+  # Template method - stable orchestration every provider reuses.
+  def charge(order)
+    auth = authorize(order)
+    capture(auth)
+  end
+end
+
+class PaypalProcessor &lt; BaseProcessor
+  def authorize(order)    = "PAY-#{order.id}"
+  def capture(auth_token) = Receipt.new(auth_token, "paypal")
+  def refund(payment_id)  = nil # POST /v2/payments/refund
+end
+
+receipt = PaypalProcessor.new.charge(Order.new("ord_918", Money.new(4999, "USD")))
+puts receipt.provider # paypal
+</code></pre>
+      </div>
+      <p class="muted"><strong>अंगठ्याचा नियम:</strong> जेव्हा implementations फक्त आकार सामायिक करतात तेव्हा interface किंवा protocol कडे वळा, आणि जेव्हा ते एकदाच लिहिण्याजोगे खरे वर्तनही सामायिक करतात तेव्हा abstract class कडे वळा.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: abstraction मधून एक सामान्य charge, caller ला न स्पर्श करता concrete provider बदलणे, आणि एका test मध्ये fake implementation वापरणे.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - एक charge abstract contract मधून वाहते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 🛒 Checkout UI
+    participant C as 🧾 CheckoutService
+    participant P as 💳 PaymentProcessor
+    participant G as 🌐 Stripe gateway
+
+    U->>C: pay(order)
+    C->>P: authorize(order)
+    P->>G: POST payment_intents
+    G-->>P: auth token
+    P-->>C: auth token
+    C->>P: capture(auth token)
+    P->>G: POST capture
+    G-->>P: settled
+    P-->>C: receipt
+    C-->>U: receipt + confirmation
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Concrete provider बदला, caller कोड अपरिवर्तित</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cfg as ⚙️ Composition root
+    participant C as 🧾 CheckoutService
+    participant P as 💳 PaymentProcessor
+
+    Note over Cfg,P: Only the wiring picks the implementation
+    alt US region
+        Cfg->>C: new CheckoutService(StripeProcessor)
+    else EU region
+        Cfg->>C: new CheckoutService(AdyenProcessor)
+    end
+    C->>P: authorize(order)
+    P-->>C: auth token
+    C->>P: capture(auth token)
+    P-->>C: receipt
+    Note over C,P: Same calls, different provider behind the interface
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - एक fake implementation tests जलद आणि offline बनवते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as 🧪 Test
+    participant C as 🧾 CheckoutService
+    participant F as 🎭 FakeProcessor
+
+    T->>C: new CheckoutService(FakeProcessor)
+    T->>C: pay(order)
+    C->>F: authorize(order)
+    F-->>C: fake auth token
+    C->>F: capture(auth token)
+    F-->>C: fake receipt
+    C-->>T: receipt
+    T->>T: assert receipt.provider == "fake"
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका गुंतागुंतीच्या, provider-जोडलेल्या checkout पासून परस्पर बदलण्याजोग्या processors सह स्वच्छ abstraction पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">लक्षण</span><h4>सर्वत्र provider कोड</h4><p>Checkout, refunds, आणि reports सर्व थेट Stripe SDK ला call करतात. PayPal जोडणे म्हणजे डझनभर फाइल्स संपादित करणे, आणि tests थेट network वर जातात.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">ओळखा</span><h4>आवश्यक operations शोधा</h4><p>Callers ना खरोखर काय हवे ते सूचीबद्ध करा: authorize, capture, refund. बाकी सर्व - headers, retries, error shapes - लपवण्याजोगा आंतरिक तपशील आहे.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">मॉडेल</span><h4>Domain types डिझाइन करा</h4><p>लहान, provider-तटस्थ types सादर करा: <code>Money</code>, <code>Order</code>, <code>Receipt</code>. Contract ला हवे तेवढेच ते वाहून नेतात.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Contract</span><h4>Abstract type घोषित करा</h4><p><code>PaymentProcessor</code> interface किंवा abstract base method signatures सह आणि कोणतीही implementation न ठेवता लिहा. हेच वचन आहे.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>पहिला concrete provider लिहा</h4><p>Contract implement करणारा <code>StripeProcessor</code> तयार करा. सगळा गोंधळलेला gateway कोड इथे राहतो, स्वच्छ method नावांमागे लपलेला.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">अवलंबित्व</span><h4>Callers ना abstraction कडे निर्देशित करा</h4><p><code>CheckoutService</code> ला Stripe object नव्हे तर एक <code>PaymentProcessor</code> स्वीकारण्यास बदला. आता ते फक्त contract बोलते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Inject</span><h4>Composition root ला त्याचे wiring करा</h4><p>Concrete processor एकदाच, startup वर तयार करा, आणि तो आत pass करा. Provider ची निवड एकाच ठिकाणी राहते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">विस्तार</span><h4>दुसरा provider जोडा</h4><p>तोच contract विरुद्ध <code>PaypalProcessor</code> लिहा. कोणतेही caller बदल नाहीत - abstraction ने फरक सामावून घेतला.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">सामायिक</span><h4>सामायिक logic base मध्ये उचला</h4><p>लक्षात घ्या दोन्ही providers authorize करतात मग capture करतात. त्याला एका abstract <code>BaseProcessor.charge()</code> template method मध्ये वर आणा, फक्त provider steps abstract ठेवून.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>एक fake बदला</h4><p>Unit tests साठी <code>FakeProcessor</code> implement करा. Checkout logic आता offline, मिलिसेकंदांत, कोणत्याही live charges शिवाय पडताळण्याजोगे आहे.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">रक्षण</span><h4>Abstraction ला झिरपण्यापासून रोखा</h4><p>Interface मध्ये provider-विशिष्ट types किंवा error codes शिरत आहेत का याचे पुनरावलोकन करा. एक स्वच्छ, किमान contract ही एक जिवंत मालमत्ता आहे जिचे तुम्ही कालांतराने रक्षण करता.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">वाईट abstractions या नसण्यापेक्षाही वाईट असतात - त्या औपचारिकता जोडतात आणि तरीही ते लपवण्याचा दावा करत असलेले तपशील झिरपू देतात. यांच्याकडे लक्ष ठेवा.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💧 Leaky abstraction</h4><p>Interface एक कच्चा Stripe error परत करते किंवा एक provider-विशिष्ट status enum उघड करते. Callers त्यावर branching सुरू करतात, आणि abstraction यापुढे कुणालाही बदलापासून संरक्षण देत नाही.</p></div>
+        <div class="card"><h4>🕰️ अकाली abstraction</h4><p>तुमच्याकडे नेमका एकच provider असताना आणि दुसऱ्याची कोणतीही योजना नसताना एक <code>PaymentProcessor</code> तयार करणे कोणत्याही फायद्याशिवाय indirection जोडते. जेव्हा दुसरे प्रकरण खरे असेल तेव्हा abstract करा.</p></div>
+        <div class="card"><h4>🎈 God interface</h4><p>authorize, refund, payouts, disputes, आणि reporting एका contract मध्ये कोंबल्याने प्रत्येक implementer ला त्याला न आधारित असलेल्या methods stub कराव्या लागतात. त्याऐवजी क्षमतेनुसार विभाजित करा.</p></div>
+        <div class="card"><h4>🪆 चुकीचा seam</h4><p>Payment संकल्पनेऐवजी HTTP client abstract केल्याने business logic अजूनही gateway च्या विचित्रतेशी जोडलेली राहते. सीमा transport भोवती नव्हे तर domain भोवती काढा.</p></div>
+        <div class="card"><h4>🧨 अती-सामान्यीकृत</h4><p>एक string tag आणि options ची पिशवी घेणारी <code>doOperation(type, params)</code> method ही abstraction नाही - ती वेषातील एक switch statement आहे, कोणत्याही compile-time contract शिवाय.</p></div>
+        <div class="card"><h4>🔓 encapsulation सह गोंधळ</h4><p>Fields private बनवणे म्हणजे encapsulation, abstraction नाही. एखादे variable लपवणे आणि तरीही एक provider-आकाराचे API उघड करणे मुद्दा चुकवते: फक्त access modifier नव्हे तर आवश्यक गोष्टींचे मॉडेल बनवा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापके</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">तुम्ही "चांगली abstraction" थेट unit-test करू शकत नाही, पण हे निरीक्षणीय संकेत तुम्हाला सांगतात की तुमच्या सीमा टिकून आहेत की नाही.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>ते तुम्हाला काय सांगते</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Provider जोडण्यासाठी स्पर्श केलेल्या फाइल्स</strong></td><td>एक स्वच्छ abstraction म्हणजे एक नवीन class आणि एक wiring ओळ. अनेक संपादने म्हणजे तपशील callers मध्ये झिरपले.</td></tr>
+            <tr><td><strong>Concrete type चे imports</strong></td><td>किती modules थेट <code>StripeProcessor</code> import करतात ते मोजा. आदर्शपणे फक्त composition root; बाकी सर्वजण interface import करतात.</td></tr>
+            <tr><td><strong>Contract वरील public method संख्या</strong></td><td>एका घट्ट interface मध्ये थोड्या, सुसंगत methods असतात. फुगणारा पृष्ठभाग एका god interface चा संकेत देतो जो विभाजित करावा.</td></tr>
+            <tr><td><strong>Caller कोडमधील provider संज्ञा</strong></td><td>Callers मध्ये "stripe", "paypal", कच्चे status codes साठी grep करा. कोणताही hit म्हणजे abstraction ने सामावून घ्यायला हवा असलेला leak.</td></tr>
+            <tr><td><strong>Test वेग आणि network वापर</strong></td><td>जर unit tests एका fake सह आणि network शिवाय चालू शकत असतील, तर seam खरा आहे. जर त्यांना live credentials लागत असतील, तर abstraction आपले काम करत नाही.</td></tr>
+            <tr><td><strong>Provider बदलाचा परिणाम व्याप्ती</strong></td><td>जेव्हा एखादा gateway एक breaking API बदल पाठवतो, तेव्हा एक चांगली abstraction दुरुस्ती एका adapter फाइलपुरती मर्यादित करते.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर एखादा provider जोडणे किंवा बदलणे एका adapter आणि एका wiring ओळीबाहेर संपादने करण्यास भाग पाडत असेल, तर तुमची abstraction झिरपत आहे. अधिक providers जोडण्यापूर्वी seam दुरुस्त करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरण अभ्यास</div>
+      <h2>वास्तविक जगातील उदाहरण अभ्यास</h2>
+      <p class="muted">तीन production-शैलीच्या सिस्टम्स जिथे एक सुरेखपणे काढलेली abstraction हा भार-वाहक डिझाइन निर्णय होता.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · प्रदेशांमध्ये payment abstraction</h3><div class="role">Pattern: एक contract, अनेक gateways</div></div></div>
+        <p class="muted">आंतरराष्ट्रीय स्तरावर विस्तारणाऱ्या एका marketplace ला US मध्ये Stripe, युरोपमध्ये Adyen, आणि ब्राझीलमध्ये एक स्थानिक gateway हवे होते, checkout तीनदा पुन्हा न लिहिता.</p>
+        <ul>
+          <li>एका <code>PaymentProcessor</code> contract ने authorize, capture, आणि refund provider-तटस्थ शब्दांत व्याख्या केले.</li>
+          <li>प्रत्येक प्रदेशाने एक adapter class पाठवला; composition root ने त्याची बाजारपेठेनुसार निवड केली.</li>
+          <li>एका <code>FakeProcessor</code> ने checkout flow ला कोणत्याही live charges शिवाय पूर्णपणे test करू दिले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एक adapter जोडून नवीन बाजारपेठा सुरू झाल्या, आणि checkout code base ने एकाही gateway ची विचित्रता कधीच शिकली नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔔</span><div><h3>2 · अनेक channels वर NotificationSender</h3><div class="role">Pattern: email, SMS, आणि push वर एकसमान interface</div></div></div>
+        <p class="muted">एका product ला एकाच application कोडमधून order updates email (SendGrid), SMS (Twilio), आणि mobile push (APNs आणि FCM) द्वारे पाठवायचे होते.</p>
+        <ul>
+          <li>एका <code>NotificationSender</code> abstraction ने एक <code>send(message, recipient)</code> operation उघड केले.</li>
+          <li>प्रत्येक channel एक concrete sender बनला; एका router ने वापरकर्त्याच्या पसंतीनुसार channels निवडले.</li>
+          <li>Provider outages injected sender बदलून हाताळले गेले, callers ना अदृश्य.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Feature teams ने कोणता vendor वितरित करतो हे न जाणता किंवा त्याची पर्वा न करता notifications trigger केले.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>3 · Cloud blobs वर storage abstraction</h3><div class="role">Pattern: S3, GCS, आणि local disk एका API मागे लपवा</div></div></div>
+        <p class="muted">एक file-upload सेवा production मध्ये AWS वर चालत होती पण development मध्ये local disk आणि एका enterprise ग्राहकासाठी Google Cloud Storage लागत होते.</p>
+        <ul>
+          <li>एका <code>BlobStore</code> interface ने फक्त <code>put</code>, <code>get</code>, आणि <code>signedUrl</code> उघड केले.</li>
+          <li>Concrete stores नी त्या contract मागे S3, GCS, आणि filesystem SDKs गुंडाळले.</li>
+          <li>Developers ने संपूर्ण app disk-आधारित store विरुद्ध offline चालवले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> तेच upload logic तीन backends वर अपरिवर्तित चालले, आणि नवीन cloud सामील करणे म्हणजे एकच adapter होते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Abstraction ही एक जुनी OOP अवशेष नाही. microservices पासून plugin ecosystems पर्यंत बहुतेक आधुनिक architecture मागील ती यंत्रणा आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 Ports आणि adapters</h4><p>Hexagonal architecture ही एक शिस्त म्हणून abstraction आहे: core हा ports (interfaces) व्याख्या करतो आणि infrastructure हा adapters पुरवते, business logic vendor-मुक्त ठेवते.</p></div>
+        <div class="card"><h4>🧬 Structural typing</h4><p>Go interfaces, TypeScript structural types, आणि Python protocols objects ना आकाराने contract पूर्ण करू देतात, म्हणून abstraction ला यापुढे inheritance tree ची गरज नाही.</p></div>
+        <div class="card"><h4>🧪 डिझाइनद्वारे testability</h4><p>प्रत्येक fake, stub, आणि mock बदलण्यासाठी एका abstraction वर अवलंबून असतो. स्वच्छ seams हेच जलद, निर्धारक tests शक्य करतात.</p></div>
+        <div class="card"><h4>🧩 Plugin ecosystems</h4><p>Editors, CI systems, आणि payment platforms एक abstract extension contract उघड करतात जेणेकरून तृतीय पक्ष core ला न स्पर्श करता providers जोडू शकतात.</p></div>
+        <div class="card"><h4>☁️ Multi-cloud portability</h4><p>Storage, queues, आणि secrets interfaces मागे abstract करणे हेच teams ना lock-in टाळू देते आणि workloads cloud vendors दरम्यान हलवू देते.</p></div>
+        <div class="card"><h4>🤖 Agents मागील tooling</h4><p>Agent आणि tool frameworks एक abstract tool interface व्याख्या करतात जेणेकरून कोणतीही क्षमता - search, payments, storage - एका एकसमान contract मधून plug होते.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> abstraction हा तुम्ही बदल कसा आवरता याचा मार्ग आहे. आवश्यक operations ना नाव द्या, बाकी सर्व लपवा, आणि contract वर अवलंबून राहा - आणि providers, vendors, आणि implementations हे तुम्ही हवे तेव्हा बदलू शकणारे तपशील बनतात.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Abstraction हा object-oriented डिझाइनच्या केंद्रस्थानी असतो. या संकल्पना थेट त्यावर आधारित आहेत.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">📜</span><h4>Interfaces आणि duck typing</h4><p>Contracts कसे व्यक्त केले जातात आणि आकाराने पूर्ण केले जातात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../polymorphism/"><span class="ico">🎭</span><h4>Polymorphism</h4><p>एक method call करणे, अनेक implementations चालवणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../dependency-inversion/"><span class="ico">🔀</span><h4>Dependency inversion</h4><p>Concrete providers नव्हे तर abstractions वर अवलंबून राहा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔒</span><h4>Encapsulation</h4><p>नियंत्रित पृष्ठभागामागे state चे रक्षण करणे.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Abstraction चे एक दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · उदाहरण अभ्यास · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>
