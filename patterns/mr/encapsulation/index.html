@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Encapsulation - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंगमधील encapsulation चे सखोल, दृश्य मार्गदर्शक: डेटा लपवणे, access modifiers, वर्तन-समृद्ध ऑब्जेक्ट्स विरुद्ध get/set बॅग्स, invariants चे रक्षण, TypeScript, Python आणि Ruby कोड, आकृत्या, 0-100 प्रवाह आणि केस स्टडीजसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Encapsulation - डेटा खाजगी ठेवा, वर्तन खुले करा</h1>
+      <p class="lede">Encapsulation state आणि त्याचे नियंत्रण करणारे नियम एका ऑब्जेक्टमध्ये एकत्र बांधते, आणि मग कच्ची फील्ड्स एका लहान, हेतुपुरस्सर API मागे लपवते. Callers आत पोहोचून balance किंवा एखाद्या order च्या total ला बिघडवू शकत नाहीत; ते फक्त ऑब्जेक्टला अशा गोष्टी करायला सांगू शकतात ज्या सुरक्षित असल्याचे त्याला माहीत असते. याचा परिणाम असा की ऑब्जेक्ट <strong>नेहमी वैध</strong> राहतो, कारण त्याला बदलण्याचा एकमेव मार्ग अशा methods मधून जातो ज्या त्याच्या invariants चे रक्षण करतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">डेटा लपवणे</span>
+        <span class="pill">Access modifiers</span>
+        <span class="pill">Invariants</span>
+        <span class="pill">वर्तन-समृद्ध ऑब्जेक्ट्स</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Encapsulation म्हणजे काय?</h2>
+      <p class="muted"><strong>Encapsulation</strong> म्हणजे एखाद्या ऑब्जेक्टचे अंतर्गत state लपवणे आणि बाहेरील जगाला ते फक्त नियंत्रित methods च्या संचामधूनच स्पर्श करू देणे. ऑब्जेक्ट स्वतःच्या डेटाचा आणि तो डेटा वैध कशामुळे राहतो याच्या नियमांचा मालक असतो. एखादे बदलता येणारे <code>balance</code> फील्ड उघड करण्याऐवजी, <code>BankAccount</code> हे <code>deposit()</code> आणि <code>withdraw()</code> उघड करते, आणि त्या methods खात्याला मोडणारी कोणतीही गोष्ट नाकारतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔒</span> डेटा लपवणे</h4>
+          <p>फील्ड्स private म्हणून चिन्हांकित केली जातात जेणेकरून कोणताही caller त्यांना थेट नियुक्त करू शकत नाही. state बदलण्याचा एकमेव मार्ग म्हणजे नियम लागू करणाऱ्या methods मधून जाणे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚪</span> एक अरुंद सार्वजनिक API</h4>
+          <p>ऑब्जेक्ट <code>withdraw(amount)</code> सारखी हेतू-प्रकट करणारी operations उघड करते, कच्चे setters नाही. पृष्ठभाग लहान राहतो आणि चुकीने वापरणे कठीण असते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛡️</span> संरक्षित invariants</h4>
+          <p>"balance कधीही ऋण होत नाही" किंवा "एखाद्या order चे total त्याच्या lines च्या बेरजेइतके असते" असे नियम प्रत्येक क्षणी टिकून राहतात कारण फक्त विश्वासार्ह कोडच state बदलू शकतो.</p>
+        </div>
+      </div>
+
+      <h3>मुख्य घटक</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>घटक</th><th>ते काय करते</th><th>ठोस उदाहरण</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Private state</strong></td><td>ऑब्जेक्टच्या मालकीची फील्ड्स ज्यांना इतर कोणीही स्पर्श करू शकत नाही</td><td>एखाद्या खात्यावरील <code>#balanceCents</code></td></tr>
+            <tr><td><strong>Constructor guard</strong></td><td>जन्मताच अवैध ऑब्जेक्ट्स नाकारतो</td><td>एखादे खाते त्याच्या overdraft मर्यादेखाली सुरू होऊ शकत नाही</td></tr>
+            <tr><td><strong>Command methods</strong></td><td>बदल कायदेशीर असेल तरच state बदलतात</td><td>अपुऱ्या निधीवर <code>withdraw()</code> त्रुटी टाकते</td></tr>
+            <tr><td><strong>Query methods</strong></td><td>state चे व्युत्पन्न, सुरक्षित दृश्य वाचतात</td><td><code>availableCredit()</code> गणना करते, कधीही कच्ची फील्ड्स उघड करत नाही</td></tr>
+            <tr><td><strong>Invariant</strong></td><td>असे सत्य जे नेहमी टिकले पाहिजे</td><td>Order total कधीही ऋण नसते आणि त्याच्या lines शी जुळते</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> encapsulation म्हणजे गुप्ततेसाठी डेटा लपवणे नव्हे, तर अवैध states ना प्रस्तुत करता न येण्याजोगे बनवणे. जर एखाद्या ऑब्जेक्टच्या state मधील एकमेव दरवाजा नियम लागू करत असेल, तर तुमच्या चालू असलेल्या सिस्टीममध्ये एखादा बिघडलेला ऑब्जेक्ट अस्तित्वातच येऊ शकत नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Encapsulation का अस्तित्वात आहे</h2>
+      <p class="muted">जेव्हा state सार्वजनिक असते, तेव्हा सिस्टीममधील कोडची प्रत्येक ओळ ती बिघडवू शकणारे संभाव्य ठिकाण बनते. Encapsulation तो स्फोट-परिघ काही मोजक्या methods पर्यंत आकुंचित करते ज्या तुम्ही वाचू शकता, तपासू शकता आणि त्यांच्यावर विश्वास ठेवू शकता.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🐛 बिघडलेल्या-state च्या कमी बग्स</h4><p>जर कधी ऋण balance दिसला, तर त्याचे कारण एका class च्या आत असते, फील्डला थेट स्पर्श करणाऱ्या डझनभर call sites मध्ये विखुरलेले नसते.</p></div>
+        <div class="card"><h4>🔧 अंतर्गत गोष्टी बदलण्याचे स्वातंत्र्य</h4><p>पैसे cents म्हणून साठवा, मग एका <code>Money</code> value type कडे वळा, आणि कोणताही caller मोडत नाही कारण त्यांनी नेहमी फक्त methods पाहिल्या, कधीही फील्ड नाही.</p></div>
+        <div class="card"><h4>🧪 तपासणे आणि समजणे सोपे</h4><p>तुम्ही नियम एकाच ठिकाणी तपासता. एक वैध ऑब्जेक्ट दिल्यास, त्याचे invariants टिकतात हे तुम्हाला माहीत असते, त्यामुळे पुढच्या कोडला कमी बचावात्मक तपासण्यांची गरज लागते.</p></div>
+        <div class="card"><h4>🤝 संघांमधील स्पष्ट करार</h4><p>सार्वजनिक method यादी हाच करार आहे. संघ कोणती फील्ड संयोजने सुरक्षित आहेत याचा अंदाज लावण्याऐवजी हेतू-प्रकट करणाऱ्या operations विरुद्ध एकत्रीकरण करतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले Encapsulation</h2>
+      <p class="muted">तीच कल्पना, ती चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ते तुमच्या डोक्यात बसेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Encapsulation हे एका <strong>vending machine</strong> सारखे आहे. तुम्ही बटणे दाबता आणि नाणी टाकता; तारा पकडायला तुम्ही कधीही पॅनेल उघडत नाही. मशीन ती वस्तू देऊ शकते का हे ठरवते, आणि स्वतःच्या नाण्यांच्या मोजणीचे रक्षण करते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>ती एक अशी class आहे जिथे फील्ड्स <strong>private असतात आणि बदल methods मधून जातो</strong>. <code>order.total = 90</code> ऐवजी, तुम्ही <code>order.addLine(item)</code> कॉल करता आणि total स्वतःची पुनर्गणना करते, त्यामुळे ते कधीही lines शी विसंगत होऊ शकत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एका <strong>बँक टेलर खिडकी</strong> चा विचार करा. ग्राहक तिजोरीत चालत जात नाहीत; ते टेलरला एक स्लिप देतात, जो पैसे हलवण्यापूर्वी नियम तपासतो. प्रवेश मध्यस्थीने होतो म्हणून तिजोरी सुसंगत राहते.</p></div>
+        <div class="card"><h4><span class="ico">💊</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक <strong>child-proof झाकण असलेली औषधाची बाटली</strong>. आतील सामग्री पोहोचण्याजोगी आहे, पण फक्त अशा एका हेतुपुरस्सर हालचालीतून जी अपघाती, असुरक्षित प्रवेश थांबवते. तो अडथळाच मुद्दा आहे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>Encapsulation प्रत्यक्षात कसे काम करते</h2>
+      <p class="muted">ऑब्जेक्टने कोणत्या invariants ची हमी दिली पाहिजे हे ठरवण्यापासून तुम्ही सुरुवात करता, मग प्रत्येक फील्ड private करता आणि सर्व बदल त्या invariants ना लागू करणाऱ्या methods मधून वळवता. Access modifiers हे भाषा-स्तरावरील साधन आहे जे "कृपया याला स्पर्श करू नका" चे रूपांतर "तुम्ही याला स्पर्श करू शकत नाही" मध्ये करते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔐</span> Access modifiers</h4>
+          <p><strong>private</strong> म्हणजे फक्त हीच class ते पाहते, <strong>protected</strong> म्हणजे ही class आणि subclasses, <strong>public</strong> म्हणजे प्रत्येकजण. Python आघाडीच्या underscore (<code>_field</code>) ने हेतू दर्शवते आणि <code>__field</code> चे name-mangle करते; Ruby by default state private करते आणि ते फक्त <code>attr_reader</code> किंवा methods द्वारे उघड करते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> वर्तन-समृद्ध ऑब्जेक्ट्स विरुद्ध get/set बॅग्स</h4>
+          <p>प्रत्येक फील्डसाठी सार्वजनिक getter आणि setter असलेला अशक्त (anemic) ऑब्जेक्ट म्हणजे class चा पोशाख घातलेला केवळ एक struct आहे. वर्तन-समृद्ध ऑब्जेक्ट क्रियापदे (<code>deposit</code>, <code>cancel</code>, <code>applyDiscount</code>) उघड करतो जी नियम वाहून नेतात, त्यामुळे callers कच्ची फील्ड्स फिरवण्याऐवजी परिणामांची मागणी करतात.</p>
+        </div>
+      </div>
+
+      <h3>Classes एका दृष्टिक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">एक BankAccount स्वतःच्या balance चा मालक असते आणि overdraft नियम लागू करते; कोणीही फील्ड थेट लिहीत नाही</div>
+        <pre class="mermaid">
+classDiagram
+    class BankAccount {
+        -balanceCents int
+        -overdraftLimitCents int
+        +deposit(amountCents) void
+        +withdraw(amountCents) void
+        +balance() Money
+        +availableToSpend() Money
+    }
+    class Money {
+        &lt;&lt;value object&gt;&gt;
+        -cents int
+        +plus(other) Money
+        +isNegative() bool
+    }
+    class InsufficientFundsError {
+        +message string
+    }
+    BankAccount o-- Money : exposes as
+    BankAccount ..> InsufficientFundsError : throws
+        </pre>
+      </div>
+
+      <h3>तीन भाषांमध्ये एक खरे BankAccount</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money is stored as integer cents so we never leak floating-point rounding.
+class InsufficientFundsError extends Error {}
+
+class BankAccount {
+  // Truly private: the # fields are invisible and unwritable from outside.
+  #balanceCents: number;
+  readonly #overdraftLimitCents: number;
+
+  constructor(openingCents: number, overdraftLimitCents = 0) {
+    if (overdraftLimitCents &lt; 0) throw new Error("Overdraft limit must be >= 0");
+    if (openingCents &lt; -overdraftLimitCents) {
+      throw new Error("Opening balance breaks the overdraft limit");
+    }
+    this.#balanceCents = openingCents;
+    this.#overdraftLimitCents = overdraftLimitCents;
+  }
+
+  deposit(amountCents: number): void {
+    if (amountCents &lt;= 0) throw new Error("Deposit must be positive");
+    this.#balanceCents += amountCents;
+  }
+
+  withdraw(amountCents: number): void {
+    if (amountCents &lt;= 0) throw new Error("Withdrawal must be positive");
+    if (this.#balanceCents - amountCents &lt; -this.#overdraftLimitCents) {
+      throw new InsufficientFundsError("Withdrawal exceeds available funds");
+    }
+    this.#balanceCents -= amountCents;
+  }
+
+  // Queries return safe, derived views. No setter for the balance exists.
+  get balanceCents(): number { return this.#balanceCents; }
+  get availableToSpendCents(): number {
+    return this.#balanceCents + this.#overdraftLimitCents;
+  }
+}
+
+const acct = new BankAccount(5_000, 2_000); // $50.00, $20 overdraft
+acct.deposit(2_500);                        // $75.00
+acct.withdraw(9_000);                       // dips into overdraft, still legal
+console.log(acct.balanceCents);             // -500  (i.e. -$5.00)
+// acct.#balanceCents = 1_000_000;          // compile error: private field
+try {
+  acct.withdraw(5_000);                     // would exceed overdraft
+} catch (e) {
+  console.log((e as Error).message);        // "Withdrawal exceeds available funds"
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Money is stored as integer cents so we never leak floating-point rounding.
+class InsufficientFundsError(Exception):
+    pass
+
+
+class BankAccount:
+    def __init__(self, opening_cents: int, overdraft_limit_cents: int = 0):
+        if overdraft_limit_cents &lt; 0:
+            raise ValueError("Overdraft limit must be >= 0")
+        if opening_cents &lt; -overdraft_limit_cents:
+            raise ValueError("Opening balance breaks the overdraft limit")
+        # Double underscore triggers name mangling: hard to touch by accident.
+        self.__balance_cents = opening_cents
+        self.__overdraft_limit_cents = overdraft_limit_cents
+
+    def deposit(self, amount_cents: int) -> None:
+        if amount_cents &lt;= 0:
+            raise ValueError("Deposit must be positive")
+        self.__balance_cents += amount_cents
+
+    def withdraw(self, amount_cents: int) -> None:
+        if amount_cents &lt;= 0:
+            raise ValueError("Withdrawal must be positive")
+        if self.__balance_cents - amount_cents &lt; -self.__overdraft_limit_cents:
+            raise InsufficientFundsError("Withdrawal exceeds available funds")
+        self.__balance_cents -= amount_cents
+
+    # Read-only property: exposes a view, never a setter for the balance.
+    @property
+    def balance_cents(self) -> int:
+        return self.__balance_cents
+
+    @property
+    def available_to_spend_cents(self) -> int:
+        return self.__balance_cents + self.__overdraft_limit_cents
+
+
+acct = BankAccount(5_000, 2_000)   # $50.00, $20 overdraft
+acct.deposit(2_500)                # $75.00
+acct.withdraw(9_000)               # dips into overdraft, still legal
+print(acct.balance_cents)          # -500  (i.e. -$5.00)
+# acct.balance_cents = 1_000_000   # AttributeError: no setter defined
+try:
+    acct.withdraw(5_000)           # would exceed overdraft
+except InsufficientFundsError as e:
+    print(e)                       # "Withdrawal exceeds available funds"</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Money is stored as integer cents so we never leak floating-point rounding.
+class InsufficientFundsError &lt; StandardError; end
+
+class BankAccount
+  # attr_reader exposes a getter only; there is no writer for the balance.
+  attr_reader :balance_cents
+
+  def initialize(opening_cents, overdraft_limit_cents = 0)
+    raise ArgumentError, "Overdraft limit must be >= 0" if overdraft_limit_cents &lt; 0
+    if opening_cents &lt; -overdraft_limit_cents
+      raise ArgumentError, "Opening balance breaks the overdraft limit"
+    end
+    @balance_cents = opening_cents
+    @overdraft_limit_cents = overdraft_limit_cents
+  end
+
+  def deposit(amount_cents)
+    raise ArgumentError, "Deposit must be positive" if amount_cents &lt;= 0
+    @balance_cents += amount_cents
+  end
+
+  def withdraw(amount_cents)
+    raise ArgumentError, "Withdrawal must be positive" if amount_cents &lt;= 0
+    if @balance_cents - amount_cents &lt; -@overdraft_limit_cents
+      raise InsufficientFundsError, "Withdrawal exceeds available funds"
+    end
+    @balance_cents -= amount_cents
+  end
+
+  def available_to_spend_cents
+    @balance_cents + @overdraft_limit_cents
+  end
+end
+
+acct = BankAccount.new(5_000, 2_000)  # $50.00, $20 overdraft
+acct.deposit(2_500)                   # $75.00
+acct.withdraw(9_000)                  # dips into overdraft, still legal
+puts acct.balance_cents               # -500  (i.e. -$5.00)
+# acct.balance_cents = 1_000_000      # NoMethodError: no writer exists
+begin
+  acct.withdraw(5_000)                # would exceed overdraft
+rescue InsufficientFundsError =&gt; e
+  puts e.message                      # "Withdrawal exceeds available funds"
+end</code></pre>
+      </div>
+      <p class="muted">तिन्हींमध्ये, balance फक्त <code>deposit</code> आणि <code>withdraw</code> मधूनच हलू शकते, आणि बदल करण्यापूर्वी दोन्ही overdraft नियम तपासतात. कोणताही सार्वजनिक setter नाही, त्यामुळे "balance कधीही overdraft मर्यादेखाली जात नाही" हे invariant प्रत्येक caller योग्य वागेल अशी आशा करून नव्हे, तर बांधणीनेच हमी दिलेले असते.</p>
+
+      <h3>एका अशक्त get/set बॅगपासून वर्तन-समृद्ध ऑब्जेक्टकडे</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// BEFORE: anemic Order. Public fields, no rules. Any caller can corrupt it.
+class OrderBag {
+  totalCents = 0;
+  status = "open";
+}
+const bad = new OrderBag();
+bad.totalCents = -999;        // negative total, nobody stopped it
+bad.status = "shpped";        // typo, meaningless state, no complaint
+
+// AFTER: Order owns its lines and derives its total. Illegal states blocked.
+type Line = { sku: string; unitCents: number; qty: number };
+
+class Order {
+  #lines: Line[] = [];
+  #status: "open" | "placed" | "cancelled" = "open";
+
+  addLine(sku: string, unitCents: number, qty: number): void {
+    if (this.#status !== "open") throw new Error("Cannot edit a closed order");
+    if (unitCents &lt; 0 || qty &lt;= 0) throw new Error("Invalid line");
+    this.#lines.push({ sku, unitCents, qty });
+  }
+
+  place(): void {
+    if (this.#lines.length === 0) throw new Error("Cannot place an empty order");
+    this.#status = "placed";
+  }
+
+  // Total is DERIVED, so it can never disagree with the lines.
+  get totalCents(): number {
+    return this.#lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0);
+  }
+  get status(): string { return this.#status; }
+}
+
+const order = new Order();
+order.addLine("SKU-42", 1_299, 2);   // $25.98
+order.place();
+console.log(order.totalCents);       // 2598, always in sync with the lines</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># BEFORE: anemic Order. Public fields, no rules. Any caller can corrupt it.
+class OrderBag:
+    def __init__(self):
+        self.total_cents = 0
+        self.status = "open"
+
+bad = OrderBag()
+bad.total_cents = -999      # negative total, nobody stopped it
+bad.status = "shpped"       # typo, meaningless state, no complaint
+
+
+# AFTER: Order owns its lines and derives its total. Illegal states blocked.
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class Line:
+    sku: str
+    unit_cents: int
+    qty: int
+
+
+class Order:
+    def __init__(self):
+        self.__lines: list[Line] = []
+        self.__status = "open"
+
+    def add_line(self, sku: str, unit_cents: int, qty: int) -> None:
+        if self.__status != "open":
+            raise ValueError("Cannot edit a closed order")
+        if unit_cents &lt; 0 or qty &lt;= 0:
+            raise ValueError("Invalid line")
+        self.__lines.append(Line(sku, unit_cents, qty))
+
+    def place(self) -> None:
+        if not self.__lines:
+            raise ValueError("Cannot place an empty order")
+        self.__status = "placed"
+
+    # Total is DERIVED, so it can never disagree with the lines.
+    @property
+    def total_cents(self) -> int:
+        return sum(l.unit_cents * l.qty for l in self.__lines)
+
+    @property
+    def status(self) -> str:
+        return self.__status
+
+
+order = Order()
+order.add_line("SKU-42", 1_299, 2)   # $25.98
+order.place()
+print(order.total_cents)             # 2598, always in sync with the lines</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># BEFORE: anemic Order. Public fields, no rules. Any caller can corrupt it.
+class OrderBag
+  attr_accessor :total_cents, :status
+  def initialize
+    @total_cents = 0
+    @status = "open"
+  end
+end
+
+bad = OrderBag.new
+bad.total_cents = -999   # negative total, nobody stopped it
+bad.status = "shpped"    # typo, meaningless state, no complaint
+
+
+# AFTER: Order owns its lines and derives its total. Illegal states blocked.
+Line = Struct.new(:sku, :unit_cents, :qty)
+
+class Order
+  attr_reader :status
+
+  def initialize
+    @lines = []
+    @status = "open"
+  end
+
+  def add_line(sku, unit_cents, qty)
+    raise "Cannot edit a closed order" unless @status == "open"
+    raise "Invalid line" if unit_cents &lt; 0 || qty &lt;= 0
+    @lines &lt;&lt; Line.new(sku, unit_cents, qty)
+  end
+
+  def place
+    raise "Cannot place an empty order" if @lines.empty?
+    @status = "placed"
+  end
+
+  # Total is DERIVED, so it can never disagree with the lines.
+  def total_cents
+    @lines.sum { |l| l.unit_cents * l.qty }
+  end
+end
+
+order = Order.new
+order.add_line("SKU-42", 1_299, 2)   # $25.98
+order.place
+puts order.total_cents               # 2598, always in sync with the lines</code></pre>
+      </div>
+      <p class="muted">अशक्त बॅग कोणत्याही caller ला निरर्थक total किंवा चुकीचे शब्दलेखन केलेली status नियुक्त करू देते. वर्तन-समृद्ध <code>Order</code> total कधीही साठवतच नाही; ते आत येताना तपासलेल्या lines मधून एक total व्युत्पन्न करते, त्यामुळे total आणि lines कधीही एकमेकांपासून विलग होऊ शकत नाहीत.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>सविस्तर sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: एक सुरक्षित withdrawal, invariant चे रक्षण करणारी एक नाकारलेली withdrawal, आणि एक order जी caller वर विश्वास ठेवण्याऐवजी स्वतःचे total व्युत्पन्न करते.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - एक withdrawal जी guard उत्तीर्ण होते आणि private state बदलते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant A as 🏦 BankAccount
+    participant S as 🔒 Private balance
+
+    C->>A: withdraw(9000)
+    A->>A: check amount is positive
+    A->>S: read current balance
+    S-->>A: 7500 cents
+    A->>A: verify 7500 - 9000 within overdraft
+    A->>S: set balance to -1500
+    A-->>C: return (void)
+    Note over A,S: Caller never reads or writes the field directly
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - एक नाकारलेली withdrawal: guard त्रुटी टाकतो आणि state अस्पर्शित राहते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant A as 🏦 BankAccount
+    participant S as 🔒 Private balance
+
+    C->>A: withdraw(5000)
+    A->>S: read current balance
+    S-->>A: -500 cents
+    A->>A: evaluate overdraft rule
+    alt breaks overdraft limit
+        A-->>C: throw InsufficientFundsError
+        Note over A,S: Balance stays -500, invariant preserved
+    else within limit
+        A->>S: apply new balance
+        A-->>C: return (void)
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - एक order स्वतःचे total व्युत्पन्न करते, त्यामुळे ते त्याच्या lines शी कधीही विसंगत होऊ शकत नाही</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant O as 🧾 Order
+    participant L as 🔒 Private lines
+
+    C->>O: addLine("SKU-42", 1299, 2)
+    O->>O: validate order is open and line is sane
+    O->>L: append validated line
+    C->>O: place()
+    O->>L: read lines
+    L-->>O: one line present
+    O->>O: mark status placed
+    C->>O: totalCents
+    O->>L: read lines
+    L-->>O: [SKU-42 x2]
+    O-->>C: 2598 (computed on demand)
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">फील्ड्सच्या असुरक्षित ढिगाऱ्यापासून अशा एका class पर्यंत जिचे ऑब्जेक्ट्स नेहमी वैध असतात - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>संकल्पनेला नाव द्या</h4><p>तुम्ही ज्याचे रक्षण करत आहात तो ऑब्जेक्ट ठरवा, जसे की BankAccount किंवा Order, आणि तो कोणत्या वास्तविक जगातील गोष्टीचे प्रतिनिधित्व करतो.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Invariants</span><h4>नियम लिहून काढा</h4><p>नेहमी टिकली पाहिजेत ती सत्ये यादी करा: balance कधीही overdraft मर्यादेखाली नाही, order total कधीही ऋण नाही, total हे lines च्या बेरजेइतके.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">State</span><h4>अंतर्गत प्रतिनिधित्व निवडा</h4><p>नियम लागू करणे सोपे होईल अशी फील्ड्स निवडा, जसे की floating-point rounding टाळण्यासाठी पैशांसाठी integer cents.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Hide</span><h4>प्रत्येक फील्ड private करा</h4><p>TypeScript मध्ये private, Python मध्ये आघाडीचा किंवा दुहेरी underscore, आणि Ruby मध्ये default-private instance variables वापरा.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Guard</span><h4>Constructor मध्ये तपासा</h4><p>अवैध ऑब्जेक्ट तयार करणारे कोणतेही arguments नाकारा, जेणेकरून एक बिघडलेला instance जन्मालाच येऊ शकत नाही.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Commands</span><h4>हेतू-प्रकट करणारी क्रियापदे उघड करा</h4><p>deposit, withdraw, addLine, आणि cancel सारख्या methods जोडा ज्या कच्ची फील्ड्स उघड करण्याऐवजी परिणामांचे वर्णन करतात.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Enforce</span><h4>बदल करण्यापूर्वी नियम तपासा</h4><p>प्रत्येक command च्या आत, आधी invariant तपासा आणि बदल तो मोडणार असेल तर अर्थपूर्ण त्रुटी टाका.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Queries</span><h4>सुरक्षित, व्युत्पन्न दृश्ये परत करा</h4><p>availableToSpend किंवा totalCents सारख्या read-only queries द्या ज्या फील्ड्स उघड करण्याऐवजी state मधून गणना करतात.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Refuse</span><h4>Setters काढून टाका</h4><p>सरसकट setters हटवा. एखादे मूल्य बदलावेच लागत असेल, तर ते खुल्या फील्डमधून नव्हे तर नियमाची मालकी असलेल्या command मधून बदलते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Invariant टिकते हे सिद्ध करा</h4><p>ऑब्जेक्टला बाहेरून मोडण्याचा प्रयत्न करणारे tests लिहा आणि तो नकार देतो याची खात्री करा, जेणेकरून हमी गृहीत न धरता पडताळली जाते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Trust</span><h4>नेहमी-वैध ऑब्जेक्ट्सवर अवलंबून राहा</h4><p>पुढचा कोड बचावात्मक तपासण्या सोडून देतो कारण त्याला मिळणारा कोणताही instance बांधणीनेच आधीच वैध असतो.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Encapsulation चा बनाव करणे सोपे आहे आणि ते गळणेही सोपे आहे. हे असे संकेत आहेत जे शांतपणे ते पूर्ववत करतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎭 Getter/setter नाटक</h4><p>प्रत्येक private फील्डला केवळ नियुक्ती करण्यापलीकडे काहीही न करणाऱ्या सार्वजनिक getter आणि setter मध्ये गुंडाळणे म्हणजे फील्ड सार्वजनिक करण्यासारखेच आहे. नियम अजूनही कुठेच राहत नाहीत.</p></div>
+        <div class="card"><h4>🩸 बदलता येणारे अंतर्गत भाग गळणे</h4><p>प्रत्यक्ष अंतर्गत list किंवा map परत केल्याने caller ऑब्जेक्टच्या पाठीमागे तिला बदलू शकतो. त्याऐवजी एक प्रत किंवा read-only दृश्य परत करा.</p></div>
+        <div class="card"><h4>🧟 अशक्त domain model</h4><p>जे ऑब्जेक्ट्स फक्त डेटा धरून ठेवतात तर सगळे logic service classes मध्ये राहते ते वेशांतर केलेले structs असतात. वर्तन आणि ते जो डेटा राखते तो एकत्र असले पाहिजेत.</p></div>
+        <div class="card"><h4>🔓 Input वर विश्वास ठेवणारा constructor</h4><p>Arguments न तपासता ऑब्जेक्ट बांधल्याने अवैध instance जन्मापासूनच अस्तित्वात राहू शकतो, त्यामुळे नंतरच्या प्रत्येक method ला त्याच गोष्टी पुन्हा तपासाव्या लागतात.</p></div>
+        <div class="card"><h4>📢 अती-उघड API</h4><p>सोयीसाठी helpers ना public चिन्हांकित केल्याने करार रुंदावतो. Callers तुम्ही बदलण्यास मोकळे ठेवू इच्छित असलेल्या अंतर्गत भागांवर अवलंबून राहू लागतात.</p></div>
+        <div class="card"><h4>🧮 व्युत्पन्न मूल्ये साठवणे</h4><p>Order total lines सोबत एका फील्डमध्ये cache केल्याने विलगता निमंत्रित होते; एक line जोडा आणि तिला update करायला विसरा, आणि दोघे विसंगत होतात. मागणीनुसार व्युत्पन्न करा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि मोजमाप कसे करावे</h2>
+      <p class="muted">Encapsulation वर तुम्ही एकच आकडा ठेवू शकत नाही, पण हे संकेत तुम्हाला सांगतात की तुमचे ऑब्जेक्ट्स प्रत्यक्षात स्वतःचे रक्षण करत आहेत का.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>ते तुम्हाला काय सांगते</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>सार्वजनिक setter ची संख्या</strong></td><td>अनेक सरसकट setters म्हणजे state प्रत्यक्षात खुले आहे आणि नियम इतरत्र किंवा कुठेच राहतात.</td></tr>
+            <tr><td><strong>Commands आणि accessors चे गुणोत्तर</strong></td><td>बहुतांश क्रियापदे वर्तन-समृद्ध ऑब्जेक्ट्स दर्शवतात; बहुतांश get/set एक अशक्त डेटा बॅग दर्शवते.</td></tr>
+            <tr><td><strong>प्रति फील्ड invariant तपासण्या</strong></td><td>तीच पडताळणी अनेक call sites वर पुनरावृत्त होणे म्हणजे ऑब्जेक्ट स्वतःच्या state चे रक्षण करत नाही.</td></tr>
+            <tr><td><strong>परत केलेल्या संग्रहांचे बाह्य बदल</strong></td><td>जर callers एखादा getter जे परत करतो ते बदलू शकत असतील, तर अंतर्गत भाग गळत आहेत आणि encapsulation मोडलेले आहे.</td></tr>
+            <tr><td><strong>अशक्य states च्या बग रिपोर्ट्स</strong></td><td>Production मध्ये ऋण balances किंवा totals थेट एका गहाळ किंवा टाळता येणाऱ्या guard कडे बोट दाखवतात.</td></tr>
+            <tr><td><strong>बदलाचा स्फोट-परिघ</strong></td><td>तुम्ही एखादे फील्ड पुनर्नामित केल्यावर किती फायली मोडतात यावरून अंतर्गत भाग किती चांगले लपवले होते हे मोजले जाते.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ठोकताळा:</strong> जर तुम्ही एखादा अवैध ऑब्जेक्ट बांधू शकत असाल, किंवा class च्या बाहेरून आत पोहोचून एखादा वैध ऑब्जेक्ट बिघडवू शकत असाल, तर तो ऑब्जेक्ट encapsulated नाही, त्यावर कितीही private keywords असले तरी.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन production-शैलीच्या सिस्टीम्स जिथे encapsulation हेच डेटा विश्वासार्ह ठेवते.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>1 · Payments platform मधील ledger service</h3><div class="role">Pattern: account balance जे कधीही अवैध होऊ शकत नाही</div></div></div>
+        <p class="muted">एक payments platform पैशांची प्रत्येक हालचाल नोंदवते आणि खात्याने कधीही शांतपणे त्याच्या परवानगीच्या मर्यादेखाली जाऊ नये याची हमी देणे आवश्यक असते.</p>
+        <ul>
+          <li>Balance हे cents चा एक private integer आहे; एकमेव बदल म्हणजे post आणि reverse operations जी आधी मर्यादा तपासतात.</li>
+          <li>Constructor overdraft नियम आधीच मोडणाऱ्या opening states ना नाकारतो, त्यामुळे कोणतेही अवैध खाते कधीही साठवले जात नाही.</li>
+          <li>Queries available-to-spend एक गणना केलेले मूल्य म्हणून उघड करतात, कधीही कच्चे फील्ड नाही, त्यामुळे callers नियम टाळू शकत नाहीत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Reconciliation मध्ये अशक्य balances दिसणे थांबते कारण पैशांची मालकी असलेली एकमेव class हाच त्यांना हलवू शकणारा एकमेव कोड असतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>2 · E-commerce backend मधील checkout आणि cart</h3><div class="role">Pattern: पडताळलेल्या lines मधून व्युत्पन्न केलेले order total</div></div></div>
+        <p class="muted">एका e-commerce backend ने हे सुनिश्चित करणे आवश्यक असते की items जोडले आणि काढले जात असले तरी order total नेहमी discounts नंतरच्या त्याच्या lines च्या बेरजेइतके असते.</p>
+        <ul>
+          <li>Order lines ची एक private list धरून ठेवते आणि total मागणीनुसार गणते, त्यामुळे दोघे कधीही विलग होऊ शकत नाहीत.</li>
+          <li>Placed order ला line जोडल्यास त्रुटी येते, ज्यामुळे placed orders गोठलेली असतात हे invariant संरक्षित होते.</li>
+          <li>Discounts अशा methods मधून लावले जातात ज्या परिणाम शून्यावर मर्यादित करतात, त्यामुळे total कधीही ऋण होऊ शकत नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> जुळत नसलेल्या totals मुळे होणारे किंमत वाद नाहीसे होतात कारण total हे एक गणना केलेले सत्य आहे, caller बदलू शकेल असे फील्ड नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📦</span><div><h3>3 · Warehouse system मधील inventory मोजण्या</h3><div class="role">Pattern: oversell पासून रक्षिलेली stock पातळी</div></div></div>
+        <p class="muted">एक warehouse system on-hand आणि reserved प्रमाणांचा मागोवा घेते आणि reserved ने कधीही on-hand पेक्षा जास्त होऊ देता कामा नये.</p>
+        <ul>
+          <li>दोन्ही मोजण्या private आहेत; reserve आणि release हेच त्यांना बदलण्याचे एकमेव मार्ग आहेत, आणि प्रत्येक invariant तपासतो.</li>
+          <li>Reserved ला on-hand पेक्षा वर ढकलणारे reservation शांतपणे जास्त सेट न करता स्पष्ट domain error सह नाकारले जाते.</li>
+          <li>उपलब्ध stock हे on-hand वजा reserved म्हणून उघड केले जाते, साठवून जुने होण्याचा धोका न पत्करता प्रत्येक वेळी गणले जाते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Overselling च्या घटना झपाट्याने कमी होतात कारण stock ऑब्जेक्ट स्वतःची सुसंगती मोडणारी कोणतीही operation नाकारते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Encapsulation आजच्या बहुतांश stacks च्या आधीचे आहे, तरीही प्रत्येक आधुनिक कल त्यावर कमी नव्हे तर अधिक जोर देतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Domain-driven design</h4><p>Aggregates म्हणजे मोठ्या प्रमाणावरील encapsulation: एक root ऑब्जेक्ट्सचा एक समूह आणि त्यांच्या invariants चे रक्षण करते, आणि बाहेरील कोड त्या समूहाला फक्त त्याच्यामार्फतच स्पर्श करतो.</p></div>
+        <div class="card"><h4>🔗 Microservice सीमा</h4><p>API मागे स्वतःचा database लपवणारी service म्हणजे नेटवर्कवरील encapsulation. Private state म्हणजे schema; सार्वजनिक पृष्ठभाग म्हणजे करार.</p></div>
+        <div class="card"><h4>🧊 Value objects आणि immutability</h4><p>Money, Email, आणि Quantity types पडताळणी एकदाच encapsulate करतात, त्यामुळे एक वैध मूल्य जिथे जिथे प्रवास करते तिथे वैधच राहते, पुन्हा तपासण्याची गरज नाही.</p></div>
+        <div class="card"><h4>🦀 भाषा-लागू केलेली गोपनीयता</h4><p>Rust modules, TypeScript private fields, आणि Kotlin visibility compiler ला लपवणे लागू करायला लावतात, ज्यामुळे एका प्रथेचे रूपांतर एका हमीमध्ये होते.</p></div>
+        <div class="card"><h4>🤖 सुरक्षित code generation</h4><p>जेव्हा ऑब्जेक्ट्स स्वतःचे नियम लागू करतात, तेव्हा generated किंवा agent ने लिहिलेली call sites state बिघडवू शकत नाहीत, कारण एकमेव दरवाजा अजूनही पडताळणी करतो.</p></div>
+        <div class="card"><h4>⚡ Concurrency सुरक्षा</h4><p>एका रक्षिलेल्या ऑब्जेक्टमधून पोहोचता येणारे state सर्वत्र स्पर्श केलेल्या फील्ड्सपेक्षा synchronize करणे खूप सोपे असते, त्यामुळे encapsulation हे concurrency चे मित्र आहे.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> encapsulation म्हणजे डेटा आणि त्याचे नियम एकाच रक्षिलेल्या ठिकाणी ठेवून अवैध states अशक्य करण्याची शिस्त. सिस्टीम्स वाढत जातात आणि अधिक कोड, मानवी किंवा generated, त्यांना स्पर्श करतो तसे, स्वतःचे रक्षण करणारा ऑब्जेक्ट हाच संपूर्ण सिस्टीमला प्रामाणिक ठेवतो.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Encapsulation OOP कल्पनांच्या एका जाळ्याच्या केंद्रस्थानी बसते. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../objects-and-classes/"><span class="ico">🧩</span><h4>Objects आणि classes</h4><p>State ला त्याचे रक्षण करणाऱ्या वर्तनासोबत बांधणारे एकक.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../tell-dont-ask/"><span class="ico">📣</span><h4>Tell, don't ask</h4><p>ऑब्जेक्ट्सना कृती करायला सांगा, त्यांच्यासाठी निर्णय घ्यायला त्यांचा डेटा बाहेर काढू नका.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../encapsulating-collections/"><span class="ico">📚</span><h4>Encapsulating collections</h4><p>List लपवा आणि तिच्यावर सुरक्षित operations उघड करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🛠️</span><h4>Construction invariants</h4><p>ऑब्जेक्ट जन्माला येताच त्याच्या वैधतेची हमी द्या.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Encapsulation चे एक दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

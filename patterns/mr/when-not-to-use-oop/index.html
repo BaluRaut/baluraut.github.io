@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP कधी वापरू नये - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="procedural, functional किंवा data-oriented कोड objects पेक्षा कधी सरस ठरतो हे ओळखण्यासाठी वरिष्ठ पातळीचे मार्गदर्शन: stateless pipelines, शुद्ध pricing गणित, छोटे scripts, objects आणणारा नसता सोपस्कार, आणि व्यवहार्यपणे paradigms एकत्र मिसळणे." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>OOP कधी वापरू नये - आणि त्याऐवजी काय निवडावे</h1>
+      <p class="lede">जेव्हा तुमच्याकडे identity, mutable state, आणि data सोबत प्रवास करणारे behavior असते, तेव्हाच objects आपली किंमत वसूल करतात. पण खरा कोड बराचसा फक्त <strong>data आत, data बाहेर</strong> इतकाच असतो: एखादे ETL transform, pricing गणित, एकदाच चालणारे migration script. त्यांना classes मध्ये गुंडाळल्याने नुसता सोपस्कार वाढतो, त्यातून काहीच मिळत नाही. procedural, functional किंवा data-oriented कोड कधी अधिक स्पष्ट पर्याय ठरतो हे ओळखणे, आणि हट्ट न धरता paradigms कसे मिसळायचे, हा या पानाचा विषय आहे.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Stateless transforms</span>
+        <span class="pill">Data-oriented design</span>
+        <span class="pill">Pure functions</span>
+        <span class="pill">व्यवहार्य मिश्रण</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>"OOP नको" म्हणजे नेमके काय</h2>
+      <p class="muted">हे OOP-विरोधी नाही. समस्येच्या आकाराला योग्य ते साधन जुळवण्याबद्दल आहे. OOP हे state आणि behavior एका interface मागे बांधून ठेवते, जेणेकरून objects कालांतराने एकत्र काम करू शकतात. जेव्हा तुमच्या समस्येत <em>दीर्घकाळ टिकणारे state नसते</em> आणि <em>रक्षण करण्यासारखी identity नसते</em>, तेव्हा हे बांधणे नुसते ओझे बनते: constructors, dependency जोडणी, mocks, आणि तुम्हाला नको असणारे lifecycle. त्याचे पर्याय म्हणजे procedural कोड, functional pipelines, आणि data-oriented design, जे साधे data आणि त्यावरील functions वेगळे ठेवते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔁</span> Stateless transforms</h4>
+          <p>rows आत घेऊन rows बाहेर देणारे ETL step दोन calls मध्ये कोणतेही state ठेवत नाही. एक pure function ही प्रामाणिक signature आहे; एकाच <code>run()</code> method असलेला class म्हणजे वेषभूषा घातलेली function आहे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧮</span> Pure गणिते</h4>
+          <p>Pricing, tax, discounts, आणि currency गणित deterministic असते: सारखे inputs, सारखे output. Functions सहज compose होतात आणि सहज test होतात. Objects एक lifecycle जोडतात जे pure गणिताने कधी मागितलेच नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📜</span> छोटे scripts</h4>
+          <p>एकदा चालून बंद होणारे backfill किंवा CSV साफसफाई करणारे script याला class hierarchy लागत नाही. एका नजरेत वाचता येईल असा वरून खालपर्यंतचा procedural कोड हीच योग्य तेवढी रचना आहे.</p>
+        </div>
+      </div>
+
+      <h3>OOP कुठे बसते आणि कुठे बसत नाही</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>समस्येतील संकेत</th><th>OOP बसते</th><th>procedural / functional निवडा</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>दीर्घकाळ टिकणारी identity</strong></td><td>टिकून राहणारा आणि बदलणारा <code>ShoppingCart</code> किंवा <code>Account</code></td><td>फक्त एका call पुरता जगणारा tax गणित</td></tr>
+            <tr><td><strong>State + invariants</strong></td><td>कधीही ऋण न होणारा एक ledger</td><td>records च्या batch वरील stateless map/filter</td></tr>
+            <tr><td><strong>Polymorphism</strong></td><td>एका interface मागे अनेक payment providers</td><td>कोणतेही प्रकार नसलेले एकच ठराविक transform</td></tr>
+            <tr><td><strong>Data चा आकार</strong></td><td>प्रत्येक entity शी जोडलेले समृद्ध behavior</td><td>pipeline मधून वाहणाऱ्या सपाट rows</td></tr>
+            <tr><td><strong>आयुष्य</strong></td><td>sessions असलेली दीर्घकाळ चालणारी service</td><td>चालून बंद होणारे cron script</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य विचारसरणी:</strong> objects हे <em>टिकून राहणाऱ्या आणि नियम लादणाऱ्या गोष्टींसाठी</em> असतात. जर तुमचा कोड input पासून output पर्यंत एकेरी रस्ता असेल आणि दोन calls मध्ये रक्षण करण्यासारखे काहीच नसेल, तर function हे अधिक स्पष्ट, स्वस्त आणि testable एकक आहे.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>OOP जबरदस्तीने लादल्याने त्रास का होतो</h2>
+      <p class="muted">हट्टी OOP साध्या data प्रवाहाचे रूपांतर सहकाऱ्यांच्या एका जाळ्यात करते, ज्यांना तुम्हाला बांधावे, inject करावे आणि mock करावे लागते. हा सोपस्कार खरे गणन झाकून टाकतो आणि पुढच्या प्रत्येक वाचकाला मंदावतो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎭 आशयाऐवजी सोपस्कार</h4><p>तीन ओळींचे transform एका constructor, private field, आणि <code>process()</code> method असलेला class बनते. वाचकांना आता एक <code>map</code> शोधण्यासाठी boilerplate चाळावे लागते. signal-to-noise गुणोत्तर घसरते.</p></div>
+        <div class="card"><h4>🧪 अवघड testing</h4><p>Pure functions ला फक्त inputs आणि तपासलेले outputs लागतात. तेच logic test करण्यासाठी object graph ला बांधलेली dependencies, mocks, आणि stubs लागतात. तुम्ही behavior ऐवजी जोडणी test करता.</p></div>
+        <div class="card"><h4>🕳️ लपलेले mutation</h4><p>Objects mutable fields ला आमंत्रण देतात. जिथे immutable stages ची स्वच्छ मालिका असावी अशा data pipeline मध्ये, लपलेले state order वर अवलंबून असणारे bugs निर्माण करते, जे पुन्हा घडवणे त्रासदायक असते.</p></div>
+        <div class="card"><h4>🧩 पोकळ कवचे</h4><p>फक्त fields get आणि set करणाऱ्या classes मध्ये data-only records गुंडाळल्याने anemic domain model तयार होते: objects चा सगळा सोपस्कार, पण त्यांना न्याय्य ठरवणारे कोणतेही behavior नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावून सांगितलेले OOP कधी वापरू नये</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ते पटकन कळेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>कागदाच्या चिटोऱ्यावर दोन आकडे बेरीज करण्यासाठी तुम्ही <strong>कपाट</strong> बनवत नाही. pricing formula म्हणजे कागदाची चिटोरी आहे. Objects म्हणजे कपाट: जेव्हा तुम्ही अनेक गोष्टी कालांतराने साठवता आणि सांभाळता तेव्हा फायद्याचे, पण एका बेरजेसाठी वाया घालवणे.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>ETL stage म्हणजे एक <strong>Unix pipe</strong>: <code>read | clean | enrich | write</code>. प्रत्येक stage एक stream घेते आणि एक परत करते. फक्त ओळी filter करण्यासाठी तुम्ही <code>grep</code> ला lifecycle असलेल्या stateful object मध्ये बदलणार नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p><strong>कर फॉर्म</strong> भरणे ही एक कृती आहे: ठराविक inputs, ठराविक नियम, एक आकडा बाहेर. एक return मोजण्यासाठी तुम्ही कायमस्वरूपी विभाग नेमत नाही. चालू व्यवसायासाठी संघटनेचा तक्ता (objects आणि भूमिका) राखून ठेवा, एकदाच्या गणनेसाठी नाही.</p></div>
+        <div class="card"><h4><span class="ico">🍳</span> रोजच्या भाषेत</h4><p>टोस्ट बनवायला तुम्ही काही <strong>पायऱ्या</strong> पाळता, Bread repository सांभाळणारा Toast Manager नेमत नाही. साध्या सरळ कामांना कृती हवी असते, विभाग आणि सोपवासोपवी असलेली संघटना नव्हे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>अति-objects बनवलेली परिस्थिती कशी ओळखावी आणि refactor करावी</h2>
+      <p class="muted">खूण अशी: कोणतेही अर्थपूर्ण state नसलेला, एकच public method असलेला, आणि <code>-er</code> किंवा <code>-Manager</code> ने संपणारे नाव असलेला class. ही एक अशी function आहे जिला constructor फुटला. उपाय म्हणजे ती एका pure function मध्ये किंवा त्यांच्या छोट्या pipeline मध्ये आकुंचित करणे.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔎</span> दुर्गंध ओळखा</h4>
+          <p>ज्या classes चे एकमेव field म्हणजे inject केलेले config आहे आणि एकमेव method म्हणजे <code>run</code>, <code>process</code> किंवा <code>calculate</code> आहे, त्या शोधा. ते एक stateless गणन आहे. त्याला function व्हायचे आहे, हवे तर आपल्या config सह curry केलेली.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧵</span> stages compose करा</h4>
+          <p>ETL प्रवाहाला immutable data पास करणाऱ्या छोट्या pure functions ची मालिका म्हणून model करा. प्रत्येक stage स्वतंत्रपणे testable, पुन्हा क्रमवारी लावता येणारे, आणि पुनर्वापर करता येणारे असते, batch धरून ठेवणारे कोणतेही shared mutable object नसते.</p>
+        </div>
+      </div>
+
+      <h3>अति-objects बनवलेल्या design चा आकार</h3>
+      <div class="diagram">
+        <div class="cap">अति-objects बनवलेले pricing: एक आकडा मोजण्यासाठी चार सहकारी</div>
+        <pre class="mermaid">
+classDiagram
+    class PriceCalculator {
+      -TaxService tax
+      -DiscountEngine discounts
+      +calculate(Order) Money
+    }
+    class TaxService {
+      +apply(Money, Region) Money
+    }
+    class DiscountEngine {
+      +apply(Money, Coupon) Money
+    }
+    class MoneyFormatter {
+      +format(Money) String
+    }
+    PriceCalculator o-- TaxService
+    PriceCalculator o-- DiscountEngine
+    PriceCalculator ..> MoneyFormatter
+        </pre>
+      </div>
+
+      <h3>अति-objects बनवलेली design विरुद्ध अधिक सोपी functional pipeline</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// OVER-OBJECTED: four classes to compute one price.
+class TaxService {
+  apply(cents: number, region: string): number {
+    const rate = region === "EU" ? 0.20 : 0.0725;
+    return Math.round(cents * (1 + rate));
+  }
+}
+class DiscountEngine {
+  apply(cents: number, coupon?: string): number {
+    return coupon === "SAVE10" ? Math.round(cents * 0.9) : cents;
+  }
+}
+class PriceCalculator {
+  constructor(private tax: TaxService, private discounts: DiscountEngine) {}
+  calculate(order: { subtotalCents: number; region: string; coupon?: string }): number {
+    const discounted = this.discounts.apply(order.subtotalCents, order.coupon);
+    return this.tax.apply(discounted, order.region);
+  }
+}
+const calc = new PriceCalculator(new TaxService(), new DiscountEngine());
+calc.calculate({ subtotalCents: 5000, region: "EU", coupon: "SAVE10" }); // 5400
+
+// SIMPLER: pure functions that compose. No wiring, no mocks to test.
+type Order = { subtotalCents: number; region: string; coupon?: string };
+
+const applyDiscount = (cents: number, coupon?: string): number =>
+  coupon === "SAVE10" ? Math.round(cents * 0.9) : cents;
+
+const applyTax = (cents: number, region: string): number => {
+  const rate = region === "EU" ? 0.20 : 0.0725;
+  return Math.round(cents * (1 + rate));
+};
+
+const priceOrder = (o: Order): number =>
+  applyTax(applyDiscount(o.subtotalCents, o.coupon), o.region);
+
+priceOrder({ subtotalCents: 5000, region: "EU", coupon: "SAVE10" }); // 5400</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># OVER-OBJECTED: four classes to compute one price.
+class TaxService:
+    def apply(self, cents: int, region: str) -> int:
+        rate = 0.20 if region == "EU" else 0.0725
+        return round(cents * (1 + rate))
+
+class DiscountEngine:
+    def apply(self, cents: int, coupon: str | None) -> int:
+        return round(cents * 0.9) if coupon == "SAVE10" else cents
+
+class PriceCalculator:
+    def __init__(self, tax: TaxService, discounts: DiscountEngine):
+        self._tax = tax
+        self._discounts = discounts
+    def calculate(self, order: dict) -> int:
+        discounted = self._discounts.apply(order["subtotal_cents"], order.get("coupon"))
+        return self._tax.apply(discounted, order["region"])
+
+calc = PriceCalculator(TaxService(), DiscountEngine())
+calc.calculate({"subtotal_cents": 5000, "region": "EU", "coupon": "SAVE10"})  # 5400
+
+# SIMPLER: pure functions that compose. No wiring, no mocks to test.
+def apply_discount(cents: int, coupon: str | None) -> int:
+    return round(cents * 0.9) if coupon == "SAVE10" else cents
+
+def apply_tax(cents: int, region: str) -> int:
+    rate = 0.20 if region == "EU" else 0.0725
+    return round(cents * (1 + rate))
+
+def price_order(order: dict) -> int:
+    discounted = apply_discount(order["subtotal_cents"], order.get("coupon"))
+    return apply_tax(discounted, order["region"])
+
+price_order({"subtotal_cents": 5000, "region": "EU", "coupon": "SAVE10"})  # 5400</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># OVER-OBJECTED: four classes to compute one price.
+class TaxService
+  def apply(cents, region)
+    rate = region == "EU" ? 0.20 : 0.0725
+    (cents * (1 + rate)).round
+  end
+end
+
+class DiscountEngine
+  def apply(cents, coupon)
+    coupon == "SAVE10" ? (cents * 0.9).round : cents
+  end
+end
+
+class PriceCalculator
+  def initialize(tax, discounts)
+    @tax = tax
+    @discounts = discounts
+  end
+  def calculate(order)
+    discounted = @discounts.apply(order[:subtotal_cents], order[:coupon])
+    @tax.apply(discounted, order[:region])
+  end
+end
+
+calc = PriceCalculator.new(TaxService.new, DiscountEngine.new)
+calc.calculate(subtotal_cents: 5000, region: "EU", coupon: "SAVE10") # 5400
+
+# SIMPLER: pure methods that compose. No wiring, no mocks to test.
+def apply_discount(cents, coupon)
+  coupon == "SAVE10" ? (cents * 0.9).round : cents
+end
+
+def apply_tax(cents, region)
+  rate = region == "EU" ? 0.20 : 0.0725
+  (cents * (1 + rate)).round
+end
+
+def price_order(order)
+  apply_tax(apply_discount(order[:subtotal_cents], order[:coupon]), order[:region])
+end
+
+price_order(subtotal_cents: 5000, region: "EU", coupon: "SAVE10") # 5400</code></pre>
+      </div>
+      <p class="muted">दोन्ही आवृत्त्या तेच 5400 cents मोजतात. functional आवृत्ती constructors, inject केलेली fields, आणि object graph test करण्यासाठी लागणारे mocks टाकून देते. उरते ते नेमके गणित, composition म्हणून व्यक्त केलेले. हेच data-oriented design आहे: साधे data pure functions मधून वाहते, आणि calls मध्ये कोणतेही state लपत नाही.</p>
+
+      <h3>ETL pipeline stateful engine नव्हे तर composed stages म्हणून</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// A transform pipeline: each stage is data-in, data-out. No engine object.
+type Row = { email: string; amount: string; region: string };
+type Clean = { email: string; cents: number; region: string };
+
+const parse = (rows: Row[]): Clean[] =>
+  rows.map(r => ({
+    email: r.email.trim().toLowerCase(),
+    cents: Math.round(parseFloat(r.amount) * 100),
+    region: r.region.toUpperCase(),
+  }));
+
+const dropInvalid = (rows: Clean[]): Clean[] =>
+  rows.filter(r => r.email.includes("@") && r.cents > 0);
+
+const totalsByRegion = (rows: Clean[]): Record&lt;string, number&gt; =>
+  rows.reduce((acc, r) => ({ ...acc, [r.region]: (acc[r.region] ?? 0) + r.cents }), {} as Record&lt;string, number&gt;);
+
+// Compose the whole pipeline as a single expression.
+const run = (rows: Row[]) => totalsByRegion(dropInvalid(parse(rows)));</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># A transform pipeline: each stage is data-in, data-out. No engine object.
+from functools import reduce
+
+def parse(rows):
+    return [
+        {
+            "email": r["email"].strip().lower(),
+            "cents": round(float(r["amount"]) * 100),
+            "region": r["region"].upper(),
+        }
+        for r in rows
+    ]
+
+def drop_invalid(rows):
+    return [r for r in rows if "@" in r["email"] and r["cents"] > 0]
+
+def totals_by_region(rows):
+    acc = {}
+    for r in rows:
+        acc[r["region"]] = acc.get(r["region"], 0) + r["cents"]
+    return acc
+
+# Compose the whole pipeline as a single expression.
+def run(rows):
+    return totals_by_region(drop_invalid(parse(rows)))</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># A transform pipeline: each stage is data-in, data-out. No engine object.
+def parse(rows)
+  rows.map do |r|
+    {
+      email: r[:email].strip.downcase,
+      cents: (r[:amount].to_f * 100).round,
+      region: r[:region].upcase,
+    }
+  end
+end
+
+def drop_invalid(rows)
+  rows.select { |r| r[:email].include?("@") && r[:cents] > 0 }
+end
+
+def totals_by_region(rows)
+  rows.each_with_object(Hash.new(0)) { |r, acc| acc[r[:region]] += r[:cents] }
+end
+
+# Compose the whole pipeline with method chaining.
+def run(rows)
+  totals_by_region(drop_invalid(parse(rows)))
+end</code></pre>
+      </div>
+      <p class="muted">येथे काहीही lifecycle असलेले object नाही. प्रत्येक stage एक pure transformation आहे, जी तुम्ही वेगळेपणाने unit-test करू शकता, पुन्हा क्रमवारी लावू शकता, किंवा दुसऱ्या pipeline मध्ये पुनर्वापर करू शकता. एक stage जोडणे म्हणजे एक function जोडणे, stateful engine संपादित करून त्याचे invariants पुन्हा तपासणे नव्हे.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: object graph चा सोपस्कार, तेच काम सपाट pipeline म्हणून, आणि व्यवहार्य मिश्रण जिथे objects कडेला बसतात आणि functions मुख्य गणित करतात.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - object graph: एक आकडा मोजण्यासाठी सोपवासोपवी आणि जोडणी</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Calc as 🧮 PriceCalculator
+    participant Disc as 🏷️ DiscountEngine
+    participant Tax as 💶 TaxService
+
+    Caller->>Calc: new(tax, discounts)
+    Note over Caller,Calc: construct and inject two dependencies
+    Caller->>Calc: calculate(order)
+    Calc->>Disc: apply(subtotal, coupon)
+    Disc-->>Calc: discounted
+    Calc->>Tax: apply(discounted, region)
+    Tax-->>Calc: total
+    Calc-->>Caller: total
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - functional pipeline: सरळ रेषेतील data प्रवाह, जोडणी नाही</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Fn as 🔁 priceOrder
+
+    Caller->>Fn: priceOrder(order)
+    Fn->>Fn: applyDiscount(subtotal, coupon)
+    Fn->>Fn: applyTax(discounted, region)
+    Fn-->>Caller: total
+    Note over Caller,Fn: pure, deterministic, nothing to construct or mock
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - व्यवहार्य मिश्रण: कडेला objects, गाभ्यात pure functions</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant HTTP as 🌐 HTTP handler
+    participant Svc as 🧰 OrderService
+    participant Pure as 🔁 pricing (pure fns)
+    participant DB as 🗄️ Repository
+
+    HTTP->>Svc: place(orderDto)
+    Svc->>DB: load prior state
+    DB-->>Svc: account, cart
+    Svc->>Pure: priceOrder(data)
+    Note over Svc,Pure: side-effect-free math lives here
+    Pure-->>Svc: total
+    alt total valid
+        Svc->>DB: persist charge
+        Svc-->>HTTP: 201 created
+    else invalid input
+        Svc-->>HTTP: 422 rejected
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी पायरीने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">कोडाच्या प्रत्येक एककासाठी paradigm निवडण्याची निर्णय प्रक्रिया, पहिल्या नजरेपासून ते सांभाळण्यायोग्य निकालापर्यंत.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">मांडणी</span><h4>एककाचे वर्णन एका वाक्यात करा</h4><p>ते काय करते ते मोठ्याने सांगा: "order मधून total मोजते", "CSV साफ करते". input पासून output पर्यंतचे pure वाक्य function कडे झुकणारा भक्कम इशारा आहे.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">State</span><h4>विचारा: दीर्घकाळ टिकणारे state आहे का?</h4><p>calls मध्ये काही टिकून राहून बदलण्याची गरज आहे का? cart, account, connection pool. जर काहीच टिकत नसेल, तर बहुधा तुम्हाला object लागणार नाही.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Identity</span><h4>विचारा: रक्षण करण्यासारखी identity आहे का?</h4><p>सारख्या वस्तू असलेल्या दोन carts तरीही वेगळ्या carts आहेत. जर instances ला identity आणि invariants असतील, तर objects बसतात. जर तुमचे data फक्त values असेल, तर records आणि functions निवडा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">प्रकार</span><h4>विचारा: तुम्हाला polymorphism लागते का?</h4><p>एका interface मागे अनेक अदलाबदल करता येणारे providers classes ला न्याय्य ठरवतात. कोणतेही प्रकार नसलेली एकच ठराविक गणना नाही; function पुरेशी आहे.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">आयुष्य</span><h4>script विरुद्ध service ची तुलना करा</h4><p>चालून बंद होणाऱ्या एकदाच्या backfill ला वरून खालपर्यंतचा procedural कोड हवा. sessions असलेली दीर्घकाळ चालणारी service म्हणजे तिथे object lifecycles फायदेशीर ठरतात.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Data आकार</span><h4>आधी साधे data model करा</h4><p>वाहणारे records परिभाषित करा: rows, orders, line items. कोणते behavior, असल्यास, जोडायचे हे ठरवण्याआधी त्यांना साधी immutable values म्हणून ठेवा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Functions लिहा</span><h4>गाभा pure functions म्हणून व्यक्त करा</h4><p>प्रत्येक transform ला side effects नसलेली function बनवा. Deterministic गणित आणि पुनर्रचना इथे येतात, I/O पासून वेगळे.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Compose</span><h4>stages ला pipeline मध्ये जोडा</h4><p>functions ला एका प्रवाहात compose करा. प्रत्येक stage एकटी testable असते आणि संपूर्ण गोष्ट एक मालिका म्हणून वाचली जाते, सहकाऱ्यांचे जाळे म्हणून नव्हे.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">सीमा</span><h4>objects ला कडेला ढकला</h4><p>जिथे तुम्हाला खरोखर state लागते, एक repository, session, stateful client, ते सीमेवर ठेवा आणि त्याला pure गाभ्याला call करू द्या.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>inputs आणि outputs थेट तपासा</h4><p>Pure functions mocks शिवाय test होतात: data द्या, निकाल तपासा. जास्त वजनदार integration tests पातळ stateful कडांसाठी राखून ठेवा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">आढावा</span><h4>सोपस्कार काढून टाका</h4><p>जर एका class ला एकच method आणि खरे state नसेल, तर तिला function मध्ये आकुंचित करा. फक्त जिथे identity, state किंवा polymorphism ने न्याय्य ठरवले तिथेच objects ठेवा.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">अपयशाच्या पद्धती दोन्ही बाजूंनी असतात: जिथे functions बसतात तिथे objects लादणे, आणि इतक्या जोरात दुसऱ्या टोकाला झुकणे की objects जी रचना योग्यरित्या पुरवतात ती तुम्ही गमावता.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🏭 -er class</h4><p>कोणतेही state नसलेला आणि एकच method असलेला <code>Manager</code>, <code>Processor</code>, किंवा <code>Handler</code> म्हणजे वेषांतरातील function. काहीही encapsulate न करता तो constructors आणि mocks वाढवतो.</p></div>
+        <div class="card"><h4>💉 Injection चा तमाशा</h4><p>stateless helpers ला DI container मधून जोडणे जेणेकरून तुम्ही pure गणित mock करू शकाल. जर dependency ला कोणतेही side effects नसतील, तर तुम्ही तिला थेट call करू शकता; container म्हणजे निव्वळ ओझे.</p></div>
+        <div class="card"><h4>🩻 Anemic domain model</h4><p>फक्त data वरील getters आणि setters असलेले classes. तुम्ही object कर भरला पण कोणतेही behavior मिळाले नाही. एकतर खरे invariants जोडा किंवा साधे record वापरा.</p></div>
+        <div class="card"><h4>🌀 Stateful pipeline engine</h4><p>mutable fields मध्ये batch जमा करणारे ETL "engine" object order वर अवलंबून असणारे bugs निर्माण करते. pure stages मधून immutable data संपूर्ण दोषवर्गच टाळते.</p></div>
+        <div class="card"><h4>🔨 spaghetti कडे अति-सुधारणा</h4><p>सर्वत्र objects नाकारल्याने global state वाटून घेणाऱ्या free functions चा ढीग तयार होतो. functional म्हणजे रचनाहीन नव्हे; module नुसार गट करा आणि data immutable ठेवा.</p></div>
+        <div class="card"><h4>🧬 गणनेसाठी खोल hierarchies</h4><p>एक formula बदलण्यासाठी subclassing करणे एक वर्गीकरण inheritance मध्ये भाजून टाकते. strategy किंवा lookup table घेणारी function ठिसूळ base class शिवाय लवचिक राहते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापके</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">हे जाणवण्यासाठी तुम्हाला क्वचितच एखादे औपचारिक मापक लागते, पण हे संकेत निर्णय ठोस आणि तपासण्याजोगा बनवतात.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रत्येक class मधील fields</strong></td><td>शून्य खरे state (फक्त inject केलेले config) म्हणजे class हे object च्या वेषातील stateless गणन आहे. त्याला function मध्ये आकुंचित करा.</td></tr>
+            <tr><td><strong>प्रत्येक class मधील public methods</strong></td><td><code>run</code> किंवा <code>calculate</code> नावाची नेमकी एकच public method म्हणजे "ही एक function आहे" हा भक्कम संकेत.</td></tr>
+            <tr><td><strong>प्रत्येक unit test मधील mocks</strong></td><td>साधे logic test करण्यासाठी अनेक mocks लागणे म्हणजे तुम्ही behavior नव्हे तर जोडणी test करत आहात. Pure functions ला एकही लागत नाही.</td></tr>
+            <tr><td><strong>transforms मधील mutation</strong></td><td>data pipeline मध्ये जागच्या जागी mutation order वर अवलंबून असणाऱ्या bugs ची भविष्यवाणी करते. pure stages मधून immutable data अधिक सुरक्षित असते.</td></tr>
+            <tr><td><strong>constructor-ते-logic गुणोत्तर</strong></td><td>काम करण्यापेक्षा dependencies जोडण्यात जास्त ओळी म्हणजे function मिटवून टाकेल असा सोपस्कार दर्शवते.</td></tr>
+            <tr><td><strong>Instance चे आयुष्य</strong></td><td>एकाच call मध्ये तयार होऊन टाकून दिलेल्या objects ला न्याय्य ठरवणारे lifecycle नाही. function ला तेच आयुष्य प्रामाणिकपणे असते.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> जर एका class ला अर्थपूर्ण state नसेल, एकच public method असेल, आणि स्वतःचे logic test करण्यासाठी mocks लागत असतील, तर ती एक function असावी. identity, invariants, आणि polymorphism साठी objects ठेवा; stateless transforms आणि pure गणितासाठी functions वापरा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरणे</div>
+      <h2>प्रत्यक्ष जगातील उदाहरणे</h2>
+      <p class="muted">तीन production-सदृश परिस्थिती जिथे OOP सोडून किंवा मर्यादित करून system अधिक स्पष्ट आणि सुरक्षित बनली.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>1 · Billing engine pure functions म्हणून पुन्हा बांधले</h3><div class="role">क्षेत्र: subscriptions आणि invoicing</div></div></div>
+        <p class="muted">एका subscriptions संघाकडे proration, tax, आणि discount logic service objects च्या जाळ्यात पसरलेले होते, जे test करणे आणि समजणे अवघड होते.</p>
+        <ul>
+          <li>immutable invoice data वरील pure functions मध्ये गणित काढून घेतले, I/O कडेला एका पातळ repository मध्ये ठेवले.</li>
+          <li>डझनभर mock-भरलेल्या tests च्या जागी leap-year proration सारख्या edge cases व्यापणारी साधी input-output तपासणी आणली.</li>
+          <li><code>Subscription</code> aggregate object म्हणूनच ठेवले कारण त्याला खरे state आणि रक्षण करण्यायोग्य lifecycle नियम आहेत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> pricing गाभा deterministic आणि सहज testable बनला, तर objects नेमके तिथेच राहिले जिथे identity आणि invariants ने त्यांना न्याय्य ठरवले.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔀</span><div><h3>2 · ETL pipeline composed stages म्हणून</h3><div class="role">क्षेत्र: data ingestion आणि reporting</div></div></div>
+        <p class="muted">एका reporting pipeline ने mutable fields मध्ये rows जमा करणारे stateful "processor" object वापरले, ज्यातून अधूनमधून येणारे, order वर अवलंबून असणारे totals निर्माण झाले.</p>
+        <ul>
+          <li>प्रत्येक step, parse, validate, enrich, aggregate, immutable batches पुढे पाठवणारी pure function म्हणून पुन्हा लिहिले.</li>
+          <li>stages ला एका प्रवाहात compose केले जेणेकरून नवीन enrichment म्हणजे जोडलेली function, shared mutable state चे संपादन नव्हे.</li>
+          <li>tests साठी stages वेगळेपणाने चालवल्या आणि त्यातील दोन दुसऱ्या pipeline मध्ये न बदलता पुनर्वापर केल्या.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> order वर अवलंबून असणारे bugs नाहीसे झाले, आणि stages जोडणे किंवा पुन्हा क्रमवारी लावणे कमी जोखमीचा, स्थानिक बदल बनला.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📜</span><div><h3>3 · एकदाच चालणारे data migration script</h3><div class="role">क्षेत्र: schema migration आणि backfill</div></div></div>
+        <p class="muted">एका अभियंत्याने एकदा चालून हटवल्या जाणाऱ्या migration साठी class hierarchy, readers, mappers, writers, बांधायला सुरुवात केली.</p>
+        <ul>
+          <li>hierarchy च्या जागी वरून खालपर्यंतचे procedural script आणले, जे स्पष्ट टप्प्यांत वाचते, map करते आणि लिहिते.</li>
+          <li>abstraction थर ऐवजी dry-run flag आणि idempotent upserts ने अचूकतेचे रक्षण केले.</li>
+          <li>script एका नजरेत वाचता येईल असे ठेवले जेणेकरून समीक्षक indirection चा मागोवा न घेता backfill पडताळू शकतील.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> migration खूप कमी वेळात पूर्ण झाले, समीक्षा करणे सोपे होते, आणि चालल्यानंतर सुरक्षितपणे हटवले गेले, सांभाळण्यासाठी कोणतेही framework नाही.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - सुसंगती</div>
+      <h2>आधुनिक सुसंगती</h2>
+      <p class="muted">मुख्य प्रवाहातील भाषांमध्ये functional आणि data-oriented वैशिष्ट्ये वाढली आहेत, ज्यामुळे "प्रत्येक गोष्ट object नाही" ही किनारी भूमिका न राहता व्यवहार्य default बनली आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Records आणि value types</h4><p>आधुनिक TypeScript मधील immutable records, Python dataclasses, आणि Ruby Data तुम्हाला पूर्ण classes च्या सोपस्काराशिवाय साधे data देतात, नेमका तोच आकार जो pipelines ला हवा असतो.</p></div>
+        <div class="card"><h4>🧵 Pattern matching</h4><p>Python, Ruby, आणि TS-लगतच्या साधनांमधील structural matching तुम्हाला प्रत्येक प्रकारासाठी polymorphic class hierarchy न लागता data च्या आकारावर branch करू देते.</p></div>
+        <div class="card"><h4>🚿 Data-oriented design</h4><p>साधे data त्यावरील functions पासून वेगळे केल्याने cache वर्तन आणि स्पष्टता सुधारते, हे तत्त्व आता game engines पलीकडे बरेच सामान्य आहे.</p></div>
+        <div class="card"><h4>⚙️ Functional cores</h4><p>"functional core, imperative shell" शैली ही मुख्य प्रवाहातील architecture आहे: आत pure logic, सीमेवर side effects.</p></div>
+        <div class="card"><h4>🔗 Composable pipelines</h4><p>Stream आणि iterator abstractions composed stateless stages ला रूढ बनवतात, त्यामुळे ETL आणि transforms ला क्वचितच खास engine object लागते.</p></div>
+        <div class="card"><h4>🤝 व्यवहार्य polyglot कोड</h4><p>संघ माफी न मागता प्रत्येक module नुसार paradigms मिसळतात: stateful aggregates साठी objects, गणित आणि transforms साठी functions, जुळणीनुसार निवडलेले.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> OOP हे एक साधन आहे, सर्व कोडाचे default आवरण नव्हे. जेव्हा तुमच्याकडे रक्षण करण्यासारखी identity, state, आणि invariants असतील तेव्हा objects निवडा; stateless transforms, pure गणिते, आणि छोट्या scripts साठी functions आणि data-oriented design निवडा. वरिष्ठ पाऊल म्हणजे paradigms जाणीवपूर्वक मिसळणे, सर्वत्र एकच लादणे नव्हे.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">objects कधी वगळावे हे जाणणे या design विषयांशी नैसर्गिकरित्या जुळते.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧩</span><h4>Composition over inheritance</h4><p>खोल class trees ऐवजी भागांतून behavior जुळवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../errors-as-objects/"><span class="ico">🚨</span><h4>Errors as objects</h4><p>अपयशांना values किंवा types म्हणून model करणे exceptions पेक्षा कधी सरस ठरते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../anemic-domain-model/"><span class="ico">🩻</span><h4>Anemic domain model</h4><p>कोणतेही behavior नसलेल्या data-only classes चा सापळा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🔗</span><h4>Coupling आणि cohesion</h4><p>module सीमा कशा आखायच्या हे ठरवणारी बले.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>OOP कधी वापरू नये याचे व्यवहार्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · उदाहरणे · सुसंगती</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

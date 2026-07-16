@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Liskov Substitution Principle (LSP) - काय, का, कसे, TypeScript, Python आणि Ruby उदाहरणांसह</title>
+  <meta name="description" content="Liskov Substitution Principle (LSP) चे सखोल, दृश्य मार्गदर्शक: subtypes हे त्यांच्या base type च्या जागी वापरता आले पाहिजेत, preconditions, postconditions आणि invariants चे contract नियम, उल्लंघन कसे उघड होते, TypeScript, Python आणि Ruby उदाहरणांसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Liskov Substitution Principle - जिथे base type अपेक्षित असेल तिथे विश्वासाने वापरता येणारे subtypes</h1>
+      <p class="lede">Liskov Substitution Principle सांगते की base type वापरणारा कोणताही प्रोग्राम, त्याला कोणताही subtype दिला तरी बरोबर चालत राहिला पाहिजे, कोणत्याही खास तपासणीशिवाय आणि कोणत्याही आश्चर्याशिवाय. हे वचन तेव्हाच पाळले जाते जेव्हा subtype <strong>base contract चा मान राखतो</strong>: तो callers कडून जास्त मागणी करू शकत नाही, त्यांना जे सांगितले होते त्यापेक्षा कमी देऊ शकत नाही, आणि base type ने दिलेली हमी गुपचूप मोडू शकत नाही. जेव्हा subtype त्या contract शी बेईमानी करतो, तेव्हा polymorphic दिसणारा कोड production मध्ये फसू लागतो.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Behavioral subtyping</span>
+        <span class="pill">Preconditions आणि postconditions</span>
+        <span class="pill">Invariants</span>
+        <span class="pill">Substitutability</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Liskov Substitution Principle म्हणजे काय?</h2>
+      <p class="muted"><strong>LSP</strong> हे SOLID मधील "L" आहे. Barbara Liskov यांचे मूळ वाक्य असे आहे की जर <code>S</code> हा <code>T</code> चा subtype असेल, तर <code>T</code> प्रकारच्या objects च्या जागी <code>S</code> प्रकारचे objects वापरता आले पाहिजेत, प्रोग्रामच्या कोणत्याही इष्ट गुणधर्मांना बाधा न आणता. सोप्या शब्दांत: subtype ने आपल्या base type सारखे वागले पाहिजे, फक्त त्याचा आकार सारखा असून चालत नाही. Inheritance तुम्हाला method signatures फुकट देते; LSP म्हणजे त्या signatures ने दिलेल्या <em>वर्तनाचा</em> मान राखणे.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔁</span> Substitutability</h4>
+          <p>Base type साठी लिहिलेला कोणताही कोड, subtype दिला तरी चालत राहतो. Caller ला कधीही concrete class तपासण्याची गरज पडू नये.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📜</span> Behavioral subtyping</h4>
+          <p>Interface फक्त inherit करणे किंवा implement करणे पुरेसे नाही. Subtype ने प्रत्येक method चा अर्थ पाळला पाहिजे, फक्त त्याचे parameters आणि return type जुळवून चालत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🤝</span> Contract, आकार नव्हे</h4>
+          <p>प्रत्येक method सोबत एक contract असतो, तिला काय हवे आणि ती काय हमी देते याचा. Subtype त्याच contract ने बांधलेला असतो, अधिक कडक नाही आणि अधिक ढिला नाही.</p>
+        </div>
+      </div>
+
+      <h3>तीन contract नियम</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>नियम</th><th>याचा अर्थ काय</th><th>उल्लंघन कसे दिसते</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Preconditions अधिक कडक करता येत नाहीत</strong></td><td>Subtype base type पेक्षा callers कडून जास्त मागणी करू शकत नाही</td><td>Subtype base ने स्वीकारलेले inputs नाकारतो, किंवा अतिरिक्त तयारी मागतो</td></tr>
+            <tr><td><strong>Postconditions अधिक ढिली करता येत नाहीत</strong></td><td>Subtype ने return वर किमान तेवढी हमी दिली पाहिजे जेवढी base ने दिली होती</td><td>Subtype null परततो, अर्धवट निकाल देतो, किंवा हमी दिलेला side effect वगळतो</td></tr>
+            <tr><td><strong>Invariants टिकवली जातात</strong></td><td>Base वर नेहमी खरी असणारी सत्ये subtype वरही खरी राहिली पाहिजेत</td><td>Subtype object ला अशा स्थितीत सोडतो जी base type ला मान्य नाही</td></tr>
+            <tr><td><strong>History constraint</strong></td><td>Subtype ने base type ने प्रतिबंधित केलेले state बदल होऊ देता कामा नये</td><td>Immutable base चा mutable subtype callers ना लपलेली state बदलू देतो</td></tr>
+            <tr><td><strong>Exception compatibility</strong></td><td>Subtype ने base ने न फेकलेले नवीन checked exceptions फेकू नयेत</td><td>Base ने नेहमी चालेल असे सांगितलेल्या method साठी subtype <code>NotSupported</code> फेकतो</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> inheritance उत्तर देते "हा आकार तोच आहे का?" LSP उत्तर देते "लेबलवरील वचनाप्रमाणे ही गोष्ट वागेल असा विश्वास मी ठेवू शकतो का?" जो subtype base परततो तिथे फेकतो, किंवा फक्त अर्धेच inputs स्वीकारतो, तो type checker मध्ये subtype असतो पण runtime ला खोटारडा असतो.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>LSP महत्त्वाचे का आहे</h2>
+      <p class="muted">LSP मुळेच polymorphism सुरक्षित होते. त्याशिवाय, प्रत्येक call site ला माहीत असावे लागते की त्याला कोणता concrete subtype मिळाला, आणि तुम्ही बांधलेली abstraction type checks च्या ढिगात कोसळते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 विश्वास ठेवता येणारा polymorphism</h4><p>जेव्हा subtypes प्रामाणिक असतात, तेव्हा एका ओळीचा कोड प्रत्येक implementation साठी चालतो. Checkout प्रवाह कोणताही <code>PaymentGateway</code> स्वीकारू शकतो आणि vendor वरून कधीही branch करत नाही.</p></div>
+        <div class="card"><h4>🚫 Defensive type checks नष्ट करते</h4><p><code>if (repo instanceof ReadOnlyRepo)</code> ने भरलेला कोड म्हणजे मोडलेल्या subtype चा वास. Contract चा मान राखा आणि त्या branches नाहीशा होतात.</p></div>
+        <div class="card"><h4>🔌 सुरक्षित extension points</h4><p>Callers ला हात न लावता नवीन subtypes जोडता येतात. हेच Open-Closed Principle चे संपूर्ण वचन आहे, आणि LSP मुळेच ते खरे राहते.</p></div>
+        <div class="card"><h4>🐞 कमी runtime आश्चर्ये</h4><p>उल्लंघने production incidents म्हणून उघड होतात: फेकणारे save, गुपचूप टाकून देणारे queue, वचन दिलेल्या मूल्याच्या जागी null. LSP हे design चूक shipping आधीच पकडते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले Liskov Substitution</h2>
+      <p class="muted">एकच तत्त्व, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असलात तरी ते डोक्यात बसते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>पर्यायी शिक्षकाला त्याच पाठ योजनेतून वर्ग चालवता आला पाहिजे. जर पर्यायी शिक्षक अर्धा अभ्यासक्रम शिकवायला नकार देत असेल किंवा नेहमीच्या शिक्षकाला कधीही न लागलेली परवानगी चिठ्ठी मागत असेल, तर विद्यार्थ्यांचे नुकसान होते. चांगला पर्याय योजनेच्या उद्देशासाठी <strong>ओळखता न येणारा</strong> असतो.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>जर एखादे function <code>Repository</code> घेते आणि <code>save()</code> कॉल करते, तर तुम्ही देत असलेल्या प्रत्येक repository ने खरोखर save केले पाहिजे. <strong>save वर फेकणारे read-only repository</strong> व्यवस्थित compile होते पण runtime ला फुटते. ते interface मध्ये बसते पण contract मोडते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>तुमचा मानक contract सही करणाऱ्या vendor ने त्याच्या अटी पूर्ण केल्या पाहिजेत. जर नवा पुरवठादार तोच करार पूर्ण करत असल्याचा दावा करत कमी order प्रकार स्वीकारत असेल किंवा अर्धवट pallets पाठवत असेल, तर कागदपत्रे जुळली तरी तुमचे कामकाज मोडते.</p></div>
+        <div class="card"><h4><span class="ico">🔑</span> रोजच्या जीवनातली आवृत्ती</h4><p>डुप्लिकेट किल्लीने तेच कुलूप उघडले पाहिजे जे मूळ किल्लीने उघडते. जी किल्ली भोकात बसते पण फक्त अर्धीच फिरते, किंवा आधी लपलेले बटण दाबल्याशिवाय अडकते, ती हुबेहूब दिसली तरी खरा पर्याय नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>आत मध्ये हे कसे चालते</h2>
+      <p class="muted">जिथे तुमच्याकडे खरा contract असलेला base type आणि एकापेक्षा जास्त implementation असतात, तिथे LSP लगेच समोर येते. उत्कृष्ट सापळा म्हणजे फक्त "is-a" चाचणीने modeling करणे: archived, read-only order repository इंग्रजीत "is a" repository आहे, म्हणून लोक writable ला extend करतात आणि <code>save()</code> ला फेकण्यासाठी override करतात. ते typecheck होते. ते LSP मोडते.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧨</span> उल्लंघन</h4>
+          <p><code>ReadOnlyOrderRepository</code> हा writable base ला extend करतो आणि <code>save()</code> ला <code>UnsupportedOperation</code> फेकण्यासाठी override करतो. Base reference धरणारे callers <code>save()</code> कॉल करतात आणि crash होतात. Subtype ने precondition अधिक कडक करून "save कधीही कॉल करू नका" असे बनवले, जे कोणताही caller पाळू शकत नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛠️</span> उपाय</h4>
+          <p>Contract विभागा. संकुचित <code>ReadableOrders</code> base फक्त reads चे वचन देतो; <code>WritableOrders</code> subtype <code>save()</code> जोडतो. Archive read-only आहे, म्हणून तो लिहिण्याचा दावा कधीही करत नाही, आणि कोणताही caller object ला न झेपणारी method कधीही कॉल करू शकत नाही.</p>
+        </div>
+      </div>
+
+      <h3>Classes आणि त्यांचे contracts</h3>
+      <div class="diagram">
+        <div class="cap">Read contract ला write contract पासून विभागा म्हणजे कोणत्याही subtype ला खोटे बोलावे लागू नये</div>
+        <pre class="mermaid">
+classDiagram
+    class ReadableOrders {
+        &lt;&lt;interface&gt;&gt;
+        +findById(id) Order
+        +listOpen() Order[]
+    }
+    class WritableOrders {
+        &lt;&lt;interface&gt;&gt;
+        +save(order) void
+    }
+    class LiveOrderRepository {
+        +findById(id) Order
+        +listOpen() Order[]
+        +save(order) void
+    }
+    class ArchiveOrderRepository {
+        +findById(id) Order
+        +listOpen() Order[]
+    }
+    WritableOrders --|> ReadableOrders
+    ReadableOrders <|.. LiveOrderRepository
+    WritableOrders <|.. LiveOrderRepository
+    ReadableOrders <|.. ArchiveOrderRepository
+        </pre>
+      </div>
+
+      <h3>उल्लंघन आणि उपाय, शेजारी शेजारी</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// VIOLATION: an archive repo that "is a" repository but refuses to save.
+class OrderRepository {
+  save(order: Order): void { /* writes to the primary DB */ }
+  findById(id: string): Order | null { /* ... */ return null; }
+}
+
+class ArchiveOrderRepository extends OrderRepository {
+  // Strengthens the precondition to "never call me" - no caller can honor that.
+  save(_order: Order): void {
+    throw new Error("Archive is read-only");
+  }
+}
+
+// A caller written against the base type has no way to know:
+function reconcile(repo: OrderRepository, order: Order) {
+  order.status = "reconciled";
+  repo.save(order);            // 💥 blows up when repo is an archive
+}
+
+reconcile(new ArchiveOrderRepository(), someOrder); // runtime crash</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># VIOLATION: an archive repo that "is a" repository but refuses to save.
+class OrderRepository:
+    def save(self, order):        # writes to the primary DB
+        ...
+    def find_by_id(self, order_id):
+        ...
+
+class ArchiveOrderRepository(OrderRepository):
+    # Strengthens the precondition to "never call me" - no caller can honor that.
+    def save(self, order):
+        raise NotImplementedError("Archive is read-only")
+
+# A caller written against the base type has no way to know:
+def reconcile(repo, order):
+    order.status = "reconciled"
+    repo.save(order)              # blows up when repo is an archive
+
+reconcile(ArchiveOrderRepository(), some_order)  # runtime crash</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># VIOLATION: an archive repo that "is a" repository but refuses to save.
+class OrderRepository
+  def save(order)        # writes to the primary DB
+  end
+
+  def find_by_id(id)
+  end
+end
+
+class ArchiveOrderRepository < OrderRepository
+  # Strengthens the precondition to "never call me" - no caller can honor that.
+  def save(_order)
+    raise NotImplementedError, "Archive is read-only"
+  end
+end
+
+# A caller written against the base type has no way to know:
+def reconcile(repo, order)
+  order.status = "reconciled"
+  repo.save(order)       # blows up when repo is an archive
+end
+
+reconcile(ArchiveOrderRepository.new, some_order) # runtime crash</code></pre>
+      </div>
+
+      <p class="muted">खाली उपाय आहे: readable contract ला writable पासून वेगळे करा. आता archive फक्त तेच implement करतो जे तो पाळू शकतो, live repository दोन्ही implement करते, आणि <code>reconcile</code> नेमकी तीच capability मागते जी ती वापरते. प्रत्येक subtype तो जाहीर करत असलेल्या interface साठी पूर्णपणे substitutable असतो.</p>
+
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// FIX: split the contract so no subtype has to lie.
+interface ReadableOrders {
+  findById(id: string): Order | null;
+}
+interface WritableOrders extends ReadableOrders {
+  save(order: Order): void;
+}
+
+class LiveOrderRepository implements WritableOrders {
+  findById(id: string): Order | null { /* ... */ return null; }
+  save(order: Order): void { /* writes to the primary DB */ }
+}
+
+class ArchiveOrderRepository implements ReadableOrders {
+  findById(id: string): Order | null { /* reads cold storage */ return null; }
+  // No save() - it never claims a capability it cannot deliver.
+}
+
+// The caller asks only for what it uses, so substitution is always safe:
+function reconcile(repo: WritableOrders, order: Order) {
+  order.status = "reconciled";
+  repo.save(order);
+}
+
+const live = new LiveOrderRepository();
+reconcile(live, someOrder);         // works for every WritableOrders
+// reconcile(new ArchiveOrderRepository(), ...) // won't even compile</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># FIX: split the contract so no subtype has to lie.
+from abc import ABC, abstractmethod
+
+class ReadableOrders(ABC):
+    @abstractmethod
+    def find_by_id(self, order_id): ...
+
+class WritableOrders(ReadableOrders):
+    @abstractmethod
+    def save(self, order): ...
+
+class LiveOrderRepository(WritableOrders):
+    def find_by_id(self, order_id):
+        ...                           # reads from the primary DB
+    def save(self, order):
+        ...                           # writes to the primary DB
+
+class ArchiveOrderRepository(ReadableOrders):
+    def find_by_id(self, order_id):
+        ...                           # reads cold storage
+    # No save() - it never claims a capability it cannot deliver.
+
+# The caller asks only for what it uses, so substitution is always safe:
+def reconcile(repo: WritableOrders, order):
+    order.status = "reconciled"
+    repo.save(order)
+
+reconcile(LiveOrderRepository(), some_order)   # works for every WritableOrders
+# ArchiveOrderRepository() is not a WritableOrders, so it can't be passed</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># FIX: split the contract into role modules so no subtype has to lie.
+module ReadableOrders
+  def find_by_id(id)
+    raise NotImplementedError
+  end
+end
+
+module WritableOrders
+  include ReadableOrders
+  def save(order)
+    raise NotImplementedError
+  end
+end
+
+class LiveOrderRepository
+  include WritableOrders
+  def find_by_id(id); end            # reads from the primary DB
+  def save(order); end               # writes to the primary DB
+end
+
+class ArchiveOrderRepository
+  include ReadableOrders
+  def find_by_id(id); end            # reads cold storage
+  # No save - it never claims a capability it cannot deliver.
+end
+
+# The caller asks only for what it uses, so substitution is always safe:
+def reconcile(repo, order)
+  order.status = "reconciled"
+  repo.save(order)
+end
+
+reconcile(LiveOrderRepository.new, some_order) # any WritableOrders works
+# ArchiveOrderRepository has no save, so passing it fails fast and loud</code></pre>
+      </div>
+
+      <p class="muted">धडा: इंग्रजीतील "is-a" नाते तुम्हाला खोटे सांगत होते. Archive हा order store चा "एक प्रकार आहे", पण तो <em>writable</em> प्रकार नाही. Noun नव्हे तर capability चे modeling करणे, हेच प्रत्येक subtype ला substitutable बनवते आणि callers ला type checks पासून मुक्त ठेवते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>सविस्तर sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: उल्लंघन runtime ला कसे उघड होते, दुरुस्त केलेले design सुरक्षितपणे कसे substitute करते, आणि अधिक कडक केलेली precondition caller ला प्रवाहाच्या मध्येच कशी मोडते.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - उल्लंघन: base reference read-only subtype वर save कॉल करते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Svc as 🧾 Reconcile service
+    participant Repo as 🗄️ OrderRepository ref
+    participant Arch as 🧊 ArchiveOrderRepository
+    Svc->>Repo: save(order)
+    Note over Repo,Arch: ref actually points at an archive
+    Repo->>Arch: save(order)
+    Arch-->>Svc: 💥 throw UnsupportedOperation
+    Note over Svc,Arch: contract said save always works - it lied
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - उपाय: caller WritableOrders वर अवलंबून असतो, substitution संपूर्ण असते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Svc as 🧾 Reconcile service
+    participant W as ✍️ WritableOrders
+    participant Live as 🟢 LiveOrderRepository
+    Svc->>W: save(order)
+    W->>Live: save(order)
+    Live-->>W: persisted ok
+    W-->>Svc: return
+    Note over Svc,Live: archive never reaches here - it isn't Writable
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - अधिक कडक केलेली precondition: subtype base ने स्वीकारलेले inputs नाकारतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Ck as 🛒 Checkout
+    participant Gw as 💳 PaymentGateway
+    participant Sub as 🌍 RegionLockedGateway
+    Ck->>Gw: charge(amount, currency)
+    Gw->>Sub: charge(amount, currency)
+    alt currency is allowed
+        Sub-->>Ck: authorized
+    else currency not in region
+        Sub-->>Ck: ❌ reject - base accepted any currency
+        Note over Ck,Sub: precondition strengthened, caller cannot honor it
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 -&gt; 100 प्रवाह</h2>
+      <p class="muted">डळमळीत "is-a" ओळखण्यापासून ते पूर्णपणे substitutable असणाऱ्या subtypes च्या संचापर्यंत, क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Base type आणि त्याचे काम नावाने सांगा</h4><p>Base type काय वचन देतो ते लिहा. <code>OrderRepository</code> वचन देतो "तुम्ही orders वाचू आणि save करू शकता." तेच वाक्य म्हणजे contract.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Contract</span><h4>प्रत्येक method चे pre आणि postconditions सांगा</h4><p><code>save(order)</code> साठी: precondition म्हणजे वैध order; postcondition म्हणजे order टिकाऊपणे जतन केला जातो. वचन स्पष्ट करा.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Invariants</span><h4>नेहमी खरी असणारी सत्ये यादी करा</h4><p>एक invariant असू शकते "save केलेल्या order ला नेहमी id असतो." प्रत्येक subtype ने ते प्रत्येक कॉलच्या आधी आणि नंतर खरे ठेवले पाहिजे.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Subtype</span><h4>एक उमेदवार subtype सुचवा</h4><p>कोणाला तरी cold storage साठी <code>ArchiveOrderRepository</code> हवे आहे. विचारा: तो प्रत्येक method चा contract न बदलता पाळू शकतो का?</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Check</span><h4>Preconditions तपासा - त्या ढिल्या आहेत की समान?</h4><p>Subtype ने callers कडून जास्त मागणी करू नये. जर archive ला वाचण्यासाठी खास flag लागत असेल, तर त्याने precondition अधिक कडक केली. धोक्याचा इशारा.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Check</span><h4>Postconditions तपासा - त्या कडक आहेत की समान?</h4><p>Subtype ने किमान वचन दिलेले तरी दिले पाहिजे. जर <code>save()</code> जतन करण्याऐवजी फेकत असेल, तर त्याने postcondition शून्यावर आणून ढिली केली.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Check</span><h4>Invariants आणि history तपासा</h4><p>Subtype कधीही base ला मान्य नसलेली state सोडत नाही आणि base ने प्रतिबंधित केलेले बदल होऊ देत नाही याची खात्री करा. Immutable ते immutable राहते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Detect</span><h4>उल्लंघन ओळखा</h4><p>Archive <code>save()</code> पाळू शकत नाही. त्याला फेकायला भाग पाडणे म्हणजे उल्लंघन. "is-a" खरे तर "is a read-only kind of" होते.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Refactor</span><h4>Capability नुसार contract विभागा</h4><p><code>ReadableOrders</code> आणि <code>WritableOrders</code> काढा. Archive फक्त तेच implement करतो जे तो पाळू शकतो; live repo दोन्ही implement करते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Depend</span><h4>Callers ला सर्वात संकुचित contract कडे वळवा</h4><p><code>reconcile</code> ला <code>WritableOrders</code> घेण्यासाठी पुन्हा लिहा. आता compiler save न करू शकणारा कोणताही subtype नाकारतो. Substitution ची हमी मिळते.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Verify</span><h4>प्रत्येक subtype वर तेच tests चालवा</h4><p>एक सामायिक contract test suite सर्व implementations वर चालतो. जर कोणताही subtype base-level test मध्ये अपयशी ठरला, तर तुम्हाला shipping आधीच LSP भंग सापडला.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">बहुतेक LSP भंग तेव्हा होतात जेव्हा वर्तन खरेच जुळत नसताना कोड पुनर्वापरासाठी inherit केले जाते. हे नेहमीचे गुन्हेगार आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🚫 "not supported" फेकणे</h4><p>Base method ला <code>UnsupportedOperation</code> फेकण्यासाठी override करणे हे सर्वात मोठ्याने ओरडणारे LSP उल्लंघन आहे. जर subtype ते करू शकत नसेल, तर त्याने ते करू शकतो हे वचन inherit करू नये.</p></div>
+        <div class="card"><h4>🔒 Preconditions अधिक कडक करणे</h4><p>Base ने स्वीकारलेले inputs नाकारणारा subtype, जसे currencies नाकारणारा region-locked <code>PaymentGateway</code>, विस्तृत contract वर अवलंबून असणाऱ्या callers ना मोडतो.</p></div>
+        <div class="card"><h4>📉 Postconditions अधिक ढिली करणे</h4><p>null परतणे, अर्धवट यादी देणे, किंवा वचन दिलेला side effect वगळणे यामुळे callers कडे base ने हमी दिलेल्यापेक्षा कमी उरते. मग गुपचूप data loss होतो.</p></div>
+        <div class="card"><h4>🕵️ caller मध्ये instanceof</h4><p><code>if (repo instanceof ArchiveRepo) skip()</code> म्हणजे caller मोडलेल्या subtype ची भरपाई करत आहे. प्रत्येक type check हे लक्षण आहे, उपाय नाही.</p></div>
+        <div class="card"><h4>🧊 Immutable base चा mutable subtype</h4><p>Callers ज्याला गोठलेले मानत होते अशा value type ला setters जोडणे history constraint चे उल्लंघन करते आणि debug करायला अत्यंत त्रासदायक अशा प्रकारे सामायिक state भ्रष्ट करते.</p></div>
+        <div class="card"><h4>🎣 भरगच्च base interface</h4><p>एक अवाढव्य interface प्रत्येक subtype ला न झेपणाऱ्या methods implement करण्यास भाग पाडते. यामुळे teams stub-and-throw कडे ढकलली जातात, जो नेमका LSP सापळा आहे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">तुम्ही LSP ला एका आकड्यात मांडू शकत नाही, पण हे संकेत तुम्हाला तुमचे subtypes प्रामाणिक आहेत की नाही हे विश्वासाने सांगतात.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>NotSupported फेकणारे overrides</strong></td><td>LSP उल्लंघनांची थेट मोजणी - प्रत्येक एक म्हणजे आपल्या contract चा भाग नाकारणारा subtype</td></tr>
+            <tr><td><strong>callers मधील instanceof / type-check घनता</strong></td><td>Calling कोड किती वेळा concrete subtypes ला खास वागवते, मोडलेल्या abstraction ची खूण</td></tr>
+            <tr><td><strong>सर्व subtypes वर सामायिक contract tests पास होणे</strong></td><td>प्रत्येक implementation base test suite समाधानी करते का - लाल subtype म्हणजे पुष्टी झालेले उल्लंघन</td></tr>
+            <tr><td><strong>रिकामे किंवा stub केलेले override bodies</strong></td><td>काहीही न करण्यासाठी override केलेल्या methods म्हणजे वचन पाळू न शकणारा पण पाळल्याचे भासवणारा subtype</td></tr>
+            <tr><td><strong>Polymorphic call sites वर runtime errors</strong></td><td>फक्त काही concrete types साठी फेकलेली exceptions थेट substitutability भंगाकडे बोट दाखवतात</td></tr>
+            <tr><td><strong>Overrides मधील precondition drift</strong></td><td>Subtype मधील अतिरिक्त null checks किंवा अधिक संकुचित input validation अधिक कडक केलेली precondition उघड करते</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर एखादी method सुरक्षितपणे कॉल करण्यासाठी तुम्हाला कधी concrete class माहीत असणे गरजेचे असेल, तर तो subtype खरोखर substitutable नाही. एक contract test suite लिहा आणि तो प्रत्येक implementation वर चालवा; अपयशी ठरणारा पहिला subtype म्हणजे तुमचे उल्लंघन.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>प्रत्यक्ष जगातील केस स्टडीज</h2>
+      <p class="muted">Production-शैलीच्या तीन systems जिथे LSP ने design टिकेल की नाही हे ठरवले.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · अनेक processors वरील payment gateway abstraction</h3><div class="role">Pattern: एका charge contract मागे प्रामाणिक subtypes</div></div></div>
+        <p class="muted">एक checkout system <code>charge(amount, currency)</code> contract असलेल्या एकाच <code>PaymentGateway</code> interface मागे अनेक processors मधून charges route करते.</p>
+        <ul>
+          <li>एक processor फक्त देशांतर्गत currency ला support करत होता आणि बाकी सर्वांवर फेकत होता, precondition अधिक कडक करून आंतरराष्ट्रीय checkout crash करत होता.</li>
+          <li>उपायाने supported currencies ला capability metadata म्हणून जाहीर केले आणि त्यानुसार route केले, म्हणून प्रत्येक gateway ने त्याला मिळालेल्या traffic साठी पूर्ण contract पाळला.</li>
+          <li>एका सामायिक contract test ने तेच charge, refund, आणि idempotency प्रकरणे प्रत्येक processor adapter वर चालवली.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Checkout ने processor-विशिष्ट exceptions पकडण्याऐवजी capability वर branch केले, आणि नवीन processor जोडण्यासाठी caller मध्ये बदल लागणे थांबले.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>2 · read-only archive असलेला repository layer</h3><div class="role">Pattern: read आणि write contracts विभागा</div></div></div>
+        <p class="muted">एक orders service अलीकडचे orders primary database मध्ये आणि जुने read-only archive मध्ये ठेवत होती, दोन्ही एकाच repository interface मागे.</p>
+        <ul>
+          <li>Archive repository ने <code>save()</code> inherit केले आणि फेकले, म्हणून background reconciliation jobs जेव्हा जेव्हा archived order ला स्पर्श करत तेव्हा अपयशी ठरत.</li>
+          <li><code>ReadableOrders</code> आणि <code>WritableOrders</code> मध्ये विभागल्याने archive ला फक्त reads implement करता आले, आणि compiler ने कोणताही write path तिथपर्यंत पोहोचण्यापासून रोखला.</li>
+          <li>Callers ना ते प्रत्यक्षात वापरत असलेल्या सर्वात संकुचित interface वर अवलंबून राहण्यासाठी पुन्हा लिहिले गेले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> "archived order save करता येत नाही" या प्रकारच्या runtime errors पूर्णपणे नाहीशा झाल्या, आणि write jobs compile वेळी सिद्धपणे सुरक्षित झाल्या.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📨</span><div><h3>3 · एका delivery interface मागे notification senders</h3><div class="role">Pattern: सर्व channels वर एकसमान postconditions</div></div></div>
+        <p class="muted">एक platform delivery receipt चे वचन देणाऱ्या <code>send(message)</code> contract असलेल्या सामायिक <code>NotificationSender</code> मधून email, SMS, आणि push पाठवत होती.</p>
+        <ul>
+          <li>Device token नसताना push sender receipt शिवाय लवकर परतत होता, postcondition ढिली करून audit logs अपूर्ण ठेवत होता.</li>
+          <li>Contract असा कडक केला की प्रत्येक sender स्पष्ट delivered किंवा failed निकाल परततो, कधीही गुपचूप no-op नाही.</li>
+          <li>एका सामायिक suite ने तिन्ही channels साठी postcondition, म्हणजे receipt नेहमी परतला जातो, याची खात्री केली.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Downstream retry आणि audit logic प्रत्येक channel साठी सारखीच चालली, कारण प्रत्येक sender ने base type ने वचन दिलेली नेमकी हमी दिली.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">LSP आजच्या भाषांच्या आधीचे आहे, पण त्याची मूळ कल्पना, behavioral substitutability, systems जसजशी interfaces आणि plugins वर अवलंबून राहत आहेत तसतशी पूर्वीपेक्षा अधिक प्रासंगिक आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Interface segregation चे भागीदार</h4><p>भरगच्च interfaces ला role-आधारित मध्ये विभागणे हा LSP समाधानी करण्याचा बहुधा सर्वात स्वच्छ मार्ग आहे. दोन्ही SOLID तत्त्वे एकमेकांना थेट बळकटी देतात.</p></div>
+        <div class="card"><h4>🔗 Plugin आणि adapter ecosystems</h4><p>प्रत्येक plugin API म्हणजे एक LSP contract. Interface अर्धवट implement करणारा plugin host मोडतो, म्हणून प्रामाणिक subtyping हा platform च्या टिकाव धरण्याचा गुण आहे.</p></div>
+        <div class="card"><h4>🦆 Structural आणि duck typing</h4><p>TypeScript structural types आणि Python protocols मध्ये, compiler आकार तपासतो पण वर्तन नाही. LSP ही ती शिस्त आहे जी ती दरी हाताने भरून काढते.</p></div>
+        <div class="card"><h4>🧪 Contract आणि property-based tests</h4><p>प्रत्येक implementation वर एक सामायिक suite चालवणे, किंवा postconditions तपासण्यासाठी inputs निर्माण करणे, LSP ला तत्त्वापासून automated gate मध्ये बदलते.</p></div>
+        <div class="card"><h4>🏗️ Inheritance पेक्षा composition</h4><p>आधुनिक designs वर्तन compose करण्याला पसंती देतात, जे subtype पाठवू न शकणारे "is-a" कधीही दावा न करता अनेक LSP सापळे टाळते.</p></div>
+        <div class="card"><h4>🤖 Typed API आणि RPC schemas</h4><p>Versioned service contracts म्हणजे network सीमेवरचे LSP: नवी server आवृत्ती जुन्यासाठी बांधलेल्या clients साठी substitutable राहिली पाहिजे.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> LSP हा तो नियम आहे जो polymorphism विश्वासार्ह ठेवतो. Subtypes ला बरोबर वाटणाऱ्या noun भोवती नव्हे तर ते खरोखर पाळू शकणाऱ्या वर्तनाभोवती design करा, आणि तुमच्या abstractions स्वच्छ राहतील, तुमचे callers type checks पासून मुक्त राहतील, आणि तुमचे extensions सुरक्षित राहतील.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">LSP संबंधित OOP कल्पनांच्या जाळ्यात बसते. हे त्याच्यासोबत स्वाभाविकपणे जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../inheritance/"><span class="ico">🧬</span><h4>Inheritance</h4><p>"is-a" नाते कुठून येते, आणि ते कसे दिशाभूल करते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">🦆</span><h4>Interfaces आणि duck typing</h4><p>आकाराने contracts, आणि तरीही वर्तन का महत्त्वाचे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../open-closed/"><span class="ico">🚪</span><h4>Open-Closed Principle</h4><p>प्रामाणिक subtypes वर अवलंबून असणारे सुरक्षित extension.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../polymorphism/"><span class="ico">🎭</span><h4>Polymorphism</h4><p>LSP ज्याच्यावर विश्वास ठेवणे सुरक्षित करते ती यंत्रणा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Liskov Substitution Principle चे दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

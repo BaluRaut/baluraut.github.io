@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Composition over Inheritance समजावून सांगितले - काय, कसे, का आणि उदाहरणे</title>
-  <meta name="description" content="Composition over inheritance वर एक सखोल, दृश्य मार्गदर्शक: is-a विरुद्ध has-a, fragile base class समस्या, diamond समस्या, delegation, mixins आणि traits, Java व TypeScript उदाहरणे, आणि inheritance केव्हा योग्य ठरते." />
+  <title>OOP मध्ये Composition over Inheritance - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="composition over inheritance वर एक सखोल, दृश्यात्मक मार्गदर्शक: has-a विरुद्ध is-a, delegation, mixins आणि modules, fragile base class समस्या, inheritance अजूनही कधी योग्य ठरते, TypeScript, Python आणि Ruby उदाहरणांसह." />
   <link rel="stylesheet" href="/patterns/assets/style.css" />
 </head>
 <body>
@@ -18,9 +18,9 @@
         <a href="#how">कसे</a>
         <a href="#diagrams">आकृत्या</a>
         <a href="#flow">0-100 प्रवाह</a>
-        <a href="#pitfalls">अडचणी</a>
-        <a href="#metrics">तडजोडी</a>
-        <a href="#cases">उदाहरणे</a>
+        <a href="#pitfalls">धोके</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">प्रकरणे</a>
         <a href="#future">भविष्य</a>
       </div>
     </div>
@@ -28,17 +28,17 @@
 
   <header class="hero">
     <div class="wrap">
-      <span class="kicker">OOP पाया</span>
-      <h1>Composition over inheritance - वर्तन extend करून नव्हे, तर जोडून तयार करा</h1>
-      <p class="lede">Inheritance एका subclass ला त्याच्या parent च्या प्रत्येक तपशीलाशी बांधून टाकते, त्यामुळे झाडाच्या वरच्या भागातील एक बदल खाली पसरतो आणि कोणालाही आठवत नसलेले classes मोडतो. Composition हे उलटे करते: एखादी base class <strong>असण्याऐवजी</strong>, एखादा object त्याच्याकडे असलेल्या collaborators कडे delegate करतो, म्हणजे तो त्यांना <strong>बाळगतो</strong>. तुम्ही वर्तन runtime ला एकत्र जोडता, तुकडे मुक्तपणे बदलता, आणि प्रत्येक भाग लहान व testable ठेवता.</p>
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Composition over inheritance - सहकाऱ्यांपासून वर्तन घडवा</h1>
+      <p class="lede">Inheritance म्हणते की एखादी वस्तू तिच्या पालकाचा <strong>is-a</strong> प्रकार आहे आणि पालकाचे आतडे प्रत्येक subclass मध्ये कॉपी करते. Composition म्हणते की वस्तूकडे <strong>has-a</strong> म्हणजे सहकाऱ्यांचा एक संच असतो, ज्यांच्याकडे ती काम सोपवते. Composition ला प्राधान्य दिल्याने वर्तन runtime वर बदलण्याजोगे राहते, base classes ठिसूळ होण्यापासून वाचतात, आणि खोल class वृक्षाऐवजी retry, auth आणि logging या भागांपासून HTTP client सारखी वैशिष्ट्ये जोडता येतात.</p>
       <div class="cta">
-        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn primary" href="#how">कोड पाहा</a>
         <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
       </div>
       <div class="pill-row">
-        <span class="pill">is-a विरुद्ध has-a</span>
+        <span class="pill">Has-a विरुद्ध is-a</span>
         <span class="pill">Delegation</span>
-        <span class="pill">Mixins आणि traits</span>
+        <span class="pill">Mixins आणि modules</span>
         <span class="pill">Fragile base class</span>
       </div>
     </div>
@@ -49,39 +49,39 @@
     <div class="wrap">
       <div class="eyebrow">01 - काय</div>
       <h2>Composition over inheritance म्हणजे काय?</h2>
-      <p class="muted"><strong>Composition over inheritance</strong> हे एक design मार्गदर्शक तत्त्व आहे जे सांगते: एखादा type तो extend करणाऱ्या base class मधून (is-a नाते) तयार करण्याऐवजी, तो <em>बाळगून delegate करणाऱ्या</em> लहान objects मधून (has-a नाते) तयार करणे अधिक चांगले. दोन्ही पद्धती code पुन्हा वापरतात, पण inheritance संपूर्ण implementation वारसा म्हणून घेऊन पुन्हा वापरते, तर composition स्वतंत्र तुकडे एकत्र जोडून पुन्हा वापरते. हे मार्गदर्शक तत्त्व अस्तित्वात आहे कारण खोल inheritance झाडे कठोर ठरतात, तर जोडलेले objects लवचिक राहतात.</p>
+      <p class="muted"><strong>Composition over inheritance</strong> हे एक design मार्गदर्शक तत्त्व आहे: कोड पुन्हा वापरण्यासाठी एखाद्या वस्तूला base class पासून घेण्याऐवजी, ती वस्तू लहान सहकाऱ्यांपासून जोडणे आणि त्यांच्याकडे काम सोपवणे यास प्राधान्य द्या. base classes च्या साखळीचा विस्तार करणाऱ्या <code>RetryingAuthenticatedHttpClient</code> ऐवजी, तुम्ही एक <code>HttpClient</code> बनवता ज्याच्याकडे <em>has a</em> retry policy असते, <em>has an</em> auth provider असतो, आणि <em>has a</em> logger असतो, यातील प्रत्येक एक स्वतंत्र वस्तू असते जी तुम्ही बदलू शकता.</p>
 
       <div class="grid cols-3">
         <div class="card">
-          <h4><span class="ico">🧬</span> Inheritance (is-a)</h4>
-          <p>एक subclass एका base class ला extend करते आणि तिचे fields व methods वारसा म्हणून घेते. मजबूत, static coupling: मूल त्याच्या parent च्या internals वर अवलंबून असते आणि compile time ला निश्चित होते.</p>
+          <h4><span class="ico">🧩</span> Has-a (composition)</h4>
+          <p>एक वस्तू सहकाऱ्यांचे संदर्भ धरून ठेवते आणि काम त्यांच्याकडे पुढे पाठवते. वर्तन हे अशा भागांची बेरीज असते जे तुम्ही एका वेळी एक बदलू शकता.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🧩</span> Composition (has-a)</h4>
-          <p>एक object collaborator objects चे references बाळगतो आणि काम त्यांच्याकडे पुढे पाठवतो. Interfaces मार्फत सैल coupling: तुकडे बदलता येतात, अगदी runtime लाही.</p>
+          <h4><span class="ico">🌳</span> Is-a (inheritance)</h4>
+          <p>एक subclass base चा विस्तार करते आणि तिचे fields व methods वारशाने घेते. पुनर्वापर खरा असतो पण कठोर: तो compile time वर निश्चित होतो आणि संपूर्ण hierarchy मध्ये पसरतो.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🔀</span> Delegation</h4>
-          <p>Composition ला कार्यरत करणारी यंत्रणा: एक method त्याच method ला एका बाळगलेल्या collaborator वर call करते, त्यामुळे बाहेरचा object स्वतः न बनवलेले वर्तन उघड करतो.</p>
+          <h4><span class="ico">🔁</span> Delegation</h4>
+          <p>ही अशी यंत्रणा जी composition ला कार्यरत करते: host वरील एक method धरून ठेवलेल्या सहकाऱ्यावर तीच किंवा संबंधित method कॉल करते आणि निकाल परत बाहेर पाठवते.</p>
         </div>
       </div>
 
-      <h3>मूलभूत शब्दसंग्रह</h3>
+      <h3>शब्दसंग्रह, नेमकेपणाने</h3>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>संज्ञा</th><th>याचा अर्थ</th><th>नाते</th></tr>
+            <tr><th>संज्ञा</th><th>तिचा अर्थ काय</th><th>ठोस उदाहरण</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>is-a</strong></td><td>एक subtype जो त्याच्या base type च्या जागी उभा राहू शकतो</td><td>Inheritance / subtyping</td></tr>
-            <tr><td><strong>has-a</strong></td><td>एक object जो दुसरा object बाळगतो आणि वापरतो</td><td>Composition / aggregation</td></tr>
-            <tr><td><strong>Delegation</strong></td><td>एका बाळगलेल्या collaborator कडे call पुढे पाठवणे</td><td>Runtime वर्तन सामायिकरण</td></tr>
-            <tr><td><strong>Mixin / trait</strong></td><td>class मध्ये मिसळलेला वर्तनाचा पुनर्वापर करता येणारा तुकडा</td><td>क्षैतिज पुनर्वापर</td></tr>
-            <tr><td><strong>Interface</strong></td><td>एक करार जो collaborator पूर्ण करण्याचे वचन देतो</td><td>Decoupling जोड</td></tr>
+            <tr><td><strong>Is-a</strong></td><td>Subtype संबंध; मूल पालकाच्या जागी उभे राहू शकते</td><td><code>PremiumAccount</code> is-a <code>Account</code></td></tr>
+            <tr><td><strong>Has-a</strong></td><td>मालकी किंवा वापर; host एक सहकारी धरून ठेवतो</td><td><code>HttpClient</code> has-a <code>RetryPolicy</code></td></tr>
+            <tr><td><strong>Delegation</strong></td><td>धरून ठेवलेल्या वस्तूकडे कॉल पुढे पाठवणे</td><td><code>client.send()</code> हे <code>retry.run(...)</code> कॉल करते</td></tr>
+            <tr><td><strong>Mixin / module</strong></td><td>पालकाच्या जागेशिवाय class मध्ये मिसळलेला वर्तनाचा गठ्ठा</td><td>Ruby <code>include Timestamps</code></td></tr>
+            <tr><td><strong>Fragile base class</strong></td><td>असा base ज्याचा अंतर्गत बदल subclasses ना नकळत तोडतो</td><td>Base खासगी कॉल पुनर्क्रमित करतो, subclass चे overrides अपयशी होतात</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>मुख्य मानसिक प्रतिमान:</strong> विचारा "X हा खरोखर Y चा एक प्रकार आहे का, कायमचा?" जर होय, तर inheritance बसेल. जर X फक्त Y <em>वापरत</em> असेल किंवा Y <em>करू शकत</em> असेल, किंवा उत्तर काळानुसार बदलत असेल, तर त्याला has-a म्हणून मांडा आणि delegate करा. Inheritance ओळखीसाठी आहे, composition क्षमतेसाठी आहे.</div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> inheritance तुम्हाला पालक <em>कसा</em> बनवला आहे याच्याशी बांधते; composition तुम्हाला फक्त सहकारी <em>काय</em> देण्याचे वचन देतो याच्याशी बांधते. सहकारी उघड करत असलेल्या interface शी program करा आणि मग class वृक्ष पुन्हा लिहून नव्हे, तर भाग बदलून तुम्ही वर्तन नव्याने घडवू शकता.</div>
     </div>
   </section>
 
@@ -89,13 +89,13 @@
   <section id="why">
     <div class="wrap">
       <div class="eyebrow">02 - का</div>
-      <h2>Composition ला प्राधान्य का</h2>
-      <p class="muted">Inheritance हे object-oriented programming मधील सर्वात घट्ट coupling आहे: एक subclass protected members पाहते, call च्या क्रमावर अवलंबून असते, आणि तिला हवे असो वा नसो, सर्व काही वारसा म्हणून घेते. हेच खोल hierarchies ला ठिसूळ बनवते. Composition ती कठोरता लवचिकतेच्या बदल्यात देते.</p>
+      <h2>Composition ला प्राधान्य का द्यावे</h2>
+      <p class="muted">Inheritance ही object orientation मधील सर्वात घट्ट coupling आहे: एक subclass base च्या public API वर, तिच्या protected सदस्यांवर, आणि बहुधा तिच्या खासगी कॉल क्रमावर अवलंबून असते. Composition ती लपलेली coupling स्पष्ट, बदलण्याजोग्या सहकाऱ्यांशी अदलाबदल करते.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🧱 Fragile base class पासून सुटका</h4><p>जेव्हा वर्तन interfaces मागच्या collaborators मध्ये राहते, तेव्हा एक बदलल्याने subclasses गुपचूप मोडत नाहीत. बदल त्या तुकड्यापुरता मर्यादित राहतो जो त्याचा मालक आहे, झाडाखाली पसरण्याऐवजी.</p></div>
-        <div class="card"><h4>🔧 Runtime ला लवचिक</h4><p>Program चालू असताना तुम्ही एक collaborator बदलू शकता, किंवा अनेक रचू शकता. Inheritance तुम्ही compile करताच निश्चित होते; composition configuration आणि dependency injection ला वर्तन ठरवू देते.</p></div>
-        <div class="card"><h4>🚫 Diamond समस्या टाळते</h4><p>Single inheritance बेढब hierarchies ला भाग पाडते आणि multiple inheritance संदिग्ध method resolution तयार करते. अनेक collaborators बाळगल्याने तुम्हाला शून्य संदिग्धतेसह अनेक वर्तने मिळतात.</p></div>
-        <div class="card"><h4>🧪 test करणे सोपे</h4><p>प्रत्येक collaborator लहान असतो आणि त्याच्या interface मार्फत mock करता येतो. तुम्ही एक unit वेगळ्याने test करता, पाच-स्तरीय base class लपलेल्या state व setup सह ओढून आणण्याऐवजी.</p></div>
+        <div class="card"><h4>🔧 Runtime वर बदलण्याजोगे</h4><p>Client ला हात न लावता चाचण्यांमध्ये <code>HttpClient</code> ला <code>NoRetry</code> policy द्या आणि production मध्ये <code>ExponentialBackoff</code> policy द्या. Inheritance प्रत्येक संयोजनासाठी नवीन subclass सक्तीने लादेल.</p></div>
+        <div class="card"><h4>🧱 संयोजनांचा स्फोट नाही</h4><p>Retry, auth आणि logging हे तीन सहकारी कोणत्याही मिश्रणात जुळतात. Subclasses म्हणून ते वाढतात: authenticated-retrying, logged-retrying, logged-authenticated, आणि असेच पुढे.</p></div>
+        <div class="card"><h4>🛡️ Fragile base class टाळते</h4><p>सहकारी फक्त एकमेकांचा public करार पाहतात, त्यामुळे एकाचा अंतर्गत refactor दुसऱ्याला नकळत तोडू शकत नाही, जसे base class बदल तिच्या subclasses ना तोडतो.</p></div>
+        <div class="card"><h4>🧪 स्वतंत्रपणे चाचणी करणे सोपे</h4><p>Constructor मध्येच थेट एक बनावट auth provider किंवा नोंद करणारा logger पाठवा. चाचणी करत असलेल्या unit ला subclass करण्याची गरज नाही, तिचे निरीक्षण करण्यासाठी protected hooks override करण्याची गरज नाही.</p></div>
       </div>
     </div>
   </section>
@@ -104,13 +104,13 @@
   <section id="analogies">
     <div class="wrap">
       <div class="eyebrow">सोप्या शब्दांत</div>
-      <h2>Composition over inheritance उपमांसह समजावून सांगितले</h2>
-      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असा तरी ती लक्षात येईल.</p>
+      <h2>उपमांसह समजावलेले composition over inheritance</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ती पटकन समजते.</p>
       <div class="grid cols-2">
-        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Inheritance म्हणजे <strong>संपूर्ण निबंध कॉपी करणे</strong> आणि काही ओळी बदलणे - जर मूळात चूक असेल, तर तुमच्यातही असेल. Composition म्हणजे <strong>स्रोत उद्धृत करणे</strong>: तुम्हाला हवे तेच परिच्छेद तुम्ही आणता आणि संपूर्ण पेपर पुन्हा न लिहिता एक स्रोत बदलता.</p></div>
-        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>Inheritance म्हणजे <code>extends BaseController</code> आणि base अपेक्षेप्रमाणे वागेल अशी आशा करणे. Composition म्हणजे एक <code>Logger</code>, एक <code>Validator</code>, आणि एक <code>Repository</code> inject करणे - प्रत्येक एक interface जो तुम्ही बाकीच्याला हात न लावता mock, बदलू, किंवा पुन्हा क्रमबद्ध करू शकता.</p></div>
-        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>Inheritance म्हणजे एक कठोर <strong>संघटन तक्ता</strong> जिथे प्रत्येकजण एका निश्चित साखळीत वर अहवाल देतो. Composition म्हणजे तज्ज्ञांमधून जमवलेली एक <strong>प्रकल्प टीम</strong>: तुम्ही कामासाठी योग्य लोक आणता आणि काम झाल्यावर विसर्जित करता.</p></div>
-        <div class="card"><h4><span class="ico">🔌</span> दैनंदिन आवृत्ती</h4><p><strong>वेल्ड केलेली battery</strong> असलेला फोन म्हणजे inheritance: काहीतरी बदलावे लागेपर्यंत स्वस्त, मग तुम्ही संपूर्ण उपकरण बदलता. <strong>plug-in उपकरणे</strong> असलेला फोन म्हणजे composition: तुम्हाला हवे तेव्हा नवीन charger, case, किंवा lens क्लिक करून जोडा.</p></div>
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Inheritance म्हणजे कुटुंबाची पाककृती वारशाने घेणे, जी तुम्ही बदलल्यास ती वारशाने घेतलेल्या प्रत्येक चुलत भावंडावर परिणाम होतो. Composition म्हणजे <strong>वेगवेगळ्या मसाल्याच्या बरण्या ठेवणे</strong>: कोणत्या या पदार्थात घालायच्या ते तुम्ही निवडता आणि केव्हाही मीठ बदलून मिरी घालू शकता.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>Retry base चा <em>विस्तार</em> करणारा <code>HttpClient</code> त्याला वेल्ड केलेला असतो. आपल्या constructor मध्ये <code>RetryPolicy</code> <em>घेणारा</em> <code>HttpClient</code> हा <strong>जोडलेला असतो, वेल्ड केलेला नाही</strong>: तुम्ही प्रत्येक वातावरणासाठी त्याची जोडणी पुन्हा करता.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>Inheritance म्हणजे एक कठोर org chart जिथे प्रत्येक संघाला पालक विभाग सांगतो तसेच करावे लागते. Composition म्हणजे <strong>तज्ज्ञ कंत्राटदार नेमणे</strong>: प्रकल्पाकडे एक सुरक्षा कंपनी, एक auditor आणि एक courier असतो, आणि कंपनीची पुनर्रचना न करता कोणालाही बदलता येते.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> रोजच्या जीवनातील आवृत्ती</h4><p>एक power strip दिव्यापासून वारसा घेत नाही. ती <strong>उपकरणे प्लग-इन करते</strong>. Composition म्हणजे तो socket: तुम्ही जे काही प्लग-इन कराल ते वर्तन पुरवते, आणि एक गोष्ट अनप्लग केल्याने इतर कधीच तुटत नाहीत.</p></div>
       </div>
     </div>
   </section>
@@ -119,155 +119,323 @@
   <section id="how">
     <div class="wrap">
       <div class="eyebrow">03 - कसे</div>
-      <h2>आतल्या बाजूने ते कसे कार्य करते</h2>
-      <p class="muted">ही हालचाल यांत्रिक आहे: जे वर्तन पूर्वी base class मध्ये राहत होते ते घ्या, ते एका <strong>interface</strong> मागे ठेवा, ते लहान classes मध्ये implement करा, आणि बाहेरच्या object ने parent extend करण्याऐवजी त्यांपैकी एकाला <strong>बाळगून delegate करा</strong>.</p>
+      <h2>आतील पातळीवर हे कसे कार्य करते</h2>
+      <p class="muted">मुख्य हालचाल म्हणजे प्रत्येक cross-cutting काळजीला तिचा स्वतःचा लहान interface म्हणून नाव देणे, मग त्या interfaces चे instances host मध्ये धरून ठेवणे आणि त्यांच्याकडे <strong>delegate</strong> करणे. Host समन्वय साधतो; सहकारी विशेष काम करतात.</p>
 
       <div class="grid cols-2">
         <div class="card">
-          <h4><span class="ico">🧬</span> Inheritance design</h4>
-          <p>एक <code>Bird</code> base class <code>fly()</code> परिभाषित करते. मग एक पेंग्विन येतो जो उडू शकत नाही, एक शहामृग जो धावतो, एक पक्षी जो पोहतो. Hierarchy विशेष प्रकरणांमध्ये आणि exceptions फेकणाऱ्या overrides मध्ये तुटते.</p>
+          <h4><span class="ico">📇</span> सहकाऱ्यांचे करार परिभाषित करा</h4>
+          <p>प्रत्येक काळजीला एक अरुंद interface मिळतो: <code>RetryPolicy.run(op)</code>, <code>AuthProvider.authorize(req)</code>, <code>RequestLogger.log(req, res)</code>. Host या interfaces वर अवलंबून असतो, ठोस classes वर नव्हे.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🧩</span> Composition design</h4>
-          <p><code>FlyBehavior</code>, <code>SwimBehavior</code> interfaces परिभाषित करा. एका पक्ष्याकडे एक fly strategy आणि एक swim strategy <em>असते</em>. पेंग्विनला <code>NoFly</code> आणि <code>StrongSwim</code> मिळते - कोणतेही exceptions नाहीत, कोणतेही मोडलेले करार नाहीत.</p>
+          <h4><span class="ico">🔗</span> Inject करा आणि delegate करा</h4>
+          <p>Host आपल्या constructor द्वारे सहकारी स्वीकारतो आणि <code>send()</code> मध्ये त्यांना कॉल करतो. वर्तन बदलणे म्हणजे वेगळे implementation पाठवणे, host कधीच संपादित न करता.</p>
         </div>
       </div>
 
-      <h3>रचना: inheritance झाड विरुद्ध जोडलेला object</h3>
+      <h3>Class रचना एका दृष्टिक्षेपात</h3>
       <div class="diagram">
-        <div class="cap">रचना - डावीकडे एक कठोर झाड, उजवीकडे बदलता येणारी वर्तने बाळगणारा object</div>
+        <div class="cap">HttpClient has-a auth, retry आणि logger; प्रत्येक एक interface असून त्यास ठोस implementations आहेत</div>
         <pre class="mermaid">
 classDiagram
-    class Bird {
-        +eat()
-        +fly()
+    class HttpClient {
+      -AuthProvider auth
+      -RetryPolicy retry
+      -RequestLogger logger
+      +send(req) Response
     }
-    class Duck
-    class Penguin {
-        +fly() throws
+    class AuthProvider {
+      &lt;&lt;interface&gt;&gt;
+      +authorize(req) Request
     }
-    Bird &lt;|-- Duck
-    Bird &lt;|-- Penguin
-
-    class Animal {
-        -FlyBehavior fly
-        -SwimBehavior swim
-        +move()
+    class RetryPolicy {
+      &lt;&lt;interface&gt;&gt;
+      +run(op) Response
     }
-    class FlyBehavior {
-        &lt;&lt;interface&gt;&gt;
-        +fly()
+    class RequestLogger {
+      &lt;&lt;interface&gt;&gt;
+      +log(req, res) void
     }
-    class SwimBehavior {
-        &lt;&lt;interface&gt;&gt;
-        +swim()
+    class BearerTokenAuth {
+      +authorize(req) Request
     }
-    Animal o-- FlyBehavior
-    Animal o-- SwimBehavior
-    FlyBehavior &lt;|.. WingFly
-    FlyBehavior &lt;|.. NoFly
-    SwimBehavior &lt;|.. StrongSwim
+    class ExponentialBackoff {
+      +run(op) Response
+    }
+    class ConsoleLogger {
+      +log(req, res) void
+    }
+    HttpClient o-- AuthProvider
+    HttpClient o-- RetryPolicy
+    HttpClient o-- RequestLogger
+    AuthProvider &lt;|.. BearerTokenAuth
+    RetryPolicy &lt;|.. ExponentialBackoff
+    RequestLogger &lt;|.. ConsoleLogger
         </pre>
       </div>
 
-      <h3>तीच समस्या, TypeScript मध्ये दोन designs</h3>
-      <pre><code>// INHERITANCE: rigid, and Penguin is forced to lie about fly()
-abstract class Bird {
-  eat(): string { return "peck peck"; }
-  fly(): string { return "flap and take off"; }
-}
-class Duck extends Bird {}
-class Penguin extends Bird {
-  // A penguin is-a Bird, but cannot fly -> the contract breaks
-  override fly(): string { throw new Error("penguins can't fly"); }
-}
+      <h3>Composition विरुद्ध inheritance, तीन भाषांमध्ये</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Collaborator contracts
+interface AuthProvider { authorize(req: Request): Request; }
+interface RetryPolicy { run&lt;T&gt;(op: () =&gt; Promise&lt;T&gt;): Promise&lt;T&gt;; }
+interface RequestLogger { log(req: Request, res: Response): void; }
 
-// COMPOSITION: behavior is injected, so no class ever lies
-interface FlyBehavior { fly(): string; }
-class WingFly  implements FlyBehavior { fly() { return "flap and take off"; } }
-class NoFly    implements FlyBehavior { fly() { return "stays grounded"; } }
-
-class Animal {
-  // has-a, not is-a: the fly behavior is a collaborator
-  constructor(private readonly flyer: FlyBehavior) {}
-  move(): string { return this.flyer.fly(); }   // delegation
-  setFlyer(f: FlyBehavior) { /* swap at runtime */ }
+class BearerTokenAuth implements AuthProvider {
+  constructor(private token: string) {}
+  authorize(req: Request): Request {
+    req.headers.set("Authorization", `Bearer ${this.token}`);
+    return req;
+  }
 }
 
-const duck    = new Animal(new WingFly());   // "flap and take off"
-const penguin = new Animal(new NoFly());     // "stays grounded" - honest, no throw
+class ExponentialBackoff implements RetryPolicy {
+  constructor(private tries = 3, private baseMs = 100) {}
+  async run&lt;T&gt;(op: () =&gt; Promise&lt;T&gt;): Promise&lt;T&gt; {
+    for (let attempt = 1; ; attempt++) {
+      try { return await op(); }
+      catch (err) {
+        if (attempt &gt;= this.tries) throw err;
+        await new Promise(r =&gt; setTimeout(r, this.baseMs * 2 ** attempt));
+      }
+    }
+  }
+}
+
+class ConsoleLogger implements RequestLogger {
+  log(req: Request, res: Response): void {
+    console.log(`${req.method} ${req.url} -&gt; ${res.status}`);
+  }
+}
+
+// The host HAS-A each collaborator and delegates to it.
+class HttpClient {
+  constructor(
+    private auth: AuthProvider,
+    private retry: RetryPolicy,
+    private logger: RequestLogger,
+  ) {}
+
+  async send(req: Request): Promise&lt;Response&gt; {
+    const authed = this.auth.authorize(req);              // delegate auth
+    const res = await this.retry.run(() =&gt; fetch(authed)); // delegate retry
+    this.logger.log(authed, res);                         // delegate logging
+    return res;
+  }
+}
+
+// Assemble by wiring parts; swap any part without a new subclass.
+const client = new HttpClient(
+  new BearerTokenAuth(process.env.API_TOKEN!),
+  new ExponentialBackoff(4, 200),
+  new ConsoleLogger(),
+);
+const res = await client.send(new Request("https://api.example.com/v1/orders"));
+
+// Contrast: the inheritance version welds everything into one tree.
+// class RetryingClient extends BaseClient { ... }
+// class AuthedRetryingClient extends RetryingClient { ... }  // combinatorial
 </code></pre>
-      <p class="muted">लक्षात घ्या की जोडलेला <code>Animal</code> कधीच काहीही override करत नाही आणि कधीच throw करत नाही. वर्तन constructor मार्फत पुरवले जाते आणि <code>setFlyer</code> ने बदलता येते - नेमकी तीच लवचिकता जी एक निश्चित <code>extends</code> नाते देऊ शकत नाही.</p>
+        <pre class="code-panel" data-lang="py" hidden><code>from __future__ import annotations
+from typing import Protocol, Callable, TypeVar
+import os, time
+
+T = TypeVar("T")
+
+# Collaborator contracts
+class AuthProvider(Protocol):
+    def authorize(self, req: Request) -&gt; Request: ...
+
+class RetryPolicy(Protocol):
+    def run(self, op: Callable[[], T]) -&gt; T: ...
+
+class RequestLogger(Protocol):
+    def log(self, req: Request, res: Response) -&gt; None: ...
+
+class BearerTokenAuth:
+    def __init__(self, token: str) -&gt; None:
+        self._token = token
+    def authorize(self, req: Request) -&gt; Request:
+        req.headers["Authorization"] = f"Bearer {self._token}"
+        return req
+
+class ExponentialBackoff:
+    def __init__(self, tries: int = 3, base_ms: int = 100) -&gt; None:
+        self._tries, self._base_ms = tries, base_ms
+    def run(self, op: Callable[[], T]) -&gt; T:
+        attempt = 1
+        while True:
+            try:
+                return op()
+            except Exception:
+                if attempt &gt;= self._tries:
+                    raise
+                time.sleep(self._base_ms * 2 ** attempt / 1000)
+                attempt += 1
+
+class ConsoleLogger:
+    def log(self, req: Request, res: Response) -&gt; None:
+        print(f"{req.method} {req.url} -&gt; {res.status}")
+
+# The host HAS-A each collaborator and delegates to it.
+class HttpClient:
+    def __init__(self, auth: AuthProvider, retry: RetryPolicy, logger: RequestLogger) -&gt; None:
+        self._auth, self._retry, self._logger = auth, retry, logger
+
+    def send(self, req: Request) -&gt; Response:
+        authed = self._auth.authorize(req)                 # delegate auth
+        res = self._retry.run(lambda: do_fetch(authed))    # delegate retry
+        self._logger.log(authed, res)                      # delegate logging
+        return res
+
+# Assemble by wiring parts; swap any part without a new subclass.
+client = HttpClient(
+    BearerTokenAuth(os.environ["API_TOKEN"]),
+    ExponentialBackoff(tries=4, base_ms=200),
+    ConsoleLogger(),
+)
+res = client.send(Request("GET", "https://api.example.com/v1/orders"))
+
+# Contrast: inheritance would force AuthedRetryingClient(RetryingClient(BaseClient))
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Collaborator contracts are duck-typed: any object answering the
+# right message plays the role. No base class needed.
+
+class BearerTokenAuth
+  def initialize(token) = @token = token
+  def authorize(req)
+    req.headers["Authorization"] = "Bearer #{@token}"
+    req
+  end
+end
+
+class ExponentialBackoff
+  def initialize(tries: 3, base_ms: 100)
+    @tries, @base_ms = tries, base_ms
+  end
+
+  def run
+    attempt = 1
+    begin
+      yield
+    rescue =&gt; e
+      raise e if attempt &gt;= @tries
+      sleep(@base_ms * 2**attempt / 1000.0)
+      attempt += 1
+      retry
+    end
+  end
+end
+
+class ConsoleLogger
+  def log(req, res) = puts("#{req.method} #{req.url} -&gt; #{res.status}")
+end
+
+# The host HAS-A each collaborator and delegates to it.
+class HttpClient
+  def initialize(auth:, retry:, logger:)
+    @auth, @retry, @logger = auth, retry, logger
+  end
+
+  def send(req)
+    authed = @auth.authorize(req)            # delegate auth
+    res = @retry.run { do_fetch(authed) }    # delegate retry
+    @logger.log(authed, res)                 # delegate logging
+    res
+  end
+end
+
+# Assemble by wiring parts; swap any part without a new subclass.
+client = HttpClient.new(
+  auth:   BearerTokenAuth.new(ENV.fetch("API_TOKEN")),
+  retry:  ExponentialBackoff.new(tries: 4, base_ms: 200),
+  logger: ConsoleLogger.new,
+)
+res = client.send(Request.new(:get, "https://api.example.com/v1/orders"))
+
+# Ruby also offers mixins for shared behavior without an is-a tree:
+# module Instrumented; def timed(&amp;blk) = ...; end
+# class HttpClient; include Instrumented; end
+</code></pre>
+      </div>
+      <p class="muted">Host चा <code>send()</code> कोणती retry किंवा auth धोरण तो धरून आहे हे कधीच जाणत नाही; तो फक्त पाठवायचा संदेश जाणतो. हेच delegation आहे: वर्तन जोडणीद्वारे निवडले जाते, त्यामुळे प्रत्येक संयोजनासाठी subclass वाढवण्याऐवजी फक्त constructor argument बदलून तोच class test, staging आणि production व्यापतो.</p>
     </div>
   </section>
 
   <!-- DIAGRAMS -->
   <section id="diagrams">
     <div class="wrap">
-      <div class="eyebrow">04 - क्रम आकृत्या</div>
-      <h2>तपशीलवार क्रम आकृत्या</h2>
-      <p class="muted">तीन दृश्ये: runtime ला एक delegate केलेला call, एक collaborator थेट बदलणे, आणि composition ने diamond संदिग्धता कशी टाळली जाते.</p>
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: composed सुखद मार्ग, delegation सह एक retry, आणि कठोर inheritance साखळीशी तुलना.</p>
 
       <div class="diagram">
-        <div class="cap">आकृती 1 - Delegation: बाहेरचा object काम बाळगलेल्या collaborator कडे पुढे पाठवतो</div>
+        <div class="cap">आकृती 1 - Composed request: host एका पाठोपाठ प्रत्येक सहकाऱ्याकडे delegate करतो</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant C as 👤 Client
-    participant A as 🧩 Animal
-    participant F as 🪶 FlyBehavior
+    participant Caller as 🧑 Caller
+    participant Client as 🖥️ HttpClient
+    participant Auth as 🔑 BearerTokenAuth
+    participant Retry as 🔁 ExponentialBackoff
+    participant Log as 📝 ConsoleLogger
 
-    C->>A: move()
-    Note over A: Animal has no fly logic of its own
-    A->>F: fly()
-    F-->>A: "flap and take off"
-    A-->>C: return result
+    Caller->>Client: send(request)
+    Client->>Auth: authorize(request)
+    Auth-->>Client: request with Bearer header
+    Client->>Retry: run(fetch operation)
+    Retry-->>Client: response 200
+    Client->>Log: log(request, response)
+    Log-->>Client: written
+    Client-->>Caller: response
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">आकृती 2 - Runtime बदल: class ला हात न लावता वर्तन बदला</div>
+        <div class="cap">आकृती 2 - Retry delegation: policy loop चा मालक असतो, client अनभिज्ञ राहतो</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant C as 👤 Client
-    participant A as 🧩 Animal
-    participant Old as 🪶 WingFly
-    participant New as 🚫 NoFly
+    participant Client as 🖥️ HttpClient
+    participant Retry as 🔁 ExponentialBackoff
+    participant Net as 🌐 Network fetch
 
-    C->>A: move()
-    A->>Old: fly()
-    Old-->>A: "flap and take off"
-    A-->>C: result
-    C->>A: setFlyer(NoFly)
-    Note over A,New: collaborator replaced, no recompile
-    C->>A: move()
-    A->>New: fly()
-    New-->>A: "stays grounded"
-    A-->>C: new result
-        </pre>
-      </div>
-
-      <div class="diagram">
-        <div class="cap">आकृती 3 - Diamond टाळणे: दोन क्षमता, कोणतीही संदिग्धता नाही</div>
-        <pre class="mermaid">
-sequenceDiagram
-    autonumber
-    participant C as 👤 Client
-    participant W as 🦆 Waterfowl
-    participant F as 🪶 Flyer
-    participant S as 🏊 Swimmer
-
-    C->>W: travel()
-    alt over land
-        W->>F: fly()
-        F-->>W: airborne
-    else over water
-        W->>S: swim()
-        S-->>W: paddling
+    Client->>Retry: run(fetch operation)
+    loop up to N attempts
+        Retry->>Net: attempt fetch
+        alt transient failure
+            Net-->>Retry: 503 error
+            Note over Retry: sleep base * 2^attempt
+        else success
+            Net-->>Retry: 200 response
+        end
     end
-    Note over W: two held behaviors, resolution is explicit not inherited
-    W-->>C: journey done
+    Retry-->>Client: final response or raised error
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Fragile base class: base मधील अंतर्गत बदल subclass ला तोडतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Sub as 🧱 AuthedRetryingClient
+    participant Base as 🌳 BaseClient
+
+    Caller->>Sub: send(request)
+    Sub->>Sub: override adds auth header
+    Sub->>Base: super send(request)
+    Note over Base: base refactor now calls<br/>an internal hook first
+    Base->>Sub: prepare() hook fires early
+    Note over Sub: override assumed header<br/>was already set, now it is not
+    Base-->>Sub: unauthorized 401
+    Sub-->>Caller: broken by a change it never saw
         </pre>
       </div>
     </div>
@@ -278,20 +446,20 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
       <h2>0 → 100 प्रवाह</h2>
-      <p class="muted">एका ठिसूळ inheritance झाडापासून एका स्वच्छ जोडलेल्या design पर्यंत - refactor क्रमाने.</p>
+      <p class="muted">एका गुंतागुंतीच्या class वृक्षापासून स्वच्छपणे composed client पर्यंत, संपूर्ण refactor क्रमाने.</p>
 
       <div class="steps">
-        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>दुर्गंध लक्षात घ्या</h4><p>एक base class वाढतच राहते, subclasses throw किंवा no-op करण्यासाठी methods override करतात, आणि parent मधील एक लहान बदल दूरच्या मुलांना मोडतो. हे fragile-base-class चे दुखणे composition ची मागणी करत आहे.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">प्रश्न</span><h4>is-a दावा तपासा</h4><p>subclass खरोखर प्रत्येक संदर्भात, कायमची, त्याच्या parent चा एक प्रकार आहे का हे विचारा. जर ती फक्त काही वर्तन वापरत असेल किंवा करू शकत असेल, तर ती वेषातील has-a आहे.</p></div></div>
-        <div class="step"><div class="num">20</div><div class="body"><span class="tag">वेगळे करा</span><h4>बदलणारे वर्तन शोधा</h4><p>subclasses मध्ये जे भाग वेगळे असतात ते ओळखा - fly, pay, render. ती भिन्नता म्हणजे hierarchy मधून बाहेर काढायचे तुकडे.</p></div></div>
-        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Interface</span><h4>एक करार परिभाषित करा</h4><p>प्रत्येक बदलणाऱ्या वर्तनासाठी एक interface तयार करा, उदाहरणार्थ <code>FlyBehavior</code>. हे बाहेरच्या object वर अवलंबून असणारी decoupling जोड बनते.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>लहान strategies लिहा</h4><p>प्रत्येक भिन्नतेसाठी ठोस classes द्या: <code>WingFly</code>, <code>NoFly</code>, <code>JetFly</code>. प्रत्येक अगदी लहान, एकाच उद्देशाची, आणि स्वतंत्रपणे testable.</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">बाळगा</span><h4>parent नव्हे, तर एक field जोडा</h4><p>बाहेरच्या class ला base extend करण्याऐवजी interface प्रकाराचे एक field द्या. आता object कडे वर्तन <em>असते</em>, तो subclass नसतो.</p></div></div>
-        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Delegate</span><h4>call पुढे पाठवा</h4><p>बाहेरच्या method मध्ये collaborator ला call करा: <code>move()</code> फक्त <code>flyer.fly()</code> ला बोलावते. class स्वतः न बनवलेले वर्तन उघड करते.</p></div></div>
-        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Inject</span><h4>बाहेरून जोडा</h4><p>collaborators constructor मार्फत किंवा एका DI container मार्फत पास करा. आता class चे नाव नव्हे, तर configuration वर्तन ठरवते.</p></div></div>
-        <div class="step"><div class="num">80</div><div class="body"><span class="tag">बदला</span><h4>runtime ला वर्तन बदला</h4><p>एक setter उघड करा जेणेकरून चालू असलेला object एक strategy दुसरीशी बदलू शकेल. ही ती लवचिकता आहे जी inheritance तुम्हाला कधीच देऊ शकत नाही.</p></div></div>
-        <div class="step"><div class="num">90</div><div class="body"><span class="tag">एकत्र करा</span><h4>mixins किंवा decorators ने स्तर रचा</h4><p>अनेक collaborators बाळगून किंवा decorators ने गुंडाळून अनेक क्षमता रचा, combinatorial class स्फोटाशिवाय समृद्ध वर्तन मिळवा.</p></div></div>
-        <div class="step"><div class="num">100</div><div class="body"><span class="tag">निर्णय</span><h4>inheritance जिथे बसते तिथे ठेवा</h4><p>खऱ्या, स्थिर is-a subtyping आणि template methods साठी inheritance टिकवा. ध्येय योग्य साधन आहे, शून्य inheritance नव्हे.</p></div></div>
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">दुर्गंध</span><h4>वाढणारी hierarchy ओळखा</h4><p><code>AuthedRetryingLoggingClient</code> सारखे classes तीन स्तर खोल विस्तार करताना तुमच्या लक्षात येते, प्रत्येक नवीन मिश्रण आणखी एक subclass मागते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">काळज्यांना नाव द्या</span><h4>Cross-cutting कामे वेगळी करा</h4><p>वृक्ष कशाची गल्लत करतो त्याची यादी करा: authentication, retry आणि logging या तीन स्वतंत्र जबाबदाऱ्या आहेत, एक वंशावळ नव्हे.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">करार परिभाषित करा</span><h4>प्रत्येक काळजीसाठी अरुंद interface लिहा</h4><p><code>AuthProvider.authorize</code>, <code>RetryPolicy.run</code>, <code>RequestLogger.log</code>. प्रत्येक एका लहान वर्तनाचे वचन देतो.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">बाहेर काढा</span><h4>वर्तन सहकाऱ्यांमध्ये हलवा</h4><p>Auth तर्क base मधून बाहेर काढून <code>BearerTokenAuth</code> मध्ये घाला; retry आणि logging साठी तेच करा. प्रत्येक एक स्वतंत्र class बनतो.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">धरून ठेवा</span><h4>Host ला has-a fields द्या</h4><p><code>HttpClient</code> आता ठोस नव्हे तर interfaces नुसार typed केलेले <code>auth</code>, <code>retry</code> आणि <code>logger</code> field साठवतो.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Inject करा</span><h4>Constructor मध्ये सहकारी स्वीकारा</h4><p>Host आपले भाग argument म्हणून घेतो, त्यामुळे कोणती implementations जोडायची हे caller ठरवतो.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Delegate करा</span><h4>send() मध्ये काम पुढे पाठवा</h4><p><code>send()</code> प्रथम <code>auth.authorize</code>, मग <code>retry.run</code>, मग <code>logger.log</code> कॉल करतो. Host समन्वय साधतो; भाग काम करतात.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">हटवा</span><h4>Subclass वृक्ष कोसळवा</h4><p>विशेष-प्रकरणाच्या subclasses नाहीशा होतात. एकच <code>HttpClient</code> आता जोडणीद्वारे प्रत्येक संयोजन व्यापतो.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">बदला</span><h4>प्रत्येक वातावरणासाठी पुनर्रचना करा</h4><p>चाचण्यांमध्ये <code>NoRetry</code> आणि <code>NullLogger</code> जोडा, production मध्ये <code>ExponentialBackoff</code> आणि structured logger जोडा. सर्वत्र तोच class.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">चाचणी करा</span><h4>बनावट inject करा आणि पडताळणी करा</h4><p>Subclass न करता किंवा network ला हात न लावता client पडताळण्यासाठी नोंद करणारा logger आणि stub auth पाठवा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">निर्णय घ्या</span><h4>Inheritance जिथे कमावते तिथे ठेवा</h4><p>स्थिर, पातळ base आणि खऱ्या substitutability सह खऱ्या is-a subtypes साठी, inheritance अजूनही योग्य आहे. ते जाणीवपूर्वक वापरा, आपोआप नव्हे.</p></div></div>
       </div>
     </div>
   </section>
@@ -299,83 +467,83 @@ sequenceDiagram
   <!-- PITFALLS -->
   <section id="pitfalls">
     <div class="wrap">
-      <div class="eyebrow">सामान्य अडचणी</div>
-      <h2>अडचणी आणि anti-patterns</h2>
-      <p class="muted">Inheritance आणि composition दोन्हींचा गैरवापर होऊ शकतो. या अशा सापळ्या आहेत ज्या वास्तविक code मध्ये सर्वात जास्त दिसतात.</p>
+      <div class="eyebrow">सामान्य धोके</div>
+      <h2>धोके आणि anti-patterns</h2>
+      <p class="muted">Composition फुकट नाही; निष्काळजीपणे केल्यास ते एका गोंधळाची जागा दुसऱ्या गोंधळाने घेते. या गोष्टींकडे लक्ष द्या.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🕳️ खोल inheritance hierarchies</h4><p>पाच किंवा सहा स्तरांचे <code>extends</code> म्हणजे एका method call ने संपूर्ण झाडात विखुरलेला code चालतो. कोणीही त्याबद्दल विचार करू शकत नाही, आणि कोणताही base बदल म्हणजे भूसुरुंग. Composition ने ते सपाट करा.</p></div>
-        <div class="card"><h4>🧱 Fragile base class</h4><p>एक base method किंवा त्याचा call क्रम बदलल्याने जुन्या वर्तनावर अवलंबून असलेल्या subclasses गुपचूप मोडतात. parent सुरक्षितपणे विकसित होऊ शकत नाही कारण तो प्रत्येक मुलाशी coupled आहे.</p></div>
-        <div class="card"><h4>💎 diamond कडे झुकणे</h4><p>Multiple inheritance जिथे दोन मार्ग एकाच पूर्वजापर्यंत पोहोचतात, तिथे संदिग्ध method आणि state resolution तयार होते. भाषा त्यावर बंदी घालतात किंवा त्याला गुंतागुंतीचे करतात, ते चांगल्या कारणासाठी - त्याऐवजी compose करा.</p></div>
-        <div class="card"><h4>🎭 फक्त code पुनर्वापरासाठी inheritance</h4><p>फक्त एक helper method मिळवण्यासाठी class extend करणे तुम्हाला अभिप्रेत नसलेला is-a दावा करण्यास भाग पाडते. तुम्ही त्याची संपूर्ण पृष्ठभाग आणि coupling वारसा म्हणून घेता. त्याला collaborator म्हणून बाळगणे अधिक चांगले.</p></div>
-        <div class="card"><h4>🧨 Liskov उल्लंघने</h4><p>एखादी method throw करण्यासाठी किंवा करार कमकुवत करण्यासाठी override करणे, जसे <code>Penguin.fly()</code> throw करणे, substitutability मोडते. base type च्या callers ना आश्चर्ये मिळतात. हे is-a चुकीचे होते याचे लक्षण आहे.</p></div>
-        <div class="card"><h4>🍝 Delegation boilerplate</h4><p>Composition दुसऱ्या दिशेने वाहू शकते: फक्त calls पुढे पाठवण्यासाठी डझनभर एक-ओळीच्या pass-through methods. ते सुटसुटीत ठेवण्यासाठी भाषेची delegation वैशिष्ट्ये, interfaces, किंवा एक decorator base वापरा.</p></div>
+        <div class="card"><h4>🏗️ फक्त पुनर्वापरासाठी inheritance</h4><p>खरा is-a संबंध नसताना, फक्त काही methods उधार घेण्यासाठी subclass करणे हा उत्कृष्ट गैरवापर आहे. जर मूल पालकाच्या जागी वापरता येत नसेल, तर त्याने वर्तन धरून ठेवावे, वारशाने घेऊ नये.</p></div>
+        <div class="card"><h4>🧨 Fragile base class</h4><p>जो base अंतर्गतरीत्या आपल्याच override करण्याजोग्या methods कॉल करतो, तो एका खासगी refactor ला प्रत्येक subclass नकळत तोडू देतो. जितके अधिक subclasses protected अंतर्गत भागांत हात घालतात, तितके ते वाईट होते.</p></div>
+        <div class="card"><h4>🪆 खोल hierarchies</h4><p>Extends चे चार-पाच स्तर वर्तन शोधणे अशक्य करतात: एक कॉल काय करतो हे समजण्यासाठी तुम्हाला संपूर्ण साखळी वाचावी लागते. सहकाऱ्यांमध्ये सपाट करा.</p></div>
+        <div class="card"><h4>🕸️ Composition मार्फत god object</h4><p>Composition एक monolith देखील लपवू शकते: पंधरा सहकारी धरून ठेवणारा आणि त्या सर्वांचे समन्वय साधणारा host म्हणजे अतिरिक्त indirection असलेला मातीचा मोठा गोळाच. Hosts एकाग्र ठेवा.</p></div>
+        <div class="card"><h4>🔁 Boilerplate delegation</h4><p>धरून ठेवलेल्या वस्तूकडे वीस methods हाताने पुढे पाठवणे कंटाळवाणे आणि चुका-प्रवण असते. त्याऐवजी भाषेची delegation वैशिष्ट्ये (Ruby <code>Forwardable</code>, Kotlin <code>by</code>) किंवा एक पातळ facade वापरा.</p></div>
+        <div class="card"><h4>🧬 Mixin टकराव</h4><p>दोन mixins जे दोन्ही <code>save</code> परिभाषित करतात किंवा दोन्ही एकाच state ला स्पर्श करतात, ते आश्चर्यकारक method resolution order bugs निर्माण करतात. Mixins लहान, ऑर्थोगोनल आणि namespaced ठेवा.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- METRICS -->
-  <section id="metrics">
+  <!-- SIGNALS -->
+  <section id="signals">
     <div class="wrap">
-      <div class="eyebrow">तडजोडी</div>
-      <h2>तडजोडी आणि केव्हा वापरावे</h2>
-      <p class="muted">Composition हा एक default आहे, नियम नव्हे. एखादी hierarchy refactor करण्यापूर्वी किंवा एखाद्या base class कडे झुकण्यापूर्वी या गोष्टींचा विचार करा.</p>
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">तुम्ही design मार्गदर्शक तत्त्वाची unit-test करू शकत नाही, पण एखादी hierarchy बिघडली आहे का आणि composition मदत करेल का हे हे संकेत सांगतात.</p>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>पैलू</th><th>तपशील</th></tr>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>फायदे</strong></td><td>सैल coupling, runtime लवचिकता, लहान testable units, fragile base class नाही, diamond समस्या टाळते, open-closed principle चा सन्मान करते.</td></tr>
-            <tr><td><strong>तोटे</strong></td><td>सुरुवातीला अधिक classes आणि interfaces, delegation boilerplate, indirection एका साध्या प्रवाहाला अस्पष्ट करू शकते, wiring constructors किंवा एका DI container कडे जाते.</td></tr>
-            <tr><td><strong>केव्हा वापरावे</strong></td><td>जेव्हा वर्तन प्रकरणांनुसार बदलते, runtime ला बदलण्याची गरज असते, खोल किंवा ठिसूळ झाड तयार होईल, किंवा नाते खरोखर has-a किंवा can-do असते.</td></tr>
-            <tr><td><strong>केव्हा टाळावे</strong></td><td>subtype खरा, स्थिर is-a असेल, तुम्हाला खरी polymorphic substitutability हवी असेल, किंवा एखादी template-method framework तुम्ही base class extend करावी अशी अपेक्षा करते.</td></tr>
-            <tr><td><strong>गुंतागुंत</strong></td><td>संकल्पनेत कमी, wiring मध्ये मध्यम. काही अतिरिक्त types च्या बदल्यात नंतरचा बदल खूप सोपा देते - क्षुल्लक प्रकरणांपलीकडे सहसा एक चांगला सौदा.</td></tr>
-            <tr><td><strong>संबंधित</strong></td><td>Strategy, Decorator, Bridge, आणि Adapter हे सर्व कृतीतील composition आहेत; SOLID चे dependency-inversion आणि open-closed principles त्याला प्रेरित करतात.</td></tr>
+            <tr><td><strong>Inheritance खोली (DIT)</strong></td><td>खोल वृक्षांबद्दल विचार करणे कठीण असते; तीन-चार स्तरांपुढे झेप बहुधा reuse-by-inheritance दर्शवते, जे composition सपाट करेल.</td></tr>
+            <tr><td><strong>संयोजनांसाठी subclass संख्या</strong></td><td>जर N वैशिष्ट्ये साधारण 2^N subclasses निर्माण करत असतील, तर तुम्ही संयोजनात्मक कर भरत आहात जो composition काढून टाकते.</td></tr>
+            <tr><td><strong>ठराविक क्रमात super कॉल करणारे overrides</strong></td><td>Base च्या अंतर्गत कॉल क्रमावर अवलंबून असलेले subclasses म्हणजे कधीही उफाळणारा fragile-base-class धोका.</td></tr>
+            <tr><td><strong>Protected सदस्य पृष्ठभाग</strong></td><td>रुंद protected API म्हणजे subclasses अंतर्गत भागांत हात घालतात; base सुरक्षितपणे विकसित होऊ शकत नाही. तो अरुंद करा आणि composition ला प्राधान्य द्या.</td></tr>
+            <tr><td><strong>चाचणी सेटअपची गुंतागुंत</strong></td><td>जर एका class ची चाचणी करण्यासाठी तिला subclass करावे लागते किंवा protected hooks override करावे लागतात, तर तिचे वर्तन injectable नाही आणि composition ते सोपे करेल.</td></tr>
+            <tr><td><strong>वृक्षभर बदलाची लाट</strong></td><td>एका base संपादनामुळे अनेक subclasses मध्ये संपादने करावी लागणे हे घट्ट structural coupling दर्शवते, जे बदलण्याजोगे सहकारी टाळतात.</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>ढोबळ नियम:</strong> inheritance कडे तेव्हाच झुका जेव्हा subtype एक खरा, कायमचा is-a असतो जो तुम्ही आश्चर्याशिवाय त्याच्या base च्या जागी वापराल. जे फक्त वर्तन पुन्हा वापरते किंवा बदलते त्या प्रत्येक गोष्टीसाठी, compose आणि delegate करा. Default म्हणून composition ला अनुकूलता द्या, समर्थनासह inheritance ला परवानगी द्या.</div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर प्रस्तावित subclass Liskov चाचणी अपयशी करेल (base अपेक्षित असेल तिथे सर्वत्र तो वापरता येत नाही), किंवा फक्त कोड पुन्हा वापरण्यासाठी अस्तित्वात असेल, तर त्याऐवजी त्याचे has-a सहकारी म्हणून प्रतिरूपण करा. खऱ्या, पातळ, स्थिर is-a subtypes साठी inheritance राखून ठेवा.</div>
     </div>
   </section>
 
   <!-- CASE STUDIES -->
   <section id="cases">
     <div class="wrap">
-      <div class="eyebrow">06 - उदाहरण अभ्यास</div>
-      <h2>वास्तविक जगातील उदाहरण अभ्यास</h2>
-      <p class="muted">तीन ठिकाणे जिथे inheritance ऐवजी composition निवडल्याने परिणाम बदलला.</p>
+      <div class="eyebrow">06 - प्रकरण अभ्यास</div>
+      <h2>वास्तविक जगातील प्रकरण अभ्यास</h2>
+      <p class="muted">तीन production-शैलीच्या प्रणाली जिथे composition ने class hierarchy ला मात दिली.</p>
 
       <div class="case">
-        <div class="hd"><span class="badge">🎮</span><div><h3>1 · component systems मार्फत game entities</h3><div class="role">Pattern: entity-component composition</div></div></div>
-        <p class="muted">सुरुवातीच्या game engines ने <code>Enemy extends Character extends GameObject</code> सारखी खोल class झाडे वापरली, मग जेव्हा एका खोक्याला AI नव्हे तर physics हवे होते तेव्हा ती मोडली.</p>
+        <div class="hd"><span class="badge">🔌</span><div><h3>1 · एक HTTP API client SDK</h3><div class="role">Pattern: retry, auth आणि logging सहकाऱ्यांपासून client जोडा</div></div></div>
+        <p class="muted">एका payments SDK ची सुरुवात प्रत्येक auth योजना आणि retry वर्तनाच्या संयोजनासाठी subclass केलेल्या <code>BaseClient</code> ने झाली, आणि वृक्ष असंभाळण्याजोगा बनला.</p>
         <ul>
-          <li>वर्तन components मध्ये विभागले: <code>Position</code>, <code>Render</code>, <code>Physics</code>, <code>AI</code>, प्रत्येक एका entity ने बाळगलेले.</li>
-          <li>एक नवा entity प्रकार म्हणजे components ची एक नवी पिशवी, कठोर झाडातील एक नवा subclass नव्हे.</li>
-          <li>Designers programmer ने hierarchy संपादित न करता runtime ला क्षमता मिसळतात.</li>
+          <li>Auth, retry आणि instrumentation client धरून ठेवणाऱ्या injectable interfaces मध्ये बाहेर काढले गेले.</li>
+          <li>Sandbox आणि live modes दोन subclasses नव्हे तर एकाच <code>HttpClient</code> च्या दोन जोडण्या बनल्या.</li>
+          <li>नवीन auth योजना client मध्ये शून्य बदलांसह नवीन <code>AuthProvider</code> implementations म्हणून पाठवल्या गेल्या.</li>
         </ul>
-        <div class="outcome">✅ <strong>परिणाम:</strong> Entity-component-system architecture उद्योगाचा प्रमाण बनला कारण जिथे inheritance combinatorially फुटले तिथे composition scale झाले.</div>
+        <div class="outcome">✅ <strong>निष्पत्ती:</strong> Subclass वृक्ष एकाच client class पर्यंत कोसळला, आणि वैशिष्ट्ये जोडणे inheritance शस्त्रक्रियेऐवजी जोडणी बनले.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">☕</span><div><h3>2 · Java I/O streams</h3><div class="role">Pattern: Decorator, गुंडाळून composition</div></div></div>
-        <p class="muted">Java ला प्रत्येक संयोजनासाठी एक class न बनवता कोणत्याही stream वर buffering, compression, आणि encryption हवे होते.</p>
+        <div class="hd"><span class="badge">📊</span><div><h3>2 · एक reporting आणि export engine</h3><div class="role">Pattern: एका Report कडे has-a datasource आणि एक formatter असतो</div></div></div>
+        <p class="muted">एका analytics platform ने प्रथम reports ला <code>Report</code> चा विस्तार करणारे <code>SalesReport</code> चा विस्तार करणारे <code>PdfSalesReport</code> असे प्रतिरूपित केले, जे formats आणि sources वाढल्याने स्फोट पावले.</p>
         <ul>
-          <li><code>BufferedInputStream</code> दुसऱ्या <code>InputStream</code> ला गुंडाळते आणि त्याला delegate करते.</li>
-          <li>तुम्ही wrappers रचता: file stream भोवती gzip, त्याभोवती buffer, runtime ला जोडलेले.</li>
-          <li>एक क्षमता जोडणे म्हणजे एक नवा decorator, प्रत्येक stream प्रकाराचा subclass नव्हे.</li>
+          <li>एक <code>Report</code> आता एक <code>DataSource</code> आणि एक <code>OutputFormatter</code> धरून ठेवतो, fetch आणि render त्यांच्याकडे delegate करतो.</li>
+          <li>CSV, PDF आणि XLSX तीन formatters बनले; warehouse आणि API दोन datasources बनले.</li>
+          <li>कोणताही source runtime वर कोणत्याही format शी जुळतो, प्रत्येक जोडीसाठी नवीन class नाही.</li>
         </ul>
-        <div class="outcome">✅ <strong>परिणाम:</strong> मूठभर composable decorators प्रत्येक संयोजन कव्हर करतात, stream subclasses चा एक प्रचंड inheritance matrix टाळतात.</div>
+        <div class="outcome">✅ <strong>निष्पत्ती:</strong> Format-गुणिले-source संयोजने भागांच्या एका लहान संचात बदलली, आणि नवीन export format म्हणजे वृक्षाची नवीन फांदी नव्हे तर एक class बनले.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">🛒</span><div><h3>3 · payment आणि pricing strategies</h3><div class="role">Pattern: Strategy, inject केलेले वर्तन</div></div></div>
-        <p class="muted">एक checkout service <code>CreditCardOrder extends Order</code> ने सुरू झाली आणि झाड अव्यवस्थापनीय होईपर्यंत प्रत्येक payment व discount नियमासाठी एक subclass मिळवत गेली.</p>
+        <div class="hd"><span class="badge">🔔</span><div><h3>3 · एक notification service</h3><div class="role">Pattern: channel hierarchy ऐवजी mixins आणि channel सहकारी</div></div></div>
+        <p class="muted">एका messaging प्रणालीत <code>Notification</code> वृक्षाचा विस्तार करणारा <code>EmailNotification</code> होता, ज्यात retry आणि templating दुहेरी होते किंवा अवघडपणे base मध्ये ढकलले होते.</p>
         <ul>
-          <li><code>PaymentMethod</code> आणि <code>DiscountPolicy</code> हे order बाळगणारे interfaces बनले.</li>
-          <li>एका order ला निर्मितीच्या वेळी एक payment strategy आणि एक discount strategy सह configure केले जाते.</li>
-          <li>नव्या जाहिराती आणि providers हे नवे strategy classes आहेत, <code>Order</code> ला हात न लावता inject केलेले.</li>
+          <li>Channels (email, SMS, push) sender धरून ठेवणारे अदलाबदल करण्याजोगे <code>Channel</code> सहकारी बनले.</li>
+          <li>Timestamping आणि rate limiting सारख्या cross-cutting काळज्या base methods नव्हे तर लहान mixins बनल्या.</li>
+          <li>एक digest sender फक्त अनेक channels धरून ठेवून त्यांना पसरवत असे, नवीन subclass ची गरज नाही.</li>
         </ul>
-        <div class="outcome">✅ <strong>परिणाम:</strong> order class बदलणे थांबले, tests ने प्रत्येक strategy वेगळ्याने mock केली, आणि नवे payment पर्याय regression धोक्याशिवाय पाठवले गेले.</div>
+        <div class="outcome">✅ <strong>निष्पत्ती:</strong> Slack channel जोडणे म्हणजे एक नवीन <code>Channel</code> class होते, आणि फुगणाऱ्या base ऐवजी सामायिक वर्तन एकाग्र mixins मध्ये राहिले.</div>
       </div>
     </div>
   </section>
@@ -385,16 +553,16 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">07 - प्रासंगिकता</div>
       <h2>आधुनिक प्रासंगिकता</h2>
-      <p class="muted">जुनाट असण्यापासून दूर, composition over inheritance आधुनिक भाषा, frameworks, आणि प्रतिमाने कशी design केली जातात याचा पाया आहे.</p>
+      <p class="muted">Composition over inheritance बहुतेक frameworks पेक्षा जुने आहे, तरीही आधुनिक भाषा आणि platform design ते अधिकाधिक मुख्य प्रवाहात ढकलत राहते.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🧵 Traits आणि mixins मुख्य प्रवाहात</h4><p>Rust traits, Scala traits, आणि TypeScript mixins तुम्हाला base class शिवाय क्षैतिज वर्तन compose करू देतात, ज्यामुळे composition हा सोयीस्कर default बनतो.</p></div>
-        <div class="card"><h4>🚫 Go आणि Rust inheritance सोडतात</h4><p>Go कडे struct embedding आणि interfaces आहेत, Rust कडे traits आहेत, आणि दोघेही class inheritance अजिबात देत नाहीत - composition वर एक जाणीवपूर्वक पैज.</p></div>
-        <div class="card"><h4>⚛️ React ने composition निवडले</h4><p>React स्पष्टपणे पुनर्वापरासाठी inheritance ऐवजी composition ची शिफारस करते, base components extend करण्याऐवजी hooks आणि child components वापरते.</p></div>
-        <div class="card"><h4>💉 Dependency injection सर्वत्र</h4><p>Spring, Angular, आणि NestJS collaborators constructors मार्फत जोडतात, ज्यामुळे has-a design हा frameworks apps जमवण्याचा default मार्ग बनतो.</p></div>
-        <div class="card"><h4>🧩 Patterns म्हणजे composition</h4><p>Strategy, Decorator, Bridge, आणि Adapter, Gang of Four चे कामाचे घोडे, हे सर्व एका विशिष्ट कामासाठी सजवलेले composition आहेत.</p></div>
-        <div class="card"><h4>🔬 Testability ची मागणी</h4><p>आधुनिक testing संस्कृती interfaces मागच्या लहान, mock करता येणाऱ्या units ला बक्षीस देते, जे नेमके composition तयार करते आणि inheritance नाकारते.</p></div>
+        <div class="card"><h4>🧵 Traits आणि protocols</h4><p>Rust traits, Swift protocol extensions, आणि Go चे interface embedding class hierarchy शिवायच composition-शैलीचा पुनर्वापर देतात, has-a ला default बनवतात.</p></div>
+        <div class="card"><h4>💉 सर्वत्र dependency injection</h4><p>Spring, NestJS आणि .NET मधील DI containers नेमके सहकाऱ्यांना hosts मध्ये जोडण्यासाठी अस्तित्वात आहेत, संपूर्ण codebases मध्ये composition pattern चे औद्योगिकीकरण करतात.</p></div>
+        <div class="card"><h4>🎛️ Delegation एक keyword म्हणून</h4><p>Kotlin चे <code>by</code> आणि Ruby चे <code>Forwardable</code> delegation ला first class बनवतात, एकेकाळी composition ला inheritance पेक्षा जड वाटायला लावणारे boilerplate काढून टाकतात.</p></div>
+        <div class="card"><h4>⚛️ UI frameworks मधील composition</h4><p>React आणि आधुनिक component प्रणालींनी inheritance-आधारित UI ला composed components आणि hooks ने बदलले, is-a पेक्षा has-a चा मोठ्या प्रमाणावरील पुरस्कार.</p></div>
+        <div class="card"><h4>🧩 Entity-component प्रणाली</h4><p>Game आणि simulation engines खोल class वृक्षांऐवजी जोडलेल्या components पासून entities बनवतात, runtime वर composition चे शुद्धतम रूप.</p></div>
+        <div class="card"><h4>🌳 Inheritance, जाणीवपूर्वक राखलेले</h4><p>Sealed classes आणि interfaces खऱ्या is-a प्रतिरूपणासाठी जागा राखतात, त्यामुळे भविष्य शून्य inheritance नाही तर हेतुपुरस्सर वापरलेले inheritance आहे.</p></div>
       </div>
-      <div class="callout"><strong>सारांश:</strong> खऱ्या, स्थिर is-a subtyping आणि template methods साठी inheritance अजूनही त्याचे स्थान कमावते, पण composition हा default आहे जो systems लवचिक, testable, आणि बदलण्यास सुरक्षित ठेवतो. आधी has-a कडे झुका, आणि inheritance ला ते तिथे बसते हे सिद्ध करू द्या.</div>
+      <div class="callout"><strong>सारांश:</strong> वर्तन बदलण्याजोगे, चाचणीयोग्य आणि fragile-base-class तुटीपासून सुरक्षित ठेवण्यासाठी composition ला प्राधान्य द्या, आणि खऱ्या, पातळ, बदलण्याजोग्या is-a संबंधांसाठी inheritance राखून ठेवा. आधी सहकाऱ्यांपासून वस्तू जोडा; subtype संबंध खरा असेल तेव्हाच base चा विस्तार करा.</div>
     </div>
   </section>
 
@@ -403,20 +571,20 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">शोध सुरू ठेवा</div>
       <h2>संबंधित विषय</h2>
-      <p class="muted">Composition object-oriented design च्या केंद्रस्थानी आहे. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <p class="muted">Composition संबंधित design कल्पनांच्या जाळ्यात बसते. या तिच्यासोबत नैसर्गिकरीत्या जुळतात.</p>
       <div class="topic-grid">
-        <a class="topic-card" href="../oop-core/"><span class="ico">🧱</span><h4>OOP मूलभूत संकल्पना</h4><p>संदर्भात encapsulation, polymorphism, आणि is-a नाते.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="../solid/"><span class="ico">📐</span><h4>SOLID तत्त्वे</h4><p>Composing ला प्रेरित करणारे open-closed आणि dependency inversion.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator pattern</h4><p>Runtime ला गुंडाळून आणि delegate करून वर्तन जोडणे.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="../strategy/"><span class="ico">♟️</span><h4>Strategy pattern</h4><p>Subclassing ऐवजी अदलाबदल करता येणारे वर्तन inject करणे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../inheritance/"><span class="ico">🌳</span><h4>Inheritance</h4><p>Is-a यंत्रणा, आणि ती खरोखर कधी योग्य ठरते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../dependency-injection/"><span class="ico">💉</span><h4>Dependency injection</h4><p>सहकारी त्यांच्या hosts मध्ये कसे जोडले जातात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single responsibility</h4><p>प्रत्येक सहकाऱ्याने एकच काम चांगले का करावे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>वर्तन गुंडाळण्यासाठी आणि विस्तारण्यासाठी लागू केलेले composition.</p><span class="go">वाचा →</span></a>
       </div>
     </div>
   </section>
 
   <footer>
     <div class="wrap">
-      <p><a href="../">← Patterns hub कडे परत</a></p>
-      <p>Composition over inheritance वर एक दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · उदाहरण अभ्यास · प्रासंगिकता</p>
+      <p><a href="../">← Patterns hub कडे परत जा</a></p>
+      <p>Composition over inheritance वर एक दृश्यात्मक मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · प्रकरण अभ्यास · भविष्य</p>
     </div>
   </footer>
 

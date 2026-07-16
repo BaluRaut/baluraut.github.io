@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Anemic Domain Model - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="Anemic Domain Model या anti-pattern चे सखोल, दृश्य मार्गदर्शन: फक्त डेटा असलेल्या objects आणि services मध्ये लॉजिक, encapsulation का गमावले जाते, rich domain model हा पर्याय, anemic objects कधी योग्य असतात, TypeScript, Python आणि Ruby सह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">उदाहरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>The Anemic Domain Model - डेटा असलेली पण वर्तन नसलेली objects</h1>
+      <p class="lede">Anemic domain model म्हणजे असा codebase जिथे तुमच्या <strong>entities फक्त getters आणि setters ची पिशवी असतात</strong> आणि प्रत्येक नियम वेगळ्या service layer मध्ये राहतो. तो object-oriented वाटतो, पण तो खरे तर class चा पोशाख घातलेला procedural code असतो. Rich पर्याय वर्तन त्या डेटाच्या शेजारी ठेवतो ज्याचे ते रक्षण करते, म्हणजे एखादा <code>Order</code> स्वतःचे invariants स्वतः लागू करतो, आणि ते लक्षात ठेवण्यासाठी <code>OrderService</code> वर विश्वास ठेवत नाही.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Encapsulation</span>
+        <span class="pill">Rich vs anemic</span>
+        <span class="pill">Invariants</span>
+        <span class="pill">Service चा फैलाव</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Anemic Domain Model म्हणजे काय?</h2>
+      <p class="muted">एक <strong>anemic domain model</strong> म्हणजे असे design जिथे domain objects स्थिती (state) बाळगतात पण जवळपास कोणतेही लॉजिक नसते. <code>Order</code>, <code>Cart</code> आणि <code>Invoice</code> हे classes public fields (किंवा प्रत्येक field साठी getters आणि setters) उघड करतात आणि त्यापलीकडे काहीच नाही. सर्व खरे वर्तन - एखादे transition तपासणे, एकूण रक्कम काढणे, discount लावणे - stateless service classes मध्ये ढकलले जाते, जे त्या objects मध्ये पोहोचतात, डेटा वाचतात, त्यात बदल करतात आणि परत लिहितात. ही objects anemic असतात कारण रक्त, म्हणजेच वर्तन, त्यांच्यातून काढून टाकलेले असते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🩸</span> फक्त-डेटा entities</h4>
+          <p><code>Order</code> सारखे classes fields आणि accessors बाळगतात. व्यवसायाच्या भाषेत अर्थपूर्ण असे त्यांना कोणतेही methods नसतात, फक्त <code>getStatus()</code> आणि <code>setStatus()</code>.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏭</span> जाडजूड service layer</h4>
+          <p>एक <code>OrderService</code> प्रत्येक नियम बाळगतो. Order कधी पाठवला जाऊ शकतो, एकूण रक्कम कशी मोजली जाते आणि कोणती transitions वैध आहेत हे तो ठरवतो - entity ला बाहेरून वाचून आणि लिहून.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔓</span> Invariants खुली राहतात</h4>
+          <p>कोणताही caller कोणतेही field सेट करू शकत असल्याने, object कधीही वैध स्थितीत आहे याची खात्री काहीच देत नाही. नियम इतरत्र कुठेतरी राहतात, आणि तेही फक्त तेव्हाच जर caller ने service मार्गे जाण्याचे लक्षात ठेवले.</p>
+        </div>
+      </div>
+
+      <h3>Anemic विरुद्ध rich, शेजारी-शेजारी</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>बाब</th><th>Anemic model</th><th>Rich model</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Entity</strong></td><td>Public fields, फक्त getters आणि setters</td><td>Private state, हेतू स्पष्ट करणारी methods</td></tr>
+            <tr><td><strong>व्यवसाय नियम</strong></td><td>अनेक service classes मध्ये विखुरलेले</td><td>ज्या object कडे डेटा आहे त्याच्यावरच राहतात</td></tr>
+            <tr><td><strong>वैध स्थिती</strong></td><td>प्रथेने लागू, जर मुळात लागू होत असेल तर</td><td>Constructor मध्ये आणि प्रत्येक method मध्ये लागू</td></tr>
+            <tr><td><strong>नियम बदलणे</strong></td><td>त्या field ला स्पर्श करणाऱ्या प्रत्येक service मधून शोधाशोध</td><td>एका class वरचे एक method संपादित करा</td></tr>
+            <tr><td><strong>जसे वाटते</strong></td><td>Records म्हणून classes असलेला procedural code</td><td>Domain चे मॉडेल करणारी objects</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>महत्त्वाचे मानसिक मॉडेल:</strong> कसोटी "माझ्याकडे classes आहेत का" ही नसून "माझ्या classes ना वर्तन आहे का" ही आहे. जर getters आणि setters सोडून प्रत्येक method काढून टाकल्याने तुमच्या entities बिघडणार नसतील, तर त्या anemic आहेत आणि object-orientation हा भास आहे. Martin Fowler ने याला anti-pattern हे नाव नेमके यासाठी दिले कारण ते domain model ची किंमत (mapping, hydration) मोजते आणि त्याचा फायदा (encapsulated वर्तन) गमावते.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>हे का महत्त्वाचे आहे</h2>
+      <p class="muted">Anemic शैली मोहक असते कारण ती सुरू करणे सोपे आहे आणि database rows शी एक-एक जुळते. किंमत नंतर येते, जेव्हा तोच नियम तीन services मध्ये पुन्हा तपासावा लागतो आणि त्यातली एक विसरते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Encapsulation गमावले जाते</h4><p>Public setters म्हणजे कुठलाही कोड कुठेही एखाद्या <code>Order</code> ला अशक्य स्थितीत टाकू शकतो - पैसे भरण्याआधी पाठवलेला, ऋण संख्या. Object स्वतःचा बचाव करू शकत नाही, म्हणून ती हमी प्रत्येक ठिकाणी पुन्हा द्यावी लागते.</p></div>
+        <div class="card"><h4>🧭 लॉजिकचे घर हरवते</h4><p>वर्तन जेव्हा डेटाबरोबर राहत नाही, तेव्हा तेच total-calculation किंवा state-check <code>OrderService</code>, <code>CheckoutService</code> आणि <code>ReportService</code> मध्ये पुन्हा पुन्हा दिसते. Duplication हळूहळू भरकटते आणि प्रती शांतपणे एकमेकांशी विसंगत होतात.</p></div>
+        <div class="card"><h4>🔍 Domain वाचता येत नाही</h4><p>एखादा order काय करू शकतो हे जाणून घ्यायला तुम्ही <code>Order</code> class वाचू शकत नाही - तुम्हाला संपूर्ण service layer मधून grep करावे लागते. व्यवसायाची ubiquitous language कधीच methods म्हणून दिसत नाही.</p></div>
+        <div class="card"><h4>🧪 Testing अवघड होते</h4><p>Stateless services मध्ये अडकलेल्या नियमांना "unpaid order पाठवता येत नाही" इतकेच सिद्ध करायला सहसा repository, gateway आणि clock चे mocks लागतात, आणि हे तर खरे तर एकाच object बद्दलचे सत्य आहे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले Anemic Domain Model</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी ती पटकन समजेल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>Anemic object म्हणजे उत्तराची किल्ली नसलेली <strong>रिकाम्या जागा भरा अशी worksheet</strong>. कुणीही चौकटींमध्ये काहीही लिहू शकतो; काय बरोबर मानायचे याचे नियम शिक्षकाच्या डोक्यात, दुसऱ्या खोलीत असतात. Rich object म्हणजे अशी worksheet जी तुम्ही लिहित असतानाच अवैध उत्तरे नाकारते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>ते <strong>manager function असलेले struct</strong> आहे. तुमच्याकडे एक डेटा record आहे आणि त्यावर काम करणाऱ्या मोकळ्या functions चा ढीग आहे. C मध्ये हे ठीक आहे, पण object language मध्ये तुम्ही classes साठी किंमत मोजली आहे आणि त्यांना समर्थन देणारे एकमेव वैशिष्ट्य - state च्या शेजारी वर्तन - फेकून दिले आहे.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>अशी कल्पना करा की <strong>बँक खाते जिथले शिल्लक कुणीही खोडून पुन्हा लिहू शकते</strong>, आणि "शून्याखाली कधीच जाऊ नका" हा नियम फक्त teller च्या हस्तपुस्तिकेत असतो. एखादा teller पुस्तिका उघडायला विसरला, तर खाते ऋण होते. Rich model हा नियम खात्यातच बेक करतो.</p></div>
+        <div class="card"><h4><span class="ico">🚗</span> रोजच्या भाषेत</h4><p>अशी कार जिचे <strong>engine, brakes आणि steering काढून garage मध्ये ठेवले आहेत</strong>, शेजारी एक चिठ्ठी आहे "mechanic तुमच्यासाठी हे चालवेल." तिच्याकडे कारचे सर्व भाग आहेत आणि चालवण्याची कोणतीही क्षमता नाही. वर्तन ज्याला त्याची गरज आहे त्या गोष्टीपासून वेगळे केले गेले.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते कसे ओळखायचे आणि कसे दुरुस्त करायचे</h2>
+      <p class="muted">Anemic पासून rich कडे refactor यांत्रिक आहे: एखाद्या service मध्ये एक नियम शोधा, ज्या object चा डेटा तो वाचतो तो शोधा, आणि तो नियम त्या object वर एक नाव असलेले method म्हणून हलवा. मग fields private करा जेणेकरून कुणी त्याला बगल देऊ शकणार नाही.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🩸</span> Anemic आकार</h4>
+          <p>Public <code>status</code>, <code>items</code> आणि <code>paidAt</code> असलेला <code>Order</code>, आणि त्या fields ला बाहेरून वाचून बदलणारे <code>OrderService.markPaid</code>, <code>OrderService.ship</code> आणि <code>OrderService.total</code>.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">💪</span> Rich आकार</h4>
+          <p>तोच <code>Order</code> पण private state आणि <code>pay()</code>, <code>ship()</code> आणि <code>total()</code> ही methods असलेला. प्रत्येक method आधी invariant तपासते, म्हणून unpaid order पाठवला जाऊच शकत नाही, तो कुणीही बोलावला तरी.</p>
+        </div>
+      </div>
+
+      <h3>Classes आणि messages</h3>
+      <div class="diagram">
+        <div class="cap">Anemic: service सर्व वर्तन बाळगतो; entity ही डेटाची पिशवी आहे</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        +String status
+        +List items
+        +DateTime paidAt
+        +getStatus() String
+        +setStatus(s) void
+    }
+    class OrderService {
+        +markPaid(order) void
+        +ship(order) void
+        +total(order) Money
+    }
+    class OrderRepository {
+        &lt;&lt;interface&gt;&gt;
+        +save(order) void
+    }
+    OrderService ..> Order : reads and mutates
+    OrderService ..> OrderRepository : persists
+        </pre>
+      </div>
+
+      <h3>तेच domain, anemic ऐवजी rich</h3>
+      <div class="diagram">
+        <div class="cap">Rich: वर्तन entity वर राहते; service फक्त समन्वय साधतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        -Status status
+        -List~LineItem~ items
+        -DateTime paidAt
+        +pay(clock) void
+        +ship() Shipment
+        +total() Money
+        +canShip() Boolean
+    }
+    class LineItem {
+        -int quantity
+        -Money unitPrice
+        +subtotal() Money
+    }
+    class PlaceOrderService {
+        +handle(command) void
+    }
+    Order *-- LineItem : contains
+    PlaceOrderService ..> Order : calls methods
+        </pre>
+      </div>
+
+      <h3>तीन भाषांत तुलना: anemic vs rich</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// ANEMIC: Order is a data bag, OrderService does everything.
+class Order {
+  status: "pending" | "paid" | "shipped" = "pending";
+  items: { quantity: number; unitPriceCents: number }[] = [];
+  paidAt: Date | null = null;
+}
+
+class OrderService {
+  markPaid(order: Order, clock: () => Date): void {
+    // The rule lives out here, and nothing forces callers through it.
+    order.status = "paid";
+    order.paidAt = clock();
+  }
+  ship(order: Order): void {
+    if (order.status !== "paid") throw new Error("Order not paid");
+    order.status = "shipped";
+  }
+  totalCents(order: Order): number {
+    return order.items.reduce((s, i) => s + i.quantity * i.unitPriceCents, 0);
+  }
+}
+
+// A caller can bypass every rule; the object cannot defend itself.
+const bad = new Order();
+bad.status = "shipped"; // shipped without ever being paid. Nothing stops it.
+
+// RICH: behavior and invariants live on the Order itself.
+class RichOrder {
+  private status: "pending" | "paid" | "shipped" = "pending";
+  private paidAt: Date | null = null;
+  constructor(private readonly items: LineItem[]) {
+    if (items.length === 0) throw new Error("Order needs at least one line item");
+  }
+  pay(clock: () => Date): void {
+    if (this.status !== "pending") throw new Error("Only a pending order can be paid");
+    this.status = "paid";
+    this.paidAt = clock();
+  }
+  ship(): void {
+    if (this.status !== "paid") throw new Error("Cannot ship an unpaid order");
+    this.status = "shipped";
+  }
+  total(): Money {
+    return this.items.reduce((sum, i) => sum.add(i.subtotal()), Money.zero());
+  }
+}
+
+const order = new RichOrder([new LineItem(2, Money.cents(1999))]);
+order.pay(() => new Date());
+order.ship();                 // legal: it was paid first
+console.log(order.total().format());  // behavior lives where the data lives</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># ANEMIC: Order is a data bag, OrderService does everything.
+from dataclasses import dataclass, field
+from datetime import datetime
+
+@dataclass
+class Order:
+    status: str = "pending"
+    items: list = field(default_factory=list)
+    paid_at: datetime | None = None
+
+class OrderService:
+    def mark_paid(self, order: Order, now: datetime) -> None:
+        # The rule lives out here; nothing forces callers through it.
+        order.status = "paid"
+        order.paid_at = now
+
+    def ship(self, order: Order) -> None:
+        if order.status != "paid":
+            raise ValueError("Order not paid")
+        order.status = "shipped"
+
+    def total_cents(self, order: Order) -> int:
+        return sum(i["quantity"] * i["unit_price_cents"] for i in order.items)
+
+# A caller can bypass every rule; the object cannot defend itself.
+bad = Order()
+bad.status = "shipped"  # shipped without ever being paid. Nothing stops it.
+
+# RICH: behavior and invariants live on the Order itself.
+class RichOrder:
+    def __init__(self, items: list["LineItem"]):
+        if not items:
+            raise ValueError("Order needs at least one line item")
+        self._items = items
+        self._status = "pending"
+        self._paid_at: datetime | None = None
+
+    def pay(self, now: datetime) -> None:
+        if self._status != "pending":
+            raise ValueError("Only a pending order can be paid")
+        self._status = "paid"
+        self._paid_at = now
+
+    def ship(self) -> None:
+        if self._status != "paid":
+            raise ValueError("Cannot ship an unpaid order")
+        self._status = "shipped"
+
+    def total(self) -> "Money":
+        return sum((i.subtotal() for i in self._items), Money.zero())
+
+order = RichOrder([LineItem(2, Money.cents(1999))])
+order.pay(datetime.now())
+order.ship()                       # legal: it was paid first
+print(order.total().format())      # behavior lives where the data lives</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># ANEMIC: Order is a data bag, OrderService does everything.
+class Order
+  attr_accessor :status, :items, :paid_at
+  def initialize
+    @status = "pending"
+    @items = []
+    @paid_at = nil
+  end
+end
+
+class OrderService
+  def mark_paid(order, now)
+    # The rule lives out here; nothing forces callers through it.
+    order.status = "paid"
+    order.paid_at = now
+  end
+
+  def ship(order)
+    raise "Order not paid" unless order.status == "paid"
+    order.status = "shipped"
+  end
+
+  def total_cents(order)
+    order.items.sum { |i| i[:quantity] * i[:unit_price_cents] }
+  end
+end
+
+# A caller can bypass every rule; the object cannot defend itself.
+bad = Order.new
+bad.status = "shipped"  # shipped without ever being paid. Nothing stops it.
+
+# RICH: behavior and invariants live on the Order itself.
+class RichOrder
+  def initialize(items)
+    raise "Order needs at least one line item" if items.empty?
+    @items = items
+    @status = "pending"
+    @paid_at = nil
+  end
+
+  def pay(now)
+    raise "Only a pending order can be paid" unless @status == "pending"
+    @status = "paid"
+    @paid_at = now
+  end
+
+  def ship
+    raise "Cannot ship an unpaid order" unless @status == "paid"
+    @status = "shipped"
+  end
+
+  def total
+    @items.reduce(Money.zero) { |sum, i| sum.add(i.subtotal) }
+  end
+end
+
+order = RichOrder.new([LineItem.new(2, Money.cents(1999))])
+order.pay(Time.now)
+order.ship                       # legal: it was paid first
+puts order.total.format          # behavior lives where the data lives</code></pre>
+      </div>
+      <p class="muted">काय हलले ते लक्षात घ्या. Anemic आवृत्तीत कुठलीही कोड-ओळ <code>status = "shipped"</code> सेट करू शकते आणि payment पूर्णपणे वगळू शकते. Rich आवृत्तीत field private आहे आणि आत जाणारे एकमेव दार <code>ship()</code> आहे, जे order भरला गेल्याशिवाय नकार देते. नियम सर्वजण पाळतील अशी आशा असलेल्या प्रथेवरून, object लागू करत असलेल्या हमीत बदलला.</p>
+
+      <h3>Anemic कधी योग्य निवड असते</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// DTOs and API payloads SHOULD be anemic. They carry data across a
+// boundary and have no invariants of their own to protect.
+interface CreateOrderRequest {
+  customerId: string;
+  lines: { sku: string; quantity: number }[];
+  couponCode?: string;
+}
+
+// The wire type is a plain record. Behavior belongs on the domain object
+// you build FROM it, not on the transport shape itself.
+function toDomain(req: CreateOrderRequest): RichOrder {
+  const items = req.lines.map(l => LineItem.fromSku(l.sku, l.quantity));
+  return new RichOrder(items); // the RichOrder enforces the rules
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># DTOs and API payloads SHOULD be anemic. They carry data across a
+# boundary and have no invariants of their own to protect.
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class CreateOrderRequest:
+    customer_id: str
+    lines: list[dict]           # {"sku": str, "quantity": int}
+    coupon_code: str | None = None
+
+# The wire type is a plain record. Behavior belongs on the domain object
+# you build FROM it, not on the transport shape itself.
+def to_domain(req: CreateOrderRequest) -> "RichOrder":
+    items = [LineItem.from_sku(l["sku"], l["quantity"]) for l in req.lines]
+    return RichOrder(items)     # the RichOrder enforces the rules</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># DTOs and API payloads SHOULD be anemic. They carry data across a
+# boundary and have no invariants of their own to protect.
+CreateOrderRequest = Struct.new(:customer_id, :lines, :coupon_code, keyword_init: true)
+# lines: [{ sku: "ABC", quantity: 2 }]
+
+# The wire type is a plain record. Behavior belongs on the domain object
+# you build FROM it, not on the transport shape itself.
+def to_domain(req)
+  items = req.lines.map { |l| LineItem.from_sku(l[:sku], l[:quantity]) }
+  RichOrder.new(items)          # the RichOrder enforces the rules
+end</code></pre>
+      </div>
+      <p class="muted">Anemic नेहमीच चुकीचे नसते. Data transfer objects, API request आणि response bodies, event payloads आणि read-model projections यांना रक्षण करण्यासाठी कोणतेही वर्तन नसते, म्हणून त्यांना methods देणे म्हणजे नुसता गोंधळ ठरेल. हे anti-pattern विशेषतः खऱ्या व्यवसाय नियम असलेल्या <em>domain entities</em> ला records मध्ये घटवण्याबद्दल आहे, तर नियम services मध्ये गळतात.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence आकृत्या</div>
+      <h2>तपशीलवार sequence आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: anemic shipping प्रवाह जिथे service सर्वकाही करतो, rich प्रवाह जिथे object स्वतःचा बचाव करतो, आणि सीमा जिथे anemic DTO ला योग्यरीत्या rich entity मध्ये रूपांतरित केले जाते.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Anemic: service entity वाचतो, नियम तपासतो आणि परत लिहितो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Controller
+    participant S as 🏭 OrderService
+    participant O as 🩸 Order (data bag)
+    participant R as 🗄️ OrderRepository
+
+    C->>S: ship(orderId)
+    S->>R: findById(orderId)
+    R-->>S: order
+    S->>O: getStatus()
+    O-->>S: "paid"
+    Note over S,O: The rule lives in the service, not the object
+    S->>O: setStatus("shipped")
+    S->>R: save(order)
+    R-->>S: ok
+    S-->>C: shipped
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Rich: caller एक message पाठवतो आणि object स्वतःचे invariant लागू करतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Controller
+    participant S as 🎯 ShipOrderService
+    participant O as 💪 Order (rich)
+    participant R as 🗄️ OrderRepository
+
+    C->>S: handle(shipCommand)
+    S->>R: findById(orderId)
+    R-->>S: order
+    S->>O: ship()
+    alt order is paid
+        O->>O: change status to shipped
+        O-->>S: shipment
+        S->>R: save(order)
+        S-->>C: shipped
+    else order not paid
+        O-->>S: throw CannotShipUnpaid
+        S-->>C: rejected
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - सीमा: anemic DTO येतो आणि rich entity मध्ये मॅप केला जातो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant HTTP as 🌐 HTTP layer
+    participant M as 🔁 Mapper
+    participant DTO as 📦 CreateOrderRequest
+    participant O as 💪 Order (rich)
+
+    HTTP->>DTO: parse JSON body
+    Note over DTO: DTO is legitimately anemic, just transport
+    HTTP->>M: toDomain(dto)
+    M->>DTO: read fields
+    DTO-->>M: customerId, lines
+    M->>O: new Order(lineItems)
+    O->>O: validate invariants in constructor
+    O-->>M: valid order or throws
+    M-->>HTTP: rich Order ready to use
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">Anemic model हेरण्यापासून ते निरोगी rich model पर्यंत, संपूर्ण refactor क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">हेरा</span><h4>वास ओळखा</h4><p>तुमच्या entities फक्त getters आणि setters पलीकडे काहीच नाहीत, आणि वाढणारा <code>...Service</code> classes चा संच प्रत्येक नियम बाळगतो. हे संयोजन म्हणजे anemic ची स्वाक्षरी.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">शोधा</span><h4>खरे नियम शोधा</h4><p>Service layer मध्ये व्यवसाय लॉजिक शोधा: state transitions, total calculations, discount अटी. ही अशी वर्तने आहेत जी एखाद्या object वर असायला हवीत.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">जुळवा</span><h4>प्रत्येक नियम त्याच्या डेटाशी जुळवा</h4><p>प्रत्येक नियमासाठी, तो जी fields वाचतो आणि लिहितो त्यांचा मालक कोणती entity आहे ते ओळखा. "भरल्याशिवाय पाठवता येत नाही" हा नियम <code>Order</code> वरचे <code>status</code> वाचतो, म्हणून तो <code>Order</code> वर असायला हवा.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">नाव द्या</span><h4>हेतू स्पष्ट करणारी methods निवडा</h4><p><code>setStatus("shipped")</code> ऐवजी <code>ship()</code> सारखे domain क्रियापद वापरा. Method चे नाव field च्या बदलासारखे नव्हे तर व्यवसाय घटनेसारखे वाचले पाहिजे.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">हलवा</span><h4>लॉजिक entity वर हलवा</h4><p>नियम service मधून कापा आणि entity वरच्या नव्या method मध्ये चिकटवा, state बदलण्याआधी invariant तपासत.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">रक्षण करा</span><h4>Constructor मध्ये validate करा</h4><p>एखादे object अवैध स्थितीत तयारच होऊ शकणार नाही याची खात्री करा. शून्य line items असलेल्या <code>Order</code> ने error फेकावा, अस्तित्वात असू नये.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">बंद करा</span><h4>Fields private करा</h4><p>Public setters काढून टाका. आता state बदलण्याचा एकमेव मार्ग नियम लागू करणाऱ्या methods मार्गे आहे. Encapsulation पुनर्स्थापित झाले.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">पातळ करा</span><h4>Service ला समन्वयकात आकुंचित करा</h4><p>आता service entity load करतो, एक method बोलावतो आणि save करतो. तो persistence आणि transactions चे समन्वय साधतो, व्यवसाय नियम नाही.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">काढा</span><h4>Value objects बाहेर काढा</h4><p><code>Money</code>, <code>Quantity</code> किंवा <code>Email</code> सारख्या संकल्पना स्वतःच्या नियमांसह छोटे types बनतात, आणखी विखुरलेली validation जागच्या जागी आणतात.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test करा</span><h4>Mocks शिवाय वर्तन test करा</h4><p>आता नियम साध्या objects वर राहत असल्याने, तुम्ही <code>Order</code> तयार करता आणि <code>ship()</code> error फेकते हे सिद्ध करता. कोणतेही repository किंवा gateway mock आवश्यक नाही.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">राखा</span><h4>DTOs जाणूनबुजून anemic ठेवा</h4><p>Request bodies, event payloads आणि read models ही साधी records म्हणून ठेवा. तुम्ही वर्तन जिथे ते असायला हवे तिथे हलवले आहे, सर्वत्र नाही.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Anemic model क्वचितच जाणूनबुजून येते. ते framework defaults आणि काही वाजवी दिसणाऱ्या शॉर्टकट्समधून वाढते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚙️ Getter आणि setter ची प्रतिक्षिप्त क्रिया</h4><p>प्रत्येक field साठी getter आणि setter आपोआप निर्माण करणे हा anemia कडे जाणारा सर्वात जलद मार्ग आहे. आधी वर्तन उघड करा, आणि बाह्य जगाला ज्यांची खरोखर गरज आहे तेवढेच accessors.</p></div>
+        <div class="card"><h4>🏭 कधीच न आकुंचित होणारा service</h4><p>प्रत्येक नियमासाठी नवे method वाढवणारा <code>OrderService</code> हे लक्षण आहे की नियमांना घर नाही. जर एखाद्या method चा गाभा मुख्यतः एका entity ची fields वाचणे आणि लिहिणे असेल, तर तो त्या entity वर असायला हवा.</p></div>
+        <div class="card"><h4>🧬 ORM entities हेच domain</h4><p>Persistence framework च्या row-mapped class ला तुमचे व्यवसाय मॉडेल बनू देणे तुम्हाला public fields आणि वर्तनहीनतेकडे ढकलते. एका वेगळ्या rich model कडे mapping करण्याचा विचार करा.</p></div>
+        <div class="card"><h4>🔁 डुप्लिकेट invariants</h4><p>तीच "ऋण होऊ शकत नाही" तपासणी तीन services मध्ये कॉपी केली की ती भरकटेल. ती एकदाच object वर हलवा जेणेकरून सत्याचा एकच स्रोत असेल.</p></div>
+        <div class="card"><h4>🦴 अति-दुरुस्तीने god entity</h4><p>असंबंधित लॉजिक आणि बाह्य कॉल्स एका entity मध्ये कोंबून anemia दुरुस्त करणे ही उलटी चूक आहे. Object शी संबंधित असलेले वर्तन ठेवा; समन्वय आणि I/O services मध्ये राहू द्या.</p></div>
+        <div class="card"><h4>🧾 DTOs ना entities समजण्याचा गोंधळ</h4><p>Transport object ला नियम जोडणे, किंवा rich entity ला transport object सारखे वागवणे सीमा अस्पष्ट करते. DTOs फक्त-डेटा आणि entities वर्तन-समृद्ध ठेवा, आणि त्यांच्यात mapping करा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि ते कसे मोजायचे</h2>
+      <p class="muted">Anemia मोजता येते. हे संकेत तुम्हाला सांगतात की वर्तन डेटाबरोबर राहते की service layer मध्ये गळले आहे.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Entities वर method-ते-accessor गुणोत्तर</strong></td><td>जर entities जवळपास सर्व getters आणि setters असतील आणि कोणतीही domain methods नसतील, तर मॉडेल anemic आहे.</td></tr>
+            <tr><td><strong>Public setter ची संख्या</strong></td><td>अनेक public setters म्हणजे invariants रक्षिली जाऊ शकत नाहीत; कोणताही caller आत पोहोचून state तोडू शकतो.</td></tr>
+            <tr><td><strong>प्रति entity service ओळी</strong></td><td>ज्या entity वर तो काम करतो त्याहून खूप मोठा service class वर्तन प्रत्यक्षात कुठे राहते ते दाखवतो.</td></tr>
+            <tr><td><strong>डुप्लिकेट नियमांची घटना</strong></td><td>तीच validation अनेक services मध्ये दिसणे हे एका नियमाला एकही घर नसल्याचे सूचित करते.</td></tr>
+            <tr><td><strong>नियम test करायला लागणारे mocks</strong></td><td>शुद्ध व्यवसाय नियम सिद्ध करायला repository आणि gateway mocks लागत असतील, तर नियम service मध्ये अडकला आहे.</td></tr>
+            <tr><td><strong>कोडमध्ये पोहोचता येणाऱ्या अवैध स्थिती</strong></td><td>व्यवसाय जी स्थिती निषिद्ध करतो त्यात object किती मार्गांनी तयार किंवा बदलता येतो ते मोजा.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर तुम्ही एखाद्या class चे संपूर्ण काम "fields बाळगते आणि एका service ला ती बदलू देते" असे वर्णन करू शकत असाल, तर ते anemic आहे. निरोगी entity ला किमान एक असे method असते ज्याचे नाव domain तज्ज्ञ ओळखेल, आणि invariant तोडू शकेल असे एकही public setter नसते.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - उदाहरण अभ्यास</div>
+      <h2>वास्तविक जगातील उदाहरण अभ्यास</h2>
+      <p class="muted">तीन प्रातिनिधिक systems जिथे anemic विरुद्ध rich modeling चे खरे परिणाम झाले.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · जाडजूड OrderService असलेले ई-कॉमर्स checkout</h3><div class="role">Pattern: state transitions परत entity वर आणले</div></div></div>
+        <p class="muted">एका retail platform कडे फक्त accessors असलेला <code>Order</code> class आणि प्रत्येक transition नियम बाळगणारा कित्येक हजार ओळींचा <code>OrderService</code> होता.</p>
+        <ul>
+          <li>एका bug ने payment पूर्ण होण्याआधी orders पाठवू दिले, कारण एका code path ने <code>status</code> थेट सेट केला आणि service तपासणी वगळली.</li>
+          <li>टीमने transition नियम <code>Order</code> वर <code>pay()</code>, <code>ship()</code> आणि <code>cancel()</code> म्हणून हलवले, प्रत्येक आपली precondition राखत.</li>
+          <li>Public setters काढून टाकले, म्हणून अवैध path compile होणे थांबले आणि तो पुन्हा घडू शकला नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> "अशक्य" स्थिती bugs चा एक संपूर्ण वर्ग अप्रस्तुत झाला, आणि service एका method कॉलभोवती पातळ समन्वयकात आकुंचित झाला.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>2 · services मध्ये पैशाचे गणित असलेले banking ledger</h3><div class="role">Pattern: value objects विखुरलेली validation शोषून घेतात</div></div></div>
+        <p class="muted">एका payments टीमने शिल्लक <code>Account</code> record वर कच्च्या integers म्हणून ठेवली, आणि rounding व currency तपासण्या transfer, fee आणि refund services मध्ये कॉपी केल्या.</p>
+        <ul>
+          <li>प्रती rounding बाबत विसंगत होत्या, ज्यामुळे reconciliation दरम्यान एका-सेंटच्या फरकाच्या तफावती निर्माण झाल्या.</li>
+          <li>त्यांनी currency, rounding आणि अ-ऋणत्व बाळगणारे <code>Money</code> value object आणले, आणि पुरेसा निधी लागू करणारे rich <code>Account.withdraw()</code>.</li>
+          <li>Services ने integers ला थेट स्पर्श करणे थांबवले आणि फक्त खात्याला पैसे हलवायला सांगितले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> एका type ने पैशाचे नियम स्वतःकडे घेतल्यावर reconciliation तफावती नाहीशा झाल्या, आणि overdraft तपासण्या यापुढे विसरता येईनाशा झाल्या.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📅</span><div><h3>3 · जाणूनबुजून API anemic ठेवणारी booking system</h3><div class="role">Pattern: rich entities, काठावर anemic transport</div></div></div>
+        <p class="muted">एका reservations platform कडे overlap आणि capacity नियम लागू करणाऱ्या rich <code>Reservation</code> entities होत्या, आणि HTTP सीमेवर जाणूनबुजून anemic request व response objects.</p>
+        <ul>
+          <li>येणारी <code>CreateBookingRequest</code> objects ही वर्तनहीन साधी records होती, एका पातळ अनुवादकाद्वारे rich entities मध्ये मॅप केलेली.</li>
+          <li>सर्व availability आणि cancellation-window नियम <code>Reservation</code> वर राहिले, कोणत्याही infrastructure mocks शिवाय test केलेले.</li>
+          <li>एकही व्यवसाय नियमाला स्पर्श न करता wire format स्वतंत्रपणे उत्क्रांत होऊ शकला.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> टीमला दोन्ही फायदे मिळाले: बचावयोग्य domain गाभा आणि लवचिक API पृष्ठभाग, कारण त्यांनी anemic आणि rich प्रत्येक जिथे बसते तिथे निवडले.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Frameworks, functional शैली आणि typed भाषांनी चर्चा बदलली आहे, पण डेटा आणि वर्तन यांच्यातील मूलभूत ताण नेहमीप्रमाणेच जिवंत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Domain-driven design चे पुनरुज्जीवन</h4><p>DDD ची aggregates हे anemia वरचे मुख्य प्रवाहातील उत्तर आहे: स्वतःच्या सुसंगतता सीमेचे रक्षण करणारी entity म्हणजे मूर्त झालेले rich model.</p></div>
+        <div class="card"><h4>🧮 Functional core, imperative shell</h4><p>Functional codebases शुद्ध लॉजिक I/O पासून वेगळे करतात. शुद्ध गाभा वर्तन बाळगतो, म्हणून नियम आणि डेटा एकाच module मध्ये ठेवून anemia टाळले जाते, एकाच class मध्ये नव्हे.</p></div>
+        <div class="card"><h4>🔒 स्थिती अप्रस्तुत करणारे types</h4><p>Sum types आणि branded types तुम्हाला "shipped order भरला गेला होता" हे type system मध्ये encode करू देतात, invariants runtime तपासणीहूनही आधी ढकलतात.</p></div>
+        <div class="card"><h4>🧬 ORMs अजूनही anemia कडे ढकलतात</h4><p>अनेक persistence frameworks default नुसार public-field entities बनवतात. Rich domain model ला persistence model पासून वेगळे करणे हा जिवंत design निर्णय राहतो.</p></div>
+        <div class="card"><h4>📨 Events आणि CQRS काठावर anemia स्वीकारतात</h4><p>Event payloads आणि read models जाणूनबुजून anemic असतात, तर write-side aggregate rich राहतो. Pattern प्रत्येक शैली कुठे बसते ते स्पष्ट करते.</p></div>
+        <div class="card"><h4>🤖 Generated code दोन्ही वाढवतो</h4><p>Scaffolding आणि AI-सहाय्यित कोड getter-आणि-setter entities वेगाने निर्माण करतात, म्हणून वर्तन objects वर हलवण्याची शिस्त अधिक महत्त्वाची ठरते, कमी नव्हे.</p></div>
+      </div>
+      <div class="callout"><strong>निष्कर्ष:</strong> anemic domain model म्हणजे "methods नसलेले classes नेहमी चुकीचे" असे नाही. ती एक आठवण आहे की domain entities वर्तन बाळगून आणि आपली invariants राखून आपली किंमत वसूल करतात. नियम त्या objects वर ठेवा जे डेटा बाळगतात, आणि तुमचे transport आकार साधे ठेवा - प्रत्येक जाणीवपूर्वक निवडा.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Anemic model संबंधित OOP कल्पनांच्या जाळ्यात बसते. या याच्यासोबत नैसर्गिकरीत्या जोडतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🛡️</span><h4>Encapsulation</h4><p>वर्तनामागे state लपवणे हाच संपूर्ण मुद्दा का आहे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../tell-dont-ask/"><span class="ico">📣</span><h4>Tell, Don't Ask</h4><p>Objects ची fields वाचण्याऐवजी त्यांना messages पाठवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single Responsibility</h4><p>वर्तन कुठे असावे आणि services कुठे पातळ राहाव्यात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">💎</span><h4>Value Objects vs Entities</h4><p>विखुरलेले नियम शोषून घेणारी छोटी typed values.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Anemic Domain Model चे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · उदाहरण अभ्यास · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

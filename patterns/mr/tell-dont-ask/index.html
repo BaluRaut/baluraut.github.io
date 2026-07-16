@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मध्ये Tell, Don't Ask - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="Tell, Don't Ask साठी सखोल, दृश्य मार्गदर्शक: एखाद्या ऑब्जेक्टची स्थिती वाचून त्याच्यासाठी निर्णय घेण्याऐवजी त्याला एक आज्ञा पाठवा, वर्तन डेटाच्या शेजारी हलवा, encapsulation अखंड ठेवा, आणि विचारणे कधी योग्य असते ते जाणून घ्या. TypeScript, Python आणि Ruby कोडसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">प्रकरणे</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Tell, Don't Ask - ऑब्जेक्टना त्यांच्या स्वतःच्या डेटावर कृती करू द्या</h1>
+      <p class="lede">एखाद्या ऑब्जेक्टची स्थिती बाहेर काढून, निर्णय घेऊन, आणि बदल परत आत ढकलण्याऐवजी, तुम्ही ऑब्जेक्टला तुम्हाला काय हवे ते <strong>सांगता</strong> आणि कसे ते त्याला ठरवू देता. वर्तन ज्या डेटाची त्याला गरज असते त्याच्या शेजारी राहते. सार्वजनिक getter वरील एका टिप्पणीऐवजी encapsulation खरे राहते ते हेच.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Query पेक्षा command</span>
+        <span class="pill">डेटाच्या शेजारी वर्तन</span>
+        <span class="pill">Encapsulation</span>
+        <span class="pill">समृद्ध domain models</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Tell, Don't Ask म्हणजे काय?</h2>
+      <p class="muted"><strong>Tell, Don't Ask</strong> हे एक डिझाइन मार्गदर्शक तत्त्व आहे: एखाद्या ऑब्जेक्टला त्याची अंतर्गत स्थिती विचारून मग त्याच्यावतीने निर्णय घेण्याऐवजी, तुम्ही ऑब्जेक्टला काय करायचे ते <em>सांगावे</em> आणि त्याला त्याचे स्वतःचे नियम लागू करू द्यावेत. जो caller <code>account.getBalance()</code> वाचतो, तपासतो, आणि मग नवीन balance सेट करतो, त्याने <code>Account</code> च्या आत असावी अशी जबाबदारी घेतली आहे. यावर उपाय म्हणजे एकच command, <code>account.withdraw(amount)</code>, जी जिथे डेटा राहतो तिथेच नियम लागू करते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📤</span> एक command पाठवा</h4>
+          <p>फील्ड्स आणून ऑब्जेक्टच्या बाहेर निकाल मोजण्याऐवजी हेतू व्यक्त करणारी एखादी method कॉल करा, जसे <code>cart.applyDiscount(code)</code>.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧲</span> डेटाच्या शेजारी वर्तन</h4>
+          <p>ज्या logic ला एखाद्या फील्डची गरज असते ते त्या फील्डच्या मालक class मध्ये राहावे. निर्णय जिथे स्थिती आधीच आहे तिथे जातात, उलट नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛡️</span> Encapsulation, अंमलात</h4>
+          <p>जेव्हा callers आत पोहोचून स्थिती बदलू शकत नाहीत, तेव्हा ऑब्जेक्ट प्रत्येक संक्रमण नियंत्रित करतो. आत जाण्यासाठी फक्त एकच दार असल्याने invariants टिकतात.</p>
+        </div>
+      </div>
+
+      <h3>Ask-then-act विरुद्ध tell</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>पैलू</th><th>Ask-then-act (टाळा)</th><th>Tell (पसंत करा)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>कोण ठरवते</strong></td><td>Caller स्थिती वाचतो आणि शाखा करतो</td><td>ऑब्जेक्ट त्याचा स्वतःचा नियम लागू करतो</td></tr>
+            <tr><td><strong>Logic कुठे राहते</strong></td><td>callers मध्ये विखुरलेले</td><td>डेटाच्या मालक class च्या आत</td></tr>
+            <tr><td><strong>स्थितीचा प्रवेश</strong></td><td>Getters आणि setters उघड केलेले</td><td>स्थिती खाजगी राहते; हेतू सार्वजनिक</td></tr>
+            <tr><td><strong>Invariants</strong></td><td>डुप्लिकेट आणि वगळणे सोपे</td><td>एकाच ठिकाणी, प्रत्येक वेळी अंमलात</td></tr>
+            <tr><td><strong>बदलाची किंमत</strong></td><td>प्रत्येक call site संपादित करा</td><td>एकच method संपादित करा</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> Tell, Don't Ask म्हणजे प्रश्नांवर बंदी नाही. हा <em>निर्णयां</em>बद्दलचा नियम आहे. अहवाल दाखवण्यासाठी स्थिती वाचणे ठीक आहे. ऑब्जेक्टने स्वतःशी काय करावे हे ठरवण्यासाठी स्थिती वाचणे हा दुर्गंध आहे.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Tell, Don't Ask का अस्तित्वात आहे</h2>
+      <p class="muted">जेव्हा callers ऑब्जेक्टच्या उघड केलेल्या स्थितीवरून निर्णय घेतात, तेव्हा ऑब्जेक्ट फक्त डेटाची पिशवी बनतो आणि खरी logic services व controllers मध्ये गळते. Telling प्रत्येक नियम एकाच ठिकाणी ठेवते, म्हणून प्रणाली वाढत असतानाही सुसंगत राहते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔒 Invariants चे रक्षण करते</h4><p>एक account <code>withdraw</code> मध्ये overdraft नाकारू शकते. जर त्याऐवजी प्रत्येक caller balance वाचून वजा करत असेल, तर एक विसरलेली तपासणी account जास्त काढते.</p></div>
+        <div class="card"><h4>🧹 डुप्लिकेशन काढून टाकते</h4><p>Cart ने अंमलात आणलेला एक discount नियम एकदाच दिसतो. तोच नियम checkout, admin, आणि API endpoints मध्ये कॉपी केला तर वेगाने विसंगत होतो.</p></div>
+        <div class="card"><h4>🧭 बदल स्थानिक करते</h4><p>जेव्हा withdrawal धोरण बदलते, तेव्हा तुम्ही एकच method संपादित करता. Ask-then-act तुम्हाला balance ला स्पर्श करणारी प्रत्येक शाखा शोधून अद्ययावत करण्यास भाग पाडते.</p></div>
+        <div class="card"><h4>🧠 हेतू उघड करते</h4><p><code>order.markShipped()</code> हे एका व्यावसायिक कृतीसारखे वाचते. Getters आणि setters ची मालिका plumbing सारखी वाचते आणि कोड काय करू पाहत आहे ते लपवते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले Tell, Don't Ask</h2>
+      <p class="muted">तीच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती लक्षात येईल.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>तुम्ही <strong>ग्रंथपालाला सांगता</strong> "माझ्यासाठी हे पुस्तक चेक आउट करा." तुम्ही शेल्फची स्थिती, कर्जाचे नियम, आणि शिक्का मागत नाही जेणेकरून तुम्ही स्वतः वहीखाते अद्ययावत करू शकाल. ते नियम ग्रंथपालाच्या मालकीचे आहेत.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p><code>if (account.balance &gt;= amount) account.balance -= amount</code> पेक्षा <code>account.withdraw(amount)</code> पसंत करा. दुसरी आवृत्ती overdraft नियम प्रत्येक call site वर विखुरते आणि encapsulation मोडते.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>तुम्ही <strong>तज्ज्ञाकडे सोपवता</strong>: तुम्ही finance ला refund प्रक्रिया करण्यास सांगता. तुम्ही त्यांची spreadsheet मागत नाही, स्वतः धोरण लागू करत नाही, आणि संपादित आकडे परत देत नाही. त्यांच्या डेटाला स्पर्श करणारा निर्णय त्यांच्या मालकीचा आहे.</p></div>
+        <div class="card"><h4><span class="ico">🍽️</span> रोजच्या जीवनातील आवृत्ती</h4><p>रेस्टॉरंटमध्ये तुम्ही <strong>पदार्थाची ऑर्डर देता</strong>; तुम्ही स्वयंपाकघरात जाऊन, कोठारगृह वाचून, स्वतः शिजवत नाही. तुम्ही हेतू सांगता आणि साहित्याची मालकी असलेले स्वयंपाकघर कसे ते ठरवते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आत कसे काम करते</h2>
+      <p class="muted">ही हालचाल यांत्रिक आहे: जिथे एखादा caller ऑब्जेक्टची स्थिती वाचतो, निर्णय घेतो, मग स्थिती परत लिहितो अशी जागा शोधा. संपूर्ण निर्णय त्या ऑब्जेक्टवरील एका method मध्ये ढकला आणि फक्त हेतू उघड करा.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔎</span> Ask-then-act ओळखा</h4>
+          <p>एक getter, त्याच्या निकालावरील एक शाखा, आणि त्यानंतर येणारा setter किंवा फील्ड बदल शोधा. ती त्रयी हा ऑब्जेक्टच्या आत असावा असा निर्णय आहे.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚚</span> निर्णय आत हलवा</h4>
+          <p>एक command method जोडा जी हेतू arguments म्हणून घेते, खाजगी स्थितीवर नियम चालवते, आणि एकतर यशस्वी होते किंवा raise करते. फक्त निर्णयाला पुरवणारे getters हटवा.</p>
+        </div>
+      </div>
+
+      <h3>Classes एका दृष्टीक्षेपात</h3>
+      <div class="diagram">
+        <div class="cap">Account त्याच्या balance आणि withdrawal नियमाचा मालक आहे; caller फक्त commands पाठवतो</div>
+        <pre class="mermaid">
+classDiagram
+    class Account {
+        -balance: Money
+        -overdraftLimit: Money
+        +withdraw(amount) void
+        +deposit(amount) void
+        +statement() Statement
+    }
+    class InsufficientFundsError {
+        +message: string
+    }
+    class TransferService {
+        +transfer(from, to, amount) void
+    }
+    TransferService ..> Account : tells
+    Account ..> InsufficientFundsError : raises
+    note for Account "balance stays private; withdraw enforces the rule"
+        </pre>
+      </div>
+
+      <h3>Ask-then-act विरुद्ध tell, तीन भाषा</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// ASK-THEN-ACT: the caller reads state and decides. The overdraft
+// rule now lives outside Account and must be repeated everywhere.
+if (account.getBalance() >= amount) {
+  account.setBalance(account.getBalance() - amount);
+} else {
+  throw new Error("Insufficient funds");
+}
+
+// TELL: send a command; Account owns balance and the rule.
+class Account {
+  constructor(
+    private balance: number,
+    private readonly overdraftLimit = 0,
+  ) {}
+
+  withdraw(amount: number): void {
+    if (amount <= 0) throw new Error("Amount must be positive");
+    if (this.balance - amount < -this.overdraftLimit) {
+      throw new Error("Insufficient funds");
+    }
+    this.balance -= amount;
+  }
+
+  deposit(amount: number): void {
+    if (amount <= 0) throw new Error("Amount must be positive");
+    this.balance += amount;
+  }
+
+  // A legitimate ASK: a read-only query for reporting, not a decision.
+  get available(): number {
+    return this.balance + this.overdraftLimit;
+  }
+}
+
+const account = new Account(100);
+account.withdraw(30);   // tell it what to do
+account.deposit(50);
+console.log(account.available); // 120 - asking is fine for a report</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># ASK-THEN-ACT: the caller reads state and decides. The overdraft
+# rule now lives outside Account and must be repeated everywhere.
+if account.balance >= amount:
+    account.balance -= amount
+else:
+    raise ValueError("Insufficient funds")
+
+# TELL: send a command; Account owns balance and the rule.
+class Account:
+    def __init__(self, balance: float, overdraft_limit: float = 0) -> None:
+        self._balance = balance
+        self._overdraft_limit = overdraft_limit
+
+    def withdraw(self, amount: float) -> None:
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        if self._balance - amount < -self._overdraft_limit:
+            raise ValueError("Insufficient funds")
+        self._balance -= amount
+
+    def deposit(self, amount: float) -> None:
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        self._balance += amount
+
+    # A legitimate ASK: a read-only query for reporting, not a decision.
+    @property
+    def available(self) -> float:
+        return self._balance + self._overdraft_limit
+
+
+account = Account(100)
+account.withdraw(30)    # tell it what to do
+account.deposit(50)
+print(account.available)  # 120 - asking is fine for a report</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># ASK-THEN-ACT: the caller reads state and decides. The overdraft
+# rule now lives outside Account and must be repeated everywhere.
+if account.balance >= amount
+  account.balance -= amount
+else
+  raise "Insufficient funds"
+end
+
+# TELL: send a command; Account owns balance and the rule.
+class Account
+  def initialize(balance, overdraft_limit = 0)
+    @balance = balance
+    @overdraft_limit = overdraft_limit
+  end
+
+  def withdraw(amount)
+    raise ArgumentError, "Amount must be positive" if amount <= 0
+    raise "Insufficient funds" if @balance - amount < -@overdraft_limit
+    @balance -= amount
+  end
+
+  def deposit(amount)
+    raise ArgumentError, "Amount must be positive" if amount <= 0
+    @balance += amount
+  end
+
+  # A legitimate ASK: a read-only query for reporting, not a decision.
+  def available
+    @balance + @overdraft_limit
+  end
+end
+
+account = Account.new(100)
+account.withdraw(30)    # tell it what to do
+account.deposit(50)
+puts account.available  # 120 - asking is fine for a report</code></pre>
+      </div>
+      <p class="muted">लक्षात घ्या की withdrawal नियम अगदी एकदाच, <code>withdraw</code> च्या आत दिसतो, आणि callers कधीही balance ला थेट स्पर्श करत नाहीत. <code>available</code> query अजूनही परवानगी आहे कारण ती फक्त अहवाल देते; account ने स्वतःशी काय करावे हे ती ठरवत नाही.</p>
+
+      <h3>दुसरे प्रकरण: स्वतःचा discount लागू करणारे cart</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// TELL: the cart owns its lines and the discount policy.
+class Cart {
+  private lines: { price: number; qty: number }[] = [];
+  private discountPct = 0;
+
+  add(price: number, qty: number): void {
+    this.lines.push({ price, qty });
+  }
+
+  applyCoupon(code: string): void {
+    // The cart decides whether the coupon is valid for its contents.
+    if (code === "SAVE10" && this.subtotal() >= 50) {
+      this.discountPct = 10;
+    } else {
+      throw new Error("Coupon not applicable");
+    }
+  }
+
+  total(): number {
+    return this.subtotal() * (1 - this.discountPct / 100);
+  }
+
+  private subtotal(): number {
+    return this.lines.reduce((s, l) => s + l.price * l.qty, 0);
+  }
+}
+
+const cart = new Cart();
+cart.add(30, 2);          // tell it to hold items
+cart.applyCoupon("SAVE10"); // tell it to apply the coupon
+console.log(cart.total());  // 54</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># TELL: the cart owns its lines and the discount policy.
+class Cart:
+    def __init__(self) -> None:
+        self._lines: list[tuple[float, int]] = []
+        self._discount_pct = 0
+
+    def add(self, price: float, qty: int) -> None:
+        self._lines.append((price, qty))
+
+    def apply_coupon(self, code: str) -> None:
+        # The cart decides whether the coupon is valid for its contents.
+        if code == "SAVE10" and self._subtotal() >= 50:
+            self._discount_pct = 10
+        else:
+            raise ValueError("Coupon not applicable")
+
+    def total(self) -> float:
+        return self._subtotal() * (1 - self._discount_pct / 100)
+
+    def _subtotal(self) -> float:
+        return sum(price * qty for price, qty in self._lines)
+
+
+cart = Cart()
+cart.add(30, 2)             # tell it to hold items
+cart.apply_coupon("SAVE10") # tell it to apply the coupon
+print(cart.total())         # 54</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># TELL: the cart owns its lines and the discount policy.
+class Cart
+  def initialize
+    @lines = []
+    @discount_pct = 0
+  end
+
+  def add(price, qty)
+    @lines << [price, qty]
+  end
+
+  def apply_coupon(code)
+    # The cart decides whether the coupon is valid for its contents.
+    if code == "SAVE10" && subtotal >= 50
+      @discount_pct = 10
+    else
+      raise "Coupon not applicable"
+    end
+  end
+
+  def total
+    subtotal * (1 - @discount_pct / 100.0)
+  end
+
+  private
+
+  def subtotal
+    @lines.sum { |price, qty| price * qty }
+  end
+end
+
+cart = Cart.new
+cart.add(30, 2)            # tell it to hold items
+cart.apply_coupon("SAVE10") # tell it to apply the coupon
+puts cart.total           # 54</code></pre>
+      </div>
+      <p class="muted">पात्रता मोजण्यासाठी caller कधीही line items वाचत नाही. तो cart ला coupon लागू करण्यास सांगतो, आणि items व धोरण या दोन्हींची मालकी असलेले cart ठरवते. नियम हलवा आणि कोणतेही call site बदलत नाही.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - अनुक्रम आकृत्या</div>
+      <h2>सविस्तर अनुक्रम आकृत्या</h2>
+      <p class="muted">तीन दृश्ये: ask-then-act anti-pattern, त्याच withdrawal ची tell आवृत्ती, आणि दोन accounts ना सांगणारा एक transfer.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Ask-then-act: caller स्थिती खेचतो आणि ठरवतो (दुर्गंध)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧾 Caller
+    participant A as 🏦 Account
+
+    C->>A: getBalance()
+    A-->>C: 100
+    C->>C: balance >= amount ?
+    alt enough funds
+        C->>A: setBalance(70)
+        A-->>C: ok
+    else not enough
+        C->>C: throw Insufficient funds
+    end
+    Note over C,A: the overdraft rule lives in the caller, not the account
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Tell: एक command, account त्याचा स्वतःचा नियम अंमलात आणतो</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧾 Caller
+    participant A as 🏦 Account
+
+    C->>A: withdraw(30)
+    A->>A: check amount and overdraft limit
+    alt rule satisfied
+        A->>A: balance -= 30
+        A-->>C: ok
+    else rule violated
+        A-->>C: raise InsufficientFundsError
+    end
+    Note over C,A: balance never leaves the account; the rule lives with the data
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Transfer: एक service दोन accounts ना सांगते, स्वतः काहीही ठरवत नाही</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant S as 🔁 TransferService
+    participant F as 🏦 From account
+    participant T as 🏦 To account
+
+    S->>F: withdraw(amount)
+    alt withdrawal allowed
+        F-->>S: ok
+        S->>T: deposit(amount)
+        T-->>S: ok
+        S-->>S: commit
+    else withdrawal refused
+        F-->>S: raise InsufficientFundsError
+        S-->>S: abort, nothing moved
+    end
+    Note over S,T: the service coordinates commands but owns no balance rule
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - पायरी दर पायरी</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका ask-then-act गुंत्यापासून स्वच्छ command पर्यंत, संपूर्ण refactor क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">शोधा</span><h4>परक्या स्थितीवरील निर्णय शोधा</h4><p>जो caller एखाद्या ऑब्जेक्टचे फील्ड वाचतो, त्यावर शाखा करतो, आणि फील्ड परत लिहितो त्याचा शोध घ्या. ती त्रयी म्हणजे त्याच्या डेटापासून दूर अडकलेले वर्तन.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">नाव द्या</span><h4>हेतूला नाव द्या</h4><p>Caller खरोखर काय करू पाहत आहे ते विचारा, कसे नाही. "Withdraw," "apply coupon," "mark shipped." ते क्रियापद नवीन method बनते.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">जोडा</span><h4>एक command method जोडा</h4><p>मालक class वर एक method तयार करा जी हेतू arguments म्हणून घेते आणि काहीही अर्थपूर्ण परत करत नाही, किंवा उल्लंघनावर raise करते.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">हलवा</span><h4>नियम आत हलवा</h4><p>शाखेची अट आणि बदल method मध्ये कॉपी करा, आता getters मार्फत नव्हे तर थेट खाजगी स्थिती वाचून व लिहून.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">रक्षण</span><h4>Invariant अंमलात आणा</h4><p>Method च्या शीर्षस्थानी inputs तपासा आणि बेकायदेशीर संक्रमणे नाकारा, जेणेकरून ऑब्जेक्ट कधीही वाईट स्थितीत राहू शकणार नाही.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">बदला</span><h4>Call sites बदला</h4><p>प्रत्येक caller ला read-decide-write वरून नवीन command च्या एकाच कॉलमध्ये बदला. शाखा caller मधून नाहीशी होते.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">छाटा</span><h4>अनावश्यक getters आणि setters काढा</h4><p>फक्त जुन्या निर्णयाला पुरवण्यासाठी अस्तित्वात असलेले accessors हटवा. स्थिती पुन्हा खाजगी बनते आणि पृष्ठभाग आकुंचन पावतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">ठेवा</span><h4>योग्य queries ठेवा</h4><p>फक्त अहवाल देणारी वाचने राखा, जसे statement वर दाखवलेला balance. ही निर्णय न घेता विचारतात, आणि तेवढे परवानगी आहे.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">तपासा</span><h4>Command थेट तपासा</h4><p>Method यश आणि नकार या दोन्हींसाठी unit test करा. नियम एकाच ठिकाणी असल्याने, एकच test suite प्रत्येक caller ला कव्हर करते.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">समन्वय</span><h4>Services ना सांगू द्या, ठरवू देऊ नका</h4><p>जिथे एखादा workflow अनेक ऑब्जेक्ट्सवर पसरतो, तिथे service ने commands पाठवाव्यात आणि अपयश हाताळावे, कोणत्याही ऑब्जेक्टचे नियम पुन्हा अंमलात न आणता.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पूर्ण</span><h4>वर्तन त्याच्या डेटासोबत बसते</h4><p>आता प्रत्येक निर्णय स्थितीच्या मालक ऑब्जेक्टमध्ये राहतो. नियम बदलल्याने एकच method ला स्पर्श होतो, आणि encapsulation रचनेनुसारच टिकते.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">Tell, Don't Ask निष्काळजीपणे लागू केल्याने स्वतःच्या गोंधळ निर्माण होतात. या नेहमीच्या सापळ्या आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🩸 Anemic domain model</h4><p>ज्या classes फक्त getters आणि setters असतात, आणि सर्व logic services मध्ये असते, त्या मोठ्या प्रमाणावर ask-then-act दुर्गंध असतात. डेटाला वर्तन नसते, म्हणून callers ला त्याच्यासाठी ठरवावे लागते.</p></div>
+        <div class="card"><h4>🎣 Getter, शाखा, setter</h4><p>क्लासिक त्रयी: <code>if (x.getState() == READY) x.setState(DONE)</code>. State machine ऑब्जेक्टमध्ये <code>complete()</code> command म्हणून असावे.</p></div>
+        <div class="card"><h4>🚂 Train-wreck साखळ्या</h4><p><code>order.getCustomer().getAddress().getCity()</code> अनेक ऑब्जेक्ट्समधून विचारते. ते तुम्हाला त्यांच्या internals शी जोडते आणि Law of Demeter शी वाईट जुळते.</p></div>
+        <div class="card"><h4>🕳️ बनावट encapsulation</h4><p>अंतर्गत list संदर्भाने परत करणारा getter callers ना तरीही खाजगी स्थिती बदलू देतो. Telling म्हणजे कोणतेही मागचे दार नाही, म्हणून प्रती परत करा किंवा commands उघड करा.</p></div>
+        <div class="card"><h4>🔨 हट्टी no-queries</h4><p>सर्व वाचनांवर बंदी घातल्याने reporting, serialization, आणि UIs मोडतात. Tell, Don't Ask निर्णयांना लक्ष्य करते, प्रामाणिक queries ना नाही. प्रत्येक getter टाळण्यासाठी कोड वाकवू नका.</p></div>
+        <div class="card"><h4>🧨 अति-command</h4><p>विचारणे टाळण्यासाठी असंबंधित logic ऑब्जेक्टमध्ये कोंबल्याने तो फुगतो आणि single responsibility चे उल्लंघन होते. जर वर्तनाला ऑब्जेक्टच्या खाजगी स्थितीची गरज नसेल, तर ते अन्यत्र असावे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापके</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">यावर तुम्ही एकच आकडा ठेवू शकत नाही, पण हे संकेत तुम्हाला सांगतात की वर्तन त्याच्या डेटासोबत बसते की नाही.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>ते तुम्हाला काय सांगते</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रति class getter-नंतर-setter जोड्या</strong></td><td>एकाच ऑब्जेक्टवर अनेक read-decide-write क्रम म्हणजे निर्णय त्यातून गळाले आहेत.</td></tr>
+            <tr><td><strong>Accessors च्या तुलनेत commands चे प्रमाण</strong></td><td>बहुतांश getters आणि setters असलेला class anemic असतो; हेतू उघड करणाऱ्या methods नी सार्वजनिक पृष्ठभागावर वर्चस्व गाजवावे.</td></tr>
+            <tr><td><strong>डुप्लिकेट व्यावसायिक नियम</strong></td><td>तीच अट अनेक callers मध्ये दिसणे म्हणजे मालक ऑब्जेक्टच्या आत एकदाच असावा असा नियम दाखवते.</td></tr>
+            <tr><td><strong>प्रति नियम बदल Call-site बदल</strong></td><td>जर एक धोरण बदलल्याने अनेक फाइल्समध्ये संपादने भाग पडत असतील, तर धोरण कधीच encapsulate केले गेले नव्हते.</td></tr>
+            <tr><td><strong>Method-साखळीची खोली</strong></td><td>खोल <code>a.getB().getC()</code> साखळ्या ऑब्जेक्ट्समधून विचारणे आणि त्यांच्या internals शी coupling दर्शवतात.</td></tr>
+            <tr><td><strong>Test सेटअपची गुंतागुंत</strong></td><td>जर एखादे वर्तन तपासण्यासाठी ऑब्जेक्टवरील अनेक getters stub करावे लागत असतील, तर ते वर्तन बहुधा त्या ऑब्जेक्टच्या आत असावे.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अनुभवाचा नियम:</strong> निर्णय घेण्यासाठी ऑब्जेक्टची स्थिती वाचण्यापूर्वी, ऑब्जेक्ट स्वतः तो निर्णय घेऊ शकतो का ते विचारा. जर होय, तर एक command जोडा आणि getter हटवा. जर तुम्हाला फक्त मूल्य दाखवण्यासाठी किंवा नोंदवण्यासाठी हवे असेल, तर विचारणे ठीक आहे.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - प्रकरण अभ्यास</div>
+      <h2>वास्तविक जगातील प्रकरण अभ्यास</h2>
+      <p class="muted">तीन production-शैलीच्या प्रणाली जिथे ऑब्जेक्टना विचारण्याऐवजी सांगण्याने नियम सुसंगत राहिले.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>1 · Payments प्रणालीमधील ledger आणि account balances</h3><div class="role">Pattern: commands आर्थिक invariants अंमलात आणतात</div></div></div>
+        <p class="muted">एका payments platform ला डझनभर प्रवेश बिंदूंवर हमी द्यायची होती की कोणतेही account त्याच्या ठरलेल्या मर्यादेपलीकडे overdraw होऊ शकणार नाही.</p>
+        <ul>
+          <li>Callers ना balance वाचून वजा करण्यावरून एकाच <code>account.withdraw(amount)</code> command मध्ये पुन्हा लिहिले गेले.</li>
+          <li>Overdraft नियम आणि currency तपासण्या account च्या आत हलवल्या, जेणेकरून प्रत्येक मार्गाने तोच invariant अंमलात आणला.</li>
+          <li>फक्त वाचनाच्या statement queries साध्या accessors म्हणून राहिल्या कारण त्या अहवाल देतात, निर्णय घेत नाहीत.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> overdraft बगचा एक संपूर्ण वर्ग नाहीसा झाला, कारण नियम आता कोणत्याही caller द्वारे वगळला जाऊ शकत नव्हता.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>2 · स्वतःचे discounts लागू करणारे checkout carts</h3><div class="role">Pattern: pricing धोरण cart सोबत राहते</div></div></div>
+        <p class="muted">एका e-commerce संघाकडे coupon logic web checkout, mobile API, आणि अंतर्गत admin tool मध्ये कॉपी केलेली होती, आणि तिन्ही एकमेकांपासून दूर गेल्या.</p>
+        <ul>
+          <li>प्रत्येक client मध्ये line items वाचणाऱ्या पात्रता तपासण्या <code>cart.applyCoupon(code)</code> मध्ये हलवल्या.</li>
+          <li>Cart त्याच्या contents साठी totals, discounts, आणि validity नियमांचा एकमेव मालक बनला.</li>
+          <li>Clients आता cart ला coupon लागू करण्यास सांगतात आणि तो जे परत करतो ते render करतात, काहीही न ठरवता.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> Coupon वर्तन सर्वत्र सुसंगत बनले, आणि नवीन promotions एकच class संपादित करून पाठवली गेली.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📦</span><div><h3>3 · Fulfillment service मधील order state machine</h3><div class="role">Pattern: setters नव्हे तर commands म्हणून संक्रमणे</div></div></div>
+        <p class="muted">एका order fulfillment service मध्ये <code>if (order.getStatus() == PAID) order.setStatus(SHIPPED)</code> तपासण्यांनी भरलेले होते ज्या बेकायदेशीर संक्रमणे निसटू देत होत्या.</p>
+        <ul>
+          <li>Status setters ना <code>order.markShipped()</code> आणि <code>order.cancel()</code> सारख्या intent commands नी बदलले.</li>
+          <li>प्रत्येक command सध्याची स्थिती तपासत असे आणि order च्या आतून बेकायदेशीर संक्रमणे नाकारत असे.</li>
+          <li>Status फील्ड खाजगी बनले, त्यामुळे कोणताही caller अवैध उडी सक्तीने करू शकत नव्हता.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निकाल:</strong> अवैध स्थिती संक्रमणे रचनेनुसारच अशक्य बनली, आणि order चे जीवनचक्र व्यावसायिक क्रियापदांसारखे वाचले.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">Tell, Don't Ask आजच्या बहुतेक frameworks पेक्षा जुने आहे, पण ते जो दबाव कमी करते तो प्रणाली अधिक distributed होत असताना केवळ वाढतच जातो.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Domain-driven design</h4><p>स्वतःचे invariants रक्षणारे समृद्ध aggregates हे दुसऱ्या नावाने Tell, Don't Ask च आहेत. DDD ही संकल्पना ज्या anemic model विरुद्ध इशारा देते त्याच्याशी स्पष्टपणे लढते.</p></div>
+        <div class="card"><h4>📨 CQRS आणि commands</h4><p>Command-query separation ही विभागणी औपचारिक करते: commands सांगतात आणि स्थिती बदलतात; queries विचारतात आणि फक्त अहवाल देतात. दोघांना वेगळे नागरिक मानले जाते.</p></div>
+        <div class="card"><h4>🌐 Distributed services</h4><p>निर्णय घेण्यासाठी service चा डेटा आणण्याऐवजी त्याला काहीतरी करण्यासाठी संदेश पाठवणे, वर्तन आणि स्थिती process सीमांपलीकडेही एकत्र ठेवते.</p></div>
+        <div class="card"><h4>🧵 Concurrency सुरक्षा</h4><p>जेव्हा एखादा ऑब्जेक्ट फक्त त्याच्या स्वतःच्या commands मार्फतच बदलतो, तेव्हा तो त्या संक्रमणांचे एकाच ठिकाणी lock ने रक्षण करू शकतो. बाह्य केलेले read-decide-write race करतात.</p></div>
+        <div class="card"><h4>🎭 Actors आणि messages</h4><p>Actor model हे runtime पातळीवरील Tell, Don't Ask आहे: तुम्ही actor ला एक message पाठवता आणि तो त्याच्या खाजगी स्थितीवर कृती करतो; तुम्ही आत पोहोचू शकत नाही.</p></div>
+        <div class="card"><h4>🧪 Testable डिझाइन</h4><p>त्याच्या डेटासोबत सहस्थित असलेले वर्तन getters च्या विस्तृत stubbing शिवाय स्वतंत्रपणे unit test करणे सोपे असते, जे test suites जलद आणि प्रामाणिक ठेवते.</p></div>
+      </div>
+      <div class="callout"><strong>निष्कर्ष:</strong> Tell, Don't Ask हा असा मार्ग आहे ज्याने तुम्ही निर्णयांना ज्या डेटावर ते अवलंबून असतात त्याच्या शेजारी ठेवता, जेणेकरून encapsulation खरे राहते आणि नियम एकाच ठिकाणी राहतात. जेव्हा तुम्हाला फक्त अहवाल द्यायचा असेल तेव्हा मुक्तपणे विचारा; जेव्हा ऑब्जेक्टने स्वतःवर कृती करावी तेव्हा सांगा.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Tell, Don't Ask संबंधित OOP कल्पनांच्या जाळ्यात बसते. हे त्याच्यासोबत नैसर्गिकरित्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🛡️</span><h4>Encapsulation</h4><p>Telling जे तत्त्व अंमलात आणते: स्थिती वर्तनामागे खाजगी राहते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../law-of-demeter/"><span class="ico">🚉</span><h4>Law of Demeter</h4><p>मित्रांशी बोला, अनोळखींशी नाही, आणि साखळ्यांमधून विचारणे टाळा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../anemic-domain-model/"><span class="ico">🩸</span><h4>Anemic domain model</h4><p>विचारण्याने निर्माण होणारा वर्तनरहित डेटाचा anti-pattern.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single responsibility</h4><p>प्रत्येक ऑब्जेक्टच्या commands ना बदलण्याच्या एका कारणावर केंद्रित ठेवा.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Tell, Don't Ask · Commands पाठवा, स्थिती query करून ठरवू नका · डेटाच्या शेजारी वर्तन · Encapsulation · विचारणे कधी योग्य असते</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मधील Interface Segregation Principle (ISP) - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="Interface Segregation Principle (ISP) ची सखोल, दृश्यात्मक ओळख: कोणत्याही client ला त्याने न वापरलेल्या methods वर अवलंबून का राहू नये, मोठ्या fat interfaces ना केंद्रित role interfaces मध्ये कसे विभागावे, class diagrams, sequence diagrams, 0-100 प्रवाह, अडचणी, केस स्टडीज आणि आधुनिक उपयुक्तता - TypeScript, Python आणि Ruby कोडसह." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Interface Segregation - clients ना कधीही न वापरणाऱ्या methods पासून दूर ठेवा</h1>
+      <p class="lede">Interface Segregation Principle सांगते की <strong>कोणत्याही client ला त्याने न वापरलेल्या methods वर अवलंबून राहण्यास भाग पाडले जाऊ नये</strong>. जेव्हा एकच मोठे fat interface वाचन, लेखन, refunds आणि exports एकत्र बांधून ठेवते, तेव्हा प्रत्येक consumer ला तो कधीही स्पर्श न करणाऱ्या कोडशी बांधले जाते. ISP त्या प्रचंड contract ला लहान, केंद्रित <strong>role interfaces</strong> मध्ये विभागते, जेणेकरून प्रत्येक caller ला त्याला खरोखर हवा असलेला तेवढाच भाग अवलंबून राहावा लागतो.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पाहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Role interfaces</span>
+        <span class="pill">Client-specific contracts</span>
+        <span class="pill">Reader / Writer विभागणी</span>
+        <span class="pill">Fat interfaces नाहीत</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>Interface Segregation Principle म्हणजे काय?</h2>
+      <p class="muted"><strong>Interface Segregation</strong> हे SOLID मधील "I" आहे. ते सांगते की एखाद्या class ला अशा फुगलेल्या interface ची अंमलबजावणी करण्यास, आणि caller ला त्यावर अवलंबून राहण्यास कधीही भाग पाडू नये जिच्या methods तो वापरणारच नाही. एका सर्वज्ञ contract ऐवजी, तुम्ही अनेक <em>लहान role interfaces</em> ठरवता - client एखाद्या object शी ज्या वेगवेगळ्या पद्धतीने संवाद साधतो त्यातील प्रत्येकासाठी एक - आणि types ना नेमक्या त्याच roles ची अंमलबजावणी करू देता ज्यांना त्या support करतात.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧩</span> Role interfaces</h4>
+          <p>एक fat contract ला <code>OrderReader</code> आणि <code>OrderWriter</code> सारख्या केंद्रित भागांमध्ये मोडा. प्रत्येक भाग एका client अवलंबून राहू शकेल अशा एकाच जबाबदारीला नाव देतो.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔌</span> Client-specific contracts</h4>
+          <p>फक्त वाचन करणारी reporting service <code>OrderReader</code> मागते आणि तिला <code>save</code> किंवा <code>delete</code> कधीही दिसत नाही. Interface implementer नव्हे तर consumer कडून आकार घेते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧱</span> जोडा, फुगवू नका</h4>
+          <p>एकच concrete class एकाच वेळी अनेक role interfaces ची अंमलबजावणी करू शकते. Callers ना तरीही फक्त त्यांना दिलेला अरुंद role दिसतो, त्यामुळे coupling किमान राहते.</p>
+        </div>
+      </div>
+
+      <h3>Fat interface विरुद्ध segregated roles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>बाब</th><th>एक fat interface</th><th>Segregated role interfaces</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Client अवलंबित्व</strong></td><td>प्रत्येक caller सर्व methods वर अवलंबून</td><td>प्रत्येक caller फक्त त्याच्या role वर अवलंबून</td></tr>
+            <tr><td><strong>सक्तीच्या अंमलबजावणी</strong></td><td>Classes ना ज्या support करता येत नाहीत त्या methods stub कराव्या लागतात</td><td>Classes फक्त संबंधित roles ची अंमलबजावणी करतात</td></tr>
+            <tr><td><strong>Recompile / redeploy चा फैलाव</strong></td><td>एक बदल असंबंधित clients पर्यंत पसरतो</td><td>बदल फक्त संबंधित role पुरता मर्यादित राहतो</td></tr>
+            <tr><td><strong>Testing</strong></td><td>Mocks ना डझनभर methods खोट्या तयार कराव्या लागतात</td><td>चाचणी होणारा लहान role mock करा</td></tr>
+            <tr><td><strong>वाचनीयता</strong></td><td>प्रचंड पृष्ठभागात हेतू गाडला जातो</td><td>Type चे नावच ती काय करते हे सांगते</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य विचारप्रतिमा:</strong> ISP हे implementer च्या नव्हे तर <em>consumer च्या</em> दृष्टिकोनाबद्दल आहे. "हा caller खरोखर काय invoke करतो?" असे विचारा आणि त्याला नेमके तेवढेच वचन देणारा contract द्या - त्याहून जास्त काही नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>Interface Segregation का अस्तित्वात आहे</h2>
+      <p class="muted">Fat interfaces खोटे coupling पसरवतात. charge, refund आणि payout एकाच interface मध्ये एकत्र करणारा payment gateway फक्त charge करणाऱ्या checkout स्क्रीनला payout API बदलल्यावर recompile करण्यास भाग पाडतो. ISP ती काल्पनिक अवलंबित्वे कापून टाकते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 कमीवर अवलंबून राहा</h4><p>फक्त inventory वाचणारा client, write path विकसित झाल्यावर तुटू नये, recompile होऊ नये किंवा पुन्हा test होऊ नये. अरुंद contracts consumer बांधलेला पृष्ठभाग आकुंचित करतात.</p></div>
+        <div class="card"><h4>🧪 वेगळेपणाने test करा</h4><p>पाच-method role mock करणे सोपे आहे; चाळीस-method god interface mock करणे हे एक कष्टाचे काम आहे जे teams ना ठिसूळ, अति-विस्तृत fakes कडे ढकलते.</p></div>
+        <div class="card"><h4>🚫 throw-not-supported stubs नकोत</h4><p>जेव्हा read replica write करू शकत नाही, तेव्हा fat interface runtime ला throw होणारा <code>save()</code> सक्तीने लादते. विभागलेले roles तिला फक्त writer contract ची अंमलबजावणी न करण्याची मुभा देतात.</p></div>
+        <div class="card"><h4>🔭 नावानेच हेतू</h4><p>एखाद्या service ला <code>OrderReader</code> देणे हे दस्तऐवजीकरण करते की ती काहीही बदलणार नाही. Type स्वतःच एक सुरक्षाकडे आणि design विधान आहे.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह Interface Segregation ची ओळख</h2>
+      <p class="muted">एकच कल्पना, चित्रित करण्याचे चार मार्ग, जेणेकरून तुम्ही कोणीही असाल तरी ती नीट समजते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>अशा एका लायब्ररी कार्डाची कल्पना करा जे तुम्हाला कायदेशीररीत्या पुस्तके रचायला, payroll सांभाळायला आणि boiler दुरुस्त करायला बांधून टाकते. तुम्हाला फक्त <strong>उसने</strong> घ्यायचे आहे. ISP तुम्हाला फक्त उसने घेणारे कार्ड देते आणि सफाई कर्मचाऱ्याला वेगळे कार्ड देते.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>वीस methods असणाऱ्या एका <code>Repository</code> ऐवजी, तुम्ही <code>Reader</code> आणि <code>Writer</code> उघड करता. एक query handler <code>Reader</code> घेतो; तो अक्षरशः <code>delete</code> <strong>करूच शकत नाही</strong>, आणि write बाजू बदलल्यावर तो कधीही पुन्हा build होत नाही.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>"फक्त refunds" पुरता मर्यादित vendor contract म्हणजे तुम्ही त्यांच्या payout जबाबदाऱ्यांसाठी उत्तरदायी नाही. Contract नेमक्या वापरलेल्या service पुरता अरुंद करा आणि <strong>कायदेशीर फैलाव</strong> त्यासोबतच आकुंचित होतो.</p></div>
+        <div class="card"><h4><span class="ico">🔧</span> रोजची आवृत्ती</h4><p>एक power outlet तुम्हाला दोन slots देतो, संपूर्ण breaker panel नाही. तुम्हाला जे हवे ते तुम्ही plug करता; फक्त फोन charge करण्यासाठी तुमच्या हातात इमारतीतील प्रत्येक switch दिला जात नाही.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते आतून कसे कार्य करते</h2>
+      <p class="muted">एका fat contract पासून सुरुवात करा, त्याचे clients जे वेगवेगळे <strong>roles</strong> बजावतात ते ओळखा, आणि प्रत्येक role साठी एक interface कोरून काढा. एक concrete class ती खरोखर support करणाऱ्या प्रत्येक role ची अंमलबजावणी करते; प्रत्येक caller फक्त त्याला हवा असलेला role मागतो.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔎</span> Client roles शोधा</h4>
+          <p>Interface च्या प्रत्येक consumer ची आणि प्रत्येकजण खरोखर call करणाऱ्या methods ची यादी करा. एकत्र वापरल्या जाणाऱ्या methods चे समूह नैसर्गिक role सीमा उघड करतात - reader, writer, refunder, payout.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">✂️</span> विभागा, मग जोडा</h4>
+          <p>प्रत्येक समूह त्याच्या स्वतःच्या interface मध्ये काढा. Concrete gateway त्या सर्वांची अंमलबजावणी करते; checkout प्रवाह <code>Charger</code> वर, ops साधन <code>Refunder</code> वर अवलंबून राहते.</p>
+        </div>
+      </div>
+
+      <h3>Classes आणि role interfaces</h3>
+      <div class="diagram">
+        <div class="cap">एक fat gateway Charger, Refunder आणि Payout roles मध्ये विभागलेला</div>
+        <pre class="mermaid">
+classDiagram
+    class Charger {
+        &lt;&lt;interface&gt;&gt;
+        +charge(amount, token) Receipt
+    }
+    class Refunder {
+        &lt;&lt;interface&gt;&gt;
+        +refund(chargeId, amount) Receipt
+    }
+    class Payout {
+        &lt;&lt;interface&gt;&gt;
+        +payout(accountId, amount) Transfer
+    }
+    class StripeGateway {
+        +charge(amount, token) Receipt
+        +refund(chargeId, amount) Receipt
+        +payout(accountId, amount) Transfer
+    }
+    class CheckoutService {
+        +placeOrder(cart) Receipt
+    }
+    class SupportConsole {
+        +issueRefund(chargeId) Receipt
+    }
+    Charger &lt;|.. StripeGateway
+    Refunder &lt;|.. StripeGateway
+    Payout &lt;|.. StripeGateway
+    CheckoutService ..&gt; Charger
+    SupportConsole ..&gt; Refunder
+        </pre>
+      </div>
+
+      <h3>एक fat interface role interfaces मध्ये विभागणे</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Role interfaces, not one fat PaymentGateway
+interface Charger {
+  charge(amountCents: number, cardToken: string): Receipt;
+}
+interface Refunder {
+  refund(chargeId: string, amountCents: number): Receipt;
+}
+interface Payout {
+  payout(accountId: string, amountCents: number): Transfer;
+}
+
+// One concrete implementation can play many roles
+class StripeGateway implements Charger, Refunder, Payout {
+  charge(amountCents: number, cardToken: string): Receipt {
+    return { id: "ch_1", amountCents, status: "captured" };
+  }
+  refund(chargeId: string, amountCents: number): Receipt {
+    return { id: "re_1", amountCents, status: "refunded" };
+  }
+  payout(accountId: string, amountCents: number): Transfer {
+    return { id: "po_1", accountId, amountCents };
+  }
+}
+
+// Checkout depends ONLY on Charger - it cannot refund or pay out
+class CheckoutService {
+  constructor(private readonly gateway: Charger) {}
+  placeOrder(cart: Cart): Receipt {
+    return this.gateway.charge(cart.totalCents, cart.cardToken);
+  }
+}
+
+const stripe = new StripeGateway();
+const checkout = new CheckoutService(stripe); // passes as a Charger
+const receipt = checkout.placeOrder({ totalCents: 4999, cardToken: "tok_visa" });
+console.log(receipt.status); // "captured"</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from typing import Protocol
+
+# Role interfaces expressed as structural Protocols
+class Charger(Protocol):
+    def charge(self, amount_cents: int, card_token: str) -> Receipt: ...
+
+class Refunder(Protocol):
+    def refund(self, charge_id: str, amount_cents: int) -> Receipt: ...
+
+class Payout(Protocol):
+    def payout(self, account_id: str, amount_cents: int) -> Transfer: ...
+
+# One concrete gateway satisfies all three roles
+class StripeGateway:
+    def charge(self, amount_cents: int, card_token: str) -> Receipt:
+        return Receipt(id="ch_1", amount_cents=amount_cents, status="captured")
+
+    def refund(self, charge_id: str, amount_cents: int) -> Receipt:
+        return Receipt(id="re_1", amount_cents=amount_cents, status="refunded")
+
+    def payout(self, account_id: str, amount_cents: int) -> Transfer:
+        return Transfer(id="po_1", account_id=account_id, amount_cents=amount_cents)
+
+# Checkout depends ONLY on Charger
+class CheckoutService:
+    def __init__(self, gateway: Charger) -> None:
+        self._gateway = gateway
+
+    def place_order(self, cart: Cart) -> Receipt:
+        return self._gateway.charge(cart.total_cents, cart.card_token)
+
+stripe = StripeGateway()
+checkout = CheckoutService(stripe)  # accepted as a Charger
+receipt = checkout.place_order(Cart(total_cents=4999, card_token="tok_visa"))
+print(receipt.status)  # "captured"</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Role modules keep each contract focused
+module Charger
+  def charge(amount_cents, card_token)
+    raise NotImplementedError
+  end
+end
+
+module Refunder
+  def refund(charge_id, amount_cents)
+    raise NotImplementedError
+  end
+end
+
+module Payout
+  def payout(account_id, amount_cents)
+    raise NotImplementedError
+  end
+end
+
+# One concrete gateway mixes in every role it supports
+class StripeGateway
+  include Charger, Refunder, Payout
+
+  def charge(amount_cents, card_token)
+    Receipt.new(id: "ch_1", amount_cents: amount_cents, status: "captured")
+  end
+
+  def refund(charge_id, amount_cents)
+    Receipt.new(id: "re_1", amount_cents: amount_cents, status: "refunded")
+  end
+
+  def payout(account_id, amount_cents)
+    Transfer.new(id: "po_1", account_id: account_id, amount_cents: amount_cents)
+  end
+end
+
+# Checkout only ever calls the charging role
+class CheckoutService
+  def initialize(gateway)
+    @gateway = gateway
+  end
+
+  def place_order(cart)
+    @gateway.charge(cart.total_cents, cart.card_token)
+  end
+end
+
+stripe = StripeGateway.new
+checkout = CheckoutService.new(stripe)
+receipt = checkout.place_order(Cart.new(total_cents: 4999, card_token: "tok_visa"))
+puts receipt.status # "captured"</code></pre>
+      </div>
+      <p class="muted">लक्षात घ्या की <code>CheckoutService</code> ला नेहमी फक्त एक <code>Charger</code> मिळतो. त्याला refunds किंवा payouts बद्दल compile-time ला काहीही माहिती नसते, त्यामुळे ते roles विकसित झाले तरी त्याला तोडू शकत नाहीत - हेच ISP एका विस्तृत अवलंबित्वाचे नेमक्या अवलंबित्वात रूपांतर करत आहे.</p>
+
+      <h3>आधी आणि नंतर: एक fat repository Reader आणि Writer मध्ये विभागलेली</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// BEFORE - one fat interface every client must depend on
+interface OrderRepository {
+  findById(id: string): Order | null;
+  search(query: OrderQuery): Order[];
+  save(order: Order): void;
+  delete(id: string): void;
+}
+
+// AFTER - segregated roles
+interface OrderReader {
+  findById(id: string): Order | null;
+  search(query: OrderQuery): Order[];
+}
+interface OrderWriter {
+  save(order: Order): void;
+  delete(id: string): void;
+}
+
+class SqlOrderRepo implements OrderReader, OrderWriter {
+  findById(id: string): Order | null { return null; }
+  search(_: OrderQuery): Order[] { return []; }
+  save(_: Order): void {}
+  delete(_: string): void {}
+}
+
+// A reporting job asks for the Reader role only
+class RevenueReport {
+  constructor(private readonly orders: OrderReader) {}
+  monthlyTotal(q: OrderQuery): number {
+    return this.orders.search(q).reduce((s, o) => s + o.totalCents, 0);
+  }
+}
+
+const repo = new SqlOrderRepo();
+const report = new RevenueReport(repo); // narrowed to OrderReader
+console.log(report.monthlyTotal({ month: "2026-07" }));</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from typing import Optional, Protocol
+
+# BEFORE - one fat interface
+class OrderRepository(Protocol):
+    def find_by_id(self, id: str) -> Optional[Order]: ...
+    def search(self, query: OrderQuery) -> list[Order]: ...
+    def save(self, order: Order) -> None: ...
+    def delete(self, id: str) -> None: ...
+
+# AFTER - segregated roles
+class OrderReader(Protocol):
+    def find_by_id(self, id: str) -> Optional[Order]: ...
+    def search(self, query: OrderQuery) -> list[Order]: ...
+
+class OrderWriter(Protocol):
+    def save(self, order: Order) -> None: ...
+    def delete(self, id: str) -> None: ...
+
+class SqlOrderRepo:
+    def find_by_id(self, id: str) -> Optional[Order]: return None
+    def search(self, query: OrderQuery) -> list[Order]: return []
+    def save(self, order: Order) -> None: ...
+    def delete(self, id: str) -> None: ...
+
+# Reporting job depends on the Reader role only
+class RevenueReport:
+    def __init__(self, orders: OrderReader) -> None:
+        self._orders = orders
+
+    def monthly_total(self, q: OrderQuery) -> int:
+        return sum(o.total_cents for o in self._orders.search(q))
+
+repo = SqlOrderRepo()
+report = RevenueReport(repo)  # narrowed to OrderReader
+print(report.monthly_total(OrderQuery(month="2026-07")))</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># BEFORE - one fat module every client mixed in
+module OrderRepository
+  def find_by_id(id); end
+  def search(query); end
+  def save(order); end
+  def delete(id); end
+end
+
+# AFTER - segregated roles
+module OrderReader
+  def find_by_id(id); raise NotImplementedError; end
+  def search(query); raise NotImplementedError; end
+end
+
+module OrderWriter
+  def save(order); raise NotImplementedError; end
+  def delete(id); raise NotImplementedError; end
+end
+
+class SqlOrderRepo
+  include OrderReader, OrderWriter
+  def find_by_id(id) = nil
+  def search(query) = []
+  def save(order) = nil
+  def delete(id) = nil
+end
+
+# Reporting job accepts anything that plays the reader role
+class RevenueReport
+  def initialize(orders)
+    @orders = orders
+  end
+
+  def monthly_total(query)
+    @orders.search(query).sum(&:total_cents)
+  end
+end
+
+repo = SqlOrderRepo.new
+report = RevenueReport.new(repo) # uses only OrderReader methods
+puts report.monthly_total(OrderQuery.new(month: "2026-07"))</code></pre>
+      </div>
+      <p class="muted">Concrete <code>SqlOrderRepo</code> अजूनही सर्व काही करते, पण consumers ना आता सर्व काही दिसत नाही. एक read replica फक्त <code>OrderReader</code> ची अंमलबजावणी करू शकते आणि ती write करू शकत नाही हे प्रामाणिकपणे जाहीर करू शकते, त्याने कधीही support न केलेल्या <code>save</code> मधून throw करण्याऐवजी.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: फक्त charging role वर अवलंबून असणारे checkout, फक्त refunds वापरणारे support console, आणि त्याने कधीही अंमलात न आणलेली write प्रामाणिकपणे नाकारणारे read replica.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - Checkout फक्त Charger role वर अवलंबून</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cust as 🛒 Customer
+    participant Chk as 🖥️ CheckoutService
+    participant Chg as 💳 Charger role
+    participant Gw as 🏦 StripeGateway
+
+    Cust->>Chk: placeOrder(cart)
+    Note over Chk,Chg: Chk holds only a Charger, not the full gateway
+    Chk->>Chg: charge(4999, cardToken)
+    Chg->>Gw: charge on concrete impl
+    Gw-->>Chg: Receipt captured
+    Chg-->>Chk: Receipt captured
+    Chk-->>Cust: Order confirmed
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - Support console फक्त Refunder role वापरते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Agent as 🎧 Support agent
+    participant Con as 🛠️ SupportConsole
+    participant Ref as 🔁 Refunder role
+    participant Gw as 🏦 StripeGateway
+
+    Agent->>Con: issueRefund(chargeId)
+    Note over Con,Ref: Con cannot charge or pay out, only refund
+    Con->>Ref: refund(chargeId, 4999)
+    Ref->>Gw: refund on concrete impl
+    Gw-->>Ref: Receipt refunded
+    Ref-->>Con: Receipt refunded
+    Con-->>Agent: Refund complete
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Read replica फक्त OrderReader ची अंमलबजावणी करते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Rep as 📊 RevenueReport
+    participant Rd as 📖 OrderReader
+    participant Wr as ✍️ OrderWriter
+    participant DB as 🗄️ Read replica
+
+    Rep->>Rd: search(query)
+    Rd->>DB: run read query
+    DB-->>Rd: orders
+    Rd-->>Rep: orders
+    alt caller wired to a writer
+        Rep->>Wr: save(order)
+        Note over Wr: Replica never implements OrderWriter
+        Wr-->>Rep: type error at wiring time
+    else read-only path
+        Rep->>Rep: sum totals, no write attempted
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">एका फुगलेल्या interface पासून स्वच्छ, client-specific role contracts पर्यंत - संपूर्ण refactor क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>Fat interface लक्षात घ्या</h4><p>एकच <code>PaymentGateway</code> किंवा <code>Repository</code> सतत methods वाढवत जाते, आणि त्यातील कोणतीही बदलली की असंबंधित clients recompile होतात.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">आराखडा</span><h4>खरे clients यादी करा</h4><p>प्रत्येक consumer ची गणना करा: checkout, support console, payouts job, reporting. प्रत्येकजण खरोखर कोणत्या methods call करतो ते नोंदवा.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">समूह</span><h4>Methods role नुसार गटांत करा</h4><p>Clients एकत्र वापरणाऱ्या methods एक सुसंगत role बनवतात: charge, refund, payout, reader, writer. हे समूह तुमची interfaces बनतात.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">काढा</span><h4>प्रत्येक role साठी एक interface ठरवा</h4><p><code>Charger</code>, <code>Refunder</code>, <code>Payout</code> (किंवा <code>OrderReader</code>, <code>OrderWriter</code>) तयार करा, प्रत्येक फक्त त्याच्या समूहाचे वचन देतो.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">अंमलबजावणी</span><h4>Concrete class ला अनेक roles बजावू द्या</h4><p>खरी <code>StripeGateway</code> ती support करणाऱ्या प्रत्येक role ची एकाच वेळी अंमलबजावणी करते, त्यामुळे वर्तन अपरिवर्तित आणि केंद्रित राहते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">अरुंद करा</span><h4>प्रत्येक client त्याच्या role नुसार retype करा</h4><p>Constructor आणि parameter types बदला: checkout <code>Charger</code> घेते, reporting <code>OrderReader</code> घेते. संपूर्ण नव्हे तर तुकड्यावर अवलंबून राहा.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Inject</span><h4>Concrete एकदाच wire करा</h4><p>Composition root ला, एकच <code>StripeGateway</code> प्रत्येक client मध्ये पाठवा. प्रत्येकाला त्याचा parameter जाहीर करणारा role तेवढाच दिसतो.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">अंमलात आणा</span><h4>Compiler ला गैरवापर मनाई करू द्या</h4><p>Checkout आता <code>refund</code> call करू शकत नाही - ते <code>Charger</code> type वर नाही. बेकायदेशीर calls production मध्ये नव्हे तर build ला fail होतात.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Test</span><h4>लहान role mock करा</h4><p>Unit tests वीस-method gateway ऐवजी दोन-method <code>Charger</code> खोटी तयार करतात. Fixtures आकुंचित होतात आणि हेतू तीक्ष्ण होतो.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">काढून टाका</span><h4>Fat interface हटवा</h4><p>एकदा सर्व clients roles वर अवलंबून झाले की, मूळ god interface आणि तिने classes ना खोट्या तयार करण्यास भाग पाडलेल्या कोणत्याही no-op stubs हटवा.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">विकसित करा</span><h4>एक role सुरक्षितपणे बदला</h4><p><code>Payout</code> मध्ये एक method जोडणे आता फक्त payout clients ना स्पर्श करते. फैलाव बदलाशी जुळतो - ISP साध्य झाले.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">ISP उल्लंघने कोणते आकार घेतात हे एकदा कळले की ती सहज ओळखता येतात.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🗑️ God interface</h4><p>findById, search, save, delete, export आणि audit असणारी <code>Repository</code> प्रत्येक client ला त्या सर्वांवर अवलंबून राहण्यास भाग पाडते. Type च्या नावाला काही अर्थच उरत नाही.</p></div>
+        <div class="card"><h4>💥 throw new NotSupported</h4><p>जेव्हा read replica एका fat writer interface ची अंमलबजावणी करते, तेव्हा <code>save()</code> runtime ला throw होते. ती throw होणारी stub म्हणजे interface त्या class साठी खूप विस्तृत होती याचा पुरावा.</p></div>
+        <div class="card"><h4>📎 समीपतेमुळे coupling</h4><p>charge आणि payout एकाच interface मध्ये बांधल्याने checkout ला payouts बदलल्यावर recompile करावे लागते, जरी checkout कोणालाही payout करत नसले तरी.</p></div>
+        <div class="card"><h4>🪆 अति-विभागणी</h4><p>प्रत्येक method साठी एक interface अशी विभागणी केल्याने single-method contracts चा थवा तयार होतो जो खरे roles झाकून टाकतो. Method संख्येनुसार नव्हे तर client गरजेनुसार विभागा.</p></div>
+        <div class="card"><h4>🎭 Tests मध्ये fat mocks</h4><p>जर एका unit test ला एकच गोष्ट exercise करण्यासाठी पंधरा methods stub कराव्या लागत असतील, तर कोड ज्यावर अवलंबून आहे ते interface खूप मोठे आहे. Test ची अडचण हाच design चा वास आहे.</p></div>
+        <div class="card"><h4>🧟 गळके role naming</h4><p>एका role interface ला <code>IManager</code> किंवा <code>IService</code> म्हणणे त्याचा हेतू लपवते. त्याला क्षमतेनुसार नाव द्या - <code>Refunder</code>, <code>OrderReader</code> - जेणेकरून callers ना काय मिळते ते दिसते.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापके</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">काही ठोस संकेतांकडे लक्ष देऊन तुम्ही fat interfaces ना त्रास होण्याआधी ओळखू शकता.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>प्रति interface methods</strong></td><td>एकाच contract वर सतत वाढणारी method संख्या सूचित करते की ती विभागल्या जाव्यात अशा अनेक roles शोषून घेत आहे.</td></tr>
+            <tr><td><strong>प्रति client न वापरलेल्या methods चे प्रमाण</strong></td><td>जर बहुतेक clients interface च्या फक्त काही methods call करत असतील, तर interface कोणत्याही consumer च्या गरजेपेक्षा विस्तृत आहे.</td></tr>
+            <tr><td><strong>NotImplemented / throw stubs</strong></td><td>"not supported" throw करणारी प्रत्येक method अशा client ला चिन्हांकित करते ज्याला तो न करू शकणाऱ्या गोष्टीवर अवलंबून राहण्यास भाग पाडले गेले.</td></tr>
+            <tr><td><strong>Recompile फैलाव</strong></td><td>Interface बदलल्यावर किती modules पुन्हा build होतात ते मोजा. असंबंधित बदलावर विस्तृत फैलाव खोटे coupling सूचित करतो.</td></tr>
+            <tr><td><strong>Tests मध्ये mock चा आकार</strong></td><td>प्रति test मोठे हाताने लिहिलेले mocks किंवा अनेक stubbed methods उघड करतात की consumers वापरतात त्याहून जास्तवर अवलंबून आहेत.</td></tr>
+            <tr><td><strong>Fan-in विरुद्ध method वापर</strong></td><td>अशा interface वर उच्च fan-in जिच्या methods वेगळ्या client गटांकडून वापरल्या जातात, हे segregation साठी पाठ्यपुस्तकातील उदाहरण आहे.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> जर कोणताही एकच client call करणाऱ्या methods चा संघ interface पेक्षा खूप लहान असेल, तर ती विभागा. योग्य आकाराचा contract तोच असतो जिथे प्रत्येक method त्यावर अवलंबून असणाऱ्या प्रत्येक client कडून पोहोचण्यायोग्य असते.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन production-सारख्या systems जिथे fat interface विभागल्याने फायदा झाला.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payments gateway Charge, Refund, Payout मध्ये विभागलेला</h3><div class="role">Pattern: प्रति consumer role interfaces</div></div></div>
+        <p class="muted">एका marketplace ने checkout, एक support console आणि seller-payouts job एकाच <code>PaymentGateway</code> interface विरुद्ध चालवले. Payouts मधील कोणताही बदल checkout ला redeploy करण्यास भाग पाडायचा.</p>
+        <ul>
+          <li>Fat interface ला <code>Charger</code>, <code>Refunder</code> आणि <code>Payout</code> role interfaces मध्ये विभागले गेले.</li>
+          <li>Concrete provider client तिन्हींची अंमलबजावणी करत राहिला; प्रत्येक service त्याच्या एकाच role नुसार retype केली गेली.</li>
+          <li>Checkout आता चुकूनही <code>payout</code> call करू शकत नव्हते, आणि payout बदल checkout builds मध्ये पसरणे थांबले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> प्रति क्षमता स्वतंत्र deploys आणि एक compiler जो checkout path ला कधीही payout करण्यापासून रोखतो.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>2 · CQRS repository Reader आणि Writer मध्ये विभागलेली</h3><div class="role">Pattern: read/write segregation</div></div></div>
+        <p class="muted">एका orders service ने वाचन replica ने आणि लेखन primary ने पाठबळ दिले, पण एकाच <code>OrderRepository</code> interface मुळे प्रत्येक query handler ला <code>save</code> आणि <code>delete</code> वाहावे लागत होते.</p>
+        <ul>
+          <li>Interface ला <code>OrderReader</code> आणि <code>OrderWriter</code> मध्ये विभागले गेले.</li>
+          <li>Read handlers replica ने पाठबळ दिलेल्या <code>OrderReader</code> वर अवलंबून राहिले, जी प्रामाणिकपणे writer ची अंमलबजावणी करत नाही.</li>
+          <li>Command handlers <code>OrderWriter</code> वर अवलंबून राहिले, primary database कडे routed.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> Read paths ना data भौतिकदृष्ट्या बदलताच येत नाही, आणि read-only replicas ना throw होणाऱ्या <code>save</code> stubs ची गरज उरली नाही.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📨</span><div><h3>3 · Notification provider channel क्षमतेनुसार विभागलेला</h3><div class="role">Pattern: capability role interfaces</div></div></div>
+        <p class="muted">एका notifications platform कडे send, schedule, template render आणि delivery-receipt methods असणारे एकच <code>NotificationChannel</code> interface होते. SMS providers rich templates render करू शकत नव्हते, म्हणून ते throw करायचे.</p>
+        <ul>
+          <li>Contract ला <code>Sender</code>, <code>Schedulable</code> आणि <code>TemplateRenderer</code> roles मध्ये विभागले गेले.</li>
+          <li>प्रत्येक provider ने फक्त तो खरोखर support करणाऱ्या roles ची अंमलबजावणी केली; SMS ने template rendering पूर्णपणे वगळले.</li>
+          <li>Callers क्षमतेनुसार channels मागत, त्यामुळे rich-template प्रवाहाने कधीही SMS-only provider निवडला नाही.</li>
+        </ul>
+        <div class="outcome">✅ <strong>निष्कर्ष:</strong> Runtime "not supported" चुका नाहीशा झाल्या कारण क्षमता send ला शोधण्याऐवजी type system मध्ये व्यक्त झाली.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - उपयुक्तता</div>
+      <h2>आधुनिक उपयुक्तता</h2>
+      <p class="muted">ISP हा classic OOP चा अवशेष नाही; आधुनिक typed आणि structural भाषा मोठ्या systems ना decoupled कशा ठेवतात याचा तो पाया आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🦫 Go मधील लहान interfaces</h4><p>Go ची संस्कृती ("accept interfaces, return structs") ही मूलतः ISP आहे: <code>io.Reader</code> आणि <code>io.Writer</code> सारखी छोटी interfaces जी client ला नेमकी गरज असेल तेव्हाच मागतो.</p></div>
+        <div class="card"><h4>🧬 Structural आणि duck typing</h4><p>Python Protocols आणि TypeScript structural types तुम्हाला client अवलंबून असणारा अरुंद role जाहीर करू देतात, त्यासाठी implementer ला interface अस्तित्वात आहे हेदेखील माहीत असण्याची गरज नाही.</p></div>
+        <div class="card"><h4>🧭 CQRS आणि ports</h4><p>Command/query separation आणि hexagonal ports हे संपूर्ण subsystems ना लागू केलेले ISP आहे: read ports आणि write ports वेगळे, किमान contracts म्हणून.</p></div>
+        <div class="card"><h4>🔒 Capability-based security</h4><p>एखाद्या component ला फक्त त्याला हवी असणारी अरुंद क्षमता देणे आणि त्याहून विस्तृत काहीही न देणे, हे केवळ design ची शोभा नव्हे तर सुरक्षा सीमा म्हणून ISP आहे.</p></div>
+        <div class="card"><h4>🧩 API आणि RPC design</h4><p>gRPC आणि GraphQL schemas ना केंद्रित service definitions चा फायदा होतो जेणेकरून clients एका monolithic service पृष्ठभागाला नव्हे तर ते call करणाऱ्या methods ना bind होतात.</p></div>
+        <div class="card"><h4>🤖 Agents साठी tool interfaces</h4><p>एखाद्या agent किंवा plugin ला एका task साठी लागणारी नेमकी tools तेवढीच उघड करणे हे ISP चे प्रतिबिंब आहे: प्रत्येक caller ला सर्वात लहान सक्षम contract द्या.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> ISP म्हणजे consumers भोवती contracts आकारण्याची शिस्त. प्रत्येक client ला त्याचे काम करू देणारे सर्वात लहान interface द्या, आणि coupling, test आकार आणि deploy फैलाव हे सर्व एकत्र आकुंचित होतात.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Interface Segregation हे संबंधित design कल्पनांच्या जाळ्यात बसते. या त्यासोबत नैसर्गिकरीत्या जुळतात.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single Responsibility</h4><p>बदलण्याचे एकच कारण - cohesive roles आकारणारे भावंड.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../dependency-inversion/"><span class="ico">🔀</span><h4>Dependency Inversion</h4><p>Abstractions वर अवलंबून राहा; role interfaces हीच ती abstractions आहेत ज्यांवर तुम्ही invert करता.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">🦆</span><h4>Interfaces आणि Duck Typing</h4><p>नाव दिलेल्या interface शिवाय client अवलंबून असणारे structural roles.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🧲</span><h4>Coupling आणि Cohesion</h4><p>ISP जुळवणारी बले: कमी coupling, अधिक cohesive contracts.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Interface Segregation Principle ची दृश्यात्मक ओळख · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · भविष्य</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

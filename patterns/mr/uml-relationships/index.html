@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UML क्लास नाती समजावून - काय, कसे, का आणि उदाहरणे</title>
-  <meta name="description" content="UML क्लास नात्यांचे सखोल, दृश्य मार्गदर्शक: association, aggregation, composition, dependency, inheritance आणि realization. नोटेशन, सिमॅंटिक्स, multiplicity, आकृत्या, 0-100 प्रवाह, खरा कोड आणि प्रत्येक कधी वापरायचे." />
+  <title>OOP मधील UML क्लास संबंध - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="UML क्लास संबंधांचे दृश्य मार्गदर्शन: association, aggregation, composition, dependency, inheritance/generalization, आणि realization. नोटेशन, अर्थ, multiplicity, class diagrams, sequence diagrams, आणि नैसर्गिक TypeScript, Python, व Ruby कोड." />
   <link rel="stylesheet" href="/patterns/assets/style.css" />
 </head>
 <body>
@@ -19,7 +19,7 @@
         <a href="#diagrams">आकृत्या</a>
         <a href="#flow">0-100 प्रवाह</a>
         <a href="#pitfalls">अडचणी</a>
-        <a href="#metrics">तडजोडी</a>
+        <a href="#signals">संकेत</a>
         <a href="#cases">केसेस</a>
         <a href="#future">भविष्य</a>
       </div>
@@ -28,18 +28,18 @@
 
   <header class="hero">
     <div class="wrap">
-      <span class="kicker">OOP पाया</span>
-      <h1>UML क्लास नाती - ऑब्जेक्ट एकमेकांशी कसे जोडले जातात</h1>
-      <p class="lede">प्रत्येक ऑब्जेक्ट मॉडेल हा नात्यांचा एक आलेख असतो. क्लास एकमेकांशी कसे संबंधित आहेत हे दाखवण्याचे UML तुम्हाला सहा अचूक मार्ग देते: <strong>association</strong>, <strong>aggregation</strong>, <strong>composition</strong>, <strong>dependency</strong>, <strong>inheritance</strong> आणि <strong>realization</strong>. बाण, हिरे, multiplicity आणि नेमके सिमॅंटिक्स शिका, म्हणजे एखादी आकृती वाचणाऱ्या प्रत्येक इंजिनिअरसाठी तिचा अर्थ एकच राहील.</p>
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>UML क्लास संबंध - तुमच्या क्लासेसना जोडणाऱ्या रेषा</h1>
+      <p class="lede">एका class diagram ची उपयुक्तता त्याच्या पेट्यांमध्ये काढलेल्या संबंधांइतकीच असते. UML तुम्हाला सहा अचूक बाण देते - <strong>association</strong>, <strong>aggregation</strong>, <strong>composition</strong>, <strong>dependency</strong>, <strong>generalization</strong>, आणि <strong>realization</strong> - प्रत्येकाचे वेगळे नोटेशन आणि ownership, lifetime व coupling बद्दल वेगळा अर्थ. ते बरोबर काढा आणि आकृती कोडप्रमाणे वाचली जाते; चुकीचे काढा आणि ती खोटे बोलते.</p>
       <div class="cta">
-        <a class="btn primary" href="#flow">संपूर्ण प्रवाह पहा ↓</a>
+        <a class="btn primary" href="#how">कोड पाहा</a>
         <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
       </div>
       <div class="pill-row">
-        <span class="pill">बाण आणि हिरे</span>
-        <span class="pill">Multiplicity</span>
-        <span class="pill">मालकी आणि जीवनचक्र</span>
-        <span class="pill">Is-a विरुद्ध has-a</span>
+        <span class="pill">Association</span>
+        <span class="pill">Aggregation विरुद्ध composition</span>
+        <span class="pill">Dependency</span>
+        <span class="pill">Generalization आणि realization</span>
       </div>
     </div>
   </header>
@@ -48,41 +48,41 @@
   <section id="what">
     <div class="wrap">
       <div class="eyebrow">01 - काय</div>
-      <h2>UML क्लास नाती म्हणजे काय?</h2>
-      <p class="muted"><strong>UML क्लास नाती</strong> म्हणजे क्लास डायग्राममध्ये क्लासना जोडणाऱ्या प्रमाणित रेषा आणि बाणांची टोके. प्रत्येकजण दोन क्लास एकमेकांशी किती जोडले गेले आहेत याबद्दल एक विशिष्ट अर्थ व्यक्त करतो: एक दुसऱ्याचा <em>वापर</em> करतो का, त्याला <em>धरून ठेवतो</em> का, आयुष्यभर त्याची <em>मालकी</em> ठेवतो का, त्याला <em>विस्तारित</em> करतो का, की त्याचा कॉन्ट्रॅक्ट <em>अंमलात</em> आणतो. हे नोटेशन एक सामायिक भाषा आहे, म्हणून हेतू व्हाइटबोर्डपासून कोडपर्यंतच्या प्रवासात टिकून राहतो.</p>
+      <h2>UML क्लास संबंध म्हणजे काय?</h2>
+      <p class="muted"><strong>UML क्लास संबंध</strong> हे प्रमाणित जोडणारे असतात जे design वेळी क्लासेस एकमेकांशी कसे संबंधित आहेत हे वर्णन करतात. सोर्स कोड ज्या तीन गोष्टी constructors, fields आणि imports मध्ये विखुरतो त्या ते एन्कोड करतात: instances मधले <em>structural links</em>, <em>ownership आणि lifetime</em>, आणि <em>type hierarchy</em>. बाणाची दिशा, त्याच्या टोकाचा आकार आणि त्याचे multiplicity वाचल्याने ऑब्जेक्ट्स एकमेकांना कसे शोधतात आणि कोणाला निर्माण करण्याची व नष्ट करण्याची जबाबदारी आहे हे कळते.</p>
 
       <div class="grid cols-3">
         <div class="card">
-          <h4><span class="ico">🔗</span> संरचनात्मक जोड</h4>
-          <p>Association, aggregation आणि composition अशा ऑब्जेक्टचे वर्णन करतात जे एकमेकांचा संदर्भ ठेवतात आणि वेळोवेळी एकत्र राहतात, त्यात मालकीची तीव्रता वाढत जाते.</p>
+          <h4><span class="ico">🔗</span> Structural links</h4>
+          <p>Association, aggregation आणि composition अशा ऑब्जेक्ट्सचे वर्णन करतात जे इतर ऑब्जेक्ट्सचे references धरून ठेवतात, जसे की <code>Order</code> त्याच्या <code>Customer</code> आणि त्याच्या <code>LineItem</code> यादीचा संदर्भ देते.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">⚡</span> वापराचे जोड</h4>
-          <p>Dependency हा सर्वात हलका स्पर्श आहे: एक क्लास दुसऱ्याचा थोडक्यात वापर करतो, पॅरामीटर, रिटर्न टाइप किंवा लोकल म्हणून, संदर्भ न धरता.</p>
+          <h4><span class="ico">🧬</span> Type hierarchy</h4>
+          <p>Generalization (inheritance) आणि realization (एखादे interface implement करणे) subtype संबंधांचे वर्णन करतात, जसे की <code>StripeGateway</code> एका <code>PaymentGateway</code> कराराचे realization करते.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🧬</span> टाइपचे जोड</h4>
-          <p>Inheritance (generalization) आणि realization हे is-a आणि implements-contract नात्यांचे वर्णन करतात, जे टाइपमधले असतात, ऑब्जेक्ट instance मधले नाहीत.</p>
+          <h4><span class="ico">⚡</span> क्षणिक वापर</h4>
+          <p>Dependency ही सर्वात कमकुवत जोडणी आहे: एक क्लास दुसऱ्याचा वापर फक्त थोडक्यात करते, method parameter किंवा local म्हणून, त्याचा reference साठवून न ठेवता.</p>
         </div>
       </div>
 
-      <h3>सहा नाती एका दृष्टिक्षेपात</h3>
+      <h3>सहा संबंध आणि त्यांचे नोटेशन</h3>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>नाते</th><th>नोटेशन</th><th>अर्थ</th><th>तीव्रता</th></tr>
+            <tr><th>संबंध</th><th>UML नोटेशन</th><th>अर्थ</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Dependency</strong></td><td>तुटक रेषा, उघडा बाण <code>..&gt;</code></td><td>तात्पुरता वापर (param, return, local)</td><td>सर्वात कमजोर</td></tr>
-            <tr><td><strong>Association</strong></td><td>ठोस रेषा, उघडा बाण <code>--&gt;</code></td><td>माहीत असते, संदर्भ धरतो</td><td>कमजोर</td></tr>
-            <tr><td><strong>Aggregation</strong></td><td>ठोस रेषा, पोकळ हिरा <code>o--</code></td><td>Has-a, सामायिक भाग, स्वतंत्र जीवनचक्र</td><td>मध्यम</td></tr>
-            <tr><td><strong>Composition</strong></td><td>ठोस रेषा, भरलेला हिरा <code>*--</code></td><td>Owns-a, भाग संपूर्णासोबतच नष्ट होतात</td><td>तीव्र</td></tr>
-            <tr><td><strong>Inheritance</strong></td><td>ठोस रेषा, पोकळ त्रिकोण <code>&lt;|--</code></td><td>Is-a, subtype supertype ला विस्तारित करतो</td><td>टाइप</td></tr>
-            <tr><td><strong>Realization</strong></td><td>तुटक रेषा, पोकळ त्रिकोण <code>&lt;|..</code></td><td>interface कॉन्ट्रॅक्ट अंमलात आणतो</td><td>टाइप</td></tr>
+            <tr><td><strong>Association</strong></td><td>ठोस रेषा, पर्यायी उघडा बाण</td><td>एक structural link; एक ऑब्जेक्ट दुसऱ्याचा reference धरते. <code>Order</code> ला त्याचा <code>Customer</code> माहीत असतो.</td></tr>
+            <tr><td><strong>Aggregation</strong></td><td>ठोस रेषा, संपूर्ण भागाकडे पोकळ हिरा</td><td>सामायिक, स्वतंत्र lifetime असलेला whole-part. एक <code>Product</code> अनेक <code>Order</code> line items ना संबंधित असू शकतो.</td></tr>
+            <tr><td><strong>Composition</strong></td><td>ठोस रेषा, संपूर्ण भागाकडे भरलेला हिरा</td><td>मालकीचा lifetime असलेला whole-part. <code>LineItem</code> ऑब्जेक्ट्स त्यांच्या <code>Order</code> सोबत नष्ट होतात.</td></tr>
+            <tr><td><strong>Dependency</strong></td><td>तुटक रेषा, उघडा बाण</td><td>क्षणिक वापर; <code>Order</code> <code>checkout()</code> ला दिलेल्या <code>PaymentGateway</code> चा वापर करते.</td></tr>
+            <tr><td><strong>Generalization</strong></td><td>ठोस रेषा, पालकाकडे पोकळ त्रिकोण</td><td>Inheritance; एक subclass ही त्याच्या superclass चा एक प्रकार असते.</td></tr>
+            <tr><td><strong>Realization</strong></td><td>तुटक रेषा, interface कडे पोकळ त्रिकोण</td><td>एक क्लास एका interface कराराची अंमलबजावणी करते.</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>मुख्य मानसिक मॉडेल:</strong> हिरा नेहमी <em>मालकावर</em> (संपूर्णावर) बसतो, आणि त्रिकोण नेहमी <em>अधिक सामान्य</em> टाइपकडे (पालक किंवा interface कडे) निर्देश करतो. ठोस म्हणजे टिकाऊ संदर्भ, तुटक म्हणजे क्षणिक वापर. हे तीन संकेत बरोबर मिळवा आणि तुम्ही कोणतीही क्लास डायग्राम वाचू शकता.</div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> हिरा "lifetime ची मालकी कोणाची?" या प्रश्नाचे उत्तर देतो आणि रेषेची शैली "जोडणी किती काळ टिकते?" या प्रश्नाचे उत्तर देते. भरलेला हिरा म्हणजे भाग संपूर्णापेक्षा जास्त जगू शकत नाही; तुटक रेषा म्हणजे जोडणी क्षणिक आहे, साठवलेली नाही.</div>
     </div>
   </section>
 
@@ -90,13 +90,13 @@
   <section id="why">
     <div class="wrap">
       <div class="eyebrow">02 - का</div>
-      <h2>हे भेद का महत्त्वाचे आहेत</h2>
-      <p class="muted">हे काही किचकट रेखाचित्र नियम नाहीत. प्रत्येक नाते वेगळे जीवनचक्र व्यवस्थापन, coupling आणि testability सुचवते. त्यांना गडबड केल्याने अशी डिझाइन तयार होतात ज्या मेमरी लीक करतात, बदलाला विरोध करतात, किंवा एखादा ऑब्जेक्ट सामायिक असताना अनपेक्षितपणे तुटतात.</p>
+      <h2>हे फरक का महत्त्वाचे आहेत</h2>
+      <p class="muted">हे बाण म्हणजे केवळ सजावट नाही. Association ऐवजी composition निवडल्याने cascade-delete नियम, testability, आणि दोन modules किती घट्ट बांधलेले आहेत हे बदलते. जी आकृती त्यांना चुकीचे लेबल लावते ती खऱ्या engineering निर्णयांना चुकीच्या दिशेने नेते.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🗂️ मालकी व्यक्त करते</h4><p>Composition विरुद्ध aggregation वाचकाला सांगते की एका ऑब्जेक्टने दुसरा तयार करून नष्ट करायचा आहे का, की फक्त एक सामायिक संदर्भ उसना घ्यायचा आहे. तो एकच निर्णय तुमच्या constructor, cleanup आणि copying ला ठरवतो.</p></div>
-        <div class="card"><h4>🔧 Coupling उघड करते</h4><p>Dependency तोडणे स्वस्त असते; composition तसे नसते. नात्याचा प्रकार आधीच पाहिल्याने तुम्हाला कळते की एखादा बदल संपूर्ण सिस्टीममध्ये किती महाग पसरेल.</p></div>
-        <div class="card"><h4>🧭 हेतू सांगते</h4><p>interface realization "मला मुक्तपणे बदला" असे सूचित करते, तर inheritance "मी एक विशेष प्रकार आहे" असे सूचित करते. वाचक कोणता बाण दिसतो त्यानुसार विस्तारांचे नियोजन वेगळ्या पद्धतीने करतात.</p></div>
-        <div class="card"><h4>🧮 Multiplicity कॉन्ट्रॅक्ट ठरवते</h4><p>1, 0..1 आणि 1..* अशी लेबले नेमकी सांगतात की प्रत्येक टोकावर किती ऑब्जेक्ट बसतात, आणि एकही test लिहिण्यापूर्वीच अवैध स्थिती पकडतात, जसे की शून्य line item असलेली एखादी order.</p></div>
+        <div class="card"><h4>🗑️ Lifetime आणि cleanup</h4><p>Composition तुम्हाला सांगते की एक भाग त्याच्या मालकासोबत निर्माण व नष्ट झाला पाहिजे. हे थेट cascade deletes, database rows च्या ownership, आणि <code>dispose()</code> कोण कॉल करते याच्याशी जुळते. Aggregation उलट सांगते: भाग स्वतःच्या जोरावर जगतो.</p></div>
+        <div class="card"><h4>🔌 दिसणारे coupling</h4><p>Dependency विरुद्ध association म्हणजे "थोडक्यात वापरते" आणि "कायमचे धरते" यातील फरक. साठवलेल्या field पेक्षा dependency (एक parameter) ला प्राधान्य दिल्याने क्लासेस loosely coupled राहतात आणि fake ने test करणे खूप सोपे होते.</p></div>
+        <div class="card"><h4>📐 अंमलबजावणीआधी करार</h4><p>Realization तुम्हाला <code>PaymentGateway</code> interface एकदाच काढून त्यामागे Stripe, PayPal, किंवा एक sandbox बदलण्याची मुभा देते. अंमलबजावणी जिथे जोडली जाते तो सांधा आकृती दस्तावेजित करते.</p></div>
+        <div class="card"><h4>🧭 सामायिक शब्दसंग्रह</h4><p>UML ही teams आणि tools मध्ये एक सामायिक भाषा आहे. भरलेला हिरा पाहणाऱ्या reviewer ला constructor न वाचता ownership नियम तत्काळ कळतो, त्यामुळे design विषयीच्या चर्चा वेगाने पुढे सरकतात.</p></div>
       </div>
     </div>
   </section>
@@ -104,14 +104,14 @@
   <!-- ANALOGIES -->
   <section id="analogies">
     <div class="wrap">
-      <div class="eyebrow">साध्या शब्दांत</div>
-      <h2>उपमांसह UML क्लास नाती समजावून</h2>
-      <p class="muted">तेच सहा विचार, त्यांची कल्पना करण्याचे चार मार्ग, म्हणजे तुम्ही कोणीही असाल तरी मालकी आणि जीवनचक्र लक्षात येईल.</p>
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह समजावलेले UML क्लास संबंध</h2>
+      <p class="muted">तेच सहा जोडणारे, "माहीत आहे", "मालकी आहे", आणि "एक प्रकार आहे" यातील फरक चित्रित करण्याचे चार मार्ग.</p>
       <div class="grid cols-2">
-        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>तुमची <strong>पिशवी आणि तुमची पुस्तके</strong> यांचा विचार करा. पिशवीतील पुस्तके म्हणजे <em>aggregation</em>: ती बाहेर काढा तरी ती अस्तित्वात राहतात. तुमचे <em>हृदयाचे ठोके आणि तुमचे शरीर</em> म्हणजे composition: शरीर काढून टाका आणि ठोके संपले. एका परीक्षेसाठी मित्राचा calculator उसना घेणे म्हणजे <em>dependency</em>.</p></div>
-        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p>दुसरा ऑब्जेक्ट धरून ठेवणारा field म्हणजे <strong>association</strong>. जर तुम्ही तो ऑब्जेक्ट constructor मध्ये <code>new</code> करत असाल आणि कधीही सामायिक करत नसाल, तर ते <em>composition</em> आहे. जर तो पॅरामीटरमधून येतो आणि तुम्ही फक्त तो साठवता, तर ते <em>aggregation</em> आहे. तुम्ही <code>implements</code> करता तो टाइप म्हणजे <em>realization</em>; तुम्ही <code>extends</code> करता तो क्लास म्हणजे <em>inheritance</em>.</p></div>
-        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एक <strong>कंपनी आणि तिचे विभाग</strong>: कंपनी विसर्जित करा आणि विभाग नाहीसे होतात (composition). इतर युनिटमधून उसने घेतलेल्या लोकांचा एक <strong>प्रोजेक्ट टीम</strong> म्हणजे aggregation; प्रोजेक्ट संपला की लोक राहतात. एका मीटिंगसाठी सल्लागार नेमणे म्हणजे dependency.</p></div>
-        <div class="card"><h4><span class="ico">🏠</span> रोजच्या जीवनातली आवृत्ती</h4><p>एक <strong>घर आणि त्याच्या खोल्या</strong> म्हणजे composition: घर पाडा आणि खोल्याही त्यासोबत जातात. <strong>फर्निचर</strong> म्हणजे aggregation: ते पुढच्या घरात हलते. "Is-a" म्हणजे <em>केबिन हे एक घर आहे</em> (inheritance); "acts-as" म्हणजे असे घर जे <em>भाड्याने देता येते</em> (Rentable कॉन्ट्रॅक्टचे realization).</p></div>
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>एका शाळेचा विचार करा. तुम्ही तुमच्या शिक्षकाशी <strong>associated</strong> आहात (तुम्ही दोघेही स्वतंत्रपणे अस्तित्वात आहात), तुमच्या <strong>नोट्स</strong> तुमच्या वहीत composed आहेत (वही फाडली की नोट्स गायब), आणि ग्रंथालयातील पुस्तक हे <strong>aggregation</strong> आहे (उधार घेतले, मग परत केले आणि तुमच्याशिवाय पुढे जगत राहते).</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> developer साठी</h4><p>साठवलेला field म्हणजे association किंवा composition; method parameter म्हणजे <strong>dependency</strong>. <code>implements PaymentGateway</code> म्हणजे realization; <code>extends BaseController</code> म्हणजे generalization. कोडमधील keyword हा आकृतीतील बाणाचे टोक असतो.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>एक कंपनी तिच्या departments ची <strong>मालकी</strong> धरते (composition - कंपनी विसर्जित करा, departments विसर्जित) पण contractors ना फक्त <strong>नोकरीवर</strong> ठेवते (aggregation - contractor अस्तित्वात राहतो). ती tax च्या वेळी एका accountant चा <strong>वापर</strong> करते (dependency), आणि प्रत्येक manager हा एक <strong>employee आहे</strong> (generalization).</p></div>
+        <div class="card"><h4><span class="ico">🏠</span> रोजच्या जीवनातील आवृत्ती</h4><p>घर आणि त्याच्या खोल्या म्हणजे composition: घर पाडा आणि खोल्या नाहीशा होतात. घर आणि त्याचे फर्निचर म्हणजे aggregation: फर्निचर नव्या घरात हलवता येते. तुम्ही बोलावलेला plumber म्हणजे dependency: एका तासासाठी वापरला, मग गेला.</p></div>
       </div>
     </div>
   </section>
@@ -120,183 +120,333 @@
   <section id="how">
     <div class="wrap">
       <div class="eyebrow">03 - कसे</div>
-      <h2>प्रत्येक नाते कोडमध्ये कसे उतरते</h2>
-      <p class="muted">प्रत्येक UML नात्याचा एक थेट कोड ठसा असतो. युक्ती म्हणजे क्लास बॉडी वाचून नात्याचे नाव सांगायला शिकणे, आणि उलटही. खालील आकृती एका कॅनव्हासवर सर्व सहा दाखवते, नंतर ती तयार करणारा Java.</p>
+      <h2>संबंध कोडशी कसे जुळतात</h2>
+      <p class="muted">प्रत्येक UML बाण एका ठोस कोड आकाराशी जुळतो. खाली, एक <strong>ecommerce checkout</strong> domain सर्व सहा एकाच वेळी दाखवते: <code>Order</code>, <code>LineItem</code>, <code>Customer</code>, <code>Product</code>, आणि दोन अंमलबजावण्या असलेले एक <code>PaymentGateway</code> interface.</p>
 
       <div class="grid cols-2">
         <div class="card">
-          <h4><span class="ico">💎</span> हिरे = मालकी</h4>
-          <p>भरलेला हिरा (composition) म्हणजे संपूर्ण त्याचे भाग आतमध्ये तयार करते आणि ते त्याचे आयुष्य वाटून घेतात. पोकळ हिरा (aggregation) म्हणजे भाग आत पास केले जातात आणि संपूर्णाच्या पलीकडे टिकतात.</p>
+          <h4><span class="ico">💎</span> Ownership constructors मध्ये दिसते</h4>
+          <p>Composition म्हणजे संपूर्ण त्याचे भाग आतल्या आत बनवते: <code>Order</code> स्वतःचे <code>LineItem</code> ऑब्जेक्ट्स तयार करते, त्यामुळे बाहेरचा कोणताही कोड ते सुपूर्द करत नाही. Aggregation आणि association म्हणजे references बाहेरून दिले जातात आणि धरणाऱ्यापेक्षा जास्त जगतात.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🔺</span> त्रिकोण = टाइप</h4>
-          <p>ठोस रेषेवरील पोकळ त्रिकोण म्हणजे <code>extends</code> (inheritance). तोच त्रिकोण तुटक रेषेवर म्हणजे <code>implements</code> (realization). दोन्ही अधिक अमूर्त टाइपकडे निर्देश करतात.</p>
+          <h4><span class="ico">🧾</span> Coupling signatures मध्ये दिसते</h4>
+          <p>Dependency एका method वर parameter type म्हणून दिसते - <code>checkout(gateway)</code> - साठवलेला field म्हणून नाही. Realization <code>implements</code> म्हणून दिसते; generalization <code>extends</code> म्हणून. जोडणी जितकी अरुंद, तितके coupling सैल.</p>
         </div>
       </div>
 
-      <h3>एका आकृतीवर सर्व सहा नाती</h3>
+      <h3>Domain एक class diagram म्हणून</h3>
       <div class="diagram">
-        <div class="cap">संरचना - क्लासच्या छोट्या संचामधली सहा UML नाती</div>
+        <div class="cap">Class diagram - एका checkout मॉडेलमधील सर्व सहा संबंध</div>
         <pre class="mermaid">
 classDiagram
-    class Payable {
+    class PaymentGateway {
         &lt;&lt;interface&gt;&gt;
-        +pay() void
+        +charge(amount, token) Receipt
     }
-    class Person {
-        +String name
+    class StripeGateway {
+        +charge(amount, token) Receipt
     }
-    class Employee {
-        +String title
-        +pay() void
+    class PayPalGateway {
+        +charge(amount, token) Receipt
     }
-    class Department {
-        +String name
+    class Customer {
+        +id string
+        +email string
     }
-    class Company {
-        +String legalName
+    class Product {
+        +sku string
+        +price Money
     }
-    class Address {
-        +String city
+    class LineItem {
+        +quantity int
+        +subtotal() Money
     }
-    class TaxService {
-        +calc(Employee) double
+    class Order {
+        +id string
+        +addItem(product, qty)
+        +total() Money
+        +checkout(gateway) Receipt
     }
 
-    Person &lt;|-- Employee : inheritance
-    Payable &lt;|.. Employee : realization
-    Company *-- Department : composition
-    Department o-- Employee : aggregation
-    Employee --&gt; Address : association
-    Employee ..&gt; TaxService : dependency
-
-    Company "1" *-- "1..*" Department
-    Department "1" o-- "0..*" Employee
-    Employee "1" --&gt; "1" Address
+    PaymentGateway &lt;|.. StripeGateway : realization
+    PaymentGateway &lt;|.. PayPalGateway : realization
+    Order --&gt; Customer : association
+    Order *-- LineItem : composition
+    LineItem o-- Product : aggregation
+    Order ..&gt; PaymentGateway : dependency
         </pre>
       </div>
 
-      <h3>तीच नाती Java मध्ये</h3>
-      <pre><code>// Realization: Employee implements the Payable contract (dashed triangle)
-interface Payable {
-    void pay();
+      <h3>तेच मॉडेल तीन भाषांमध्ये</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// PaymentGateway is an interface: StripeGateway REALIZES it.
+interface PaymentGateway {
+  charge(amountCents: number, token: string): Receipt;
 }
 
-// Inheritance / generalization: Employee IS-A Person (solid triangle)
-class Person {
-    protected String name;
-    Person(String name) { this.name = name; }
+interface Receipt { id: string; amountCents: number; status: string; }
+
+class StripeGateway implements PaymentGateway {            // realization
+  charge(amountCents: number, token: string): Receipt {
+    return { id: `ch_${token}`, amountCents, status: "paid" };
+  }
 }
 
-class Address {                       // a value the Employee references
-    final String city;
-    Address(String city) { this.city = city; }
+class Customer {
+  constructor(readonly id: string, readonly email: string) {}
 }
 
-class TaxService {                    // used, but never stored
-    double calc(Employee e) { return 0.0; }
+class Product {
+  constructor(readonly sku: string, readonly priceCents: number) {}
 }
 
-class Employee extends Person implements Payable {
-    private final Address address;    // association: holds a reference, 1..1
-
-    Employee(String name, Address address) {
-        super(name);
-        this.address = address;       // reference passed in, not owned
-    }
-
-    @Override public void pay() { /* ... */ }
-
-    // Dependency: TaxService is a parameter, used and discarded (dashed arrow)
-    double taxes(TaxService service) {
-        return service.calc(this);
-    }
+// LineItem AGGREGATES a Product: the Product exists independently,
+// it is passed in and shared across many orders.
+class LineItem {
+  constructor(readonly product: Product, readonly quantity: number) {}   // aggregation
+  subtotalCents(): number { return this.product.priceCents * this.quantity; }
 }
 
-class Department {
-    private final String name;
-    // Aggregation: employees are passed in and outlive the department (hollow diamond)
-    private final List&lt;Employee&gt; members = new ArrayList&lt;&gt;();
+class Order {
+  // COMPOSITION: the Order builds and owns its own LineItems.
+  private readonly items: LineItem[] = [];
 
-    Department(String name) { this.name = name; }
-    void add(Employee e) { members.add(e); }   // shared, borrowed reference
+  // ASSOCIATION: the Order holds a Customer reference it does not own.
+  constructor(readonly id: string, private readonly customer: Customer) {}
+
+  addItem(product: Product, quantity: number): void {
+    this.items.push(new LineItem(product, quantity));      // owns its parts
+  }
+
+  totalCents(): number {
+    return this.items.reduce((sum, li) => sum + li.subtotalCents(), 0);
+  }
+
+  // DEPENDENCY: the gateway is used only inside this call, never stored.
+  checkout(gateway: PaymentGateway, token: string): Receipt {
+    return gateway.charge(this.totalCents(), token);
+  }
 }
 
-class Company {
-    // Composition: the company CREATES its departments; they die with it (filled diamond)
-    private final List&lt;Department&gt; departments = new ArrayList&lt;&gt;();
+const order = new Order("ord_1001", new Customer("cus_7", "amir@example.com"));
+order.addItem(new Product("SKU-KB-01", 8900), 2);          // create + call method
+order.addItem(new Product("SKU-MS-04", 4500), 1);
+const receipt = order.checkout(new StripeGateway(), "tok_visa");
+console.log(order.totalCents(), receipt.status);           // 22300 paid</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass
+from typing import Protocol
 
-    Company() {
-        departments.add(new Department("Engineering")); // owned, built internally
-        departments.add(new Department("Finance"));
-    }
-}</code></pre>
-      <p class="muted">कोड वाचा आणि नाती आपोआप बाहेर पडतात: <em>extends</em> म्हणजे inheritance, <em>implements</em> म्हणजे realization, पास केलेला साठवलेला field म्हणजे association किंवा aggregation, क्लास आतमध्ये <code>new</code> करतो आणि कधीही बाहेर सोडत नाही असा field म्हणजे composition, आणि एकदाच वापरलेला method पॅरामीटर म्हणजे dependency.</p>
+
+# PaymentGateway is a Protocol (interface): StripeGateway REALIZES it.
+class PaymentGateway(Protocol):
+    def charge(self, amount_cents: int, token: str) -&gt; "Receipt": ...
+
+
+@dataclass
+class Receipt:
+    id: str
+    amount_cents: int
+    status: str
+
+
+class StripeGateway:                                        # realization
+    def charge(self, amount_cents: int, token: str) -&gt; Receipt:
+        return Receipt(id=f"ch_{token}", amount_cents=amount_cents, status="paid")
+
+
+@dataclass
+class Customer:
+    id: str
+    email: str
+
+
+@dataclass
+class Product:
+    sku: str
+    price_cents: int
+
+
+# LineItem AGGREGATES a Product: the Product is passed in and shared.
+@dataclass
+class LineItem:
+    product: Product                                        # aggregation
+    quantity: int
+
+    def subtotal_cents(self) -&gt; int:
+        return self.product.price_cents * self.quantity
+
+
+class Order:
+    # ASSOCIATION: holds a reference to a Customer it does not own.
+    def __init__(self, id: str, customer: Customer) -&gt; None:
+        self.id = id
+        self.customer = customer
+        self._items: list[LineItem] = []                    # composition
+
+    # COMPOSITION: the Order builds and owns its own LineItems.
+    def add_item(self, product: Product, quantity: int) -&gt; None:
+        self._items.append(LineItem(product, quantity))
+
+    def total_cents(self) -&gt; int:
+        return sum(li.subtotal_cents() for li in self._items)
+
+    # DEPENDENCY: the gateway is used only inside this call, never stored.
+    def checkout(self, gateway: PaymentGateway, token: str) -&gt; Receipt:
+        return gateway.charge(self.total_cents(), token)
+
+
+order = Order("ord_1001", Customer("cus_7", "amir@example.com"))
+order.add_item(Product("SKU-KB-01", 8900), 2)               # create + call method
+order.add_item(Product("SKU-MS-04", 4500), 1)
+receipt = order.checkout(StripeGateway(), "tok_visa")
+print(order.total_cents(), receipt.status)                  # 22300 paid</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>Receipt = Struct.new(:id, :amount_cents, :status)
+
+# Ruby has no formal interface; the gateway duck-types the contract.
+# StripeGateway REALIZES the PaymentGateway role by responding to #charge.
+class StripeGateway                                          # realization
+  def charge(amount_cents, token)
+    Receipt.new("ch_#{token}", amount_cents, "paid")
+  end
+end
+
+class Customer
+  attr_reader :id, :email
+  def initialize(id, email)
+    @id = id
+    @email = email
+  end
+end
+
+class Product
+  attr_reader :sku, :price_cents
+  def initialize(sku, price_cents)
+    @sku = sku
+    @price_cents = price_cents
+  end
+end
+
+# LineItem AGGREGATES a Product: the Product is passed in and shared.
+class LineItem
+  attr_reader :product, :quantity
+  def initialize(product, quantity)                          # aggregation
+    @product = product
+    @quantity = quantity
+  end
+
+  def subtotal_cents = product.price_cents * quantity
+end
+
+class Order
+  attr_reader :id, :customer
+
+  # ASSOCIATION: holds a reference to a Customer it does not own.
+  def initialize(id, customer)
+    @id = id
+    @customer = customer
+    @items = []                                              # composition
+  end
+
+  # COMPOSITION: the Order builds and owns its own LineItems.
+  def add_item(product, quantity)
+    @items &lt;&lt; LineItem.new(product, quantity)
+  end
+
+  def total_cents = @items.sum(&amp;:subtotal_cents)
+
+  # DEPENDENCY: the gateway is used only inside this call, never stored.
+  def checkout(gateway, token)
+    gateway.charge(total_cents, token)
+  end
+end
+
+order = Order.new("ord_1001", Customer.new("cus_7", "amir@example.com"))
+order.add_item(Product.new("SKU-KB-01", 8900), 2)           # create + call method
+order.add_item(Product.new("SKU-MS-04", 4500), 1)
+receipt = order.checkout(StripeGateway.new, "tok_visa")
+puts "#{order.total_cents} #{receipt.status}"               # 22300 paid</code></pre>
+      </div>
+      <p class="muted">कोड बाणांशी तुलना करून वाचा: <code>implements</code> (किंवा Ruby मधील duck-typed <code>charge</code>) म्हणजे realization, साठवलेला <code>customer</code> field म्हणजे association, <code>Order</code> आतील <code>new LineItem(...)</code> म्हणजे composition, दिलेला <code>product</code> म्हणजे aggregation, आणि <code>checkout</code> वरील <code>gateway</code> parameter म्हणजे dependency. तेच सहा links तिन्ही भाषांमध्ये एकसारखे दिसतात.</p>
     </div>
   </section>
 
   <!-- DIAGRAMS -->
   <section id="diagrams">
     <div class="wrap">
-      <div class="eyebrow">04 - Sequence आकृत्या</div>
-      <h2>गतीमधली नाती</h2>
-      <p class="muted">क्लास डायग्राम स्थिर संरचना दाखवतात; हे sequence दाखवतात की runtime मध्ये जीवनचक्र कसे वेगळे असते, आणि नोटेशन तुम्हाला नेमके त्याबद्दलच सावध करण्याचा प्रयत्न करत असते.</p>
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>ऑब्जेक्ट्स प्रत्यक्षात कसे संवाद साधतात</h2>
+      <p class="muted">त्याच checkout चे तीन दृश्ये: order बनवणे (composition आणि aggregation कृतीत), gateway मार्फत charge करणे (dependency आणि realization), आणि नाकारलेल्या payment चा मार्ग.</p>
 
       <div class="diagram">
-        <div class="cap">आकृती 1 - Composition: संपूर्ण त्याचे भाग तयार करते आणि नष्ट करते</div>
+        <div class="cap">आकृती 1 - एक order बनवणे: composition भाग तयार करते, aggregation एका सामायिक Product चा पुनर्वापर करते</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant Client as 👤 Client
-    participant Company as 🏢 Company
-    participant Dept as 🗂️ Department
+    participant Client as 🛒 Checkout UI
+    participant Order as 📦 Order
+    participant Catalog as 🗂️ Product catalog
+    participant Item as 🧾 LineItem
 
-    Client->>Company: new Company()
-    Company->>Dept: new Department("Engineering")
-    Company->>Dept: new Department("Finance")
-    Note over Company,Dept: Parts are created inside the whole
-    Client->>Company: close()
-    Company->>Dept: dispose()
-    Note over Company,Dept: Parts die with the whole (filled diamond)
+    Client->>Catalog: lookup(sku)
+    Catalog-->>Client: Product (shared, independent lifetime)
+    Client->>Order: addItem(product, qty)
+    Note over Order,Item: Composition - Order creates and owns the LineItem
+    Order->>Item: new LineItem(product, qty)
+    Note over Item,Catalog: Aggregation - LineItem references the shared Product
+    Item-->>Order: line item stored
+    Order-->>Client: item added
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">आकृती 2 - Aggregation विरुद्ध dependency: उसने घेणे विरुद्ध पास करून जाणे</div>
+        <div class="cap">आकृती 2 - Checkout: StripeGateway ने realize केलेल्या PaymentGateway वर dependency</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant Client as 👤 Client
-    participant Emp as 👷 Employee
-    participant Dept as 🗂️ Department
-    participant Tax as 🧮 TaxService
+    participant Client as 🛒 Checkout UI
+    participant Order as 📦 Order
+    participant Gateway as 💳 StripeGateway
+    participant Bank as 🏦 Card network
 
-    Client->>Emp: new Employee(addr)
-    Client->>Dept: add(employee)
-    Note over Dept,Emp: Aggregation - Dept borrows a shared Employee
-    Client->>Emp: taxes(taxService)
-    Emp->>Tax: calc(this)
-    Tax-->>Emp: amount
-    Note over Emp,Tax: Dependency - TaxService used then discarded
+    Client->>Order: checkout(gateway, token)
+    Note over Order,Gateway: Dependency - gateway is a parameter, not a field
+    Order->>Order: total() over composed LineItems
+    Order->>Gateway: charge(totalCents, token)
+    Note over Gateway: Realizes the PaymentGateway interface
+    Gateway->>Bank: authorize(amount, token)
+    Bank-->>Gateway: approved
+    Gateway-->>Order: Receipt(status = paid)
+    Order-->>Client: Receipt + order confirmed
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">आकृती 3 - Inheritance आणि realization: polymorphic dispatch</div>
+        <div class="cap">आकृती 3 - नाकारलेला मार्ग: तीच dependency, वेगळा realization निकाल</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant Client as 👤 Client
-    participant Payable as 📜 Payable
-    participant Emp as 👷 Employee
-    participant Person as 🧍 Person
+    participant Client as 🛒 Checkout UI
+    participant Order as 📦 Order
+    participant Gateway as 💳 PaymentGateway
+    participant Bank as 🏦 Card network
 
-    Client->>Payable: pay()
-    Note over Client,Payable: Client depends on the interface, not the class
-    Payable->>Emp: dispatch pay() (realization)
-    Emp->>Person: super reference (inheritance)
-    Person-->>Emp: inherited state
-    Emp-->>Client: paid
+    Client->>Order: checkout(gateway, token)
+    Order->>Gateway: charge(totalCents, token)
+    Gateway->>Bank: authorize(amount, token)
+    alt insufficient funds
+        Bank-->>Gateway: declined
+        Gateway-->>Order: Receipt(status = declined)
+        Order-->>Client: show retry with another method
+    else approved
+        Bank-->>Gateway: approved
+        Gateway-->>Order: Receipt(status = paid)
+        Order-->>Client: order confirmed
+    end
         </pre>
       </div>
     </div>
@@ -307,20 +457,20 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
       <h2>0 → 100 प्रवाह</h2>
-      <p class="muted">दोन असंबद्ध क्लासपासून एका योग्यरित्या भाष्य केलेल्या, multiplicity-लेबल केलेल्या आकृतीपर्यंत जी कोडशी स्वच्छपणे जुळते.</p>
+      <p class="muted">आवश्यकतांपासून एका बरोबर class diagram पर्यंत - प्रत्येक क्लास जोडीसाठी, सहापैकी कोणता संबंध खरोखर लागू होतो हे ठरवणे.</p>
 
       <div class="steps">
-        <div class="step"><div class="num">00</div><div class="body"><span class="tag">मॉडेल</span><h4>क्लासची यादी करा</h4><p>तुमच्या डोमेनमधील नामे candidate क्लास म्हणून लिहून घ्या. अजून कोणतीही रेषा काढू नका; फक्त कॅनव्हासवर बॉक्स मिळवा.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">"is-a" विचारा</span><h4>Inheritance शोधा</h4><p>प्रत्येक जोडीसाठी विचारा की एक दुसऱ्याचा विशेष प्रकार आहे का. जर होय आणि प्रतिस्थापन सर्वत्र टिकत असेल, तर पालकाकडे पोकळ त्रिकोणासह ठोस रेषा काढा.</p></div></div>
-        <div class="step"><div class="num">20</div><div class="body"><span class="tag">"acts-as" विचारा</span><h4>Realization शोधा</h4><p>एखादा क्लास subtype न बनता एखादा कॉन्ट्रॅक्ट, एखादे interface पूर्ण करण्याचे वचन देतो का? interface कडे पोकळ त्रिकोणासह तुटक रेषा काढा.</p></div></div>
-        <div class="step"><div class="num">30</div><div class="body"><span class="tag">"has-a" विचारा</span><h4>संरचनात्मक जोड शोधा</h4><p>जिथे एक क्लास दुसरा एक field म्हणून धरतो, तिथे तुमच्याकडे association, aggregation किंवा composition आहे. पुढील टप्पे त्यांना वेगळे करतात.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">मालकी</span><h4>जीवनचक्र तपासा</h4><p>जर संपूर्ण भाग तयार करते आणि भाग त्याच्या पलीकडे टिकू शकत नाही, तर ते composition आहे (भरलेला हिरा). जर भाग आत पास केला जातो आणि स्वतंत्रपणे टिकतो, तर ते aggregation आहे (पोकळ हिरा).</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">संदर्भ</span><h4>Association ला default ठेवा</h4><p>जर एखादा क्लास फक्त एक संदर्भ ठेवतो आणि भाग-संपूर्णाच्या तीव्र मालकीचा दावा नसतो, तर उघड्या बाणासह साधी ठोस रेषा (association) हा प्रामाणिक पर्याय आहे.</p></div></div>
-        <div class="step"><div class="num">60</div><div class="body"><span class="tag">वापर</span><h4>Dependency ओळखा</h4><p>जिथे एखादा क्लास दुसऱ्याला फक्त method पॅरामीटर, रिटर्न टाइप किंवा लोकल व्हेरिएबल म्हणून स्पर्श करतो, तिथे उघड्या बाणासह तुटक रेषा काढा. काहीही साठवले जात नाही.</p></div></div>
-        <div class="step"><div class="num">70</div><div class="body"><span class="tag">दिशा</span><h4>Navigability जोडा</h4><p>बाणांची टोके दाखवतात की कोण कोणापर्यंत पोहोचू शकतो. जर Employee ला त्याचा Address माहीत असेल पण Address कधीही Employee चा संदर्भ देत नसेल, तर बाण फक्त एकाच दिशेने दाखवा.</p></div></div>
-        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Multiplicity</span><h4>टोके लेबल करा</h4><p>प्रत्येक टोकावर संख्या भाष्य करा: 1, 0..1, 1..*, किंवा 0..*. एका Company कडे 1..* Department असतात; एका Department कडे 0..* Employee असतात.</p></div></div>
-        <div class="step"><div class="num">90</div><div class="body"><span class="tag">पडताळणी</span><h4>कोडशी क्रॉस-चेक करा</h4><p>प्रत्येक रेषा एका constructor, field किंवा method पर्यंत मागे चालत जा. जर कोड बाणाशी जुळत नसेल, तर त्यांच्यापैकी एक खोटे बोलत आहे; विसंगती दुरुस्त करा.</p></div></div>
-        <div class="step"><div class="num">100</div><div class="body"><span class="tag">संवाद</span><h4>मॉडेल सामायिक करा</h4><p>आता तुमच्याकडे अशी आकृती आहे जी कोणीही एकाच पद्धतीने वाचू शकते: मालकी, दिशा आणि cardinality सर्व स्पष्ट आहेत आणि नोटेशनद्वारे लागू केलेले आहेत.</p></div></div>
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">ओळखा</span><h4>क्लासेसची यादी करा</h4><p>Domain मधून नामे काढा: <code>Order</code>, <code>LineItem</code>, <code>Customer</code>, <code>Product</code>, <code>PaymentGateway</code>. हे आकृतीवरील पेट्या बनतात.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">जोडा</span><h4>References शोधा</h4><p>प्रत्येक क्लाससाठी विचारा की ती इतर कोणत्या क्लासेस धरते. एक <code>Order</code> एक <code>Customer</code> आणि <code>LineItem</code> ऑब्जेक्ट्सची यादी धरते. धरलेला प्रत्येक reference किमान एक association असतो.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Ownership</span><h4>Lifetime कोण नियंत्रित करते ते विचारा</h4><p>संपूर्ण नष्ट केल्याने भाग नष्ट होतो का? एक <code>Order</code> नष्ट करा आणि त्याचे <code>LineItem</code> ऑब्जेक्ट्स नाहीसे झाले पाहिजेत. ते composition आहे, भरलेल्या हिऱ्याने काढलेले.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">सामायिकता</span><h4>सामायिक भाग शोधा</h4><p>एक <code>Product</code> catalog मध्ये राहतो आणि अनेक line items त्याचा संदर्भ देतात. तो कोणत्याही एका order पेक्षा जास्त जगतो, म्हणून <code>LineItem</code> ते <code>Product</code> म्हणजे aggregation, एक पोकळ हिरा.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">साधी जोडणी</span><h4>साध्या associations चिन्हांकित करा</h4><p><code>Order</code> ते <code>Customer</code> ही जोडणी ना मालकीची आहे ना whole-part; दोन्ही स्वतःच्या जोरावर अस्तित्वात आहेत. ती एक साधी association आहे, एक ठोस रेषा.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">क्षणिक</span><h4>वापर आणि धरून ठेवणे वेगळे करा</h4><p><code>PaymentGateway</code> फक्त <code>checkout()</code> आत वापरले जाते आणि कधीच साठवले जात नाही. ते एक dependency आहे, एक तुटक बाण, association नाही.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">अमूर्त</span><h4>Interfaces आणा</h4><p><code>PaymentGateway</code> ला interface म्हणून परिभाषित करा जेणेकरून अनेक providers जोडता येतील. ते interface stereotype असलेल्या एका क्लास म्हणून काढा.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Realize</span><h4>अंमलबजावण्या जोडा</h4><p><code>StripeGateway</code> आणि <code>PayPalGateway</code> कराराची अंमलबजावणी करतात. Realization काढा: interface कडे पोकळ त्रिकोण असलेली एक तुटक रेषा.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Generalize</span><h4>सामायिक subtypes वेगळे करा</h4><p>अनेक क्लासेस fields आणि वर्तन सामायिक करत असतील, तर एक superclass काढा आणि generalization ने जोडा: पालकाकडे पोकळ त्रिकोण असलेली एक ठोस रेषा.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Multiplicity</span><h4>टोकांना नोंदी लावा</h4><p>Multiplicities जोडा: <code>Order</code> "1" ते <code>LineItem</code> "1..*", <code>Customer</code> "1" ते <code>Order</code> "0..*". या मर्यादा अवैध states लवकर पकडतात.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">पडताळा</span><h4>आकृती परत कोड म्हणून वाचा</h4><p>प्रत्येक बाणावरून चाला आणि constructor, field, किंवा parameter जुळतो याची खात्री करा. आकृती जिला dependency म्हणते ती जर कोड साठवत असेल, तर दोघांपैकी एक दुरुस्त करा जेणेकरून ते जुळतील.</p></div></div>
       </div>
     </div>
   </section>
@@ -330,40 +480,40 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">सामान्य अडचणी</div>
       <h2>अडचणी आणि anti-patterns</h2>
-      <p class="muted">बहुतेक UML चुका एखाद्या नात्याला अवाजवी दाखवण्यातून येतात. शंका असेल तेव्हा कमजोर पर्याय निवडा.</p>
+      <p class="muted">बहुतेक संबंध चुका "बद्दल माहीत आहे" आणि "मालकी आहे" यांच्यात गोंधळ केल्याने किंवा एक जोडणी पुरेशी असताना inheritance कडे वळल्याने होतात.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>💠 Aggregation असताना composition</h4><p>पास केलेल्या आणि सामायिक भागांसाठी भरलेला हिरा काढल्याने असे सूचित होते की संपूर्ण त्यांच्या जीवनचक्राची मालकी ठेवते. मग वाचक असा cleanup कोड लिहितात जो इतर क्लास अजूनही वापरत असलेले ऑब्जेक्ट नष्ट करतो.</p></div>
-        <div class="card"><h4>🧬 कोड पुनर्वापरासाठी inheritance</h4><p>खरे is-a नाते नसताना फक्त एखाद्या क्लासच्या method उसन्या घेण्यासाठी त्याला extend केल्याने ठिसूळ hierarchy तयार होतात. composition ला प्राधान्य द्या; खऱ्या substitutability साठीच inheritance राखून ठेवा.</p></div>
-        <div class="card"><h4>🔢 गहाळ multiplicity</h4><p>टोके लेबल न ठेवल्याने अवैध स्थिती लपते. "1..*" शिवाय एखाद्या Order ला शून्य line item असण्यापासून काहीही थांबवत नाही, आणि ती संदिग्धता थेट बग्गी कोडमध्ये गळते.</p></div>
-        <div class="card"><h4>↔️ Default नुसार bidirectional</h4><p>जेव्हा navigation खरे तर एकाच दिशेचे असते तेव्हा दोन्ही टोकांवर बाण टोके जोडल्याने, किंवा एकही न जोडल्याने, coupling फुगते आणि updates गुंतागुंतीचे होतात. navigability फक्त जिथे अस्तित्वात आहे तिथेच काढा.</p></div>
-        <div class="card"><h4>🔗 Dependency म्हणून वेष घेतलेले association</h4><p>एखादा ऑब्जेक्ट field मध्ये साठवून पण तुटका use-बाण काढल्याने coupling कमी दाखवले जाते. जर तो एक member असेल, तर तो किमान एक association आहे, क्षणिक dependency नाही.</p></div>
-        <div class="card"><h4>🎭 Inheritance म्हणून काढलेले realization</h4><p>interface अंमलबजावणीसाठी ठोस त्रिकोण वापरल्याने "एक प्रकार आहे" आणि "एक कॉन्ट्रॅक्ट पूर्ण करतो" यातील भेद हरवतो, आणि विस्तारांचे नियोजन करणाऱ्या कोणालाही दिशाभूल करतो.</p></div>
+        <div class="card"><h4>💠 Composition विरुद्ध aggregation गोंधळ</h4><p>एका सामायिक <code>Product</code> ला <code>LineItem</code> मध्ये composed म्हणून चिन्हांकित केल्याने order नष्ट केल्यावर catalog नोंद नष्ट होते असे सूचित होते. भाग संपूर्णापेक्षा जास्त जगू शकतो का हे विचारून हिरा निवडा.</p></div>
+        <div class="card"><h4>🪢 Dependency योग्य असताना association</h4><p>एकदाच कॉल करण्यासाठी <code>PaymentGateway</code> ला field म्हणून साठवल्याने coupling घट्ट होते आणि tests गुंतागुंतीचे होतात. जर ते एका method मध्ये वापरले जात असेल, तर ते parameter म्हणून द्या आणि एक तुटक dependency काढा.</p></div>
+        <div class="card"><h4>🧬 कोड पुनर्वापरासाठी inheritance</h4><p>एक discount method पुनर्वापर करण्यासाठी <code>Order</code> ला subclass केल्याने एक खोटे "is a" संबंध निर्माण होते. फक्त वर्तन सामायिक करायचे असेल तेव्हा generalization पेक्षा एका collaborator (composition) ला प्राधान्य द्या.</p></div>
+        <div class="card"><h4>➡️ गहाळ किंवा चुकीची दिशा</h4><p>बाणविरहित किंवा उलट associations कोण कोणावर अवलंबून आहे हे लपवतात. दिशा navigability एन्कोड करते; फक्त order reference धरत असताना <code>Customer</code> ला <code>Order</code> कडे निर्देश करत काढणे साफ चुकीचे आहे.</p></div>
+        <div class="card"><h4>🔢 Multiplicity नसणे</h4><p>टोके नोंदविरहित ठेवल्याने order ला एक line item आहे की अनेक, किंवा customer पर्यायी आहे का हे लपते. गहाळ मर्यादा अवैध object graphs review मधून निसटू देतात.</p></div>
+        <div class="card"><h4>🔁 सरसकट bidirectional</h4><p>प्रत्येक association दुतर्फा केल्याने reference cycles तयार होतात जे memory गळती करतात आणि serialization गुंतागुंतीचे करतात. दोन्ही बाजूंना खरोखर navigate करण्याची गरज असल्याखेरीज links एकतर्फी ठेवा.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- METRICS -->
-  <section id="metrics">
+  <!-- SIGNALS -->
+  <section id="signals">
     <div class="wrap">
-      <div class="eyebrow">तडजोडी</div>
-      <h2>तडजोडी आणि कधी वापरायचे</h2>
-      <p class="muted">ही नाती सैलपासून घट्टापर्यंतचा एक पट्टा तयार करतात. तुमच्या डिझाइनचे सत्य अजूनही व्यक्त करणारा सर्वात सैल पर्याय निवडा.</p>
+      <div class="eyebrow">संकेत आणि मापदंड</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">कोड आणि object graph प्रत्यक्षात कसे वागतात याच्या विरुद्ध तुम्ही संबंध निवडींची तपासणी करू शकता.</p>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>पैलू</th><th>तपशील</th></tr>
+            <tr><th>संकेत</th><th>ते तुम्हाला काय सांगते</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>फायदे</strong></td><td>एक सामायिक, स्पष्ट शब्दसंग्रह; मालकी आणि जीवनचक्र स्पष्ट होतात; multiplicity अवैध स्थिती पकडते; आकृत्या थेट कोडशी जुळतात.</td></tr>
-            <tr><td><strong>तोटे</strong></td><td>अति-निर्दिष्ट करणे सोपे; aggregation विरुद्ध association सारखे भेद अनौपचारिक आणि वादग्रस्त आहेत; देखभाल न केल्यास आकृत्या कोडपासून दूर सरकतात.</td></tr>
-            <tr><td><strong>कधी वापरायचे</strong></td><td>एखादे डोमेन मॉडेल डिझाइन किंवा दस्तऐवजीकरण करताना, इंजिनिअरना onboard करताना, coupling चा आढावा घेताना, किंवा जीवनचक्र-संवेदनशील कोड लिहिण्यापूर्वी मालकीवर सहमत होताना.</td></tr>
-            <tr><td><strong>कधी टाळायचे</strong></td><td>जेव्हा एक झटपट रेखाचित्र पुरेसे असते, किंवा एका फेकून देण्याजोग्या prototype साठी अतिरिक्त औपचारिकता (अचूक हिरे आणि multiplicity) मूल्यापेक्षा जास्त असते.</td></tr>
-            <tr><td><strong>गुंतागुंत</strong></td><td>काढायला सोपे, पण सिमॅंटिक्स सूक्ष्म आहेत. कठीण भाग म्हणजे निर्णय: composition विरुद्ध aggregation आणि inheritance विरुद्ध realization.</td></tr>
-            <tr><td><strong>संबंधित</strong></td><td>Composition-over-inheritance, coupling आणि cohesion, SOLID तत्त्वे, आणि Composite सारखे संरचनात्मक pattern जे या जोडांवर अवलंबून असतात.</td></tr>
+            <tr><td><strong>Cascade-delete वर्तन</strong></td><td>संपूर्ण काढल्याने भाग काढला गेला पाहिजे, तर जोडणी composition आहे. भाग टिकला, तर ते aggregation किंवा association आहे.</td></tr>
+            <tr><td><strong>Field चे constructor मूळ</strong></td><td>मालकाच्या आत <code>new</code> ने तयार केलेले भाग composition सुचवतात; constructor मध्ये दिलेले references aggregation किंवा association सुचवतात.</td></tr>
+            <tr><td><strong>Field विरुद्ध parameter</strong></td><td>Field म्हणून ठेवलेला collaborator म्हणजे association; फक्त method signature मध्ये दिसणारा म्हणजे dependency.</td></tr>
+            <tr><td><strong>Afferent / efferent coupling</strong></td><td>प्रति क्लास येणाऱ्या आणि जाणाऱ्या dependencies मोजल्याने खूप बाण असलेल्या पेट्या दिसतात, refactor करण्यायोग्य एक design smell.</td></tr>
+            <tr><td><strong>Interface fan-in</strong></td><td>अनेक क्लासेस एका interface चे realization करणे म्हणजे निरोगी abstraction; शून्य realizations म्हणजे interface फक्त future-proofing म्हणून उपयोगी आहे.</td></tr>
+            <tr><td><strong>Inheritance खोली</strong></td><td>खोल generalization साखळ्या (तीन पातळ्यांपेक्षा जास्त) सहसा गैरवापरलेले inheritance सूचित करतात जे composition अधिक स्वच्छपणे मॉडेल करेल.</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>ठोकताळा:</strong> अजूनही अचूक असणाऱ्या सर्वात कमजोर नात्याला प्राधान्य द्या. association पेक्षा dependency, aggregation पेक्षा association, composition पेक्षा aggregation, आणि inheritance पेक्षा composition. तीव्रता ही किंमत आहे, वैशिष्ट्य नाही, म्हणून तिची किंमत डिझाइनला खरोखर गरज असेल तेव्हाच मोजा.</div>
+      <div class="callout"><strong>अंगठ्याचा नियम:</strong> "भाग संपूर्णासोबत नष्ट होतो का?" आणि "तो साठवला आहे की फक्त वापरला आहे?" या प्रश्नांची उत्तरे देता येत नसतील, तर तुम्ही अजून योग्य बाण निवडू शकत नाही. आधी त्या दोन प्रश्नांची उत्तरे द्या, मग काढा.</div>
     </div>
   </section>
 
@@ -372,39 +522,39 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">06 - केस स्टडीज</div>
       <h2>वास्तविक जगातील केस स्टडीज</h2>
-      <p class="muted">तीन परिचित सिस्टीम, प्रत्येक एक नाते बरोबर मिळवण्यावर अवलंबून.</p>
+      <p class="muted">Production software systems मध्ये संबंध निवडी कशा उतरतात.</p>
 
       <div class="case">
-        <div class="hd"><span class="badge">🛒</span><div><h3>1 · ई-कॉमर्स order आणि line item</h3><div class="role">Pattern: कडक multiplicity सह composition</div></div></div>
-        <p class="muted">एक order अशा line item एकत्र करते ज्यांना स्वतंत्रपणे काही अर्थ नाही. order हटवली की तिचे item हटलेच पाहिजेत.</p>
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · मोठ्या प्रमाणावर ecommerce checkout</h3><div class="role">Pattern: order lines साठी composition, payment साठी dependency</div></div></div>
+        <p class="muted">एक commerce platform अशा orders चे मॉडेल बनवते जे एकदा दिल्यावर अपरिवर्तनीय snapshots असले पाहिजेत, तर product catalog बदलत राहते.</p>
         <ul>
-          <li>Order भरलेल्या हिऱ्यासह OrderLine ला compose करते; order प्रत्येक line तयार करते आणि तिची मालकी ठेवते.</li>
-          <li>Multiplicity "1 ते 1..*" हे लागू करते की एका order ला नेहमी किमान एक line item असते.</li>
-          <li>Product ला association ने संदर्भित केले जाते, मालकी नाही, कारण product कोणत्याही order पासून स्वतंत्रपणे अस्तित्वात असतात.</li>
+          <li><code>Order</code> त्याचे <code>LineItem</code> ऑब्जेक्ट्स compose करते आणि किमतीचा snapshot घेते, त्यामुळे नंतरचा catalog बदल कधीही जुनी order पुन्हा लिहीत नाही.</li>
+          <li><code>LineItem</code> सामायिक <code>Product</code> ला फक्त reference आणि SKU ने aggregate करते, catalog ला single source of truth ठेवते.</li>
+          <li><code>PaymentGateway</code> ही <code>checkout()</code> मध्ये inject केलेली dependency आहे, त्यामुळे तोच order flow production मध्ये Stripe विरुद्ध आणि tests मध्ये fake विरुद्ध चालतो.</li>
         </ul>
-        <div class="outcome">✅ <strong>परिणाम:</strong> Cascading deletes आणि invariants मॉडेलमधून आपोआप बाहेर पडतात, म्हणून कोणतेही अनाथ line item किंवा रिकाम्या order डेटाबेसमध्ये शिरत नाहीत.</div>
+        <div class="outcome">✅ <strong>निकाल:</strong> ऐतिहासिक orders बरोबर आणि auditable राहतात, आणि payment providers बदलणे order मॉडेलऐवजी एका interface ला स्पर्श करते.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">🎓</span><div><h3>2 · विद्यापीठ नोंदणी</h3><div class="role">Pattern: सामायिक भागांसह aggregation</div></div></div>
-        <p class="muted">एक course विद्यार्थ्यांना गटबद्ध करतो, पण विद्यार्थी course च्या आधी आणि नंतर अस्तित्वात असतात आणि एकाच वेळी अनेक course चे असतात.</p>
+        <div class="hd"><span class="badge">🏦</span><div><h3>2 · Banking ledger आणि accounts</h3><div class="role">Pattern: entries साठी composition, posting rules साठी realization</div></div></div>
+        <p class="muted">एक core banking system व्यवहार ledger entries म्हणून नोंदवते जे त्यांच्या पालक व्यवहाराशिवाय कधीही अस्तित्वात नसले पाहिजेत.</p>
         <ul>
-          <li>Course पोकळ हिऱ्यासह Student ला aggregate करतो; विद्यार्थी आत पास केले जातात, course कधीही तयार करत नाही.</li>
-          <li>Multiplicity "0..* ते 0..*" अनेक-ते-अनेक नोंदणी नाते पकडते.</li>
-          <li>एखादा course सोडल्याने प्रत्येक विद्यार्थी अखंड राहतो, नेमके जे aggregation नोटेशन वचन देते.</li>
+          <li>एक <code>Transaction</code> त्याच्या <code>LedgerEntry</code> ओळी compose करते; व्यवहार नष्ट करणे किंवा उलटवणे मुद्दामच entries पर्यंत cascade होते.</li>
+          <li>प्रत्येक <code>Account</code> एका <code>AccountHolder</code> शी associated आहे जो अनेक accounts मध्ये स्वतंत्रपणे अस्तित्वात असतो.</li>
+          <li>वेगवेगळी products एका सामायिक <code>PostingPolicy</code> interface चे realization करतात, त्यामुळे savings, checking, आणि loan accounts एकच posting सांधा सामायिक करतात.</li>
         </ul>
-        <div class="outcome">✅ <strong>परिणाम:</strong> जीवनचक्र बग नाहीसे होतात; एखादा course संपल्याने कधीही एखादी व्यक्ती हटत नाही, कारण आकृतीने सामायिक मालकी स्पष्ट केली.</div>
+        <div class="outcome">✅ <strong>निकाल:</strong> Double-entry invariants structurally लागू होतात, आणि नवे account प्रकार ledger core न बदलता posting मध्ये जोडले जातात.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">💳</span><div><h3>3 · Payment gateway abstraction</h3><div class="role">Pattern: pluggable provider साठी realization</div></div></div>
-        <p class="muted">एका checkout सेवेला स्वतःचा कोड न बदलता Stripe, PayPal आणि इतरांना समर्थन द्यावे लागते.</p>
+        <div class="hd"><span class="badge">🚚</span><div><h3>3 · Shipping आणि fulfillment</h3><div class="role">Pattern: carriers साठी aggregation, shipment प्रकारांसाठी generalization</div></div></div>
+        <p class="muted">एक logistics service warehouse packages पासून shipments जमवते आणि त्यांना बाह्य carriers मार्फत मार्ग देते.</p>
         <ul>
-          <li>प्रत्येक provider तुटक्या त्रिकोणासह एका PaymentGateway interface चे realize करतो.</li>
-          <li>Checkout interface वर अवलंबून असते, एक dependency, म्हणून कोणताही provider परस्पर बदलण्याजोगा बसतो.</li>
-          <li>नवीन provider जोडणे म्हणजे आणखी एक realization, checkout क्लासमध्ये शून्य edit सह.</li>
+          <li>एक <code>Shipment</code> त्याचे <code>Package</code> घटक compose करते पण एका <code>Carrier</code> ला aggregate करते जो एकाच वेळी हजारो shipments ना सेवा देतो.</li>
+          <li><code>ExpressShipment</code> आणि <code>FreightShipment</code> एका base <code>Shipment</code> ला generalize करतात, tracking सामायिक करत असताना rate calculation override करतात.</li>
+          <li>एक <code>RateProvider</code> dependency <code>quote()</code> मध्ये दिली जाते, त्यामुळे carrier pricing APIs एका एकल, mockable सांध्यामागे राहतात.</li>
         </ul>
-        <div class="outcome">✅ <strong>परिणाम:</strong> मुख्य logic ला स्पर्श न करता नवीन payment पद्धती shipped होतात, कारण realization अधिक dependency ने कॉन्ट्रॅक्टला अंमलबजावणीपासून वेगळे केले.</div>
+        <div class="outcome">✅ <strong>निकाल:</strong> एक carrier किंवा shipment प्रकार जोडणे हा एक local बदल आहे, आणि object graph खऱ्या ownership चे प्रतिबिंब असल्याने cleanup आणि reporting सोपे राहते.</div>
       </div>
     </div>
   </section>
@@ -414,16 +564,16 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">07 - प्रासंगिकता</div>
       <h2>आधुनिक प्रासंगिकता</h2>
-      <p class="muted">एक जड प्रक्रिया म्हणून UML फिकट झाले, पण झटपट रेखाचित्रे आणि generated आकृत्यांच्या जगात त्याचा नाते-शब्दसंग्रह पूर्वीपेक्षा अधिक उपयुक्त आहे.</p>
+      <p class="muted">क्लास संबंध आजच्या stacks च्या आधीचे आहेत, तरीही तेच फरक आधुनिक systems कशी मॉडेल आणि generate केली जातात हे चालवतात.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>📝 कोड म्हणून आकृत्या</h4><p>Mermaid, PlantUML आणि D2 तुम्हाला source सोबत क्लास डायग्राम version करू देतात. सहा नाती first-class syntax आहेत, म्हणून नोटेशन आता तुमच्या repo मध्ये राहते.</p></div>
-        <div class="card"><h4>🤖 AI-generated मॉडेल</h4><p>LLM काही सेकंदात वर्णनावरून क्लास डायग्राम रेखाटतात. सिमॅंटिक्स माहीत असल्याने एखादे साधन जिथे aggregation हवे तिथे composition काढते तेव्हा तुम्ही ते पकडू शकता.</p></div>
-        <div class="card"><h4>🧩 Domain-driven design</h4><p>Aggregate, entity आणि value object थेट composition आणि association वर उतरतात. ही नाती तुम्ही bounded context कसे काढता याचा पाया आहेत.</p></div>
-        <div class="card"><h4>🔍 कोड review शॉर्टहँड</h4><p>"ते composition नाही, aggregation असायला हवे" असे म्हणणे हा review मध्ये जीवनचक्र बग निदर्शनास आणण्याचा एक अचूक, वेगवान मार्ग आहे, कोणत्याही आकृतीशिवाय.</p></div>
-        <div class="card"><h4>🏗️ आर्किटेक्चर whiteboarding</h4><p>मुलाखत आणि डिझाइन सत्रे अजूनही बॉक्स आणि बाणांवर चालतात. योग्य नोटेशन seniority दर्शवते आणि महागड्या मालकी गैरसमजांना प्रतिबंध करते.</p></div>
-        <div class="card"><h4>🔗 pattern साठी पाया</h4><p>प्रत्येक design pattern या नात्यांमध्ये वर्णन केला जातो. Composite, Strategy आणि Observer हे फक्त composition, realization आणि dependency ची विशिष्ट मांडणी आहेत.</p></div>
+        <div class="card"><h4>🗄️ ORM mappings</h4><p>Composition विरुद्ध aggregation थेट Prisma, Hibernate, आणि ActiveRecord सारख्या ORMs मधील cascade नियम आणि ownership शी जुळते. आकृती तुमचे <code>onDelete</code> वर्तन ठरवते.</p></div>
+        <div class="card"><h4>🧩 Domain-driven design</h4><p>DDD मधील aggregates म्हणजे UML composition स्पष्ट केलेले: एक root त्याच्या भागांची मालकी धरते आणि त्यांचे invariants राखते, आणि बाहेरचा कोड फक्त root धरतो.</p></div>
+        <div class="card"><h4>💉 Dependency injection</h4><p>साठवलेल्या association पेक्षा dependency ला प्राधान्य देणे हेच DI containers चे संपूर्ण गृहीतक आहे. Interfaces विरुद्ध realization हेच त्यांना अंमलबजावण्या बदलू देते.</p></div>
+        <div class="card"><h4>🤖 कोड म्हणून आकृत्या</h4><p>Mermaid आणि PlantUML सारखी tools हे नेमके बाण version control मध्ये ठेवतात, त्यामुळे संबंध कोडशेजारी राहतात आणि review मध्ये राहतात.</p></div>
+        <div class="card"><h4>🔗 API आणि event schemas</h4><p>GraphQL types, protobuf messages, आणि event payloads तेच has-a आणि is-a निवडी एन्कोड करतात; ownership बरोबर मिळवल्याने गळकी, cyclic schemas टळतात.</p></div>
+        <div class="card"><h4>🧠 AI-सहाय्यित मॉडेलिंग</h4><p>जेव्हा एक model आवश्यकतांपासून class diagram generate करते, तेव्हा जो कठीण भाग ते अजूनही चुकते तो नेमका हाच आहे: composition विरुद्ध aggregation, आणि dependency विरुद्ध association.</p></div>
       </div>
-      <div class="callout"><strong>निष्कर्ष:</strong> तुम्ही कदाचित पुन्हा कधीही संपूर्ण UML spec काढणार नाही, पण तुम्ही ही सहा नाती सतत वाचाल आणि त्यावर तर्क कराल. हिरे, त्रिकोण आणि multiplicity यात प्रभुत्व मिळवा आणि तुम्ही कोणतेही ऑब्जेक्ट मॉडेल अचूकपणे वर्णन करू शकता, एका आकृतीत किंवा एका वाक्यात.</div>
+      <div class="callout"><strong>सारांश:</strong> सहा संबंध म्हणजे ownership, lifetime, आणि coupling साठी एक संक्षिप्त शब्दसंग्रह. त्यांच्यावर प्रभुत्व मिळवा आणि तुम्ही स्पर्श करता ती प्रत्येक class diagram, ORM mapping, आणि dependency graph समजण्यास सोपी आणि बदलण्यास सुरक्षित बनते.</div>
     </div>
   </section>
 
@@ -432,12 +582,12 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">शोध सुरू ठेवा</div>
       <h2>संबंधित विषय</h2>
-      <p class="muted">क्लास नात्यांची भक्कम पकड असल्यास हे नैसर्गिकरित्या जोडीला येतात.</p>
+      <p class="muted">संबंध OOP design च्या केंद्रस्थानी असतात. हे विषय याच्याशी नैसर्गिकरित्या जुळतात.</p>
       <div class="topic-grid">
-        <a class="topic-card" href="../oop-core/"><span class="ico">🧱</span><h4>OOP मूलभूत संकल्पना</h4><p>ही नाती जे ऑब्जेक्ट आणि क्लास जोडतात ते.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🔀</span><h4>Inheritance पेक्षा composition</h4><p>प्रत्यक्षात has-a बहुधा is-a पेक्षा का सरस ठरते.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🧲</span><h4>Coupling आणि cohesion</h4><p>नात्याची तीव्रता maintainability ला कशी चालवते.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite pattern</h4><p>भाग-संपूर्ण composition वर बांधलेला एक संरचनात्मक pattern.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../objects-and-classes/"><span class="ico">🧱</span><h4>Objects आणि classes</h4><p>हे बाण ज्या पेट्यांना जोडतात त्या.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧩</span><h4>Composition over inheritance</h4><p>जेव्हा एक has-a जोडणी is-a hierarchy ला हरवते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🔌</span><h4>Coupling आणि cohesion</h4><p>Association विरुद्ध dependency coupling वर काय करते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../inheritance/"><span class="ico">🧬</span><h4>Inheritance</h4><p>Generalization आणि realization जवळून.</p><span class="go">वाचा →</span></a>
       </div>
     </div>
   </section>
@@ -445,7 +595,7 @@ sequenceDiagram
   <footer>
     <div class="wrap">
       <p><a href="../">← Patterns hub कडे परत</a></p>
-      <p>UML क्लास नात्यांचे एक दृश्य मार्गदर्शक · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
+      <p>UML क्लास संबंधांचे दृश्य मार्गदर्शन · काय · का · कसे · आकृत्या · प्रवाह · केस स्टडीज · प्रासंगिकता</p>
     </div>
   </footer>
 

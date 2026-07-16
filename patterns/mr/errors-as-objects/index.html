@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OOP मध्ये Errors as Objects - काय, का, कसे, TypeScript, Python आणि Ruby सह</title>
+  <meta name="description" content="अपयशाला जादुई string नव्हे तर data म्हणून वागवा. errors ला first-class objects म्हणून मॉडेल करण्याचे दृश्य मार्गदर्शन: custom exception hierarchies, context वाहणाऱ्या domain errors, exceptions विरुद्ध Result/Either, आकृत्या, अडचणी, आणि केस स्टडीज." />
+  <link rel="stylesheet" href="/patterns/assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">काय</a>
+        <a href="#why">का</a>
+        <a href="#analogies">उपमा</a>
+        <a href="#how">कसे</a>
+        <a href="#diagrams">आकृत्या</a>
+        <a href="#flow">0-100 प्रवाह</a>
+        <a href="#pitfalls">अडचणी</a>
+        <a href="#signals">संकेत</a>
+        <a href="#cases">केसेस</a>
+        <a href="#future">भविष्य</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP संकल्पना</span>
+      <h1>Errors as Objects - type system मध्ये अपयशाचे मॉडेलिंग</h1>
+      <p class="lede">अयशस्वी payment ही एखादी string नसते किंवा भटकलेली <code>-1</code> नसते. ती एक अशी गोष्ट असते जिला नाव, कारण आणि context असतो: कोणते कार्ड, किती रक्कम, बँकेने का नकार दिला. जेव्हा तुम्ही errors ला जादुई मूल्यांऐवजी <strong>first-class objects</strong> बनवता, तेव्हा अपयश ही अशी गोष्ट बनते जिच्याबद्दल compiler आणि तुमचे handlers विचार करू शकतात, तिला मार्गी लावू शकतात आणि तिच्यातून सावरू शकतात.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">कोड पहा ↓</a>
+        <a class="btn ghost" href="#diagrams">आकृत्यांकडे जा</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Exception hierarchies</span>
+        <span class="pill">Domain errors</span>
+        <span class="pill">Result / Either</span>
+        <span class="pill">Typed failure</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - काय</div>
+      <h2>"errors as objects" म्हणजे काय?</h2>
+      <p class="muted">object-oriented भाषांमध्ये exception हा काही खास primitive नसतो: तो एका class चा <strong>सामान्य object</strong> असतो, ज्याला तुम्ही subclass करू शकता, विस्तारू शकता आणि समृद्ध करू शकता. "errors as objects" ही अशी शिस्त आहे जिथे प्रत्येक वेगळ्या अपयशाला त्याचा स्वतःचा type म्हणून नाव दिले जाते, त्याला fields दिली जातात जी काय चुकले याची तथ्ये वाहतात, आणि callers ना message parse करण्याऐवजी किंवा numeric code तपासण्याऐवजी <em>type</em> वर जुळवण्याची मुभा दिली जाते.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🏷️</span> एक नामकरण केलेला type</h4>
+          <p><code>PaymentDeclined</code> ही एक class आहे, string नाही. Handlers तिला नावाने catch करतात, त्यामुळे "declined" आणि "network timeout" वेगवेगळ्या शाखांमध्ये जातात, string matching शिवाय.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎒</span> context वाहते</h4>
+          <p>object मध्ये रक्कम, currency, card fingerprint, आणि decline code असतो. catch करणाऱ्या जागी संरचित data मिळतो, तिला उलटा शोधावा लागणारे वाक्य नाही.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌳</span> एका hierarchy चा भाग</h4>
+          <p><code>InsufficientFunds</code> हे <code>PaymentDeclined</code> ला विस्तारते, जे मूळ <code>PaymentError</code> ला विस्तारते. संपूर्ण कुटुंब हाताळण्यासाठी base catch करा, किंवा एका नेमक्या प्रकरणासाठी leaf.</p>
+        </div>
+      </div>
+
+      <h3>अपयश दर्शवण्याचे मार्ग</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>दर्शन</th><th>caller कशी प्रतिक्रिया देतो</th><th>किंमत</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Boolean / null return</strong></td><td>का ते हवेतून अंदाज लावतो</td><td>कारण पूर्णपणे गमावते</td></tr>
+            <tr><td><strong>Numeric error code</strong></td><td>एक constant शोधतो, ते चालू असेल अशी आशा करतो</td><td>Untyped, दुर्लक्ष करणे सोपे</td></tr>
+            <tr><td><strong>String message</strong></td><td>गद्य parse करतो, शब्दरचना बदलली की तुटतो</td><td>ठिसूळ, machine साठी सुरक्षित नाही</td></tr>
+            <tr><td><strong>Exception object</strong></td><td>class ने catch करतो, fields वाचतो</td><td>Control flow happy path सोडून जातो</td></tr>
+            <tr><td><strong>Result / Either value</strong></td><td>मूल्य वापरण्याआधी तपासावेच लागते</td><td>अपयश signature मध्ये दिसते</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>मुख्य मानसिक प्रतिमा:</strong> error object एकाच वेळी तीन प्रश्नांची उत्तरे देतो - <em>कोणत्या प्रकारचे</em> अपयश (त्याची class), <em>तपशील</em> (त्याची fields), आणि <em>त्याची जागा कोठे</em> (hierarchy मधील त्याचे स्थान). एक string यापैकी एकाचेही उत्तर विश्वासार्हपणे देत नाही.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - का</div>
+      <h2>errors ला objects म्हणून का मॉडेल करावे</h2>
+      <p class="muted">खऱ्या systems मध्ये अपयश हे नंतरचा विचार नसते - एक payments service आपली बहुतांश edge cases पैसे न हलण्याचे मार्ग हाताळण्यातच घालवते. त्या cases ना स्पष्ट types बनवल्याने "काही throw होणार नाही अशी आशा" चे रूपांतर code अंमलात आणणाऱ्या checklist मध्ये होते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 नेमके हाताळणे</h4><p><code>InsufficientFunds</code> catch केल्याने "निधी घाला" असे सुचवता येते, तर <code>CardExpired</code> "कार्ड अद्यतनित करा" सुचवते. एकच सामान्य catch यांच्यात फरक करू शकत नाही, त्यामुळे तो दोन्हीसाठी चुकीचे करतो.</p></div>
+        <div class="card"><h4>📦 context अपयशासोबत प्रवास करते</h4><p>decline code, retry करण्याची शक्यता, आणि gateway reference हे सर्व object च्या आत stack च्या शेवटपर्यंत सोबत जातात. कोणताही global lookup नाही, मूळ जागेला आधीच माहीत असलेली तथ्ये पुन्हा काढणे नाही.</p></div>
+        <div class="card"><h4>🧭 type system अपयशाचे दस्तऐवजीकरण करते</h4><p>एक <code>Result&lt;Receipt, PaymentError&gt;</code> return type प्रत्येक caller ला, compile time ला, सांगते की हा call अयशस्वी होऊ शकतो आणि नेमके कसे. अपयश रात्री 3 वाजता येणारे आश्चर्य राहत नाही.</p></div>
+        <div class="card"><h4>🧱 callers न तोडता विस्तारते</h4><p><code>PaymentDeclined</code> खाली <code>FraudSuspected</code> जोडा आणि base catch करणारे जुने handlers अजूनही चालतात. नवीन handlers तयार असताना बारीक प्रकरणात सामील होतात.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">सोप्या शब्दांत</div>
+      <h2>उपमांसह errors as objects समजावून</h2>
+      <p class="muted">तीच कल्पना, कल्पना करण्याचे चार मार्ग, त्यामुळे तुम्ही कोणीही असाल तरी ती डोक्यात बसते.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> विद्यार्थ्यासाठी</h4><p>फक्त <strong>"चूक"</strong> असे सांगणारी तपासलेली परीक्षा तुम्हाला काहीच शिकवत नाही. "चूक: प्रश्न 4 मध्ये तुम्ही गुणाकाराऐवजी भागाकार केला" असे सांगणारी परीक्षा तुम्हाला नेमके काय दुरुस्त करायचे ते सांगते. error object हा दुसऱ्या प्रकारचा अभिप्राय आहे.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> डेव्हलपरसाठी</h4><p><code>false</code> return करणारे function आणि typed <strong>failure value</strong> return करणारे function यांतील हा फरक आहे. एक तुम्हाला अंदाज लावायला भाग पाडते; दुसरे तुम्हाला अशी class देते जी तुम्ही नावाने <code>catch</code> करू शकता आणि जिच्यातून fields वाचू शकता.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> व्यावसायिकासाठी</h4><p>नाकारलेल्या व्यवहाराच्या पावतीवर फक्त "नाही" नव्हे तर <strong>reason code, रक्कम, आणि व्यापारी</strong> यांची यादी असते. बँक अपयशाला संरचित नोंद म्हणून encode करते, जेणेकरून पुढील systems योग्य कृती करतील. ती पावती म्हणजे error object.</p></div>
+        <div class="card"><h4><span class="ico">📮</span> रोजच्या जीवनातली आवृत्ती</h4><p><strong>"असा पत्ता नाही"</strong> असा शिक्का मारलेले परत आलेले पत्र विरुद्ध "स्थलांतरित, forwarding संपले" असा शिक्का असलेले पत्र. दोन्ही पोहोचली नाहीत, पण लिफाफ्यावरील कारण तुमची पुढील हालचाल ठरवते. तो शिक्का म्हणजे typed error.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - कसे</div>
+      <h2>ते कसे बांधावे</h2>
+      <p class="muted">तुम्ही दोन गोष्टी करता: एका domain base मध्ये मूळ असलेली error classes ची <strong>hierarchy</strong> परिभाषित करता, आणि प्रत्येक operation साठी ठरवता की त्यांना <strong>raise</strong> करायचे (खरोखर अपवादात्मक, स्थानिक नसलेल्या अपयशांसाठी) की <code>Result</code> म्हणून <strong>return</strong> करायचे (अपेक्षित, business-level परिणामांसाठी जे callers ना inline हाताळावे लागतात).</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🌳</span> hierarchy ची रचना करा</h4>
+          <p>एक base <code>PaymentError</code> जेणेकरून कोणताही handler संपूर्ण domain catch करू शकेल. <code>InsufficientFunds</code> आणि <code>CardExpired</code> सारख्या leaf classes त्यांच्या प्रकरणाला विशिष्ट fields जोडतात. जेव्हा तुम्ही पहिल्यांदा त्यावर routing करता तेव्हा खोली स्वतःचा मोबदला देते.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔀</span> raise विरुद्ध return</h4>
+          <p>caller सहसा येथे सावरू शकत नसेल आणि ते वर पोहोचावे असे इच्छित असेल (gateway बंद पडणे) तेव्हा raise करा. जेव्हा अपयश हे एक सामान्य business परिणाम असते जिथे तात्काळ caller ला शाखा करावी लागते (नाकारलेले कार्ड) तेव्हा <code>Result</code> return करा.</p>
+        </div>
+      </div>
+
+      <h3>error hierarchy एक class diagram म्हणून</h3>
+      <div class="diagram">
+        <div class="cap">एक domain error hierarchy - एक base, स्वतःचा context वाहणारी विशेष leaves</div>
+        <pre class="mermaid">
+classDiagram
+    class DomainError {
+        &lt;&lt;abstract&gt;&gt;
+        +String code
+        +Boolean retryable
+        +Map context
+        +toLog() Record
+    }
+    class PaymentError {
+        &lt;&lt;abstract&gt;&gt;
+        +Money amount
+        +String currency
+    }
+    class PaymentDeclined {
+        +String declineCode
+        +String gatewayRef
+    }
+    class InsufficientFunds {
+        +Money shortfall
+    }
+    class CardExpired {
+        +String expiry
+    }
+    class GatewayUnavailable {
+        +int statusCode
+    }
+    DomainError &lt;|-- PaymentError
+    PaymentError &lt;|-- PaymentDeclined
+    PaymentDeclined &lt;|-- InsufficientFunds
+    PaymentDeclined &lt;|-- CardExpired
+    PaymentError &lt;|-- GatewayUnavailable
+        </pre>
+      </div>
+
+      <h3>error class परिभाषित करा, raise करा, आणि हाताळा</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// A domain error is a real class: named, typed, context-carrying.
+class PaymentError extends Error {
+  constructor(
+    message: string,
+    readonly amount: number,
+    readonly currency: string,
+  ) {
+    super(message);
+    this.name = new.target.name; // keeps the leaf class name
+  }
+}
+
+class InsufficientFunds extends PaymentError {
+  constructor(amount: number, currency: string, readonly shortfall: number) {
+    super(`Short by ${shortfall} ${currency}`, amount, currency);
+  }
+}
+
+class CardExpired extends PaymentError {
+  constructor(amount: number, currency: string, readonly expiry: string) {
+    super(`Card expired ${expiry}`, amount, currency);
+  }
+}
+
+class PaymentGateway {
+  charge(cardBalance: number, expiry: string, amount: number): string {
+    if (expiry &lt; "2026-07") throw new CardExpired(amount, "USD", expiry);
+    if (cardBalance &lt; amount)
+      throw new InsufficientFunds(amount, "USD", amount - cardBalance);
+    return `receipt_${Date.now()}`; // charge succeeded
+  }
+}
+
+// Handle by TYPE, not by parsing a message.
+const gateway = new PaymentGateway();
+try {
+  const receipt = gateway.charge(40, "2027-01", 99.5);
+  console.log("Charged:", receipt);
+} catch (err) {
+  if (err instanceof InsufficientFunds) {
+    console.log(`Ask for ${err.shortfall} ${err.currency} more`);
+  } else if (err instanceof CardExpired) {
+    console.log(`Prompt to update card (was ${err.expiry})`);
+  } else if (err instanceof PaymentError) {
+    console.log("Generic payment failure:", err.message);
+  } else {
+    throw err; // not ours - let it bubble
+  }
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># A domain error is a real class: named, typed, context-carrying.
+class PaymentError(Exception):
+    def __init__(self, message: str, amount: float, currency: str):
+        super().__init__(message)
+        self.amount = amount
+        self.currency = currency
+
+
+class InsufficientFunds(PaymentError):
+    def __init__(self, amount: float, currency: str, shortfall: float):
+        super().__init__(f"Short by {shortfall} {currency}", amount, currency)
+        self.shortfall = shortfall
+
+
+class CardExpired(PaymentError):
+    def __init__(self, amount: float, currency: str, expiry: str):
+        super().__init__(f"Card expired {expiry}", amount, currency)
+        self.expiry = expiry
+
+
+class PaymentGateway:
+    def charge(self, card_balance: float, expiry: str, amount: float) -> str:
+        if expiry &lt; "2026-07":
+            raise CardExpired(amount, "USD", expiry)
+        if card_balance &lt; amount:
+            raise InsufficientFunds(amount, "USD", amount - card_balance)
+        return f"receipt_{amount}"  # charge succeeded
+
+
+# Handle by TYPE, not by parsing a message.
+gateway = PaymentGateway()
+try:
+    receipt = gateway.charge(40, "2027-01", 99.5)
+    print("Charged:", receipt)
+except InsufficientFunds as err:
+    print(f"Ask for {err.shortfall} {err.currency} more")
+except CardExpired as err:
+    print(f"Prompt to update card (was {err.expiry})")
+except PaymentError as err:
+    print("Generic payment failure:", err)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># A domain error is a real class: named, typed, context-carrying.
+class PaymentError &lt; StandardError
+  attr_reader :amount, :currency
+
+  def initialize(message, amount:, currency:)
+    super(message)
+    @amount = amount
+    @currency = currency
+  end
+end
+
+class InsufficientFunds &lt; PaymentError
+  attr_reader :shortfall
+
+  def initialize(amount:, currency:, shortfall:)
+    super("Short by #{shortfall} #{currency}", amount: amount, currency: currency)
+    @shortfall = shortfall
+  end
+end
+
+class CardExpired &lt; PaymentError
+  attr_reader :expiry
+
+  def initialize(amount:, currency:, expiry:)
+    super("Card expired #{expiry}", amount: amount, currency: currency)
+    @expiry = expiry
+  end
+end
+
+class PaymentGateway
+  def charge(card_balance:, expiry:, amount:)
+    raise CardExpired.new(amount: amount, currency: "USD", expiry: expiry) if expiry &lt; "2026-07"
+    if card_balance &lt; amount
+      raise InsufficientFunds.new(amount: amount, currency: "USD", shortfall: amount - card_balance)
+    end
+    "receipt_#{amount}" # charge succeeded
+  end
+end
+
+# Handle by TYPE, not by parsing a message.
+gateway = PaymentGateway.new
+begin
+  receipt = gateway.charge(card_balance: 40, expiry: "2027-01", amount: 99.5)
+  puts "Charged: #{receipt}"
+rescue InsufficientFunds =&gt; err
+  puts "Ask for #{err.shortfall} #{err.currency} more"
+rescue CardExpired =&gt; err
+  puts "Prompt to update card (was #{err.expiry})"
+rescue PaymentError =&gt; err
+  puts "Generic payment failure: #{err.message}"
+end</code></pre>
+      </div>
+      <p class="muted">लक्षात घ्या की प्रत्येक <code>rescue</code> / <code>catch</code> शाखा एका <em>class</em> शी जुळते आणि मग <em>fields</em> वाचते. base <code>PaymentError</code> शाखा ही तुम्ही अजून न लिहिलेल्या भविष्यातील leaf types साठी सुरक्षा जाळे आहे, आणि परकी काहीही पुन्हा raise केल्याने असंबंधित bugs मोठ्याने वाजत राहतात.</p>
+
+      <h3>अपयश नित्याचे असते तेव्हा: raise करण्याऐवजी Result return करा</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Result makes the failure visible in the signature - callers cannot forget it.
+type Ok&lt;T&gt; = { ok: true; value: T };
+type Err&lt;E&gt; = { ok: false; error: E };
+type Result&lt;T, E&gt; = Ok&lt;T&gt; | Err&lt;E&gt;;
+
+function authorize(balance: number, amount: number): Result&lt;string, PaymentError&gt; {
+  if (balance &lt; amount)
+    return { ok: false, error: new InsufficientFunds(amount, "USD", amount - balance) };
+  return { ok: true, value: `auth_${amount}` };
+}
+
+const res = authorize(40, 99.5);
+if (res.ok) {
+  console.log("Authorized:", res.value);
+} else {
+  console.log("Declined:", res.error.message); // typed error, no throw
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Result makes the failure visible in the signature - callers cannot forget it.
+from dataclasses import dataclass
+from typing import Generic, TypeVar, Union
+
+T = TypeVar("T")
+E = TypeVar("E")
+
+
+@dataclass
+class Ok(Generic[T]):
+    value: T
+
+
+@dataclass
+class Err(Generic[E]):
+    error: E
+
+
+Result = Union[Ok[T], Err[E]]
+
+
+def authorize(balance: float, amount: float) -> Result[str, PaymentError]:
+    if balance &lt; amount:
+        return Err(InsufficientFunds(amount, "USD", amount - balance))
+    return Ok(f"auth_{amount}")
+
+
+res = authorize(40, 99.5)
+if isinstance(res, Ok):
+    print("Authorized:", res.value)
+else:
+    print("Declined:", res.error)  # typed error, no raise</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Result makes the failure visible in the return value - callers must branch on it.
+Ok  = Struct.new(:value)
+Err = Struct.new(:error)
+
+def authorize(balance:, amount:)
+  if balance &lt; amount
+    return Err.new(InsufficientFunds.new(amount: amount, currency: "USD", shortfall: amount - balance))
+  end
+  Ok.new("auth_#{amount}")
+end
+
+res = authorize(balance: 40, amount: 99.5)
+case res
+when Ok  then puts "Authorized: #{res.value}"
+when Err then puts "Declined: #{res.error.message}" # typed error, no raise
+end</code></pre>
+      </div>
+      <p class="muted">त्याच error classes, वेगळी पोहोचवण्याची पद्धत. खोल call chain रद्द करावी अशा अपयशांना raise करणे शोभते; <code>Result</code> return करणे अशा अपेक्षित परिणामांना शोभते जिथे तात्काळ caller ला मूल्य स्पर्श करण्याआधी सामोरे जावे लागते. error <em>object</em> दोन्ही बाबतीत एकसारखाच असतो - फक्त त्याची वाहतूक बदलते.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>तपशीलवार sequence diagrams</h2>
+      <p class="muted">तीन दृश्ये: typed error raise करून तो catch करणे, hierarchy वर routing करणे, आणि throw नसलेला Result-return करणारा पर्याय.</p>
+
+      <div class="diagram">
+        <div class="cap">आकृती 1 - typed error raise करा आणि class ने तो catch करा</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Checkout
+    participant G as 💳 PaymentGateway
+    participant E as 🏷️ InsufficientFunds
+
+    C->>G: charge(balance=40, amount=99.5)
+    G->>G: balance below amount
+    G->>E: new(amount, shortfall=59.5)
+    G-->>C: throw InsufficientFunds
+    C->>C: catch by class, read err.shortfall
+    C-->>C: Prompt "add 59.5 USD"
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 2 - एक try block error hierarchy वर routing करते</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Checkout
+    participant G as 💳 PaymentGateway
+    participant H as 🧭 Handler
+
+    C->>G: charge(card, amount)
+    alt card expired
+        G-->>H: throw CardExpired(expiry)
+        H-->>C: Prompt to update card
+    else balance too low
+        G-->>H: throw InsufficientFunds(shortfall)
+        H-->>C: Ask for more funds
+    else gateway down
+        G-->>H: throw GatewayUnavailable(503)
+        H-->>C: Retry later, it is retryable
+    end
+    Note over H,C: Each leaf type takes its own branch
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">आकृती 3 - Result पर्याय: throw नाही, अपयश मूल्य म्हणून परत केले</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Checkout
+    participant A as 🔐 Authorizer
+    participant R as 📦 Result
+
+    C->>A: authorize(balance, amount)
+    A->>R: Err(InsufficientFunds)
+    A-->>C: return Result (no exception)
+    C->>C: inspect res.ok
+    alt res.ok is false
+        C-->>C: Show typed decline reason
+    else res.ok is true
+        C-->>C: Capture the authorization
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - टप्प्याटप्प्याने</div>
+      <h2>0 → 100 प्रवाह</h2>
+      <p class="muted">boolean-return करणाऱ्या function पासून काठावर routing केलेल्या पूर्णपणे typed error model पर्यंत - संपूर्ण प्रवास क्रमाने.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">दुर्गंध</span><h4>stringly-typed अपयश ओळखा</h4><p>charge function <code>false</code> return करते किंवा उघडी string throw करते. Callers कारणाचा अंदाज लावतात, आणि प्रत्येक नवीन decline प्रकरण आणखी एक ठिसूळ <code>if message.includes(...)</code> जोडते.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Base</span><h4>एक domain base class तयार करा</h4><p>भाषेच्या exception type ला विस्तारणारे <code>PaymentError</code> परिभाषित करा. प्रत्येक payment अपयश त्यातून उतरेल जेणेकरून एकच handler संपूर्ण कुटुंब catch करू शकेल.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Fields</span><h4>base ला सामाईक context द्या</h4><p>base ला <code>amount</code>, <code>currency</code>, आणि एक <code>retryable</code> flag जोडा जेणेकरून प्रत्येक payment अपयश शेअर करणारा context नेमक्या एकाच ठिकाणी राहील.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Leaves</span><h4>प्रत्येक वेगळ्या अपयशाला नाव द्या</h4><p><code>InsufficientFunds</code>, <code>CardExpired</code>, <code>GatewayUnavailable</code> मध्ये subclass करा. प्रत्येक आपल्या प्रकरणाला विशिष्ट fields वाहते, जसे <code>shortfall</code> किंवा <code>statusCode</code>.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Raise</span><h4>मूळ जागी नेमका type throw करा</h4><p>अट सापडताच gateway नेमकी leaf class बांधते आणि raise करते, आपल्या हाताशी आधीच असलेली तथ्ये टिपून घेते.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Propagate</span><h4>त्याला अबाधित वर जाऊ द्या</h4><p>मधले स्तर त्याला गिळत नाहीत किंवा पुन्हा गुंडाळत नाहीत. object त्याचा type आणि context अबाधित ठेवून वर प्रवास करतो, जोपर्यंत निर्णय घेऊ शकणारा एखादा स्तर त्याला catch करत नाही.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Catch</span><h4>message ने नव्हे तर class ने हाताळा</h4><p>सीमा <code>InsufficientFunds</code> विरुद्ध <code>CardExpired</code> वर जुळते आणि त्यांची fields वाचते, प्रत्येकाला अनुरूप वापरकर्ता प्रतिसाद देते.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">जाळे</span><h4>base-class सुरक्षा शाखा ठेवा</h4><p>अंतिम <code>catch PaymentError</code> तुम्ही अजून खास न हाताळलेली कोणतीही leaf हाताळते, जेणेकरून नवीन error types कच्चे बाहेर पडण्याऐवजी सौम्यपणे मार्गी लागतात.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">निवडा</span><h4>प्रत्येक call साठी raise विरुद्ध Result ठरवा</h4><p>callers ना सामोरे जावे लागणाऱ्या अपेक्षित business परिणामांसाठी, <code>Result&lt;Receipt, PaymentError&gt;</code> return करा जेणेकरून अपयश signature मध्ये दिसेल.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Log</span><h4>वाक्य नव्हे तर object serialize करा</h4><p>एक <code>toLog()</code> method संरचित fields (code, amount, gatewayRef) उत्सर्जित करते जेणेकरून dashboards अपयशाच्या प्रकारांवर नेमकेपणे गट करू शकतील आणि alert देऊ शकतील.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">विकसित</span><h4>callers न तोडता नवीन अपयशे जोडा</h4><p><code>PaymentDeclined</code> खाली <code>FraudSuspected</code> आणा. जुने base-class handlers अजूनही चालतात; नवीन handlers तयार असताना बारीक प्रकरणात सामील होतात.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">सामान्य अडचणी</div>
+      <h2>अडचणी आणि anti-patterns</h2>
+      <p class="muted">errors चांगल्या प्रकारे मॉडेल करणे सूक्ष्मपणे चुकणे सोपे आहे. या वारंवार होणाऱ्या चुका आहेत.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ सर्व काही गिळणे</h4><p>log करून पुढे जाणारा एक उघडा <code>catch (e) {}</code> किंवा <code>rescue =&gt; e</code> हा <code>InsufficientFunds</code> ला खऱ्या <code>NullPointer</code> शेजारी लपवतो. तुम्ही खरोखर हाताळू शकाल तो सर्वात संकुचित type catch करा.</p></div>
+        <div class="card"><h4>🧵 stringly-typed कारणे</h4><p><code>if err.message.includes("declined")</code> वर शाखा करणे कोणीतरी message ची शब्दरचना बदलताच किंवा त्याचे स्थानिकीकरण करताच तुटते. class वर जुळवा, कधीही गद्यावर नाही.</p></div>
+        <div class="card"><h4>🥞 एक अवाढव्य error class</h4><p><code>type</code> string field असलेली एकच <code>AppError</code> ही वेषातील enum च आहे. तुम्ही <code>instanceof</code> routing आणि प्रत्येक प्रकरणाची fields गमावता. खऱ्या subclasses ला प्राधान्य द्या.</p></div>
+        <div class="card"><h4>📭 rethrow वर context काढून टाकणे</h4><p>समृद्ध error catch करून <code>new Error("payment failed")</code> पुन्हा throw केल्याने decline code आणि कारण मिटते. <code>cause</code> सह गुंडाळा, कधीही string मध्ये सपाट करू नका.</p></div>
+        <div class="card"><h4>🚦 control flow साठी exceptions</h4><p>एका सामान्य, अपेक्षित परिणामाचे (रिकामी cart) संकेत देण्यासाठी throw करणे हे stack-unwinding यंत्रणेचा गैरवापर आहे. raise करणे खऱ्या अपवादात्मक गोष्टींसाठी राखून ठेवा; अन्यथा <code>Result</code> return करा.</p></div>
+        <div class="card"><h4>🌊 अति-खोल hierarchies</h4><p>कोणीही स्वतंत्रपणे कधीही catch न करणाऱ्या abstract error classes चे दहा स्तर हे स्पष्टता नव्हे तर औपचारिकता आहे. एखादा handler त्यावर शाखा करेल तेव्हाच subclass जोडा.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">संकेत आणि मापके</div>
+      <h2>संकेत आणि कसे मोजावे</h2>
+      <p class="muted">तुमचे error model आपले वजन पेलत आहे की नाही हे code मध्ये आणि production telemetry मध्ये दिसते.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>संकेत</th><th>तो तुम्हाला काय सांगतो</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>typed catches चे bare catches शी गुणोत्तर</strong></td><td>उच्च typed गुणोत्तर म्हणजे handlers विशिष्ट अपयशांवर कृती करतात; अनेक bare catches म्हणजे अपयशाचा तपशील फेकून दिला जात आहे.</td></tr>
+            <tr><td><strong>error messages वर string matching</strong></td><td>control flow मधील कोणतेही <code>message.includes(...)</code> हे संकेत आहे की अपयश एक वेगळा type असायला हवा होता.</td></tr>
+            <tr><td><strong>log dashboards मध्ये उपस्थित error types</strong></td><td>तुम्ही class नाव आणि field ने घटनांचे गट करू शकत असाल, तर तुमचे errors पुरेशी संरचना वाहतात. सर्व काही फक्त "Error" असेल, तर ते वाहत नाहीत.</td></tr>
+            <tr><td><strong>कारण गमावणारे rethrows</strong></td><td><code>cause</code> जपून न ठेवता गुंडाळल्याने stack traces तुटतात आणि on-call debugging दरम्यान मूळ कारणे लपतात.</td></tr>
+            <tr><td><strong>callers ना स्पर्श न करता जोडलेले नवीन अपयश</strong></td><td>नवीन leaf type विद्यमान base खाली बसते आणि जुने handlers अजूनही compile होतात व वागतात, तर तुमची hierarchy चांगली रचलेली आहे.</td></tr>
+            <tr><td><strong>अयशस्वी होऊ शकणाऱ्या signatures मध्ये Result types</strong></td><td>ज्यांच्या signatures अपयश मान्य करतात असे अयशस्वी होणारे operations callers ना ते हाताळायला भाग पाडतात; लपलेले throws callers ना विसरू देतात.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>ढोबळ नियम:</strong> catch block वाचणारा माणूस throw करणारे function उघडल्याशिवाय काय अयशस्वी झाले हे सांगू शकत नसेल, तर error हा एक समृद्ध object असायला हवा होता. अपयशाला नाव द्या, त्याचा context वाहा, आणि त्याच्या type वर routing करा.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - केस स्टडीज</div>
+      <h2>वास्तविक जगातील केस स्टडीज</h2>
+      <p class="muted">तीन production systems जिथे errors-as-objects हे भार पेलणारे आहे.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Stripe-शैलीतील payment API error taxonomy</h3><div class="role">Pattern: context वाहणारे typed decline codes</div></div></div>
+        <p class="muted">एका payments platform ने integrators ना charge नेमके का अयशस्वी झाले हे सांगावेच लागते जेणेकरून त्यांची apps योग्य प्रतिक्रिया देतील, फक्त "ते चालले नाही" नव्हे.</p>
+        <ul>
+          <li>एक <code>CardError</code> base <code>card_declined</code>, <code>expired_card</code>, <code>insufficient_funds</code> मध्ये विभागतो, प्रत्येकाला machine वाचता येणारा <code>decline_code</code> असतो.</li>
+          <li>प्रत्येक error object request id, रक्कम, आणि retry यशस्वी होण्याची शक्यता वाहतो.</li>
+          <li>प्रत्येक भाषेतील SDKs हीच taxonomy native exception classes म्हणून समोर आणतात, ज्या callers type ने catch करतात.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> Integrators नेमके recovery flows (retry विरुद्ध prompt विरुद्ध सोडून देणे) लिहितात कारण अपयश अस्पष्ट status ऐवजी संरचित, typed data म्हणून येते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">✅</span><div><h3>2 · अनेक typed errors return करणारे form validation</h3><div class="role">Pattern: throwing ऐवजी एकत्रित error objects</div></div></div>
+        <p class="muted">एका signup service ने पहिल्या चुकीच्या input वर लगेच अयशस्वी न होता प्रत्येक अवैध field एकाच वेळी नोंदवावे लागते.</p>
+        <ul>
+          <li>प्रत्येक नियम एक <code>ValidationError</code> subclass (<code>Required</code>, <code>TooShort</code>, <code>NotUnique</code>) देतो, ज्यात दोषी field आणि एक स्थिर code असतो.</li>
+          <li>validator error objects ची यादी धारण करणारे <code>Result</code> return करते, त्यामुळे सामान्य चुकीच्या input साठी काहीही raise होत नाही.</li>
+          <li>API स्तर प्रत्येक error चे field आणि code एका JSON प्रतिसादात serialize करते, जो front end inline messages मध्ये मॅप करते.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> वापरकर्ते त्यांच्या सर्व चुका एकाच फेरीत पाहतात, आणि front end इंग्रजी वाक्ये parse करण्याऐवजी स्थिर codes वरून messages render करते.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🦀</span><div><h3>3 · Rust आणि Go ने संपूर्ण उद्योगाला Result कडे वळवले</h3><div class="role">Pattern: return type मध्ये encode केलेले अपयश</div></div></div>
+        <p class="muted">दोन मुख्य प्रवाहातील भाषांनी अपयशक्षमतेला लपलेला दुय्यम मार्ग नव्हे तर signature चा भाग जाणीवपूर्वक बनवले.</p>
+        <ul>
+          <li>Rust चे <code>Result&lt;T, E&gt;</code> आणि Go चे स्पष्ट <code>error</code> return प्रत्येक caller ला call site वर अपयशाला सामोरे जाण्यास भाग पाडतात.</li>
+          <li>Custom error enums आणि types context वाहतात आणि callers ना विशिष्ट variant वर जुळू देतात.</li>
+          <li>या pattern ने TypeScript, Kotlin, आणि Swift परिसंस्थांना अपेक्षित अपयशांसाठी typed-result libraries कडे ढकलले.</li>
+        </ul>
+        <div class="outcome">✅ <strong>परिणाम:</strong> कमी विसरलेले अपयश-मार्ग आणि अधिक स्पष्ट APIs, कारण "हे अयशस्वी होऊ शकते, आणि ते असे" हे documentation किंवा नशिबावर न सोडता type मध्ये लिहिलेले असते.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - प्रासंगिकता</div>
+      <h2>आधुनिक प्रासंगिकता</h2>
+      <p class="muted">type systems आणि distributed systems परिपक्व होत असताना अपयशाला first-class data म्हणून वागवणे अधिकाधिक केंद्रस्थानी येत आहे.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧬 typed results मुख्य प्रवाहात येत आहेत</h4><p>TypeScript, Kotlin, आणि Swift हे <code>Result</code>-शैलीतील types पुरवतात किंवा लोकप्रिय करतात, ज्यामुळे अपेक्षित अपयश हे लपलेल्या throw ऐवजी signatures चा दृश्य भाग बनते.</p></div>
+        <div class="card"><h4>🔗 cause chain असलेले errors</h4><p>native <code>cause</code> समर्थन (JavaScript, Python चे <code>raise from</code>) एका error object ला खालच्या object ला गुंडाळू देते, मूळापासून सीमेपर्यंतची संपूर्ण कहाणी जपून ठेवते.</p></div>
+        <div class="card"><h4>🌐 services मध्ये संरचित errors</h4><p>gRPC status details आणि HTTP साठी Problem Details (RFC 9457) typed, field-समृद्ध errors network वर वाहतात, object model एका process च्या पलीकडे विस्तारतात.</p></div>
+        <div class="card"><h4>🔭 error types वर आधारित observability</h4><p>Tracing tools error class आणि attributes वर गट करतात व alert देतात. समृद्ध error objects incident triage ला log grepping ऐवजी एका query मध्ये बदलतात.</p></div>
+        <div class="card"><h4>🛡️ exhaustiveness checking</h4><p>Union-typed errors compiler ला तुम्ही प्रत्येक प्रकरण हाताळले हे सिद्ध करू देतात, त्यामुळे नवीन failure variant जोडल्याने जुळवून घ्यावी लागणारी प्रत्येक जागा समोर येते.</p></div>
+        <div class="card"><h4>🤖 machine ने कृती करता येणारी अपयशे</h4><p>Agents आणि automated retries ना अशी अपयशे हवी असतात ज्यांवर ते programmatically शाखा करू शकतील. typed object वरील <code>retryable</code> flag हा message वाचण्यापेक्षा चांगला असतो.</p></div>
+      </div>
+      <div class="callout"><strong>सारांश:</strong> अपयश हा प्रत्येक खऱ्या system चा सामान्य भाग असतो, म्हणून त्याला तसेच मॉडेल करा. प्रत्येक वेगळ्या अपयशाला नाव द्या, त्याला तथ्ये वाहू द्या, त्याला hierarchy मध्ये ठेवा, आणि त्याला raise करायचे की return करायचे हे जाणीवपूर्वक निवडा. Errors as objects "काहीतरी बिघडले" चे रूपांतर अशा गोष्टीत करतात जिच्याबद्दल तुमचा code, आणि तुमची टीम, खरोखर विचार करू शकते.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">शोध सुरू ठेवा</div>
+      <h2>संबंधित विषय</h2>
+      <p class="muted">Errors as objects हे या OOP विषयांशी नैसर्गिकरित्या जुळते.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🧱</span><h4>Construction आणि invariants</h4><p>construction वेळीच अवैध state नाकारा जेणेकरून नंतर कमी errors उद्भवतील.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../tell-dont-ask/"><span class="ico">📣</span><h4>Tell, don't ask</h4><p>कच्ची state उघड करण्याऐवजी objects ना निर्णय घेऊ द्या आणि अपयशाचा संकेत देऊ द्या.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single responsibility</h4><p>बदलण्याचे एकच कारण प्रत्येक error type केंद्रित आणि सुसंगत ठेवते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="../when-not-to-use-oop/"><span class="ico">⚖️</span><h4>OOP कधी वापरू नये</h4><p>कधीकधी एक साधे Result मूल्य exception hierarchy पेक्षा चांगले असते.</p><span class="go">वाचा →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Patterns hub कडे परत</a></p>
+      <p>Errors as Objects · काय · का · कसे · आकृत्या · प्रवाह · अडचणी · संकेत · केसेस · प्रासंगिकता</p>
+    </div>
+  </footer>
+
+  <script src="/patterns/assets/app.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OOP आणि डिझाइन पॅटर्न्स - व्हिज्युअल नॉलेज हब</title>
-  <meta name="description" content="ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंग आणि Gang of Four च्या 23 डिझाइन पॅटर्न्ससाठी एक व्हिज्युअल, सखोल समजावून सांगणारा हब: काय, का, कसे, सीक्वेन्स डायग्राम, 0-100 फ्लो, तडजोडी आणि केस स्टडीज. इंग्रजी आणि मराठीमध्ये." />
+  <meta name="description" content="ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंग आणि 23 Gang of Four डिझाइन पॅटर्न्ससाठी एक व्हिज्युअल, सखोल समजावून सांगणारा हब: काय, का, कसे, सिक्वेन्स डायग्राम्स, 0-100 फ्लो, ट्रेड-ऑफ्स आणि केस स्टडीज. इंग्रजी आणि मराठी." />
   <link rel="stylesheet" href="/patterns/assets/style.css" />
 </head>
 <body>
@@ -13,9 +13,9 @@
       <div class="brand"><a href="/patterns/mr/">Patterns<span>·</span>Hub</a></div>
       <div class="links">
         <a href="#oop">OOP</a>
-        <a href="#creational">क्रिएशनल</a>
-        <a href="#structural">स्ट्रक्चरल</a>
-        <a href="#behavioral">बिहेवियरल</a>
+        <a href="#creational">Creational</a>
+        <a href="#structural">Structural</a>
+        <a href="#behavioral">Behavioral</a>
       </div>
     </div>
   </nav>
@@ -23,17 +23,17 @@
   <header class="hero">
     <div class="wrap">
       <span class="kicker">व्हिज्युअल नॉलेज हब</span>
-      <h1>OOP आणि डिझाइन पॅटर्न्स, ते प्रत्यक्षात जसे काम करतात तसे समजावून सांगितलेले</h1>
-      <p class="lede">ऑब्जेक्ट-ओरिएंटेड डिझाइनचे पाच पायाभूत तत्त्वे आणि Gang of Four चे संपूर्ण <strong>23 पॅटर्न्स</strong>, प्रत्येक एका सखोल, व्हिज्युअल मार्गदर्शकाच्या रूपात: <strong>काय / का / कसे</strong>, <strong>क्लास आणि सीक्वेन्स डायग्राम</strong>, टप्प्याटप्प्याने <strong>0-100 फ्लो</strong>, <strong>तडजोडी</strong>, खरेखुरे <strong>केस स्टडीज</strong> आणि सहज समजणाऱ्या उपमा. इंग्रजी आणि मराठीमध्ये उपलब्ध.</p>
+      <h1>OOP आणि डिझाइन पॅटर्न्स, ते प्रत्यक्षात जसे काम करतात तसे समजावून</h1>
+      <p class="lede">ऑब्जेक्ट-ओरिएंटेड डिझाइनचे पाच पाये आणि सर्व <strong>23 Gang of Four पॅटर्न्स</strong>, प्रत्येक एक सखोल, व्हिज्युअल मार्गदर्शक म्हणून: <strong>काय / का / कसे</strong>, <strong>क्लास आणि सिक्वेन्स डायग्राम्स</strong>, टप्प्याटप्प्याने <strong>0-100 फ्लो</strong>, <strong>ट्रेड-ऑफ्स</strong>, खरे <strong>केस स्टडीज</strong> आणि सहज समजणाऱ्या उपमा. इंग्रजी आणि मराठीमध्ये उपलब्ध.</p>
       <div class="cta">
-        <a class="btn primary" href="#oop">विषय एक्सप्लोर करा ↓</a>
+        <a class="btn primary" href="#oop">विषय पाहा ↓</a>
         <a class="btn ghost" href="strategy/">Strategy पासून सुरुवात करा</a>
       </div>
       <div class="pill-row">
-        <span class="pill">28 विषय</span>
-        <span class="pill">क्लास आणि सीक्वेन्स डायग्राम</span>
-        <span class="pill">0-100 फ्लो</span>
-        <span class="pill">तडजोडी</span>
+        <span class="pill">48 विषय</span>
+        <span class="pill">TypeScript · Python · Ruby</span>
+        <span class="pill">क्लास आणि सिक्वेन्स डायग्राम्स</span>
+        <span class="pill">वास्तविक जगातील उदाहरणे</span>
         <span class="pill">EN · मराठी</span>
       </div>
     </div>
@@ -41,15 +41,45 @@
 
   <section id="oop">
     <div class="wrap">
-      <div class="eyebrow">पायाभूत तत्त्वे</div>
+      <div class="eyebrow">पाये</div>
       <h2>ऑब्जेक्ट-ओरिएंटेड प्रोग्रामिंग</h2>
-      <p class="group-sub">ज्या तत्त्वांवर पॅटर्न्स उभे आहेत ती.</p>
+      <p class="group-sub">TypeScript, Python आणि Ruby मधील वास्तविक जगातील कोडसह 25 विषय. ज्या कल्पनांवर पॅटर्न्स उभे आहेत त्या.</p>
+
+      <h3 class="group-title">🏛️ मूलभूत तत्त्वे</h3>
       <div class="topic-grid">
-        <a class="topic-card" href="oop-core/"><span class="status live">थेट</span><span class="ico">🏛️</span><h4>चार आधारस्तंभ</h4><p>एन्कॅप्सुलेशन, इनहेरिटन्स, पॉलिमॉर्फिझम आणि ॲब्स्ट्रॅक्शन.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="solid/"><span class="status live">थेट</span><span class="ico">🧱</span><h4>SOLID तत्त्वे</h4><p>क्लासेस लवचिक आणि देखभालक्षम राहण्यासाठी पाच नियम.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="composition-over-inheritance/"><span class="status live">थेट</span><span class="ico">🧩</span><h4>इनहेरिटन्सपेक्षा कंपोझिशन</h4><p>पुनर्वापरासाठी "has-a" हे सहसा "is-a" पेक्षा का सरस ठरते.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="coupling-cohesion/"><span class="status live">थेट</span><span class="ico">🔗</span><h4>कपलिंग आणि कोहेजन</h4><p>तुमचा कोड किती बदलण्याजोगा आहे हे ठरवणाऱ्या दोन शक्ती.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="uml-relationships/"><span class="status live">थेट</span><span class="ico">📐</span><h4>UML क्लास संबंध</h4><p>असोसिएशन, ॲग्रीगेशन, कंपोझिशन, डिपेंडन्सी, इनहेरिटन्स.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="objects-and-classes/"><span class="status live">थेट</span><span class="ico">🧩</span><h4>Objects आणि Classes</h4><p>स्थिती, वर्तन आणि ओळख: मूलभूत घटक.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="encapsulation/"><span class="status live">थेट</span><span class="ico">🔒</span><h4>Encapsulation</h4><p>डेटा लपवा, वर्तन उघड करा, invariants सुरक्षित ठेवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="abstraction/"><span class="status live">थेट</span><span class="ico">🎭</span><h4>Abstraction</h4><p>आवश्यक गोष्टींचे मॉडेल करा, बाकीचे लपवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="inheritance/"><span class="status live">थेट</span><span class="ico">🧬</span><h4>Inheritance</h4><p>is-a द्वारे पुनर्वापर, आणि ते कुठे चुकते.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="polymorphism/"><span class="status live">थेट</span><span class="ico">🔀</span><h4>Polymorphism</h4><p>एक इंटरफेस, रनटाइमला अनेक वर्तने.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="interfaces-duck-typing/"><span class="status live">थेट</span><span class="ico">🦆</span><h4>Interfaces आणि Duck Typing</h4><p>कॉन्क्रीट क्लासेसना नव्हे, कॉन्ट्रॅक्ट्सना प्रोग्राम करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="composition-over-inheritance/"><span class="status live">थेट</span><span class="ico">🧱</span><h4>Composition over Inheritance</h4><p>पुनर्वापरासाठी has-a सहसा is-a पेक्षा का चांगले.</p><span class="go">वाचा →</span></a>
+      </div>
+
+      <h3 class="group-title">🏷️ मॉडेलिंग</h3>
+      <div class="topic-grid">
+        <a class="topic-card" href="value-objects-vs-entities/"><span class="status live">थेट</span><span class="ico">🏷️</span><h4>Value Objects विरुद्ध Entities</h4><p>ओळख विरुद्ध मूल्याने समानता.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="immutability/"><span class="status live">थेट</span><span class="ico">🧊</span><h4>Immutability</h4><p>निर्मितीनंतर कधीही न बदलणारे objects.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="construction-invariants/"><span class="status live">थेट</span><span class="ico">🏗️</span><h4>Construction आणि Invariants</h4><p>अगदी पहिल्या ओळीपासून वैध objects.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="equality-identity/"><span class="status live">थेट</span><span class="ico">⚖️</span><h4>Equality आणि Identity</h4><p>दोन objects एकच object कधी असतात.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="encapsulating-collections/"><span class="status live">थेट</span><span class="ico">📚</span><h4>Encapsulating Collections</h4><p>तुमच्या अंतर्गत lists आणि maps कधीही बाहेर जाऊ देऊ नका.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="errors-as-objects/"><span class="status live">थेट</span><span class="ico">🚨</span><h4>Errors as Objects</h4><p>टाइप सिस्टीममध्ये अपयशाचे मॉडेल करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="anemic-domain-model/"><span class="status live">थेट</span><span class="ico">🩸</span><h4>Anemic Domain Model</h4><p>लॉजिकविरहित objects चा अँटी-पॅटर्न.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="uml-relationships/"><span class="status live">थेट</span><span class="ico">📐</span><h4>UML Class Relationships</h4><p>Association, aggregation, composition, dependency.</p><span class="go">वाचा →</span></a>
+      </div>
+
+      <h3 class="group-title">🧭 डिझाइन तत्त्वे</h3>
+      <div class="topic-grid">
+        <a class="topic-card" href="single-responsibility/"><span class="status live">थेट</span><span class="ico">1️⃣</span><h4>Single Responsibility</h4><p>प्रत्येक क्लाससाठी बदलण्याचे एकच कारण.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="open-closed/"><span class="status live">थेट</span><span class="ico">🔓</span><h4>Open / Closed</h4><p>विस्तारासाठी खुले, बदलासाठी बंद.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="liskov-substitution/"><span class="status live">थेट</span><span class="ico">🔁</span><h4>Liskov Substitution</h4><p>Subtypes ने बेस कॉन्ट्रॅक्ट पाळलाच पाहिजे.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="interface-segregation/"><span class="status live">थेट</span><span class="ico">✂️</span><h4>Interface Segregation</h4><p>एका मोठ्यापेक्षा अनेक लहान इंटरफेस चांगले.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="dependency-inversion/"><span class="status live">थेट</span><span class="ico">🔗</span><h4>Dependency Inversion</h4><p>तपशिलांवर नव्हे, abstractions वर अवलंबून राहा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="dependency-injection/"><span class="status live">थेट</span><span class="ico">💉</span><h4>Dependency Injection</h4><p>collaborators आत पाठवा, त्यांना new करू नका.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="coupling-cohesion/"><span class="status live">थेट</span><span class="ico">🧲</span><h4>Coupling आणि Cohesion</h4><p>बदलण्याजोग्या कोडमागील दोन शक्ती.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="law-of-demeter/"><span class="status live">थेट</span><span class="ico">📞</span><h4>Law of Demeter</h4><p>अनोळखींशी नव्हे, मित्रांशी बोला.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="tell-dont-ask/"><span class="status live">थेट</span><span class="ico">🗣️</span><h4>Tell, Don't Ask</h4><p>आदेश पाठवा, स्थितीची चौकशी करू नका.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="when-not-to-use-oop/"><span class="status live">थेट</span><span class="ico">🚫</span><h4>OOP कधी वापरू नये</h4><p>जिथे functions किंवा data objects पेक्षा चांगले.</p><span class="go">वाचा →</span></a>
       </div>
     </div>
   </section>
@@ -57,14 +87,14 @@
   <section id="creational">
     <div class="wrap">
       <div class="eyebrow">Gang of Four</div>
-      <h2>क्रिएशनल पॅटर्न्स</h2>
-      <p class="group-sub">ऑब्जेक्ट्स लवचिकपणे आणि सुरक्षितपणे कसे तयार होतात.</p>
+      <h2>Creational Patterns</h2>
+      <p class="group-sub">Objects कसे तयार होतात, लवचिकपणे आणि सुरक्षितपणे.</p>
       <div class="topic-grid">
-        <a class="topic-card" href="singleton/"><span class="status live">थेट</span><span class="ico">1️⃣</span><h4>Singleton</h4><p>ग्लोबल ॲक्सेस पॉइंटसह एकच शेअर केलेला इन्स्टन्स.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="factory-method/"><span class="status live">थेट</span><span class="ico">🏭</span><h4>Factory Method</h4><p>कोणता ऑब्जेक्ट तयार करायचा हे सबक्लासेसना ठरवू द्या.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="abstract-factory/"><span class="status live">थेट</span><span class="ico">🏗️</span><h4>Abstract Factory</h4><p>संबंधित ऑब्जेक्ट्सचे कुटुंब एकत्रितपणे तयार करा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="builder/"><span class="status live">थेट</span><span class="ico">🧱</span><h4>Builder</h4><p>गुंतागुंतीचे ऑब्जेक्ट्स टप्प्याटप्प्याने तयार करा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="prototype/"><span class="status live">थेट</span><span class="ico">🧬</span><h4>Prototype</h4><p>अस्तित्वात असलेल्या ऑब्जेक्ट्सचे क्लोन करून नवे तयार करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="singleton/"><span class="status live">थेट</span><span class="ico">1️⃣</span><h4>Singleton</h4><p>ग्लोबल अ‍ॅक्सेस पॉइंटसह एकच शेअर्ड instance.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="factory-method/"><span class="status live">थेट</span><span class="ico">🏭</span><h4>Factory Method</h4><p>कोणते object तयार करायचे हे subclasses ना ठरवू द्या.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="abstract-factory/"><span class="status live">थेट</span><span class="ico">🏗️</span><h4>Abstract Factory</h4><p>संबंधित objects चे कुटुंब एकत्र तयार करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="builder/"><span class="status live">थेट</span><span class="ico">🧱</span><h4>Builder</h4><p>गुंतागुंतीचे objects टप्प्याटप्प्याने बनवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="prototype/"><span class="status live">थेट</span><span class="ico">🧬</span><h4>Prototype</h4><p>अस्तित्वात असलेल्यांची क्लोन करून नवे objects तयार करा.</p><span class="go">वाचा →</span></a>
       </div>
     </div>
   </section>
@@ -72,16 +102,16 @@
   <section id="structural">
     <div class="wrap">
       <div class="eyebrow">Gang of Four</div>
-      <h2>स्ट्रक्चरल पॅटर्न्स</h2>
-      <p class="group-sub">ऑब्जेक्ट्स आणि क्लासेस मोठ्या रचनांमध्ये कसे एकत्र येतात.</p>
+      <h2>Structural Patterns</h2>
+      <p class="group-sub">Objects आणि classes मोठ्या रचनांमध्ये कसे एकत्र येतात.</p>
       <div class="topic-grid">
-        <a class="topic-card" href="adapter/"><span class="status live">थेट</span><span class="ico">🔌</span><h4>Adapter</h4><p>विसंगत इंटरफेस एकत्र काम करण्यास लावा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="bridge/"><span class="status live">थेट</span><span class="ico">🌉</span><h4>Bridge</h4><p>ॲब्स्ट्रॅक्शनला त्याच्या इम्प्लिमेंटेशनपासून वेगळे करा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="composite/"><span class="status live">थेट</span><span class="ico">🌳</span><h4>Composite</h4><p>एकल ऑब्जेक्ट्स आणि गटांना एकसमान वागणूक द्या.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="decorator/"><span class="status live">थेट</span><span class="ico">🎁</span><h4>Decorator</h4><p>ऑब्जेक्ट्सना गुंडाळून त्यांना नवीन वर्तन जोडा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="facade/"><span class="status live">थेट</span><span class="ico">🚪</span><h4>Facade</h4><p>गुंतागुंतीच्या सबसिस्टमवर एक साधा दर्शनी भाग.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="flyweight/"><span class="status live">थेट</span><span class="ico">🍃</span><h4>Flyweight</h4><p>प्रचंड संख्येला स्वस्तात आधार देण्यासाठी ऑब्जेक्ट्स शेअर करा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="proxy/"><span class="status live">थेट</span><span class="ico">🛡️</span><h4>Proxy</h4><p>दुसऱ्या ऑब्जेक्टचा ॲक्सेस नियंत्रित करणारा प्रतिनिधी.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="adapter/"><span class="status live">थेट</span><span class="ico">🔌</span><h4>Adapter</h4><p>विसंगत इंटरफेसना एकत्र काम करायला लावा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="bridge/"><span class="status live">थेट</span><span class="ico">🌉</span><h4>Bridge</h4><p>abstraction ला त्याच्या implementation पासून वेगळे करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="composite/"><span class="status live">थेट</span><span class="ico">🌳</span><h4>Composite</h4><p>वैयक्तिक objects आणि गटांना सारखेच वागवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="decorator/"><span class="status live">थेट</span><span class="ico">🎁</span><h4>Decorator</h4><p>objects भोवती आवरण घालून त्यांना वर्तन जोडा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="facade/"><span class="status live">थेट</span><span class="ico">🚪</span><h4>Facade</h4><p>गुंतागुंतीच्या subsystem वर एक साधे दर्शनी रूप.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="flyweight/"><span class="status live">थेट</span><span class="ico">🍃</span><h4>Flyweight</h4><p>प्रचंड संख्येला स्वस्तात आधार देण्यासाठी objects शेअर करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="proxy/"><span class="status live">थेट</span><span class="ico">🛡️</span><h4>Proxy</h4><p>दुसऱ्या object चा अ‍ॅक्सेस नियंत्रित करणारा स्टँड-इन.</p><span class="go">वाचा →</span></a>
       </div>
     </div>
   </section>
@@ -89,28 +119,28 @@
   <section id="behavioral">
     <div class="wrap">
       <div class="eyebrow">Gang of Four</div>
-      <h2>बिहेवियरल पॅटर्न्स</h2>
-      <p class="group-sub">ऑब्जेक्ट्स एकमेकांशी कसे संवाद साधतात आणि जबाबदारी कशी वाटून घेतात.</p>
+      <h2>Behavioral Patterns</h2>
+      <p class="group-sub">Objects कसे संवाद साधतात आणि जबाबदारी वाटून घेतात.</p>
       <div class="topic-grid">
-        <a class="topic-card" href="chain-of-responsibility/"><span class="status live">थेट</span><span class="ico">⛓️</span><h4>Chain of Responsibility</h4><p>विनंती हँडलर्सच्या साखळीतून पुढे पाठवा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="command/"><span class="status live">थेट</span><span class="ico">🎮</span><h4>Command</h4><p>विनंतीला एका स्वतंत्र ऑब्जेक्टमध्ये रूपांतरित करा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="interpreter/"><span class="status live">थेट</span><span class="ico">🗣️</span><h4>Interpreter</h4><p>एका छोट्या भाषेतील वाक्यांचे मूल्यांकन करा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="iterator/"><span class="status live">थेट</span><span class="ico">🔁</span><h4>Iterator</h4><p>कलेक्शन उघड न करता त्यातून फिरा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="mediator/"><span class="status live">थेट</span><span class="ico">🕹️</span><h4>Mediator</h4><p>ऑब्जेक्ट्सचा संच कसा संवाद साधतो हे केंद्रीकृत करा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="memento/"><span class="status live">थेट</span><span class="ico">💾</span><h4>Memento</h4><p>ऑब्जेक्टची स्थिती टिपा आणि पुन्हा प्रस्थापित करा.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="observer/"><span class="status live">थेट</span><span class="ico">👀</span><h4>Observer</h4><p>स्थिती बदलल्यावर अवलंबून असणाऱ्यांना सूचित करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="chain-of-responsibility/"><span class="status live">थेट</span><span class="ico">⛓️</span><h4>Chain of Responsibility</h4><p>handlers च्या साखळीतून विनंती पुढे पाठवा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="command/"><span class="status live">थेट</span><span class="ico">🎮</span><h4>Command</h4><p>विनंतीला एक स्वतंत्र object मध्ये रूपांतरित करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="interpreter/"><span class="status live">थेट</span><span class="ico">🗣️</span><h4>Interpreter</h4><p>एका लहान भाषेतील वाक्यांचे मूल्यमापन करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="iterator/"><span class="status live">थेट</span><span class="ico">🔁</span><h4>Iterator</h4><p>collection उघड न करता तिच्यातून फिरा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="mediator/"><span class="status live">थेट</span><span class="ico">🕹️</span><h4>Mediator</h4><p>objects चा एक संच कसा संवाद साधतो ते केंद्रित करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="memento/"><span class="status live">थेट</span><span class="ico">💾</span><h4>Memento</h4><p>object ची स्थिती जतन करा आणि परत आणा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="observer/"><span class="status live">थेट</span><span class="ico">👀</span><h4>Observer</h4><p>स्थिती बदलल्यावर अवलंबितांना सूचित करा.</p><span class="go">वाचा →</span></a>
         <a class="topic-card" href="state/"><span class="status live">थेट</span><span class="ico">🚦</span><h4>State</h4><p>अंतर्गत स्थिती बदलल्यावर वर्तन बदला.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="strategy/"><span class="status live">थेट</span><span class="ico">♟️</span><h4>Strategy</h4><p>रनटाइमला अदलाबदल करण्याजोगे अल्गोरिदम बदला.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="template-method/"><span class="status live">थेट</span><span class="ico">📋</span><h4>Template Method</h4><p>अल्गोरिदमचा सांगाडा निश्चित करा, टप्पे बदला.</p><span class="go">वाचा →</span></a>
-        <a class="topic-card" href="visitor/"><span class="status live">थेट</span><span class="ico">🧭</span><h4>Visitor</h4><p>क्लासेस न बदलता नवीन ऑपरेशन्स जोडा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="strategy/"><span class="status live">थेट</span><span class="ico">♟️</span><h4>Strategy</h4><p>रनटाइमला परस्पर बदलण्याजोगे algorithms अदलाबदल करा.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="template-method/"><span class="status live">थेट</span><span class="ico">📋</span><h4>Template Method</h4><p>algorithm चा सांगाडा निश्चित करा, टप्पे बदला.</p><span class="go">वाचा →</span></a>
+        <a class="topic-card" href="visitor/"><span class="status live">थेट</span><span class="ico">🧭</span><h4>Visitor</h4><p>classes न बदलता operations जोडा.</p><span class="go">वाचा →</span></a>
       </div>
     </div>
   </section>
 
   <footer>
     <div class="wrap">
-      <p>OOP आणि डिझाइन पॅटर्न्स - एक व्हिज्युअल नॉलेज हब · काय · का · कसे · डायग्राम · फ्लो · तडजोडी · केसेस</p>
-      <p>मजकुराचा आकार आणि थीमसाठी तरंगणारे <strong>Aa</strong> बटण वापरा, आणि इंग्रजी किंवा मराठीसाठी 🌐 मेनू वापरा.</p>
+      <p>OOP आणि डिझाइन पॅटर्न्स - एक व्हिज्युअल नॉलेज हब · काय · का · कसे · डायग्राम्स · फ्लो · ट्रेड-ऑफ्स · केसेस</p>
+      <p>मजकुराचा आकार आणि थीमसाठी फ्लोटिंग <strong>Aa</strong> बटण वापरा, आणि इंग्रजी किंवा मराठीसाठी 🌐 मेनू वापरा.</p>
     </div>
   </footer>
 
