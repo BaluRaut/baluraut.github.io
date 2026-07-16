@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anemic Domain Model in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to the Anemic Domain Model anti-pattern: data-only objects with logic in services, why it forfeits encapsulation, the rich domain model alternative, when anemic objects are fine, with TypeScript, Python and Ruby." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>The Anemic Domain Model - objects with data but no behavior</h1>
+      <p class="lede">An anemic domain model is a codebase where your <strong>entities are bags of getters and setters</strong> and every rule lives in a separate service layer. It looks object-oriented, but it is procedural code wearing a class costume. The rich alternative puts the behavior next to the data it protects, so an <code>Order</code> enforces its own invariants instead of trusting an <code>OrderService</code> to remember.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Encapsulation</span>
+        <span class="pill">Rich vs anemic</span>
+        <span class="pill">Invariants</span>
+        <span class="pill">Service sprawl</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Anemic Domain Model?</h2>
+      <p class="muted">An <strong>anemic domain model</strong> is a design where domain objects carry state but almost no logic. The <code>Order</code>, <code>Cart</code>, and <code>Invoice</code> classes expose public fields (or getters and setters for every field) and nothing else. All the actual behavior - validating a transition, calculating a total, applying a discount - is pushed into stateless service classes that reach into those objects, read the data, mutate it, and write it back. The objects are anemic because the blood, the behavior, has been drained out of them.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🩸</span> Data-only entities</h4>
+          <p>Classes like <code>Order</code> hold fields and accessors. They have no methods that mean anything in the business language, only <code>getStatus()</code> and <code>setStatus()</code>.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏭</span> Fat service layer</h4>
+          <p>An <code>OrderService</code> owns every rule. It decides when an order may ship, how totals are computed, and which transitions are legal - reading and writing the entity from outside.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔓</span> Invariants left open</h4>
+          <p>Because any caller can set any field, nothing guarantees the object is ever in a valid state. The rules live somewhere else, and only if the caller remembered to route through the service.</p>
+        </div>
+      </div>
+
+      <h3>Anemic versus rich, side by side</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Anemic model</th><th>Rich model</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Entity</strong></td><td>Public fields, getters and setters only</td><td>Private state, intention-revealing methods</td></tr>
+            <tr><td><strong>Business rules</strong></td><td>Scattered across service classes</td><td>Live on the object that owns the data</td></tr>
+            <tr><td><strong>Valid state</strong></td><td>Enforced by convention, if at all</td><td>Enforced in the constructor and every method</td></tr>
+            <tr><td><strong>Change a rule</strong></td><td>Hunt through every service that touches the field</td><td>Edit one method on one class</td></tr>
+            <tr><td><strong>Feels like</strong></td><td>Procedural code with classes as records</td><td>Objects that model the domain</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> the test is not "do I have classes" but "do my classes have behavior." If deleting every method except getters and setters would not break your entities, they are anemic and the object-orientation is an illusion. Martin Fowler named this an anti-pattern precisely because it pays the cost of a domain model (mapping, hydration) while forfeiting its benefit (encapsulated behavior).</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why it matters</h2>
+      <p class="muted">The anemic style is seductive because it is easy to start and mirrors database rows one-to-one. The cost arrives later, when the same rule has to be re-checked in three services and one of them forgets.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Encapsulation is forfeited</h4><p>Public setters mean any code anywhere can put an <code>Order</code> into an impossible state - shipped before paid, negative quantity. The object cannot defend itself, so the guarantee has to be repeated everywhere.</p></div>
+        <div class="card"><h4>🧭 Logic loses its home</h4><p>When behavior does not live with data, the same total-calculation or state-check reappears in <code>OrderService</code>, <code>CheckoutService</code>, and <code>ReportService</code>. Duplication drifts and the copies quietly disagree.</p></div>
+        <div class="card"><h4>🔍 The domain becomes unreadable</h4><p>To learn what an order can do, you cannot read the <code>Order</code> class - you must grep across a service layer. The ubiquitous language of the business never shows up as methods.</p></div>
+        <div class="card"><h4>🧪 Testing gets awkward</h4><p>Rules trapped in stateless services usually need mocks for a repository, a gateway, and a clock just to assert "you cannot ship an unpaid order," a fact that is really about one object.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Anemic Domain Model explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>An anemic object is a <strong>fill-in-the-blank worksheet</strong> with no answer key. Anyone can write anything in the boxes; the rules for what counts as correct live in the teacher's head, in another room. A rich object is a worksheet that refuses invalid answers as you write them.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a <strong>struct with a manager function</strong>. You have a data record and a pile of free functions that operate on it. That is fine in C, but in an object language you have paid for classes and thrown away the one feature - behavior next to state - that justifies them.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Imagine a <strong>bank account whose balance anyone can overwrite</strong>, where the rule "never go below zero" lives only in the teller's manual. If a teller forgets to open the manual, the account goes negative. A rich model bakes the rule into the account itself.</p></div>
+        <div class="card"><h4><span class="ico">🚗</span> Everyday version</h4><p>A car with the <strong>engine, brakes, and steering ripped out and left in the garage</strong>, next to a note saying "the mechanic will operate these for you." It has all the parts of a car and none of the ability to drive. The behavior was separated from the thing that needs it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How to recognize it and fix it</h2>
+      <p class="muted">The refactor from anemic to rich is mechanical: find a rule inside a service, find the object whose data it reads, and move the rule onto that object as a named method. Then make the fields private so nobody can bypass it.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🩸</span> The anemic shape</h4>
+          <p>An <code>Order</code> with public <code>status</code>, <code>items</code>, and <code>paidAt</code>, plus an <code>OrderService.markPaid</code>, <code>OrderService.ship</code>, and <code>OrderService.total</code> that read and mutate those fields from the outside.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">💪</span> The rich shape</h4>
+          <p>The same <code>Order</code> with private state and methods <code>pay()</code>, <code>ship()</code>, and <code>total()</code>. Each method checks the invariant first, so an unpaid order simply cannot ship, no matter who calls it.</p>
+        </div>
+      </div>
+
+      <h3>The classes and messages</h3>
+      <div class="diagram">
+        <div class="cap">Anemic: the service holds all behavior; the entity is a data bag</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        +String status
+        +List items
+        +DateTime paidAt
+        +getStatus() String
+        +setStatus(s) void
+    }
+    class OrderService {
+        +markPaid(order) void
+        +ship(order) void
+        +total(order) Money
+    }
+    class OrderRepository {
+        &lt;&lt;interface&gt;&gt;
+        +save(order) void
+    }
+    OrderService ..> Order : reads and mutates
+    OrderService ..> OrderRepository : persists
+        </pre>
+      </div>
+
+      <h3>The same domain, rich instead of anemic</h3>
+      <div class="diagram">
+        <div class="cap">Rich: behavior lives on the entity; the service only coordinates</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        -Status status
+        -List~LineItem~ items
+        -DateTime paidAt
+        +pay(clock) void
+        +ship() Shipment
+        +total() Money
+        +canShip() Boolean
+    }
+    class LineItem {
+        -int quantity
+        -Money unitPrice
+        +subtotal() Money
+    }
+    class PlaceOrderService {
+        +handle(command) void
+    }
+    Order *-- LineItem : contains
+    PlaceOrderService ..> Order : calls methods
+        </pre>
+      </div>
+
+      <h3>Contrast in three languages: anemic vs rich</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// ANEMIC: Order is a data bag, OrderService does everything.
+class Order {
+  status: "pending" | "paid" | "shipped" = "pending";
+  items: { quantity: number; unitPriceCents: number }[] = [];
+  paidAt: Date | null = null;
+}
+
+class OrderService {
+  markPaid(order: Order, clock: () => Date): void {
+    // The rule lives out here, and nothing forces callers through it.
+    order.status = "paid";
+    order.paidAt = clock();
+  }
+  ship(order: Order): void {
+    if (order.status !== "paid") throw new Error("Order not paid");
+    order.status = "shipped";
+  }
+  totalCents(order: Order): number {
+    return order.items.reduce((s, i) => s + i.quantity * i.unitPriceCents, 0);
+  }
+}
+
+// A caller can bypass every rule; the object cannot defend itself.
+const bad = new Order();
+bad.status = "shipped"; // shipped without ever being paid. Nothing stops it.
+
+// RICH: behavior and invariants live on the Order itself.
+class RichOrder {
+  private status: "pending" | "paid" | "shipped" = "pending";
+  private paidAt: Date | null = null;
+  constructor(private readonly items: LineItem[]) {
+    if (items.length === 0) throw new Error("Order needs at least one line item");
+  }
+  pay(clock: () => Date): void {
+    if (this.status !== "pending") throw new Error("Only a pending order can be paid");
+    this.status = "paid";
+    this.paidAt = clock();
+  }
+  ship(): void {
+    if (this.status !== "paid") throw new Error("Cannot ship an unpaid order");
+    this.status = "shipped";
+  }
+  total(): Money {
+    return this.items.reduce((sum, i) => sum.add(i.subtotal()), Money.zero());
+  }
+}
+
+const order = new RichOrder([new LineItem(2, Money.cents(1999))]);
+order.pay(() => new Date());
+order.ship();                 // legal: it was paid first
+console.log(order.total().format());  // behavior lives where the data lives</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># ANEMIC: Order is a data bag, OrderService does everything.
+from dataclasses import dataclass, field
+from datetime import datetime
+
+@dataclass
+class Order:
+    status: str = "pending"
+    items: list = field(default_factory=list)
+    paid_at: datetime | None = None
+
+class OrderService:
+    def mark_paid(self, order: Order, now: datetime) -> None:
+        # The rule lives out here; nothing forces callers through it.
+        order.status = "paid"
+        order.paid_at = now
+
+    def ship(self, order: Order) -> None:
+        if order.status != "paid":
+            raise ValueError("Order not paid")
+        order.status = "shipped"
+
+    def total_cents(self, order: Order) -> int:
+        return sum(i["quantity"] * i["unit_price_cents"] for i in order.items)
+
+# A caller can bypass every rule; the object cannot defend itself.
+bad = Order()
+bad.status = "shipped"  # shipped without ever being paid. Nothing stops it.
+
+# RICH: behavior and invariants live on the Order itself.
+class RichOrder:
+    def __init__(self, items: list["LineItem"]):
+        if not items:
+            raise ValueError("Order needs at least one line item")
+        self._items = items
+        self._status = "pending"
+        self._paid_at: datetime | None = None
+
+    def pay(self, now: datetime) -> None:
+        if self._status != "pending":
+            raise ValueError("Only a pending order can be paid")
+        self._status = "paid"
+        self._paid_at = now
+
+    def ship(self) -> None:
+        if self._status != "paid":
+            raise ValueError("Cannot ship an unpaid order")
+        self._status = "shipped"
+
+    def total(self) -> "Money":
+        return sum((i.subtotal() for i in self._items), Money.zero())
+
+order = RichOrder([LineItem(2, Money.cents(1999))])
+order.pay(datetime.now())
+order.ship()                       # legal: it was paid first
+print(order.total().format())      # behavior lives where the data lives</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># ANEMIC: Order is a data bag, OrderService does everything.
+class Order
+  attr_accessor :status, :items, :paid_at
+  def initialize
+    @status = "pending"
+    @items = []
+    @paid_at = nil
+  end
+end
+
+class OrderService
+  def mark_paid(order, now)
+    # The rule lives out here; nothing forces callers through it.
+    order.status = "paid"
+    order.paid_at = now
+  end
+
+  def ship(order)
+    raise "Order not paid" unless order.status == "paid"
+    order.status = "shipped"
+  end
+
+  def total_cents(order)
+    order.items.sum { |i| i[:quantity] * i[:unit_price_cents] }
+  end
+end
+
+# A caller can bypass every rule; the object cannot defend itself.
+bad = Order.new
+bad.status = "shipped"  # shipped without ever being paid. Nothing stops it.
+
+# RICH: behavior and invariants live on the Order itself.
+class RichOrder
+  def initialize(items)
+    raise "Order needs at least one line item" if items.empty?
+    @items = items
+    @status = "pending"
+    @paid_at = nil
+  end
+
+  def pay(now)
+    raise "Only a pending order can be paid" unless @status == "pending"
+    @status = "paid"
+    @paid_at = now
+  end
+
+  def ship
+    raise "Cannot ship an unpaid order" unless @status == "paid"
+    @status = "shipped"
+  end
+
+  def total
+    @items.reduce(Money.zero) { |sum, i| sum.add(i.subtotal) }
+  end
+end
+
+order = RichOrder.new([LineItem.new(2, Money.cents(1999))])
+order.pay(Time.now)
+order.ship                       # legal: it was paid first
+puts order.total.format          # behavior lives where the data lives</code></pre>
+      </div>
+      <p class="muted">Notice what moved. In the anemic version any line of code can set <code>status = "shipped"</code> and skip payment entirely. In the rich version the field is private and the only door in is <code>ship()</code>, which refuses unless the order was paid. The rule went from a convention you hope everyone follows to a guarantee the object enforces.</p>
+
+      <h3>When anemic is the right call</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// DTOs and API payloads SHOULD be anemic. They carry data across a
+// boundary and have no invariants of their own to protect.
+interface CreateOrderRequest {
+  customerId: string;
+  lines: { sku: string; quantity: number }[];
+  couponCode?: string;
+}
+
+// The wire type is a plain record. Behavior belongs on the domain object
+// you build FROM it, not on the transport shape itself.
+function toDomain(req: CreateOrderRequest): RichOrder {
+  const items = req.lines.map(l => LineItem.fromSku(l.sku, l.quantity));
+  return new RichOrder(items); // the RichOrder enforces the rules
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># DTOs and API payloads SHOULD be anemic. They carry data across a
+# boundary and have no invariants of their own to protect.
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class CreateOrderRequest:
+    customer_id: str
+    lines: list[dict]           # {"sku": str, "quantity": int}
+    coupon_code: str | None = None
+
+# The wire type is a plain record. Behavior belongs on the domain object
+# you build FROM it, not on the transport shape itself.
+def to_domain(req: CreateOrderRequest) -> "RichOrder":
+    items = [LineItem.from_sku(l["sku"], l["quantity"]) for l in req.lines]
+    return RichOrder(items)     # the RichOrder enforces the rules</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># DTOs and API payloads SHOULD be anemic. They carry data across a
+# boundary and have no invariants of their own to protect.
+CreateOrderRequest = Struct.new(:customer_id, :lines, :coupon_code, keyword_init: true)
+# lines: [{ sku: "ABC", quantity: 2 }]
+
+# The wire type is a plain record. Behavior belongs on the domain object
+# you build FROM it, not on the transport shape itself.
+def to_domain(req)
+  items = req.lines.map { |l| LineItem.from_sku(l[:sku], l[:quantity]) }
+  RichOrder.new(items)          # the RichOrder enforces the rules
+end</code></pre>
+      </div>
+      <p class="muted">Anemic is not always wrong. Data transfer objects, API request and response bodies, event payloads, and read-model projections have no behavior to protect, so giving them methods would be noise. The anti-pattern is specifically about <em>domain entities</em> with real business rules being reduced to records while the rules leak into services.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the anemic shipping flow where the service does everything, the rich flow where the object defends itself, and the boundary where an anemic DTO is legitimately turned into a rich entity.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Anemic: the service reads the entity, checks the rule, and writes it back</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Controller
+    participant S as 🏭 OrderService
+    participant O as 🩸 Order (data bag)
+    participant R as 🗄️ OrderRepository
+
+    C->>S: ship(orderId)
+    S->>R: findById(orderId)
+    R-->>S: order
+    S->>O: getStatus()
+    O-->>S: "paid"
+    Note over S,O: The rule lives in the service, not the object
+    S->>O: setStatus("shipped")
+    S->>R: save(order)
+    R-->>S: ok
+    S-->>C: shipped
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Rich: the caller sends one message and the object enforces its own invariant</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🖥️ Controller
+    participant S as 🎯 ShipOrderService
+    participant O as 💪 Order (rich)
+    participant R as 🗄️ OrderRepository
+
+    C->>S: handle(shipCommand)
+    S->>R: findById(orderId)
+    R-->>S: order
+    S->>O: ship()
+    alt order is paid
+        O->>O: change status to shipped
+        O-->>S: shipment
+        S->>R: save(order)
+        S-->>C: shipped
+    else order not paid
+        O-->>S: throw CannotShipUnpaid
+        S-->>C: rejected
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - The boundary: an anemic DTO arrives and is mapped into a rich entity</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant HTTP as 🌐 HTTP layer
+    participant M as 🔁 Mapper
+    participant DTO as 📦 CreateOrderRequest
+    participant O as 💪 Order (rich)
+
+    HTTP->>DTO: parse JSON body
+    Note over DTO: DTO is legitimately anemic, just transport
+    HTTP->>M: toDomain(dto)
+    M->>DTO: read fields
+    DTO-->>M: customerId, lines
+    M->>O: new Order(lineItems)
+    O->>O: validate invariants in constructor
+    O-->>M: valid order or throws
+    M-->>HTTP: rich Order ready to use
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From spotting an anemic model to a healthy rich one, the whole refactor in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the smell</h4><p>Your entities are nothing but getters and setters, and a growing set of <code>...Service</code> classes hold every rule. That combination is the anemic signature.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Locate</span><h4>Find the real rules</h4><p>Search the service layer for the business logic: state transitions, total calculations, discount conditions. These are behaviors that belong on an object.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Map</span><h4>Match each rule to its data</h4><p>For every rule, identify which entity owns the fields it reads and writes. "Cannot ship unless paid" reads <code>status</code> on <code>Order</code>, so it belongs on <code>Order</code>.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Name</span><h4>Choose intention-revealing methods</h4><p>Replace <code>setStatus("shipped")</code> with a domain verb like <code>ship()</code>. The method name should read like the business event, not the field mutation.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Move</span><h4>Relocate the logic onto the entity</h4><p>Cut the rule out of the service and paste it into the new method on the entity, checking the invariant before it mutates state.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Guard</span><h4>Validate in the constructor</h4><p>Ensure an object cannot even be created in an invalid state. An <code>Order</code> with zero line items should throw, not exist.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Close</span><h4>Make the fields private</h4><p>Remove the public setters. Now the only way to change state is through the methods that enforce the rules. Encapsulation is restored.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Thin</span><h4>Shrink the service to a coordinator</h4><p>The service now loads the entity, calls one method, and saves. It orchestrates persistence and transactions, not business rules.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Extract</span><h4>Pull out value objects</h4><p>Concepts like <code>Money</code>, <code>Quantity</code>, or <code>Email</code> become small types with their own rules, draining even more scattered validation into place.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Test behavior without mocks</h4><p>Because rules now live on plain objects, you construct an <code>Order</code> and assert <code>ship()</code> throws. No repository or gateway mock required.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Keep</span><h4>Keep DTOs anemic on purpose</h4><p>Leave request bodies, event payloads, and read models as plain records. You have moved behavior to where it belongs, not everywhere.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">The anemic model rarely arrives on purpose. It grows from framework defaults and a few reasonable-looking shortcuts.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚙️ Getter and setter reflex</h4><p>Auto-generating a getter and setter for every field is the fastest route to anemia. Expose behavior first, and only the accessors the outside world genuinely needs.</p></div>
+        <div class="card"><h4>🏭 Service that never shrinks</h4><p>An <code>OrderService</code> that grows a new method for every rule is a sign the rules have no home. If a method's body is mostly reading and writing one entity's fields, it belongs on that entity.</p></div>
+        <div class="card"><h4>🧬 ORM entities as the domain</h4><p>Letting the persistence framework's row-mapped class be your business model pushes you toward public fields and no behavior. Consider mapping to a separate rich model.</p></div>
+        <div class="card"><h4>🔁 Duplicated invariants</h4><p>The same "cannot go negative" check copied into three services will drift. Move it onto the object once so there is a single source of truth.</p></div>
+        <div class="card"><h4>🦴 Over-correcting to a god entity</h4><p>Fixing anemia by cramming unrelated logic and external calls into one entity is the opposite mistake. Keep behavior that belongs to the object; coordination and I/O stay in services.</p></div>
+        <div class="card"><h4>🧾 Confusing DTOs with entities</h4><p>Adding rules to a transport object, or treating a rich entity like a transport object, blurs the boundary. Keep DTOs data-only and entities behavior-rich, and map between them.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">Anemia is measurable. These signals tell you whether behavior lives with data or has leaked into a service layer.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Method-to-accessor ratio on entities</strong></td><td>If entities are almost all getters and setters with no domain methods, the model is anemic.</td></tr>
+            <tr><td><strong>Public setter count</strong></td><td>Many public setters mean invariants cannot be protected; any caller can reach in and break state.</td></tr>
+            <tr><td><strong>Service lines per entity</strong></td><td>A service class far larger than the entity it operates on shows where the behavior actually lives.</td></tr>
+            <tr><td><strong>Duplicated rule occurrences</strong></td><td>The same validation appearing in several services signals a rule that has no single home.</td></tr>
+            <tr><td><strong>Mocks needed to test a rule</strong></td><td>If asserting a pure business rule requires repository and gateway mocks, the rule is trapped in a service.</td></tr>
+            <tr><td><strong>Invalid states reachable in code</strong></td><td>Count the ways an object can be constructed or mutated into a state the business forbids.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you can describe a class's entire job as "holds fields and lets a service change them," it is anemic. A healthy entity has at least one method whose name a domain expert would recognize, and no public setter that could break an invariant.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative systems where anemic versus rich modeling had real consequences.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · E-commerce checkout with a fat OrderService</h3><div class="role">Pattern: state transitions pulled back onto the entity</div></div></div>
+        <p class="muted">A retail platform had an <code>Order</code> class of pure accessors and an <code>OrderService</code> of several thousand lines holding every transition rule.</p>
+        <ul>
+          <li>A bug let orders ship before payment settled, because one code path set <code>status</code> directly and skipped the service check.</li>
+          <li>The team moved transition rules onto <code>Order</code> as <code>pay()</code>, <code>ship()</code>, and <code>cancel()</code>, each guarding its precondition.</li>
+          <li>Public setters were removed, so the invalid path stopped compiling and could not recur.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A whole class of "impossible" state bugs became unrepresentable, and the service shrank to a thin coordinator around one method call.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>2 · Banking ledger with money math in services</h3><div class="role">Pattern: value objects absorb scattered validation</div></div></div>
+        <p class="muted">A payments team kept balances as raw integers on an <code>Account</code> record, with rounding and currency checks copied across transfer, fee, and refund services.</p>
+        <ul>
+          <li>The copies disagreed on rounding, producing off-by-one-cent discrepancies during reconciliation.</li>
+          <li>They introduced a <code>Money</code> value object owning currency, rounding, and non-negativity, and a rich <code>Account.withdraw()</code> that enforced sufficient funds.</li>
+          <li>Services stopped touching integers directly and simply asked the account to move money.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Reconciliation discrepancies disappeared once one type owned the money rules, and overdraft checks could no longer be forgotten.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📅</span><div><h3>3 · Booking system that kept its API anemic on purpose</h3><div class="role">Pattern: rich entities, anemic transport at the edge</div></div></div>
+        <p class="muted">A reservations platform had rich <code>Reservation</code> entities that enforced overlap and capacity rules, and deliberately anemic request and response objects at the HTTP boundary.</p>
+        <ul>
+          <li>Incoming <code>CreateBookingRequest</code> objects were plain records with no behavior, mapped into rich entities by a thin translator.</li>
+          <li>All availability and cancellation-window rules lived on <code>Reservation</code>, tested with no infrastructure mocks.</li>
+          <li>The wire format could evolve independently without touching a single business rule.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The team got both benefits: a defensible domain core and a flexible API surface, because they chose anemic and rich each where it fit.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Frameworks, functional styles, and typed languages have changed the conversation, but the core tension between data and behavior is as alive as ever.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Domain-driven design revival</h4><p>DDD's aggregates are the mainstream answer to anemia: an entity that guards its own consistency boundary is the rich model made concrete.</p></div>
+        <div class="card"><h4>🧮 Functional core, imperative shell</h4><p>Functional codebases split pure logic from I/O. The pure core carries the behavior, so anemia is avoided by keeping rules and data in the same module, not the same class.</p></div>
+        <div class="card"><h4>🔒 Types that make states unrepresentable</h4><p>Sum types and branded types let you encode "a shipped order was paid" in the type system, pushing invariants even earlier than a runtime check.</p></div>
+        <div class="card"><h4>🧬 ORMs still nudge toward anemia</h4><p>Many persistence frameworks default to public-field entities. Separating a rich domain model from the persistence model remains a live design choice.</p></div>
+        <div class="card"><h4>📨 Events and CQRS embrace anemia at edges</h4><p>Event payloads and read models are intentionally anemic, while the write-side aggregate stays rich. The pattern clarifies where each style belongs.</p></div>
+        <div class="card"><h4>🤖 Generated code amplifies both</h4><p>Scaffolding and AI-assisted code emit getter-and-setter entities fast, so the discipline of moving behavior onto objects matters more, not less.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> the anemic domain model is not "classes without methods are always wrong." It is a reminder that domain entities earn their keep by owning behavior and defending their invariants. Keep the rules on the objects that hold the data, and keep your transport shapes plain - choose each deliberately.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">The anemic model sits in a web of related OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🛡️</span><h4>Encapsulation</h4><p>Why hiding state behind behavior is the whole point.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../tell-dont-ask/"><span class="ico">📣</span><h4>Tell, Don't Ask</h4><p>Send objects messages instead of reading their fields.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single Responsibility</h4><p>Where behavior belongs and where services stay thin.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">💎</span><h4>Value Objects vs Entities</h4><p>Small typed values that absorb scattered rules.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Anemic Domain Model · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

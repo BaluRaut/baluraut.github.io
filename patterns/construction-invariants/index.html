@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Construction &amp; Invariants in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to construction and invariants in OOP: objects valid from the first line, constructors that enforce rules, guard clauses, static factories, avoiding half-built objects, and safe setters, with TypeScript, Python, and Ruby code." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Construction &amp; Invariants - objects that are valid from the first line</h1>
+      <p class="lede">An object should be trustworthy the instant it exists. When a constructor <strong>enforces the invariants</strong> - an Order with at least one line item, an Email that is actually an address, Money that never goes negative - the rest of the system can stop re-checking and just use it. The alternative is a codebase full of half-built objects and defensive null checks that leak everywhere.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Guard clauses</span>
+        <span class="pill">Static factories</span>
+        <span class="pill">No half-built objects</span>
+        <span class="pill">Safe setters</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is construction &amp; invariants?</h2>
+      <p class="muted">An <strong>invariant</strong> is a rule that must always hold true for an object over its entire lifetime: an <code>Order</code> always has at least one line item, a <code>Money</code> value always carries a currency, a <code>ShippingAddress</code> always has a non-empty postal code. <strong>Construction</strong> is the moment you get to guarantee those rules. If the constructor refuses to build anything that would violate them, then every method downstream can assume a valid object and never re-validate.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧱</span> Valid from line one</h4>
+          <p>The constructor either returns a fully valid object or throws. There is no window in which a caller holds a partially initialized, rule-breaking instance.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚧</span> Guard clauses up front</h4>
+          <p>The constructor checks preconditions first and rejects bad input immediately, before assigning any field. Fail fast, close to the source of the mistake.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏭</span> Static factory methods</h4>
+          <p>Named builders like <code>Order.forCustomer(...)</code> or <code>Money.fromCents(...)</code> express intent, validate, and can return cached or subtype instances.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Invariant</strong></td><td>A rule that must always be true for the object</td><td>Order has &ge; 1 line item; total &ge; 0</td></tr>
+            <tr><td><strong>Constructor</strong></td><td>The single choke point that establishes the invariants</td><td>Rejects an empty item list by throwing</td></tr>
+            <tr><td><strong>Guard clause</strong></td><td>An early precondition check that rejects bad input</td><td><code>if (items.length === 0) throw ...</code></td></tr>
+            <tr><td><strong>Static factory</strong></td><td>A named alternative to <code>new</code> that validates and clarifies intent</td><td><code>Email.parse("a@b.com")</code></td></tr>
+            <tr><td><strong>Encapsulated state</strong></td><td>Private fields plus intent-revealing methods, not raw setters</td><td><code>order.addItem(...)</code>, not <code>order.items = ...</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a constructor is a gatekeeper, not a data-loader. Its job is not to copy arguments into fields, it is to refuse to create an object that could ever be invalid. Push validation to the moment of creation and the whole system stops writing defensive checks.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why enforce invariants at construction</h2>
+      <p class="muted">The cheapest place to reject bad data is the boundary where it enters your object model. Every rule you enforce in a constructor is a rule no caller, service, or database ever has to re-check.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ One place to trust</h4><p>If <code>Order</code> can only exist with valid line items, checkout, invoicing, and shipping code never need to guard against an empty order. The invariant is proven once, at birth.</p></div>
+        <div class="card"><h4>💥 Fail fast, fail near</h4><p>A guard clause throws at the exact call site that passed bad input, with a clear message. Bugs surface at creation, not three services later as a mysterious null.</p></div>
+        <div class="card"><h4>🧹 Less defensive noise</h4><p>Without invariants, every method starts with <code>if (this.items == null)</code> checks. Enforce them once and that scattered defensive code simply disappears.</p></div>
+        <div class="card"><h4>🔐 Encapsulation that holds</h4><p>Public setters let any caller drop an object into an illegal state after the fact. Intent-revealing methods that re-check invariants keep the object honest for its whole life.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Construction &amp; invariants explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is like a <strong>form that will not submit</strong> until every required field is filled. You cannot even create the record until the rules are satisfied, so there is no such thing as a half-valid submission floating around.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>The constructor is a <strong>validating parser</strong>: raw input goes in, and either a guaranteed-valid object comes out or it throws. After that line, you never write another <code>if valid</code> check for that object.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of <strong>a bank opening an account</strong>. Identity, minimum deposit, and signatures are verified before the account number is issued. There is no active account that skipped the checks.</p></div>
+        <div class="card"><h4><span class="ico">🏗️</span> Everyday version</h4><p>A building only gets a <strong>certificate of occupancy</strong> once it passes inspection. You do not move families into a half-built structure and inspect it later, you gate on the rules before it opens.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How to enforce invariants in construction</h2>
+      <p class="muted">There are two moves. First, make the constructor reject anything invalid with guard clauses. Second, keep the object valid over time by exposing intent-revealing methods that re-check the invariant, never raw setters that can break it.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🚪</span> Gate at creation</h4>
+          <p>Guard clauses run first: reject empty item lists, negative amounts, malformed emails. Assign fields only after every precondition passes, so the object is never partially built.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Preserve over the lifetime</h4>
+          <p>Mutation flows through methods like <code>addItem</code> or <code>applyDiscount</code> that re-assert the invariant. No public setter can quietly leave the order empty or the total negative.</p>
+        </div>
+      </div>
+
+      <h3>The classes at a glance</h3>
+      <div class="diagram">
+        <div class="cap">An Order composed of validated value objects, built through a static factory</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        -id: string
+        -customerId: string
+        -items: LineItem[]
+        -status: string
+        +forCustomer(customerId, items)$ Order
+        +addItem(item) void
+        +removeItem(sku) void
+        +total() Money
+    }
+    class LineItem {
+        -sku: string
+        -quantity: int
+        -unitPrice: Money
+        +subtotal() Money
+    }
+    class Money {
+        -amountCents: int
+        -currency: string
+        +fromCents(cents, currency)$ Money
+        +add(other) Money
+        +isNegative() bool
+    }
+    class Email {
+        -value: string
+        +parse(raw)$ Email
+    }
+    Order o-- LineItem
+    LineItem *-- Money
+    Order ..> Email
+    note for Order "Constructor throws if items is empty"
+        </pre>
+      </div>
+
+      <h3>A real class enforcing its invariants</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money: a value object that can never be malformed
+class Money {
+  private constructor(
+    readonly amountCents: number,
+    readonly currency: string,
+  ) {}
+
+  // Static factory: validate, then build
+  static fromCents(cents: number, currency: string): Money {
+    if (!Number.isInteger(cents)) throw new Error("amount must be whole cents");
+    if (!/^[A-Z]{3}$/.test(currency)) throw new Error("currency must be ISO 4217");
+    return new Money(cents, currency);
+  }
+
+  add(other: Money): Money {
+    if (other.currency !== this.currency) throw new Error("currency mismatch");
+    return new Money(this.amountCents + other.amountCents, this.currency);
+  }
+}
+
+class LineItem {
+  constructor(
+    readonly sku: string,
+    readonly quantity: number,
+    readonly unitPrice: Money,
+  ) {
+    // Guard clauses run before the object is usable
+    if (!sku.trim()) throw new Error("sku is required");
+    if (!Number.isInteger(quantity) || quantity < 1)
+      throw new Error("quantity must be at least 1");
+  }
+
+  subtotal(): Money {
+    return Money.fromCents(this.unitPrice.amountCents * this.quantity, this.unitPrice.currency);
+  }
+}
+
+class Order {
+  private readonly items: LineItem[];
+
+  // Private: the ONLY way in is the validated factory below
+  private constructor(readonly id: string, readonly customerId: string, items: LineItem[]) {
+    if (items.length === 0) throw new Error("an order needs at least one line item");
+    this.items = [...items]; // defensive copy, no shared mutable reference
+  }
+
+  static forCustomer(customerId: string, items: LineItem[]): Order {
+    if (!customerId.trim()) throw new Error("customerId is required");
+    return new Order(crypto.randomUUID(), customerId, items);
+  }
+
+  // Intent-revealing mutation, NOT a public setter
+  addItem(item: LineItem): void {
+    this.items.push(item);
+  }
+
+  removeItem(sku: string): void {
+    if (this.items.length === 1 && this.items[0].sku === sku)
+      throw new Error("cannot remove the last line item"); // invariant preserved
+    const next = this.items.filter((i) =&gt; i.sku !== sku);
+    this.items.length = 0;
+    this.items.push(...next);
+  }
+
+  total(): Money {
+    return this.items
+      .map((i) =&gt; i.subtotal())
+      .reduce((sum, s) =&gt; sum.add(s));
+  }
+}
+
+// Usage: object is valid the instant it exists
+const order = Order.forCustomer("cust_42", [
+  new LineItem("SKU-BOOK-1", 2, Money.fromCents(1999, "USD")),
+]);
+order.addItem(new LineItem("SKU-PEN-9", 5, Money.fromCents(150, "USD")));
+console.log(order.total().amountCents); // 4748
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from __future__ import annotations
+from dataclasses import dataclass
+from functools import reduce
+import re
+import uuid
+
+
+@dataclass(frozen=True)
+class Money:  # value object: immutable, always well-formed
+    amount_cents: int
+    currency: str
+
+    @staticmethod
+    def from_cents(cents: int, currency: str) -&gt; "Money":
+        if not isinstance(cents, int):
+            raise ValueError("amount must be whole cents")
+        if not re.fullmatch(r"[A-Z]{3}", currency):
+            raise ValueError("currency must be ISO 4217")
+        return Money(cents, currency)
+
+    def add(self, other: "Money") -&gt; "Money":
+        if other.currency != self.currency:
+            raise ValueError("currency mismatch")
+        return Money(self.amount_cents + other.amount_cents, self.currency)
+
+
+class LineItem:
+    def __init__(self, sku: str, quantity: int, unit_price: Money) -&gt; None:
+        # Guard clauses run before any field is trusted
+        if not sku.strip():
+            raise ValueError("sku is required")
+        if not isinstance(quantity, int) or quantity &lt; 1:
+            raise ValueError("quantity must be at least 1")
+        self.sku = sku
+        self.quantity = quantity
+        self.unit_price = unit_price
+
+    def subtotal(self) -&gt; Money:
+        return Money.from_cents(self.unit_price.amount_cents * self.quantity,
+                                self.unit_price.currency)
+
+
+class Order:
+    # Private constructor convention: build via for_customer()
+    def __init__(self, id: str, customer_id: str, items: list[LineItem]) -&gt; None:
+        if len(items) == 0:
+            raise ValueError("an order needs at least one line item")
+        self._id = id
+        self._customer_id = customer_id
+        self._items = list(items)  # defensive copy
+
+    @classmethod
+    def for_customer(cls, customer_id: str, items: list[LineItem]) -&gt; "Order":
+        if not customer_id.strip():
+            raise ValueError("customer_id is required")
+        return cls(str(uuid.uuid4()), customer_id, items)
+
+    def add_item(self, item: LineItem) -&gt; None:  # intent-revealing, not a setter
+        self._items.append(item)
+
+    def remove_item(self, sku: str) -&gt; None:
+        if len(self._items) == 1 and self._items[0].sku == sku:
+            raise ValueError("cannot remove the last line item")  # invariant held
+        self._items = [i for i in self._items if i.sku != sku]
+
+    def total(self) -&gt; Money:
+        return reduce(lambda acc, i: acc.add(i.subtotal()),
+                      self._items[1:], self._items[0].subtotal())
+
+
+# Usage: valid from the first line
+order = Order.for_customer("cust_42", [
+    LineItem("SKU-BOOK-1", 2, Money.from_cents(1999, "USD")),
+])
+order.add_item(LineItem("SKU-PEN-9", 5, Money.from_cents(150, "USD")))
+print(order.total().amount_cents)  # 4748
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>require "securerandom"
+
+# Value object: frozen and always well-formed
+class Money
+  attr_reader :amount_cents, :currency
+
+  def self.from_cents(cents, currency)
+    raise ArgumentError, "amount must be whole cents" unless cents.is_a?(Integer)
+    raise ArgumentError, "currency must be ISO 4217" unless currency.match?(/\A[A-Z]{3}\z/)
+    new(cents, currency)
+  end
+
+  def initialize(amount_cents, currency)
+    @amount_cents = amount_cents
+    @currency = currency
+    freeze
+  end
+
+  def add(other)
+    raise ArgumentError, "currency mismatch" unless other.currency == currency
+    Money.new(amount_cents + other.amount_cents, currency)
+  end
+end
+
+class LineItem
+  attr_reader :sku, :quantity, :unit_price
+
+  def initialize(sku, quantity, unit_price)
+    # Guard clauses reject bad input at construction
+    raise ArgumentError, "sku is required" if sku.to_s.strip.empty?
+    raise ArgumentError, "quantity must be at least 1" unless quantity.is_a?(Integer) &amp;&amp; quantity &gt;= 1
+    @sku = sku
+    @quantity = quantity
+    @unit_price = unit_price
+  end
+
+  def subtotal
+    Money.from_cents(unit_price.amount_cents * quantity, unit_price.currency)
+  end
+end
+
+class Order
+  attr_reader :id, :customer_id
+
+  # Prefer the factory; initialize enforces the core invariant
+  def initialize(id, customer_id, items)
+    raise ArgumentError, "an order needs at least one line item" if items.empty?
+    @id = id
+    @customer_id = customer_id
+    @items = items.dup # defensive copy
+  end
+  private_class_method :new
+
+  def self.for_customer(customer_id, items)
+    raise ArgumentError, "customer_id is required" if customer_id.to_s.strip.empty?
+    allocate.tap { |o| o.send(:initialize, SecureRandom.uuid, customer_id, items) }
+  end
+
+  def add_item(item) # intent-revealing method, not a setter
+    @items.push(item)
+  end
+
+  def remove_item(sku)
+    if @items.size == 1 &amp;&amp; @items.first.sku == sku
+      raise ArgumentError, "cannot remove the last line item" # invariant preserved
+    end
+    @items.reject! { |i| i.sku == sku }
+  end
+
+  def total
+    @items.map(&amp;:subtotal).reduce { |sum, s| sum.add(s) }
+  end
+end
+
+# Usage: the object is valid the moment it is born
+order = Order.for_customer("cust_42", [
+  LineItem.new("SKU-BOOK-1", 2, Money.from_cents(1999, "USD")),
+])
+order.add_item(LineItem.new("SKU-PEN-9", 5, Money.from_cents(150, "USD")))
+puts order.total.amount_cents # 4748
+</code></pre>
+      </div>
+      <p class="muted">Notice what is missing: there is no <code>setItems</code>, no way to construct an empty order, and no path that assigns fields before the guard clauses pass. The constructor is private and the only public entry points, the static factories, validate first. Mutation happens through <code>addItem</code> and <code>removeItem</code>, both of which protect the "at least one item" rule.</p>
+
+      <h3>Before and after: the leaky version</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// ANTI-PATTERN: anemic object with public setters
+class Order {
+  id = "";
+  customerId = "";
+  items: LineItem[] = []; // starts empty and invalid
+  status = "";
+}
+
+// Half-built and rule-breaking, yet the type system is happy
+const order = new Order();
+order.customerId = "cust_42"; // did anyone set items? who knows
+checkout(order);              // may explode on an empty order deep in the call stack
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># ANTI-PATTERN: anemic object, no invariants
+class Order:
+    def __init__(self):
+        self.id = ""
+        self.customer_id = ""
+        self.items = []   # empty and invalid
+        self.status = ""
+
+# Half-built object escapes into the system
+order = Order()
+order.customer_id = "cust_42"   # items never set
+checkout(order)                 # blows up later, far from the mistake
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># ANTI-PATTERN: attr_accessor exposes every field
+class Order
+  attr_accessor :id, :customer_id, :items, :status
+end
+
+# Nothing stops an empty, half-built order
+order = Order.new
+order.customer_id = "cust_42"   # items still nil
+checkout(order)                 # fails somewhere downstream
+</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a successful construction through a factory, a rejected construction that fails fast, and a mutation that refuses to break the invariant.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Valid construction: factory validates, then builds</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Checkout code
+    participant F as 🏭 Order.forCustomer
+    participant Ctor as 🚪 Order constructor
+    participant O as 📦 Order
+
+    C->>F: forCustomer("cust_42", [item])
+    F->>F: guard: customerId not blank
+    F->>Ctor: new Order(id, customerId, items)
+    Ctor->>Ctor: guard: items not empty
+    Ctor->>Ctor: defensive copy of items
+    Ctor-->>F: valid Order
+    F-->>C: valid Order
+    Note over C,O: Object is usable immediately, no re-checks needed
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Invalid input: guard clause fails fast at the call site</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Checkout code
+    participant F as 🏭 Order.forCustomer
+    participant Ctor as 🚪 Order constructor
+
+    C->>F: forCustomer("cust_42", [])
+    F->>F: guard: customerId not blank
+    F->>Ctor: new Order(id, customerId, [])
+    Ctor->>Ctor: guard: items is empty
+    alt items empty
+        Ctor-->>F: throw "needs at least one line item"
+        F-->>C: exception bubbles up here
+    else items present
+        Ctor-->>F: valid Order
+    end
+    Note over C,Ctor: No half-built object ever escapes the factory
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Mutation: a method preserves the invariant over the object's life</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Cart service
+    participant O as 📦 Order
+    participant I as 🧾 items list
+
+    C->>O: removeItem("SKU-BOOK-1")
+    O->>I: how many items remain?
+    I-->>O: this is the last one
+    alt removing the last item
+        O-->>C: throw "cannot remove the last line item"
+    else more than one item
+        O->>I: drop matching sku
+        I-->>O: updated list
+        O-->>C: ok, still valid
+    end
+    Note over O,I: The "at least one item" rule holds after every mutation
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From raw input to a guaranteed-valid object that stays valid, the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Define</span><h4>State the invariants</h4><p>Write down the rules that must always hold: an order has at least one line item, money is never negative, an email matches an address shape. These become the object's contract.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Hide</span><h4>Make the constructor private</h4><p>Prevent arbitrary <code>new</code> calls that could skip validation. Callers must go through a named entry point you control.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Expose</span><h4>Add a static factory method</h4><p>Provide <code>Order.forCustomer(...)</code> or <code>Email.parse(...)</code> so intent is clear and there is a single validated path to creation.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Guard</span><h4>Check preconditions first</h4><p>Guard clauses at the top reject blank ids, empty item lists, and malformed values before any field is assigned. Fail fast with a clear message.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Reject</span><h4>Throw on violation</h4><p>If any rule is broken, throw immediately at the call site that supplied bad input, so the bug surfaces where it was made, not three layers away.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Copy</span><h4>Defensively copy inputs</h4><p>Clone incoming collections so a caller cannot mutate the internal list later and quietly break the invariant from the outside.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Assign</span><h4>Set fields only when valid</h4><p>Only after every guard passes do you store state. The object transitions straight from "not created" to "fully valid," with no half-built middle.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Return</span><h4>Hand back a trustworthy object</h4><p>The factory returns an instance every method can rely on. Downstream code carries no defensive null or emptiness checks.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Encapsulate</span><h4>Expose intent-revealing methods</h4><p>Instead of setters, offer <code>addItem</code>, <code>applyDiscount</code>, <code>cancel</code>. Each expresses a real operation and re-checks the invariant.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Preserve</span><h4>Re-assert rules on mutation</h4><p>A method that would leave the order empty or the balance negative refuses. The invariant holds not just at birth but for the object's whole life.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Compose</span><h4>Build bigger objects from valid parts</h4><p>Because each value object is self-validating, an <code>Order</code> of <code>LineItem</code>s of <code>Money</code> is correct by construction, all the way up.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most invariant bugs come from creating objects in two steps, or from letting callers reach in and change state. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧟 Anemic objects</h4><p>A bag of public fields with no behavior and no rules. Nothing stops an empty order or negative money, so every consumer has to validate instead. The object cannot protect itself.</p></div>
+        <div class="card"><h4>🪣 The empty-then-fill pattern</h4><p>Constructing a blank object and setting fields afterward creates a window where it is invalid. Someone will use it during that window, or forget a field entirely.</p></div>
+        <div class="card"><h4>🔓 Public setters everywhere</h4><p><code>attr_accessor</code>, auto-properties, or exposed fields let any caller drop the object into an illegal state after the fact. Setters that bypass the rules undo the constructor's work.</p></div>
+        <div class="card"><h4>🕳️ Leaking internal collections</h4><p>Returning or storing the caller's list without copying lets outside code mutate internals directly, so the "at least one item" rule can be violated from a distance.</p></div>
+        <div class="card"><h4>🤐 Silent coercion</h4><p>Quietly clamping a negative amount to zero or defaulting a bad currency hides caller mistakes. Guard clauses should reject and explain, not paper over invalid input.</p></div>
+        <div class="card"><h4>🏗️ Validation in a separate step</h4><p>An <code>order.validate()</code> method you must remember to call means invalid objects can and will be used before anyone calls it. Validation belongs in construction, not in an optional afterthought.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You can feel weak invariants in a codebase before you can prove them. These signals tell you whether construction is doing its job.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Defensive checks per method</strong></td><td>Many <code>if x == null</code> or emptiness guards inside business methods mean the constructor is not establishing invariants. The checks migrated downstream.</td></tr>
+            <tr><td><strong>Setter count vs. method count</strong></td><td>A class that is mostly getters and setters is anemic. A healthy domain object has few or no setters and several intent-revealing methods.</td></tr>
+            <tr><td><strong>Number of construction paths</strong></td><td>If an object can be built five different ways, it is hard to guarantee all five validate. Funneling through one factory tightens the guarantee.</td></tr>
+            <tr><td><strong>Invalid-state bugs in production</strong></td><td>Null pointer and "empty order" incidents point to objects escaping creation half-built. Each such bug is a missing guard clause.</td></tr>
+            <tr><td><strong>Test setup complexity</strong></td><td>If building a valid object in a test takes many lines and manual field-setting, construction is not encapsulating its rules well.</td></tr>
+            <tr><td><strong>Distance from cause to crash</strong></td><td>Bugs that surface far from the code that caused them signal late validation. Fail-fast constructors shrink that distance to zero.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you cannot construct the object without it being valid, you never have to check that it is valid. Count the runtime guards outside constructors; every one you can delete after tightening a constructor is proof the invariant now lives in the right place.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where constructor-enforced invariants carry real weight.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payments: a Money value object</h3><div class="role">Pattern: validated value object, no floats</div></div></div>
+        <p class="muted">A payments platform needs amounts that never lose precision and never mix currencies. Money is modeled as integer cents plus an ISO currency code.</p>
+        <ul>
+          <li>The static factory rejects non-integer cents and any currency that is not a valid ISO 4217 code.</li>
+          <li>Arithmetic like <code>add</code> refuses to combine two different currencies, throwing instead of silently converting.</li>
+          <li>The object is immutable, so a shared Money instance can never be mutated into an illegal amount.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> whole categories of rounding and currency-mixing bugs become impossible, because an invalid Money simply cannot be constructed.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>2 · E-commerce: Order aggregate</h3><div class="role">Pattern: aggregate root with a lifetime invariant</div></div></div>
+        <p class="muted">A checkout service treats Order as an aggregate that must always hold at least one line item and a consistent total.</p>
+        <ul>
+          <li>A private constructor plus <code>Order.forCustomer(...)</code> guarantees no order is created empty.</li>
+          <li><code>removeItem</code> refuses to delete the final line item, preserving the invariant through mutation.</li>
+          <li>Line items and money are themselves validated value objects, so the whole aggregate is correct by construction.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> downstream invoicing, tax, and fulfillment code drops its empty-order guards and trusts every Order it receives.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📧</span><div><h3>3 · Notifications: a parsed Email address</h3><div class="role">Pattern: parse, don't validate-and-hope</div></div></div>
+        <p class="muted">A notifications service sends email, SMS, and push. Email addresses enter from signup forms, imports, and webhooks, all untrusted.</p>
+        <ul>
+          <li><code>Email.parse(raw)</code> normalizes and validates once at the boundary, returning a typed Email or throwing.</li>
+          <li>Every function downstream takes an <code>Email</code>, not a <code>string</code>, so "is this a valid address" is answered by the type.</li>
+          <li>Because the value is immutable, a normalized address cannot later be corrupted into an unsendable string.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> bounce rates from malformed addresses drop, and the validation logic lives in exactly one place instead of scattered across senders.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Constructor-enforced invariants are not a legacy OOP habit, they underpin how modern type-driven and domain-driven systems stay correct.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Domain-driven design</h4><p>Aggregates and value objects are defined by the invariants they protect. Enforcing rules at construction is the mechanism that makes an aggregate a real consistency boundary.</p></div>
+        <div class="card"><h4>🔒 Parse, don't validate</h4><p>The functional-programming idea of turning unstructured input into a typed, always-valid value at the boundary is exactly a validating constructor or factory.</p></div>
+        <div class="card"><h4>🧊 Immutability by default</h4><p>Records, frozen dataclasses, and readonly fields make objects that are validated once and never mutated into an illegal state, pairing naturally with strong construction.</p></div>
+        <div class="card"><h4>🏭 Factories over new</h4><p>Named static factories are the norm in modern libraries because they express intent, hide subtype choices, and give validation a single home.</p></div>
+        <div class="card"><h4>🛠️ Type-state and smart constructors</h4><p>Languages increasingly let the type system encode "this object passed its checks," so an invalid instance is unrepresentable, not just unlikely.</p></div>
+        <div class="card"><h4>🌐 Safer API boundaries</h4><p>Deserializing JSON into rich objects through validating factories stops malformed external data from ever entering the domain as a valid-looking instance.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> the most reliable way to make invalid states impossible is to refuse to build them. Put your rules in the constructor and factory, keep objects immutable or mutated only through invariant-preserving methods, and the rest of your system gets simpler and safer for free.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Construction and invariants sit in a web of related OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔐</span><h4>Encapsulation</h4><p>Hiding state so only invariant-preserving methods can change it.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">🧭</span><h4>Value objects vs. entities</h4><p>What Money and Email are, and why identity matters for Order.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../immutability/"><span class="ico">🧊</span><h4>Immutability</h4><p>Validate once, then never let the object change into an illegal state.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../errors-as-objects/"><span class="ico">🚨</span><h4>Errors as objects</h4><p>Modeling the failures a guard clause throws as first-class types.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Construction &amp; Invariants · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

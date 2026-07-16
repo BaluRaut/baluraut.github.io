@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Errors as Objects in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="Treat failure as data, not a magic string. A visual guide to modeling errors as first-class objects: custom exception hierarchies, domain errors carrying context, exceptions vs Result/Either, diagrams, pitfalls, and case studies." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Errors as Objects - modeling failure in the type system</h1>
+      <p class="lede">A failed payment is not a string and not a stray <code>-1</code>. It is a thing with a name, a cause, and context: which card, how much, why the bank said no. When you make errors <strong>first-class objects</strong> instead of magic values, failure becomes something the compiler and your handlers can reason about, route, and recover from.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Exception hierarchies</span>
+        <span class="pill">Domain errors</span>
+        <span class="pill">Result / Either</span>
+        <span class="pill">Typed failure</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What does "errors as objects" mean?</h2>
+      <p class="muted">In object-oriented languages an exception is not a special primitive: it is an <strong>ordinary object</strong> of a class you can subclass, extend, and enrich. "Errors as objects" is the discipline of naming each distinct failure as its own type, giving it fields that carry the facts of what went wrong, and letting callers match on the <em>type</em> rather than parsing a message or checking a numeric code.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🏷️</span> A named type</h4>
+          <p><code>PaymentDeclined</code> is a class, not a string. Handlers catch it by name, so "declined" and "network timeout" take different branches without string matching.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎒</span> Carries context</h4>
+          <p>The object holds the amount, currency, card fingerprint, and decline code. The catch site gets structured data, not a sentence it has to reverse-engineer.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🌳</span> Part of a hierarchy</h4>
+          <p><code>InsufficientFunds</code> extends <code>PaymentDeclined</code> extends a base <code>PaymentError</code>. Catch the base to handle a whole family, or a leaf for one precise case.</p>
+        </div>
+      </div>
+
+      <h3>Ways a failure can be represented</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Representation</th><th>How the caller reacts</th><th>Cost</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Boolean / null return</strong></td><td>Guesses why from thin air</td><td>Loses the reason entirely</td></tr>
+            <tr><td><strong>Numeric error code</strong></td><td>Looks up a constant, hopes it is current</td><td>Untyped, easy to ignore</td></tr>
+            <tr><td><strong>String message</strong></td><td>Parses prose, breaks on rewording</td><td>Fragile, not machine-safe</td></tr>
+            <tr><td><strong>Exception object</strong></td><td>Catches by class, reads fields</td><td>Control flow leaves the happy path</td></tr>
+            <tr><td><strong>Result / Either value</strong></td><td>Must inspect before using the value</td><td>Failure is visible in the signature</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> an error object answers three questions at once - <em>what kind</em> of failure (its class), <em>the specifics</em> (its fields), and <em>where it fits</em> (its place in the hierarchy). A string answers none of them reliably.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why model errors as objects</h2>
+      <p class="muted">Failure is not an afterthought in real systems - a payments service spends most of its edge cases handling the ways money does not move. Making those cases explicit types turns "hope nothing throws" into a checklist the code enforces.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎯 Precise handling</h4><p>Catching <code>InsufficientFunds</code> can prompt "add funds," while <code>CardExpired</code> prompts "update card." A single generic catch cannot tell these apart, so it does the wrong thing for both.</p></div>
+        <div class="card"><h4>📦 Context travels with the failure</h4><p>The decline code, retry-ability, and gateway reference ride inside the object all the way up the stack. No global lookup, no re-deriving facts the origin already knew.</p></div>
+        <div class="card"><h4>🧭 The type system documents failure</h4><p>A <code>Result&lt;Receipt, PaymentError&gt;</code> return type tells every caller, at compile time, that this call can fail and exactly how. Failure stops being a surprise at 3am.</p></div>
+        <div class="card"><h4>🧱 Extends without breaking callers</h4><p>Add <code>FraudSuspected</code> under <code>PaymentDeclined</code> and old handlers that catch the base still work. New handlers opt into the finer case when ready.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Errors as objects explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>A graded exam that just says <strong>"wrong"</strong> teaches you nothing. One that says "wrong: you divided instead of multiplied on question 4" tells you exactly what to fix. An error object is the second kind of feedback.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is the difference between a function returning <code>false</code> and returning a typed <strong>failure value</strong>. One forces you to guess; the other hands you a class you can <code>catch</code> by name and read fields off.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A declined transaction slip lists the <strong>reason code, amount, and merchant</strong>, not just "no." The bank encodes the failure as a structured record so downstream systems act correctly. That slip is an error object.</p></div>
+        <div class="card"><h4><span class="ico">📮</span> Everyday version</h4><p>A returned letter stamped <strong>"no such address"</strong> versus one stamped "moved, forwarding expired." Both are undelivered, but the reason on the envelope decides your next move. The stamp is a typed error.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How to build it</h2>
+      <p class="muted">You do two things: define a <strong>hierarchy</strong> of error classes rooted in one domain base, and decide per operation whether to <strong>raise</strong> them (for truly exceptional, non-local failures) or <strong>return</strong> them as a <code>Result</code> (for expected, business-level outcomes callers must handle inline).</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🌳</span> Design the hierarchy</h4>
+          <p>One base <code>PaymentError</code> so any handler can catch the whole domain. Leaf classes like <code>InsufficientFunds</code> and <code>CardExpired</code> add fields specific to their case. Depth pays for itself the first time you route on it.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔀</span> Raise vs. return</h4>
+          <p>Raise when the caller usually cannot recover here and wants it to bubble (a gateway outage). Return a <code>Result</code> when the failure is an ordinary business outcome the immediate caller must branch on (a declined card).</p>
+        </div>
+      </div>
+
+      <h3>The error hierarchy as a class diagram</h3>
+      <div class="diagram">
+        <div class="cap">A domain error hierarchy - one base, specialized leaves carrying their own context</div>
+        <pre class="mermaid">
+classDiagram
+    class DomainError {
+        &lt;&lt;abstract&gt;&gt;
+        +String code
+        +Boolean retryable
+        +Map context
+        +toLog() Record
+    }
+    class PaymentError {
+        &lt;&lt;abstract&gt;&gt;
+        +Money amount
+        +String currency
+    }
+    class PaymentDeclined {
+        +String declineCode
+        +String gatewayRef
+    }
+    class InsufficientFunds {
+        +Money shortfall
+    }
+    class CardExpired {
+        +String expiry
+    }
+    class GatewayUnavailable {
+        +int statusCode
+    }
+    DomainError &lt;|-- PaymentError
+    PaymentError &lt;|-- PaymentDeclined
+    PaymentDeclined &lt;|-- InsufficientFunds
+    PaymentDeclined &lt;|-- CardExpired
+    PaymentError &lt;|-- GatewayUnavailable
+        </pre>
+      </div>
+
+      <h3>Define the error class, raise it, and handle it</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// A domain error is a real class: named, typed, context-carrying.
+class PaymentError extends Error {
+  constructor(
+    message: string,
+    readonly amount: number,
+    readonly currency: string,
+  ) {
+    super(message);
+    this.name = new.target.name; // keeps the leaf class name
+  }
+}
+
+class InsufficientFunds extends PaymentError {
+  constructor(amount: number, currency: string, readonly shortfall: number) {
+    super(`Short by ${shortfall} ${currency}`, amount, currency);
+  }
+}
+
+class CardExpired extends PaymentError {
+  constructor(amount: number, currency: string, readonly expiry: string) {
+    super(`Card expired ${expiry}`, amount, currency);
+  }
+}
+
+class PaymentGateway {
+  charge(cardBalance: number, expiry: string, amount: number): string {
+    if (expiry &lt; "2026-07") throw new CardExpired(amount, "USD", expiry);
+    if (cardBalance &lt; amount)
+      throw new InsufficientFunds(amount, "USD", amount - cardBalance);
+    return `receipt_${Date.now()}`; // charge succeeded
+  }
+}
+
+// Handle by TYPE, not by parsing a message.
+const gateway = new PaymentGateway();
+try {
+  const receipt = gateway.charge(40, "2027-01", 99.5);
+  console.log("Charged:", receipt);
+} catch (err) {
+  if (err instanceof InsufficientFunds) {
+    console.log(`Ask for ${err.shortfall} ${err.currency} more`);
+  } else if (err instanceof CardExpired) {
+    console.log(`Prompt to update card (was ${err.expiry})`);
+  } else if (err instanceof PaymentError) {
+    console.log("Generic payment failure:", err.message);
+  } else {
+    throw err; // not ours - let it bubble
+  }
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># A domain error is a real class: named, typed, context-carrying.
+class PaymentError(Exception):
+    def __init__(self, message: str, amount: float, currency: str):
+        super().__init__(message)
+        self.amount = amount
+        self.currency = currency
+
+
+class InsufficientFunds(PaymentError):
+    def __init__(self, amount: float, currency: str, shortfall: float):
+        super().__init__(f"Short by {shortfall} {currency}", amount, currency)
+        self.shortfall = shortfall
+
+
+class CardExpired(PaymentError):
+    def __init__(self, amount: float, currency: str, expiry: str):
+        super().__init__(f"Card expired {expiry}", amount, currency)
+        self.expiry = expiry
+
+
+class PaymentGateway:
+    def charge(self, card_balance: float, expiry: str, amount: float) -> str:
+        if expiry &lt; "2026-07":
+            raise CardExpired(amount, "USD", expiry)
+        if card_balance &lt; amount:
+            raise InsufficientFunds(amount, "USD", amount - card_balance)
+        return f"receipt_{amount}"  # charge succeeded
+
+
+# Handle by TYPE, not by parsing a message.
+gateway = PaymentGateway()
+try:
+    receipt = gateway.charge(40, "2027-01", 99.5)
+    print("Charged:", receipt)
+except InsufficientFunds as err:
+    print(f"Ask for {err.shortfall} {err.currency} more")
+except CardExpired as err:
+    print(f"Prompt to update card (was {err.expiry})")
+except PaymentError as err:
+    print("Generic payment failure:", err)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># A domain error is a real class: named, typed, context-carrying.
+class PaymentError &lt; StandardError
+  attr_reader :amount, :currency
+
+  def initialize(message, amount:, currency:)
+    super(message)
+    @amount = amount
+    @currency = currency
+  end
+end
+
+class InsufficientFunds &lt; PaymentError
+  attr_reader :shortfall
+
+  def initialize(amount:, currency:, shortfall:)
+    super("Short by #{shortfall} #{currency}", amount: amount, currency: currency)
+    @shortfall = shortfall
+  end
+end
+
+class CardExpired &lt; PaymentError
+  attr_reader :expiry
+
+  def initialize(amount:, currency:, expiry:)
+    super("Card expired #{expiry}", amount: amount, currency: currency)
+    @expiry = expiry
+  end
+end
+
+class PaymentGateway
+  def charge(card_balance:, expiry:, amount:)
+    raise CardExpired.new(amount: amount, currency: "USD", expiry: expiry) if expiry &lt; "2026-07"
+    if card_balance &lt; amount
+      raise InsufficientFunds.new(amount: amount, currency: "USD", shortfall: amount - card_balance)
+    end
+    "receipt_#{amount}" # charge succeeded
+  end
+end
+
+# Handle by TYPE, not by parsing a message.
+gateway = PaymentGateway.new
+begin
+  receipt = gateway.charge(card_balance: 40, expiry: "2027-01", amount: 99.5)
+  puts "Charged: #{receipt}"
+rescue InsufficientFunds =&gt; err
+  puts "Ask for #{err.shortfall} #{err.currency} more"
+rescue CardExpired =&gt; err
+  puts "Prompt to update card (was #{err.expiry})"
+rescue PaymentError =&gt; err
+  puts "Generic payment failure: #{err.message}"
+end</code></pre>
+      </div>
+      <p class="muted">Notice each <code>rescue</code> / <code>catch</code> branch matches a <em>class</em> and then reads <em>fields</em>. The base <code>PaymentError</code> branch is a safety net for future leaf types you have not written yet, and re-raising anything foreign keeps unrelated bugs loud.</p>
+
+      <h3>When failure is routine: return a Result instead of raising</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Result makes the failure visible in the signature - callers cannot forget it.
+type Ok&lt;T&gt; = { ok: true; value: T };
+type Err&lt;E&gt; = { ok: false; error: E };
+type Result&lt;T, E&gt; = Ok&lt;T&gt; | Err&lt;E&gt;;
+
+function authorize(balance: number, amount: number): Result&lt;string, PaymentError&gt; {
+  if (balance &lt; amount)
+    return { ok: false, error: new InsufficientFunds(amount, "USD", amount - balance) };
+  return { ok: true, value: `auth_${amount}` };
+}
+
+const res = authorize(40, 99.5);
+if (res.ok) {
+  console.log("Authorized:", res.value);
+} else {
+  console.log("Declined:", res.error.message); // typed error, no throw
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Result makes the failure visible in the signature - callers cannot forget it.
+from dataclasses import dataclass
+from typing import Generic, TypeVar, Union
+
+T = TypeVar("T")
+E = TypeVar("E")
+
+
+@dataclass
+class Ok(Generic[T]):
+    value: T
+
+
+@dataclass
+class Err(Generic[E]):
+    error: E
+
+
+Result = Union[Ok[T], Err[E]]
+
+
+def authorize(balance: float, amount: float) -> Result[str, PaymentError]:
+    if balance &lt; amount:
+        return Err(InsufficientFunds(amount, "USD", amount - balance))
+    return Ok(f"auth_{amount}")
+
+
+res = authorize(40, 99.5)
+if isinstance(res, Ok):
+    print("Authorized:", res.value)
+else:
+    print("Declined:", res.error)  # typed error, no raise</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Result makes the failure visible in the return value - callers must branch on it.
+Ok  = Struct.new(:value)
+Err = Struct.new(:error)
+
+def authorize(balance:, amount:)
+  if balance &lt; amount
+    return Err.new(InsufficientFunds.new(amount: amount, currency: "USD", shortfall: amount - balance))
+  end
+  Ok.new("auth_#{amount}")
+end
+
+res = authorize(balance: 40, amount: 99.5)
+case res
+when Ok  then puts "Authorized: #{res.value}"
+when Err then puts "Declined: #{res.error.message}" # typed error, no raise
+end</code></pre>
+      </div>
+      <p class="muted">Same error classes, different delivery. Raising suits failures that should abort a deep call chain; returning a <code>Result</code> suits expected outcomes the immediate caller must confront before touching the value. The error <em>object</em> is identical either way - only its transport changes.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: raising and catching a typed error, routing on the hierarchy, and the Result-returning alternative with no throw.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Raise a typed error and catch it by class</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Checkout
+    participant G as 💳 PaymentGateway
+    participant E as 🏷️ InsufficientFunds
+
+    C->>G: charge(balance=40, amount=99.5)
+    G->>G: balance below amount
+    G->>E: new(amount, shortfall=59.5)
+    G-->>C: throw InsufficientFunds
+    C->>C: catch by class, read err.shortfall
+    C-->>C: Prompt "add 59.5 USD"
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - One try block routes on the error hierarchy</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Checkout
+    participant G as 💳 PaymentGateway
+    participant H as 🧭 Handler
+
+    C->>G: charge(card, amount)
+    alt card expired
+        G-->>H: throw CardExpired(expiry)
+        H-->>C: Prompt to update card
+    else balance too low
+        G-->>H: throw InsufficientFunds(shortfall)
+        H-->>C: Ask for more funds
+    else gateway down
+        G-->>H: throw GatewayUnavailable(503)
+        H-->>C: Retry later, it is retryable
+    end
+    Note over H,C: Each leaf type takes its own branch
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Result alternative: no throw, failure returned as a value</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🛒 Checkout
+    participant A as 🔐 Authorizer
+    participant R as 📦 Result
+
+    C->>A: authorize(balance, amount)
+    A->>R: Err(InsufficientFunds)
+    A-->>C: return Result (no exception)
+    C->>C: inspect res.ok
+    alt res.ok is false
+        C-->>C: Show typed decline reason
+    else res.ok is true
+        C-->>C: Capture the authorization
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a boolean-returning function to a fully typed error model routed at the edge - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Smell</span><h4>Spot the stringly-typed failure</h4><p>The charge function returns <code>false</code> or throws a bare string. Callers guess the reason, and every new decline case adds another fragile <code>if message.includes(...)</code>.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Base</span><h4>Create one domain base class</h4><p>Define <code>PaymentError</code> extending the language's exception type. Every payment failure will descend from it so a single handler can catch the whole family.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Fields</span><h4>Give the base shared context</h4><p>Add <code>amount</code>, <code>currency</code>, and a <code>retryable</code> flag to the base so context that every payment failure shares lives in exactly one place.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Leaves</span><h4>Name each distinct failure</h4><p>Subclass into <code>InsufficientFunds</code>, <code>CardExpired</code>, <code>GatewayUnavailable</code>. Each carries the fields specific to its case, like <code>shortfall</code> or <code>statusCode</code>.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Raise</span><h4>Throw the specific type at the origin</h4><p>The gateway constructs and raises the precise leaf class the moment it detects the condition, capturing the facts it already has on hand.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Propagate</span><h4>Let it bubble unchanged</h4><p>Intermediate layers do not swallow or rewrap it. The object travels up with its type and context intact until a layer that can decide catches it.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Catch</span><h4>Handle by class, not by message</h4><p>The boundary matches on <code>InsufficientFunds</code> vs <code>CardExpired</code> and reads their fields, giving each a tailored user response.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Net</span><h4>Keep a base-class safety branch</h4><p>A final <code>catch PaymentError</code> handles any leaf you have not special-cased yet, so new error types degrade gracefully instead of leaking raw.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Choose</span><h4>Decide raise vs. Result per call</h4><p>For expected business outcomes callers must confront, return a <code>Result&lt;Receipt, PaymentError&gt;</code> so the failure shows up in the signature.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Log</span><h4>Serialize the object, not a sentence</h4><p>A <code>toLog()</code> method emits structured fields (code, amount, gatewayRef) so dashboards can group and alert on failure types precisely.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Evolve</span><h4>Add new failures without breaking callers</h4><p>Introduce <code>FraudSuspected</code> under <code>PaymentDeclined</code>. Old base-class handlers still work; new handlers opt into the finer case when they are ready.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Modeling errors well is easy to get subtly wrong. These are the recurring mistakes.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Catch-all swallowing</h4><p>A bare <code>catch (e) {}</code> or <code>rescue =&gt; e</code> that logs and moves on hides <code>InsufficientFunds</code> next to a real <code>NullPointer</code>. Catch the narrowest type you can actually handle.</p></div>
+        <div class="card"><h4>🧵 Stringly-typed reasons</h4><p>Branching on <code>if err.message.includes("declined")</code> shatters the moment someone rewords the message or localizes it. Match on the class, never the prose.</p></div>
+        <div class="card"><h4>🥞 One giant error class</h4><p>A single <code>AppError</code> with a <code>type</code> string field is just an enum in disguise. You lose <code>instanceof</code> routing and per-case fields. Prefer real subclasses.</p></div>
+        <div class="card"><h4>📭 Context stripped on rethrow</h4><p>Catching a rich error and rethrowing <code>new Error("payment failed")</code> deletes the decline code and cause. Wrap with a <code>cause</code>, never flatten to a string.</p></div>
+        <div class="card"><h4>🚦 Exceptions for control flow</h4><p>Throwing to signal an ordinary, expected outcome (an empty cart) abuses the stack-unwinding machinery. Reserve raising for the genuinely exceptional; return a <code>Result</code> otherwise.</p></div>
+        <div class="card"><h4>🌊 Over-deep hierarchies</h4><p>Ten levels of abstract error classes nobody ever catches individually is ceremony, not clarity. Add a subclass only when some handler will branch on it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">Whether your error model is pulling its weight shows up in the code and in production telemetry.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Ratio of typed catches to bare catches</strong></td><td>High typed ratio means handlers act on specific failures; many bare catches mean failure detail is being thrown away.</td></tr>
+            <tr><td><strong>String matching on error messages</strong></td><td>Any <code>message.includes(...)</code> in control flow is a signal the failure should have been a distinct type instead.</td></tr>
+            <tr><td><strong>Error types present in log dashboards</strong></td><td>If you can group incidents by class name and field, your errors carry enough structure. If everything is "Error," they do not.</td></tr>
+            <tr><td><strong>Rethrows that lose the cause</strong></td><td>Wrapping without preserving <code>cause</code> breaks stack traces and hides root causes during on-call debugging.</td></tr>
+            <tr><td><strong>New failure added without touching callers</strong></td><td>If a new leaf type slots under an existing base and old handlers still compile and behave, your hierarchy is well factored.</td></tr>
+            <tr><td><strong>Result types in fallible signatures</strong></td><td>Fallible operations whose signatures admit failure force callers to handle it; hidden throws let callers forget.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if a human reading a catch block cannot tell what failed without opening the function that threw, the error needed to be a richer object. Name the failure, carry its context, and route on its type.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production systems where errors-as-objects is load-bearing.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Stripe-style payment API error taxonomy</h3><div class="role">Pattern: typed decline codes carrying context</div></div></div>
+        <p class="muted">A payments platform must tell integrators exactly why a charge failed so their apps react correctly, not just "it did not work."</p>
+        <ul>
+          <li>A <code>CardError</code> base splits into <code>card_declined</code>, <code>expired_card</code>, <code>insufficient_funds</code>, each with a machine-readable <code>decline_code</code>.</li>
+          <li>Every error object carries the request id, the amount, and whether a retry could plausibly succeed.</li>
+          <li>SDKs in each language surface the same taxonomy as native exception classes callers catch by type.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Integrators write precise recovery flows (retry vs. prompt vs. abandon) because the failure arrives as structured, typed data instead of an opaque status.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">✅</span><div><h3>2 · Form validation returning many typed errors</h3><div class="role">Pattern: aggregate error objects over throwing</div></div></div>
+        <p class="muted">A signup service must report every invalid field at once, not fail fast on the first bad input.</p>
+        <ul>
+          <li>Each rule yields a <code>ValidationError</code> subclass (<code>Required</code>, <code>TooShort</code>, <code>NotUnique</code>) with the offending field and a stable code.</li>
+          <li>The validator returns a <code>Result</code> holding a list of error objects, so nothing is raised for ordinary bad input.</li>
+          <li>The API layer serializes each error's field and code into a JSON response the front end maps to inline messages.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Users see all their mistakes in one pass, and the front end renders messages from stable codes rather than parsing English sentences.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🦀</span><div><h3>3 · Rust and Go steering the whole industry to Result</h3><div class="role">Pattern: failure encoded in the return type</div></div></div>
+        <p class="muted">Two mainstream languages deliberately made fallibility part of the signature rather than a hidden side channel.</p>
+        <ul>
+          <li>Rust's <code>Result&lt;T, E&gt;</code> and Go's explicit <code>error</code> return force every caller to confront failure at the call site.</li>
+          <li>Custom error enums and types carry context and let callers match on the specific variant.</li>
+          <li>The pattern pushed TypeScript, Kotlin, and Swift ecosystems toward typed-result libraries for expected failures.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Fewer forgotten failure paths and clearer APIs, because "this can fail, and here is how" is written into the type, not left to documentation or luck.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Treating failure as first-class data is only getting more central as type systems and distributed systems mature.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧬 Typed results going mainstream</h4><p>TypeScript, Kotlin, and Swift ship or popularize <code>Result</code>-style types, making expected failure a visible part of signatures rather than a hidden throw.</p></div>
+        <div class="card"><h4>🔗 Errors with a cause chain</h4><p>Native <code>cause</code> support (JavaScript, Python's <code>raise from</code>) lets an error object wrap the one beneath it, preserving the full story from origin to boundary.</p></div>
+        <div class="card"><h4>🌐 Structured errors across services</h4><p>gRPC status details and Problem Details for HTTP (RFC 9457) carry typed, field-rich errors across the network, extending the object model past one process.</p></div>
+        <div class="card"><h4>🔭 Observability keyed on error types</h4><p>Tracing tools group and alert on error class and attributes. Rich error objects turn incident triage into a query instead of log grepping.</p></div>
+        <div class="card"><h4>🛡️ Exhaustiveness checking</h4><p>Union-typed errors let the compiler prove you handled every case, so adding a new failure variant surfaces every place that must adapt.</p></div>
+        <div class="card"><h4>🤖 Machine-actionable failures</h4><p>Agents and automated retries need failures they can branch on programmatically. A <code>retryable</code> flag on a typed object beats reading a message.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> failure is a normal part of every real system, so model it like one. Give each distinct failure a name, let it carry the facts, place it in a hierarchy, and choose deliberately whether to raise it or return it. Errors as objects turn "something broke" into something your code, and your team, can actually reason about.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Errors as objects pairs naturally with these OOP topics.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🧱</span><h4>Construction &amp; invariants</h4><p>Reject invalid state at construction so fewer errors can arise later.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../tell-dont-ask/"><span class="ico">📣</span><h4>Tell, don't ask</h4><p>Let objects decide and signal failure instead of exposing raw state.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single responsibility</h4><p>One reason to change keeps each error type focused and cohesive.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../when-not-to-use-oop/"><span class="ico">⚖️</span><h4>When not to use OOP</h4><p>Sometimes a plain Result value beats an exception hierarchy.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>Errors as Objects · What · Why · How · Diagrams · Flow · Pitfalls · Signals · Cases · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inheritance in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to inheritance in object-oriented programming: the is-a relationship, subclassing, method overriding and super, protected members, the fragile base class problem, when it fits, diagrams, code in TypeScript, Python and Ruby, and case studies." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Inheritance - modeling is-a and reusing behavior safely</h1>
+      <p class="lede">Inheritance lets one class extend another so a subtype reuses and specializes a base type's data and behavior. Used well, it captures a real <strong>is-a</strong> relationship, like an email notification is a notification. Used carelessly, it welds classes together and creates the fragile base class trap.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Is-a relationship</span>
+        <span class="pill">Method overriding</span>
+        <span class="pill">super calls</span>
+        <span class="pill">Protected members</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is inheritance?</h2>
+      <p class="muted"><strong>Inheritance</strong> is a mechanism where a subclass derives from a base class and automatically gains its fields and methods. The subclass can add new behavior, reuse what it inherited, or override methods to specialize them. The design test is the <em>is-a</em> question: an SMS notification is a notification, a salaried employee is an employee. If that sentence sounds wrong, inheritance is the wrong tool.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Base class</h4>
+          <p>Holds the shared contract and state, like a Notification with a recipient, retry policy, and a delivery routine common to every channel.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📨</span> Subclass</h4>
+          <p>Extends the base and specializes it, like EmailNotification adding subject and HTML body while reusing the retry and logging logic.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Override + super</h4>
+          <p>A subclass replaces a base method with its own version, and can call <code>super</code> to run the base implementation as part of it.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Example in a notification system</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Base class</strong></td><td>Defines shared state and default behavior</td><td><code>Notification</code> with <code>send()</code> and retry logic</td></tr>
+            <tr><td><strong>Subclass (extends)</strong></td><td>Inherits and specializes the base</td><td><code>EmailNotification</code>, <code>SmsNotification</code></td></tr>
+            <tr><td><strong>Method override</strong></td><td>Replaces a base method for one subtype</td><td><code>formatBody()</code> differs per channel</td></tr>
+            <tr><td><strong>super</strong></td><td>Invokes the base version from the override</td><td>subclass validates, then calls <code>super.send()</code></td></tr>
+            <tr><td><strong>Protected member</strong></td><td>Visible to subclasses but not outside callers</td><td><code>protected recipient</code> shared with subtypes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> inheritance is not code sharing for its own sake, it is subtyping. A subclass is a promise that instances can stand in anywhere the base is expected. If a subtype breaks that promise, you have coupling without the safety, which is the seed of the fragile base class problem.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why inheritance exists</h2>
+      <p class="muted">Inheritance earns its place when a family of types genuinely shares a contract and a large chunk of behavior. It removes duplication, expresses hierarchy directly, and gives you one place to change common logic.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>♻️ Reuse without copy-paste</h4><p>Retry, logging, and validation live once in the base. Every channel subtype inherits them instead of duplicating fragile boilerplate across email, SMS, and push senders.</p></div>
+        <div class="card"><h4>🗂️ Models a real hierarchy</h4><p>When the domain truly has an is-a tree, like employee types in payroll, the class graph mirrors the business language and reads clearly to newcomers.</p></div>
+        <div class="card"><h4>🎯 Enables polymorphism</h4><p>Code that accepts the base type works with any subclass. A dispatcher loops over notifications and calls <code>send()</code> without knowing the concrete channel.</p></div>
+        <div class="card"><h4>🧩 One place to extend</h4><p>Adding a new channel means one new subclass, not edits scattered across a switch statement. The base contract tells you exactly what to implement.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Inheritance explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Inheritance is a <strong>base recipe with variations</strong>. The master dough is written once; the sourdough and focaccia versions inherit the steps and only change what makes them different.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is <strong>extends plus override</strong>. A <code>PaymentGateway</code> base defines <code>charge()</code>; <code>StripeGateway</code> reuses the retry loop and overrides only the provider-specific call, invoking <code>super</code> for the shared parts.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>company policy with department addenda</strong>. Every team inherits the corporate handbook; each department overrides a few clauses. The base rules still apply unless explicitly specialized.</p></div>
+        <div class="card"><h4><span class="ico">🏛️</span> Everyday version</h4><p>Legal precedent: a <strong>general law</strong> covers everyone, and a specific ruling refines it for one case. The specific still relies on the general beneath it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How inheritance works under the hood</h2>
+      <p class="muted">A subclass declares that it <strong>extends</strong> a base, gets the base members, and can <strong>override</strong> methods. At call time the runtime uses the object's real type to pick the method, and <code>super</code> lets an override reuse the base version.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Subclassing and constructors</h4>
+          <p>The subclass constructor first calls the base constructor (<code>super(...)</code>) to initialize inherited state, then sets up its own fields. Skip that call and inherited invariants never get established.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> Protected members</h4>
+          <p>Fields marked protected are reachable by subclasses but hidden from outside callers, so subtypes can build on internal state without exposing it as public API.</p>
+        </div>
+      </div>
+
+      <h3>The class hierarchy at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Notification base with Email and SMS subclasses overriding formatBody</div>
+        <pre class="mermaid">
+classDiagram
+    class Notification {
+        &lt;&lt;abstract&gt;&gt;
+        #recipient String
+        #retries int
+        +send() bool
+        +formatBody() String
+        #log(msg) void
+    }
+    class EmailNotification {
+        -subject String
+        +formatBody() String
+    }
+    class SmsNotification {
+        -senderId String
+        +formatBody() String
+    }
+    class NotificationDispatcher {
+        +dispatch(items) void
+    }
+    Notification &lt;|-- EmailNotification
+    Notification &lt;|-- SmsNotification
+    NotificationDispatcher o-- Notification
+        </pre>
+      </div>
+
+      <h3>Define a class, create an object, call its methods</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Base class: shared delivery contract for every channel
+abstract class Notification {
+  protected retries = 3;
+
+  constructor(protected recipient: string) {}
+
+  // Subclasses MUST specialize how the body is rendered
+  abstract formatBody(): string;
+
+  protected log(msg: string): void {
+    console.log(`[notify] ${msg}`);
+  }
+
+  // Template behavior reused by all subtypes
+  send(): boolean {
+    const body = this.formatBody();
+    for (let attempt = 1; attempt &lt;= this.retries; attempt++) {
+      this.log(`attempt ${attempt} -&gt; ${this.recipient}`);
+      if (this.transmit(body)) return true;
+    }
+    return false;
+  }
+
+  protected transmit(_body: string): boolean {
+    return true; // pretend the carrier accepted it
+  }
+}
+
+class EmailNotification extends Notification {
+  constructor(recipient: string, private subject: string) {
+    super(recipient); // initialize inherited state first
+  }
+
+  formatBody(): string {
+    return `Subject: ${this.subject}\n&lt;html&gt;Hello&lt;/html&gt;`;
+  }
+}
+
+class SmsNotification extends Notification {
+  constructor(recipient: string, private senderId: string) {
+    super(recipient);
+    this.retries = 2; // SMS carriers are stricter, override default
+  }
+
+  formatBody(): string {
+    return `From ${this.senderId}: your code is 4821`;
+  }
+
+  // Override that reuses the base via super
+  send(): boolean {
+    this.log("checking SMS opt-in");
+    return super.send();
+  }
+}
+
+const outbox: Notification[] = [
+  new EmailNotification("ana@shop.io", "Order shipped"),
+  new SmsNotification("+15550100", "SHOPIO"),
+];
+
+for (const n of outbox) {
+  n.send(); // dynamic dispatch picks the right formatBody + send
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+
+class Notification(ABC):
+    """Base class: shared delivery contract for every channel."""
+
+    def __init__(self, recipient: str) -> None:
+        self._recipient = recipient   # protected by convention
+        self._retries = 3
+
+    @abstractmethod
+    def format_body(self) -&gt; str:
+        ...
+
+    def _log(self, msg: str) -&gt; None:
+        print(f"[notify] {msg}")
+
+    def _transmit(self, body: str) -&gt; bool:
+        return True  # pretend the carrier accepted it
+
+    def send(self) -&gt; bool:
+        body = self.format_body()
+        for attempt in range(1, self._retries + 1):
+            self._log(f"attempt {attempt} -&gt; {self._recipient}")
+            if self._transmit(body):
+                return True
+        return False
+
+
+class EmailNotification(Notification):
+    def __init__(self, recipient: str, subject: str) -&gt; None:
+        super().__init__(recipient)   # initialize inherited state
+        self._subject = subject
+
+    def format_body(self) -&gt; str:
+        return f"Subject: {self._subject}\n&lt;html&gt;Hello&lt;/html&gt;"
+
+
+class SmsNotification(Notification):
+    def __init__(self, recipient: str, sender_id: str) -&gt; None:
+        super().__init__(recipient)
+        self._sender_id = sender_id
+        self._retries = 2             # override the default
+
+    def format_body(self) -&gt; str:
+        return f"From {self._sender_id}: your code is 4821"
+
+    def send(self) -&gt; bool:           # override that reuses super
+        self._log("checking SMS opt-in")
+        return super().send()
+
+
+outbox = [
+    EmailNotification("ana@shop.io", "Order shipped"),
+    SmsNotification("+15550100", "SHOPIO"),
+]
+
+for n in outbox:
+    n.send()  # dynamic dispatch picks the right format_body + send</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Base class: shared delivery contract for every channel
+class Notification
+  def initialize(recipient)
+    @recipient = recipient   # instance vars are protected by design
+    @retries = 3
+  end
+
+  # Subclasses must specialize this
+  def format_body
+    raise NotImplementedError, "subclass must implement format_body"
+  end
+
+  def send
+    body = format_body
+    (1..@retries).each do |attempt|
+      log("attempt #{attempt} -&gt; #{@recipient}")
+      return true if transmit(body)
+    end
+    false
+  end
+
+  protected
+
+  def log(msg)
+    puts "[notify] #{msg}"
+  end
+
+  def transmit(_body)
+    true # pretend the carrier accepted it
+  end
+end
+
+class EmailNotification &lt; Notification
+  def initialize(recipient, subject)
+    super(recipient)   # initialize inherited state first
+    @subject = subject
+  end
+
+  def format_body
+    "Subject: #{@subject}\n&lt;html&gt;Hello&lt;/html&gt;"
+  end
+end
+
+class SmsNotification &lt; Notification
+  def initialize(recipient, sender_id)
+    super(recipient)
+    @sender_id = sender_id
+    @retries = 2       # override the default
+  end
+
+  def format_body
+    "From #{@sender_id}: your code is 4821"
+  end
+
+  def send             # override that reuses super
+    log("checking SMS opt-in")
+    super
+  end
+end
+
+outbox = [
+  EmailNotification.new("ana@shop.io", "Order shipped"),
+  SmsNotification.new("+15550100", "SHOPIO")
+]
+
+outbox.each(&amp;:send) # dynamic dispatch picks the right format_body + send</code></pre>
+      </div>
+      <p class="muted">All three snippets define one base contract, add two subclasses, and create real objects that go through a shared <code>send</code> routine. Notice how <code>SmsNotification</code> overrides <code>send</code> but still calls <code>super</code>, so it adds an opt-in check without reimplementing the retry loop.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a polymorphic dispatch, an override that calls super, and a subclass constructor chaining to the base.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Dispatcher calls send on a base reference, runtime picks the subclass</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Disp as 🗂️ Dispatcher
+    participant Base as 🧬 Notification.send
+    participant Sub as 📨 EmailNotification
+    participant Carrier as 📡 Carrier
+
+    Disp->>Base: send() on an EmailNotification
+    Base->>Sub: formatBody() overridden
+    Sub-->>Base: rendered email body
+    Base->>Carrier: transmit(body)
+    Carrier-->>Base: accepted
+    Base-->>Disp: true
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Override adds a check, then delegates to super</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant App as 🖥️ Caller
+    participant Sms as 📱 SmsNotification.send
+    participant Base as 🧬 Notification.send
+    participant Carrier as 📡 Carrier
+
+    App->>Sms: send()
+    Sms->>Sms: log opt-in check
+    Sms->>Base: super.send()
+    loop up to retries
+        Base->>Carrier: transmit(body)
+        Carrier-->>Base: result
+    end
+    Base-->>Sms: delivered
+    Sms-->>App: true
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Constructor chaining initializes inherited state first</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑‍💻 new EmailNotification
+    participant Sub as 📨 Email constructor
+    participant Base as 🧬 Notification constructor
+
+    Client->>Sub: new(recipient, subject)
+    Sub->>Base: super(recipient)
+    Base->>Base: set recipient and retries
+    Base-->>Sub: base state ready
+    Sub->>Sub: set subject
+    Sub-->>Client: fully built object
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From spotting a shared contract to shipping a safe hierarchy, the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Find repeated behavior</h4><p>Email, SMS, and push senders all retry, log, and validate the same way. Duplication across a real type family is the signal to consider a base class.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Test</span><h4>Ask the is-a question</h4><p>Say it out loud: an SMS notification is a notification. If the sentence is true and stable, inheritance fits. If it feels forced, prefer composition.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Extract</span><h4>Define the base class</h4><p>Pull the shared state and the common routine into <code>Notification</code>. Mark the parts every subtype must supply as abstract.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Subclass</span><h4>Declare extends</h4><p>Create <code>EmailNotification</code> and <code>SmsNotification</code> that extend the base and inherit its members automatically.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Chain</span><h4>Call super in constructors</h4><p>Each subclass constructor calls <code>super(...)</code> first so inherited fields and invariants are set before subtype-specific setup runs.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Override</span><h4>Specialize methods</h4><p>Override <code>formatBody()</code> per channel. Where you only need to add behavior, override and call <code>super</code> to reuse the base version.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Protect</span><h4>Scope shared state</h4><p>Mark fields protected so subclasses can use them while outside callers cannot, keeping the public surface small.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Dispatch</span><h4>Program to the base type</h4><p>The dispatcher holds a list of <code>Notification</code> and calls <code>send()</code>. Dynamic dispatch selects the right override at runtime.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Guard</span><h4>Respect the base contract</h4><p>Every override must honor the base promise: no throwing where the base returns, no strengthening preconditions. This keeps substitution safe.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Watch</span><h4>Limit depth and coupling</h4><p>Keep the tree shallow. A base change should not silently break subclasses. Deep hierarchies are where the fragile base class problem bites.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Extend by adding subclasses</h4><p>A new channel is one new subclass implementing the contract, with no edits to existing senders. That is the payoff of a clean hierarchy.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Inheritance fails loudest when it is used for reuse rather than for a true subtype relationship. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🏚️ Fragile base class</h4><p>A harmless-looking change to the base, like reordering internal calls, silently breaks subclasses that depended on the old flow. The deeper the tree, the wider the blast radius.</p></div>
+        <div class="card"><h4>🧱 Inheriting for reuse only</h4><p>Subclassing <code>ArrayList</code> just to borrow methods, when your type is not really a list, drags along an API you cannot honor. If it is not an is-a, use composition.</p></div>
+        <div class="card"><h4>🚫 Breaking substitution</h4><p>An override that throws where the base returns, or narrows accepted inputs, violates the base contract. Callers holding a base reference get surprised at runtime.</p></div>
+        <div class="card"><h4>🕳️ Deep hierarchies</h4><p>Five levels of extends means behavior is smeared across the chain. Understanding one method requires reading the whole ancestry, and every change ripples down.</p></div>
+        <div class="card"><h4>🔓 Leaky protected state</h4><p>Exposing too many protected fields turns internals into an unofficial API. Subclasses lock onto them, and you can no longer refactor the base freely.</p></div>
+        <div class="card"><h4>🧨 Calling overridable methods in constructors</h4><p>The base constructor calls an overridden method before the subclass has initialized its fields, so the override runs against half-built state and misbehaves.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">Healthy inheritance stays shallow, honors its contracts, and rarely forces base edits. Watch these signals to catch decay early.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Hierarchy depth</strong></td><td>Chains deeper than two or three levels usually mean behavior is hard to trace and a candidate for flattening or composition.</td></tr>
+            <tr><td><strong>Base change ripple</strong></td><td>How many subclasses break when the base changes. High ripple is the fragile base class problem in numbers.</td></tr>
+            <tr><td><strong>Override obligation</strong></td><td>The count of abstract methods a subclass must implement. Too many means the base is doing too little to justify the coupling.</td></tr>
+            <tr><td><strong>Liskov violations</strong></td><td>Tests that pass on the base but fail on a subclass signal that a subtype is not truly substitutable.</td></tr>
+            <tr><td><strong>Protected surface size</strong></td><td>A large protected member set means subclasses depend on internals, shrinking your freedom to refactor.</td></tr>
+            <tr><td><strong>super-call ratio</strong></td><td>Overrides that never call super may be replacing rather than extending, hinting the base abstraction is off.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if a change to the base class regularly forces edits or breaks tests in subclasses, the hierarchy is fragile. Favor shallow trees, small protected surfaces, and composition when the relationship is has-a rather than is-a.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three representative systems where inheritance models a genuine type hierarchy.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment gateway adapters</h3><div class="role">Pattern: base charge flow, provider-specific overrides</div></div></div>
+        <p class="muted">A checkout service integrates several payment providers that share a lifecycle but differ in the actual API call.</p>
+        <ul>
+          <li>A <code>PaymentGateway</code> base owns validation, idempotency keys, and the retry loop.</li>
+          <li><code>StripeGateway</code> and <code>AdyenGateway</code> override only the provider request, calling <code>super</code> for shared handling.</li>
+          <li>The order service programs to the base type, so adding a provider is one new subclass.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> New processors ship without touching checkout, and shared safety logic lives in exactly one place.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>2 · Payroll employee types</h3><div class="role">Pattern: is-a hierarchy for pay calculation</div></div></div>
+        <p class="muted">A payroll engine computes pay for salaried, hourly, and commission employees that share identity and tax handling.</p>
+        <ul>
+          <li>An <code>Employee</code> base holds tax withholding and pay-stub formatting.</li>
+          <li><code>SalariedEmployee</code>, <code>HourlyEmployee</code>, and <code>CommissionEmployee</code> override <code>calculateGrossPay()</code>.</li>
+          <li>The run loop treats every worker as an <code>Employee</code> and never branches on type.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Adding a new worker classification means one subclass and the pay run stays untouched and correct.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🖼️</span><div><h3>3 · UI component frameworks</h3><div class="role">Pattern: base widget, specialized controls</div></div></div>
+        <p class="muted">A component toolkit models controls as a hierarchy where every widget shares layout and event plumbing.</p>
+        <ul>
+          <li>A base <code>View</code> or <code>Component</code> handles measure, layout, and the render lifecycle.</li>
+          <li>Buttons, text fields, and lists extend it and override <code>render</code> and event hooks.</li>
+          <li>The framework walks a tree of base references and drives everything through the shared lifecycle.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Widget authors reuse the entire lifecycle and only implement what is truly specific to their control.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Inheritance is no longer the default hammer it was in early OOP, but it remains the right tool for genuine is-a hierarchies and disciplined framework design.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Composition first</h4><p>Modern guidance favors composition for reuse and reserves inheritance for true subtyping. Both belong in a healthy codebase, used for different jobs.</p></div>
+        <div class="card"><h4>🧭 Interfaces over deep trees</h4><p>Teams lean on interfaces and small traits to share contracts without dragging state, keeping hierarchies shallow and flexible.</p></div>
+        <div class="card"><h4>🏛️ Frameworks still rely on it</h4><p>UI toolkits, ORMs, and test frameworks expose base classes you extend. Inheritance remains the ergonomic extension point for lifecycles.</p></div>
+        <div class="card"><h4>🔐 sealed and final</h4><p>Languages add sealed and final so authors can cap hierarchies, taming the fragile base class problem by controlling who may extend.</p></div>
+        <div class="card"><h4>📐 Liskov as a guardrail</h4><p>The substitution principle is the litmus test for whether a subclass is honest. It keeps inheritance safe rather than merely convenient.</p></div>
+        <div class="card"><h4>🧬 Mixins and traits</h4><p>Ruby modules and similar mechanisms offer targeted behavior sharing without single-inheritance limits, blending reuse with clean contracts.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> reach for inheritance only when a subtype truly is-a base type and shares its contract. Keep trees shallow, honor substitution, and prefer composition for plain reuse. Done that way, inheritance stays a precise modeling tool instead of a coupling trap.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Inheritance sits in a web of related OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../polymorphism/"><span class="ico">🎭</span><h4>Polymorphism</h4><p>How overridden methods dispatch on the real type.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧩</span><h4>Composition over inheritance</h4><p>When has-a beats is-a for reuse.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../liskov-substitution/"><span class="ico">📐</span><h4>Liskov substitution</h4><p>The rule that keeps subclasses honest.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../abstraction/"><span class="ico">🪧</span><h4>Abstraction</h4><p>Base classes and interfaces as contracts.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to inheritance · What · Why · How · Diagrams · Flow · Pitfalls · Signals · Cases · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

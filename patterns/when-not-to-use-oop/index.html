@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>When NOT to Use OOP in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A senior-level guide to knowing when procedural, functional, or data-oriented code beats objects: stateless pipelines, pure pricing math, small scripts, the ceremony objects add, and mixing paradigms pragmatically." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>When NOT to use OOP - and what to reach for instead</h1>
+      <p class="lede">Objects earn their keep when you have identity, mutable state, and behavior that travels with data. But a lot of real code is just <strong>data in, data out</strong>: an ETL transform, a pricing calculation, a one-off migration script. Wrapping those in classes adds ceremony without buying anything. This page is about recognizing when procedural, functional, or data-oriented code is the clearer choice, and how to mix paradigms without dogma.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Stateless transforms</span>
+        <span class="pill">Data-oriented design</span>
+        <span class="pill">Pure functions</span>
+        <span class="pill">Pragmatic mixing</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What "not OOP" actually means</h2>
+      <p class="muted">This is not anti-OOP. It is about matching the tool to the shape of the problem. OOP bundles state and behavior behind an interface so objects can collaborate over time. When your problem has <em>no long-lived state</em> and <em>no identity to protect</em>, that bundling becomes overhead: constructors, dependency wiring, mocks, and lifecycle you do not need. The alternatives are procedural code, functional pipelines, and data-oriented design that keeps plain data and the functions over it separate.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔁</span> Stateless transforms</h4>
+          <p>An ETL step that takes rows in and returns rows out holds no state between calls. A pure function is the honest signature; a class with a single <code>run()</code> method is a function wearing a costume.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧮</span> Pure calculations</h4>
+          <p>Pricing, tax, discounts, and currency math are deterministic: same inputs, same output. Functions compose and test trivially. Objects add a lifecycle that pure math never asked for.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📜</span> Small scripts</h4>
+          <p>A backfill or a CSV cleanup that runs once and exits does not need a class hierarchy. Top-to-bottom procedural code you can read in one pass is the correct amount of structure.</p>
+        </div>
+      </div>
+
+      <h3>Where OOP fits and where it does not</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal in the problem</th><th>OOP fits</th><th>Prefer procedural / functional</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Long-lived identity</strong></td><td>A <code>ShoppingCart</code> or <code>Account</code> that persists and mutates</td><td>A tax calc that lives only for one call</td></tr>
+            <tr><td><strong>State + invariants</strong></td><td>A ledger that must never go negative</td><td>A stateless map/filter over a batch of records</td></tr>
+            <tr><td><strong>Polymorphism</strong></td><td>Many payment providers behind one interface</td><td>A single fixed transform with no variants</td></tr>
+            <tr><td><strong>Data shape</strong></td><td>Rich behavior tied to each entity</td><td>Flat rows flowing through a pipeline</td></tr>
+            <tr><td><strong>Lifetime</strong></td><td>A long-running service with sessions</td><td>A cron script that runs and exits</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> objects are for <em>things that persist and enforce rules</em>. If your code is a one-way street from input to output with nothing to protect between calls, a function is the clearer, cheaper, more testable unit.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why forcing OOP hurts</h2>
+      <p class="muted">Dogmatic OOP turns simple data flow into a graph of collaborators you must construct, inject, and mock. The ceremony obscures the actual computation and slows every future reader down.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎭 Ceremony over substance</h4><p>A three-line transform becomes a class with a constructor, a private field, and a <code>process()</code> method. Readers now scan boilerplate to find one <code>map</code>. The signal-to-noise ratio drops.</p></div>
+        <div class="card"><h4>🧪 Harder testing</h4><p>Pure functions need only inputs and asserted outputs. An object graph needs constructed dependencies, mocks, and stubs to test the same logic. You test wiring instead of behavior.</p></div>
+        <div class="card"><h4>🕳️ Hidden mutation</h4><p>Objects invite mutable fields. In a data pipeline that should be a clean sequence of immutable stages, hidden state creates order-dependent bugs that are painful to reproduce.</p></div>
+        <div class="card"><h4>🧩 Anemic shells</h4><p>Wrapping data-only records in classes that just get and set fields produces the anemic domain model: all the ceremony of objects with none of the behavior that justifies them.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>When NOT to use OOP explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>You do not build a <strong>filing cabinet</strong> to add two numbers on a scrap of paper. A pricing formula is the scrap of paper. Objects are the cabinet: worth it when you are storing and managing many things over time, wasteful for a single sum.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>An ETL stage is a <strong>Unix pipe</strong>: <code>read | clean | enrich | write</code>. Each stage takes a stream and returns one. You would not turn <code>grep</code> into a stateful object with a lifecycle just to filter lines.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Filling in a <strong>tax form</strong> is a procedure: fixed inputs, fixed rules, one number out. You do not hire a standing department to compute one return. Reserve the org chart (objects and roles) for the ongoing business, not the one-off calculation.</p></div>
+        <div class="card"><h4><span class="ico">🍳</span> Everyday version</h4><p>To make toast you follow <strong>steps</strong>, you do not appoint a Toast Manager who owns a Bread repository. Simple linear tasks want a recipe, not an organization with departments and hand-offs.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How to recognize and refactor the over-objected case</h2>
+      <p class="muted">The tell is a class with no meaningful state, one public method, and a name that ends in <code>-er</code> or <code>-Manager</code>. It is a function that grew a constructor. The fix is to collapse it into a pure function or a small pipeline of them.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔎</span> Spot the smell</h4>
+          <p>Look for classes whose only field is injected config and whose only method is <code>run</code>, <code>process</code>, or <code>calculate</code>. That is a stateless computation. It wants to be a function, optionally curried with its config.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧵</span> Compose stages</h4>
+          <p>Model an ETL flow as a sequence of small pure functions passing immutable data. Each stage is independently testable, reorderable, and reusable, with no shared mutable object holding the batch.</p>
+        </div>
+      </div>
+
+      <h3>The shape of an over-objected design</h3>
+      <div class="diagram">
+        <div class="cap">Over-objected pricing: four collaborators to compute one number</div>
+        <pre class="mermaid">
+classDiagram
+    class PriceCalculator {
+      -TaxService tax
+      -DiscountEngine discounts
+      +calculate(Order) Money
+    }
+    class TaxService {
+      +apply(Money, Region) Money
+    }
+    class DiscountEngine {
+      +apply(Money, Coupon) Money
+    }
+    class MoneyFormatter {
+      +format(Money) String
+    }
+    PriceCalculator o-- TaxService
+    PriceCalculator o-- DiscountEngine
+    PriceCalculator ..> MoneyFormatter
+        </pre>
+      </div>
+
+      <h3>Over-objected design vs a simpler functional pipeline</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// OVER-OBJECTED: four classes to compute one price.
+class TaxService {
+  apply(cents: number, region: string): number {
+    const rate = region === "EU" ? 0.20 : 0.0725;
+    return Math.round(cents * (1 + rate));
+  }
+}
+class DiscountEngine {
+  apply(cents: number, coupon?: string): number {
+    return coupon === "SAVE10" ? Math.round(cents * 0.9) : cents;
+  }
+}
+class PriceCalculator {
+  constructor(private tax: TaxService, private discounts: DiscountEngine) {}
+  calculate(order: { subtotalCents: number; region: string; coupon?: string }): number {
+    const discounted = this.discounts.apply(order.subtotalCents, order.coupon);
+    return this.tax.apply(discounted, order.region);
+  }
+}
+const calc = new PriceCalculator(new TaxService(), new DiscountEngine());
+calc.calculate({ subtotalCents: 5000, region: "EU", coupon: "SAVE10" }); // 5400
+
+// SIMPLER: pure functions that compose. No wiring, no mocks to test.
+type Order = { subtotalCents: number; region: string; coupon?: string };
+
+const applyDiscount = (cents: number, coupon?: string): number =>
+  coupon === "SAVE10" ? Math.round(cents * 0.9) : cents;
+
+const applyTax = (cents: number, region: string): number => {
+  const rate = region === "EU" ? 0.20 : 0.0725;
+  return Math.round(cents * (1 + rate));
+};
+
+const priceOrder = (o: Order): number =>
+  applyTax(applyDiscount(o.subtotalCents, o.coupon), o.region);
+
+priceOrder({ subtotalCents: 5000, region: "EU", coupon: "SAVE10" }); // 5400</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># OVER-OBJECTED: four classes to compute one price.
+class TaxService:
+    def apply(self, cents: int, region: str) -> int:
+        rate = 0.20 if region == "EU" else 0.0725
+        return round(cents * (1 + rate))
+
+class DiscountEngine:
+    def apply(self, cents: int, coupon: str | None) -> int:
+        return round(cents * 0.9) if coupon == "SAVE10" else cents
+
+class PriceCalculator:
+    def __init__(self, tax: TaxService, discounts: DiscountEngine):
+        self._tax = tax
+        self._discounts = discounts
+    def calculate(self, order: dict) -> int:
+        discounted = self._discounts.apply(order["subtotal_cents"], order.get("coupon"))
+        return self._tax.apply(discounted, order["region"])
+
+calc = PriceCalculator(TaxService(), DiscountEngine())
+calc.calculate({"subtotal_cents": 5000, "region": "EU", "coupon": "SAVE10"})  # 5400
+
+# SIMPLER: pure functions that compose. No wiring, no mocks to test.
+def apply_discount(cents: int, coupon: str | None) -> int:
+    return round(cents * 0.9) if coupon == "SAVE10" else cents
+
+def apply_tax(cents: int, region: str) -> int:
+    rate = 0.20 if region == "EU" else 0.0725
+    return round(cents * (1 + rate))
+
+def price_order(order: dict) -> int:
+    discounted = apply_discount(order["subtotal_cents"], order.get("coupon"))
+    return apply_tax(discounted, order["region"])
+
+price_order({"subtotal_cents": 5000, "region": "EU", "coupon": "SAVE10"})  # 5400</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># OVER-OBJECTED: four classes to compute one price.
+class TaxService
+  def apply(cents, region)
+    rate = region == "EU" ? 0.20 : 0.0725
+    (cents * (1 + rate)).round
+  end
+end
+
+class DiscountEngine
+  def apply(cents, coupon)
+    coupon == "SAVE10" ? (cents * 0.9).round : cents
+  end
+end
+
+class PriceCalculator
+  def initialize(tax, discounts)
+    @tax = tax
+    @discounts = discounts
+  end
+  def calculate(order)
+    discounted = @discounts.apply(order[:subtotal_cents], order[:coupon])
+    @tax.apply(discounted, order[:region])
+  end
+end
+
+calc = PriceCalculator.new(TaxService.new, DiscountEngine.new)
+calc.calculate(subtotal_cents: 5000, region: "EU", coupon: "SAVE10") # 5400
+
+# SIMPLER: pure methods that compose. No wiring, no mocks to test.
+def apply_discount(cents, coupon)
+  coupon == "SAVE10" ? (cents * 0.9).round : cents
+end
+
+def apply_tax(cents, region)
+  rate = region == "EU" ? 0.20 : 0.0725
+  (cents * (1 + rate)).round
+end
+
+def price_order(order)
+  apply_tax(apply_discount(order[:subtotal_cents], order[:coupon]), order[:region])
+end
+
+price_order(subtotal_cents: 5000, region: "EU", coupon: "SAVE10") # 5400</code></pre>
+      </div>
+      <p class="muted">Both versions compute the same 5400 cents. The functional version drops the constructors, the injected fields, and the mocks you would need to test the object graph. What is left is exactly the math, expressed as composition. This is data-oriented design: plain data flows through pure functions, and nothing hides state between calls.</p>
+
+      <h3>An ETL pipeline as composed stages, not a stateful engine</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// A transform pipeline: each stage is data-in, data-out. No engine object.
+type Row = { email: string; amount: string; region: string };
+type Clean = { email: string; cents: number; region: string };
+
+const parse = (rows: Row[]): Clean[] =>
+  rows.map(r => ({
+    email: r.email.trim().toLowerCase(),
+    cents: Math.round(parseFloat(r.amount) * 100),
+    region: r.region.toUpperCase(),
+  }));
+
+const dropInvalid = (rows: Clean[]): Clean[] =>
+  rows.filter(r => r.email.includes("@") && r.cents > 0);
+
+const totalsByRegion = (rows: Clean[]): Record&lt;string, number&gt; =>
+  rows.reduce((acc, r) => ({ ...acc, [r.region]: (acc[r.region] ?? 0) + r.cents }), {} as Record&lt;string, number&gt;);
+
+// Compose the whole pipeline as a single expression.
+const run = (rows: Row[]) => totalsByRegion(dropInvalid(parse(rows)));</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># A transform pipeline: each stage is data-in, data-out. No engine object.
+from functools import reduce
+
+def parse(rows):
+    return [
+        {
+            "email": r["email"].strip().lower(),
+            "cents": round(float(r["amount"]) * 100),
+            "region": r["region"].upper(),
+        }
+        for r in rows
+    ]
+
+def drop_invalid(rows):
+    return [r for r in rows if "@" in r["email"] and r["cents"] > 0]
+
+def totals_by_region(rows):
+    acc = {}
+    for r in rows:
+        acc[r["region"]] = acc.get(r["region"], 0) + r["cents"]
+    return acc
+
+# Compose the whole pipeline as a single expression.
+def run(rows):
+    return totals_by_region(drop_invalid(parse(rows)))</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># A transform pipeline: each stage is data-in, data-out. No engine object.
+def parse(rows)
+  rows.map do |r|
+    {
+      email: r[:email].strip.downcase,
+      cents: (r[:amount].to_f * 100).round,
+      region: r[:region].upcase,
+    }
+  end
+end
+
+def drop_invalid(rows)
+  rows.select { |r| r[:email].include?("@") && r[:cents] > 0 }
+end
+
+def totals_by_region(rows)
+  rows.each_with_object(Hash.new(0)) { |r, acc| acc[r[:region]] += r[:cents] }
+end
+
+# Compose the whole pipeline with method chaining.
+def run(rows)
+  totals_by_region(drop_invalid(parse(rows)))
+end</code></pre>
+      </div>
+      <p class="muted">Nothing here is an object with a lifecycle. Each stage is a pure transformation you can unit-test in isolation, reorder, or reuse in another pipeline. Adding a stage means adding a function, not editing a stateful engine and re-checking its invariants.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the ceremony of an object graph, the same work as a flat pipeline, and the pragmatic mix where objects sit at the edges and functions do the core math.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - The object graph: hand-offs and wiring to compute one price</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Calc as 🧮 PriceCalculator
+    participant Disc as 🏷️ DiscountEngine
+    participant Tax as 💶 TaxService
+
+    Caller->>Calc: new(tax, discounts)
+    Note over Caller,Calc: construct and inject two dependencies
+    Caller->>Calc: calculate(order)
+    Calc->>Disc: apply(subtotal, coupon)
+    Disc-->>Calc: discounted
+    Calc->>Tax: apply(discounted, region)
+    Tax-->>Calc: total
+    Calc-->>Caller: total
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - The functional pipeline: straight-line data flow, no wiring</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Fn as 🔁 priceOrder
+
+    Caller->>Fn: priceOrder(order)
+    Fn->>Fn: applyDiscount(subtotal, coupon)
+    Fn->>Fn: applyTax(discounted, region)
+    Fn-->>Caller: total
+    Note over Caller,Fn: pure, deterministic, nothing to construct or mock
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Pragmatic mix: objects at the boundary, pure functions in the core</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant HTTP as 🌐 HTTP handler
+    participant Svc as 🧰 OrderService
+    participant Pure as 🔁 pricing (pure fns)
+    participant DB as 🗄️ Repository
+
+    HTTP->>Svc: place(orderDto)
+    Svc->>DB: load prior state
+    DB-->>Svc: account, cart
+    Svc->>Pure: priceOrder(data)
+    Note over Svc,Pure: side-effect-free math lives here
+    Pure-->>Svc: total
+    alt total valid
+        Svc->>DB: persist charge
+        Svc-->>HTTP: 201 created
+    else invalid input
+        Svc-->>HTTP: 422 rejected
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">A decision procedure for choosing paradigm per unit of code, from first look to a maintainable result.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Frame</span><h4>Describe the unit in one sentence</h4><p>Say what it does out loud: "computes a total from an order", "cleans a CSV". A pure input-to-output sentence is a strong hint toward a function.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">State</span><h4>Ask: is there long-lived state?</h4><p>Does anything need to persist and mutate between calls? A cart, an account, a connection pool. If nothing persists, you likely do not need an object.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Identity</span><h4>Ask: is there identity to protect?</h4><p>Two carts with the same items are still different carts. If instances have identity and invariants, objects fit. If your data is just values, prefer records and functions.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Variants</span><h4>Ask: do you need polymorphism?</h4><p>Many interchangeable providers behind one interface justify classes. One fixed calculation with no variants does not; a function is enough.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Lifetime</span><h4>Weigh the script vs the service</h4><p>A one-off backfill that runs and exits wants top-to-bottom procedural code. A long-running service with sessions is where object lifecycles pay off.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Shape data</span><h4>Model plain data first</h4><p>Define the records that flow through: rows, orders, line items. Keep them as simple immutable values before deciding what behavior, if any, needs to attach.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Write functions</span><h4>Express the core as pure functions</h4><p>Turn each transform into a function with no side effects. Deterministic math and reshaping belong here, isolated from I/O.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Compose</span><h4>Chain stages into a pipeline</h4><p>Compose the functions into one flow. Each stage is testable alone and the whole reads as a sequence, not a graph of collaborators.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Boundary</span><h4>Push objects to the edges</h4><p>Where you truly need state, a repository, a session, a stateful client, keep it at the boundary and let it call into the pure core.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Assert inputs and outputs directly</h4><p>Pure functions test without mocks: pass data, assert results. Reserve heavier integration tests for the thin stateful edges.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Review</span><h4>Delete the ceremony</h4><p>If a class has one method and no real state, collapse it into a function. Keep objects only where identity, state, or polymorphism earned them.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">The failure modes cut both ways: forcing objects where functions fit, and swinging so hard the other way you lose the structure objects rightly provide.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🏭 The -er class</h4><p>A <code>Manager</code>, <code>Processor</code>, or <code>Handler</code> with no state and one method is a function in disguise. It multiplies constructors and mocks without encapsulating anything.</p></div>
+        <div class="card"><h4>💉 Injection theater</h4><p>Wiring stateless helpers through a DI container so you can mock pure math. If a dependency has no side effects, you can just call it; the container is pure overhead.</p></div>
+        <div class="card"><h4>🩻 Anemic domain model</h4><p>Classes that are only getters and setters over data. You paid the object tax and got none of the behavior. Either add real invariants or use a plain record.</p></div>
+        <div class="card"><h4>🌀 Stateful pipeline engine</h4><p>An ETL "engine" object that accumulates the batch in mutable fields creates order-dependent bugs. Immutable data through pure stages avoids the whole class of defect.</p></div>
+        <div class="card"><h4>🔨 Overcorrecting to spaghetti</h4><p>Rejecting objects everywhere yields a pile of free functions sharing global state. Functional does not mean unstructured; group by module and keep data immutable.</p></div>
+        <div class="card"><h4>🧬 Deep hierarchies for calculation</h4><p>Subclassing to vary a formula bakes a taxonomy into inheritance. A function taking a strategy or a lookup table flexes without the fragile base class.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You rarely need a formal metric to feel this, but these signals make the call concrete and reviewable.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Fields per class</strong></td><td>Zero real state (only injected config) means the class is a stateless computation dressed as an object. Collapse it to a function.</td></tr>
+            <tr><td><strong>Public methods per class</strong></td><td>Exactly one public method named <code>run</code> or <code>calculate</code> is a strong "this is a function" signal.</td></tr>
+            <tr><td><strong>Mocks per unit test</strong></td><td>Needing many mocks to test simple logic means you are testing wiring, not behavior. Pure functions need none.</td></tr>
+            <tr><td><strong>Mutation in transforms</strong></td><td>In-place mutation inside a data pipeline predicts order-dependent bugs. Immutable data through pure stages is safer.</td></tr>
+            <tr><td><strong>Constructor-to-logic ratio</strong></td><td>More lines wiring dependencies than doing work signals ceremony that a function would erase.</td></tr>
+            <tr><td><strong>Instance lifetime</strong></td><td>Objects created and discarded within a single call have no lifecycle to justify them. A function has the same lifetime honestly.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if a class has no meaningful state, one public method, and needs mocks to test its own logic, it should be a function. Keep objects for identity, invariants, and polymorphism; use functions for stateless transforms and pure math.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style situations where dropping or limiting OOP made the system clearer and safer.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>1 · Billing engine rebuilt as pure functions</h3><div class="role">Domain: subscriptions &amp; invoicing</div></div></div>
+        <p class="muted">A subscriptions team had proration, tax, and discount logic spread across a graph of service objects that were hard to test and reason about.</p>
+        <ul>
+          <li>Extracted the math into pure functions over immutable invoice data, keeping I/O in a thin repository at the edge.</li>
+          <li>Replaced dozens of mock-heavy tests with plain input-output assertions covering edge cases like leap-year proration.</li>
+          <li>Kept the <code>Subscription</code> aggregate as an object because it has real state and lifecycle rules worth protecting.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The pricing core became deterministic and trivially testable, while objects stayed exactly where identity and invariants justified them.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔀</span><div><h3>2 · ETL pipeline as composed stages</h3><div class="role">Domain: data ingestion &amp; reporting</div></div></div>
+        <p class="muted">A reporting pipeline used a stateful "processor" object that accumulated rows in mutable fields, producing intermittent, order-dependent totals.</p>
+        <ul>
+          <li>Rewrote each step, parse, validate, enrich, aggregate, as a pure function passing immutable batches forward.</li>
+          <li>Composed the stages into one flow so a new enrichment was an added function, not an edit to shared mutable state.</li>
+          <li>Ran stages in isolation for tests and reused two of them unchanged in a second pipeline.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The order-dependent bugs disappeared, and adding or reordering stages became a low-risk, local change.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📜</span><div><h3>3 · One-off data migration script</h3><div class="role">Domain: schema migration &amp; backfill</div></div></div>
+        <p class="muted">An engineer started building a class hierarchy, readers, mappers, writers, for a migration that would run once and be deleted.</p>
+        <ul>
+          <li>Replaced the hierarchy with a top-to-bottom procedural script that reads, maps, and writes in clear phases.</li>
+          <li>Guarded correctness with a dry-run flag and idempotent upserts instead of an abstraction layer.</li>
+          <li>Left the script readable in a single pass so reviewers could verify the backfill without tracing indirection.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The migration shipped in a fraction of the time, was easy to review, and was safely deleted after it ran, with no framework to maintain.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Mainstream languages have grown functional and data-oriented features, making "not everything is an object" the pragmatic default rather than a fringe stance.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Records &amp; value types</h4><p>Immutable records in modern TypeScript, Python dataclasses, and Ruby Data give you plain data without the ceremony of full classes, exactly the shape pipelines want.</p></div>
+        <div class="card"><h4>🧵 Pattern matching</h4><p>Structural matching in Python, Ruby, and TS-adjacent tools lets you branch on data shape without a polymorphic class hierarchy for every variant.</p></div>
+        <div class="card"><h4>🚿 Data-oriented design</h4><p>Separating plain data from the functions over it improves cache behavior and clarity, a principle now common far beyond game engines.</p></div>
+        <div class="card"><h4>⚙️ Functional cores</h4><p>The "functional core, imperative shell" style is a mainstream architecture: pure logic inside, side effects at the boundary.</p></div>
+        <div class="card"><h4>🔗 Composable pipelines</h4><p>Stream and iterator abstractions make composed stateless stages idiomatic, so ETL and transforms rarely need a bespoke engine object.</p></div>
+        <div class="card"><h4>🤝 Pragmatic polyglot code</h4><p>Teams mix paradigms per module without apology: objects for stateful aggregates, functions for math and transforms, chosen by fit.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> OOP is one tool, not the default wrapper for all code. Reach for objects when you have identity, state, and invariants to protect; reach for functions and data-oriented design for stateless transforms, pure calculations, and small scripts. The senior move is mixing paradigms deliberately, not enforcing one everywhere.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Knowing when to skip objects pairs naturally with these design topics.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧩</span><h4>Composition over inheritance</h4><p>Assemble behavior from parts instead of deep class trees.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../errors-as-objects/"><span class="ico">🚨</span><h4>Errors as objects</h4><p>When modeling failures as values or types beats exceptions.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../anemic-domain-model/"><span class="ico">🩻</span><h4>Anemic domain model</h4><p>The trap of data-only classes with no behavior.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🔗</span><h4>Coupling &amp; cohesion</h4><p>The forces that decide how to draw module boundaries.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A pragmatic guide to when NOT to use OOP · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

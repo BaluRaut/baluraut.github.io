@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UML Class Relationships Explained - What, How, Why &amp; Examples</title>
-  <meta name="description" content="A deep, visual guide to UML class relationships: association, aggregation, composition, dependency, inheritance, and realization. Notation, semantics, multiplicity, diagrams, a 0-100 flow, real code, and when each applies." />
+  <title>UML Class Relationships in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A visual guide to UML class relationships: association, aggregation, composition, dependency, inheritance/generalization, and realization. Notation, semantics, multiplicity, class diagrams, sequence diagrams, and idiomatic TypeScript, Python, and Ruby code." />
   <link rel="stylesheet" href="../assets/style.css" />
 </head>
 <body>
@@ -19,7 +19,7 @@
         <a href="#diagrams">Diagrams</a>
         <a href="#flow">0-100 Flow</a>
         <a href="#pitfalls">Pitfalls</a>
-        <a href="#metrics">Trade-offs</a>
+        <a href="#signals">Signals</a>
         <a href="#cases">Cases</a>
         <a href="#future">Future</a>
       </div>
@@ -28,18 +28,18 @@
 
   <header class="hero">
     <div class="wrap">
-      <span class="kicker">OOP Foundation</span>
-      <h1>UML class relationships - how objects connect</h1>
-      <p class="lede">Every object model is a graph of relationships. UML gives you six precise ways to draw how classes relate: <strong>association</strong>, <strong>aggregation</strong>, <strong>composition</strong>, <strong>dependency</strong>, <strong>inheritance</strong>, and <strong>realization</strong>. Learn the arrows, the diamonds, the multiplicity, and the exact semantics, so a diagram means the same thing to every engineer who reads it.</p>
+      <span class="kicker">OOP Concept</span>
+      <h1>UML class relationships - the lines that connect your classes</h1>
+      <p class="lede">A class diagram is only as useful as the relationships drawn between its boxes. UML gives you six precise arrows - <strong>association</strong>, <strong>aggregation</strong>, <strong>composition</strong>, <strong>dependency</strong>, <strong>generalization</strong>, and <strong>realization</strong> - each with a different notation and a different meaning about ownership, lifetime, and coupling. Get them right and the diagram reads like the code; get them wrong and it lies.</p>
       <div class="cta">
-        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn primary" href="#how">See the code</a>
         <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
       </div>
       <div class="pill-row">
-        <span class="pill">Arrows &amp; diamonds</span>
-        <span class="pill">Multiplicity</span>
-        <span class="pill">Ownership &amp; lifecycle</span>
-        <span class="pill">Is-a vs has-a</span>
+        <span class="pill">Association</span>
+        <span class="pill">Aggregation vs composition</span>
+        <span class="pill">Dependency</span>
+        <span class="pill">Generalization &amp; realization</span>
       </div>
     </div>
   </header>
@@ -49,40 +49,40 @@
     <div class="wrap">
       <div class="eyebrow">01 - What</div>
       <h2>What are UML class relationships?</h2>
-      <p class="muted"><strong>UML class relationships</strong> are the standardized lines and arrowheads that connect classes in a class diagram. Each one encodes a specific meaning about how two classes are coupled: does one <em>use</em> the other, <em>hold</em> it, <em>own</em> it for life, <em>extend</em> it, or <em>implement</em> its contract. The notation is a shared language, so intent survives the trip from whiteboard to code.</p>
+      <p class="muted"><strong>UML class relationships</strong> are the standardized connectors that describe how classes relate at design time. They encode three things that source code scatters across constructors, fields, and imports: <em>structural links</em> between instances, <em>ownership and lifetime</em>, and <em>type hierarchy</em>. Reading the arrow direction, its head shape, and its multiplicity tells you how objects find each other and who is responsible for creating and destroying whom.</p>
 
       <div class="grid cols-3">
         <div class="card">
           <h4><span class="ico">🔗</span> Structural links</h4>
-          <p>Association, aggregation, and composition describe objects that reference each other and live together over time, with increasing degrees of ownership.</p>
+          <p>Association, aggregation, and composition describe objects that hold references to other objects, such as an <code>Order</code> referencing its <code>Customer</code> and its <code>LineItem</code> list.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">⚡</span> Usage links</h4>
-          <p>Dependency is the lightest touch: one class uses another briefly, as a parameter, return type, or local, without holding a reference.</p>
+          <h4><span class="ico">🧬</span> Type hierarchy</h4>
+          <p>Generalization (inheritance) and realization (implementing an interface) describe subtype relationships, such as a <code>StripeGateway</code> realizing a <code>PaymentGateway</code> contract.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🧬</span> Type links</h4>
-          <p>Inheritance (generalization) and realization describe is-a and implements-contract relationships between types, not between object instances.</p>
+          <h4><span class="ico">⚡</span> Transient use</h4>
+          <p>Dependency is the weakest link: one class uses another only briefly, as a method parameter or local, without storing a reference to it.</p>
         </div>
       </div>
 
-      <h3>The six relationships at a glance</h3>
+      <h3>The six relationships and their notation</h3>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Relationship</th><th>Notation</th><th>Meaning</th><th>Strength</th></tr>
+            <tr><th>Relationship</th><th>UML notation</th><th>Meaning</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Dependency</strong></td><td>Dashed line, open arrow <code>..&gt;</code></td><td>Uses temporarily (param, return, local)</td><td>Weakest</td></tr>
-            <tr><td><strong>Association</strong></td><td>Solid line, open arrow <code>--&gt;</code></td><td>Knows about, holds a reference</td><td>Weak</td></tr>
-            <tr><td><strong>Aggregation</strong></td><td>Solid line, hollow diamond <code>o--</code></td><td>Has-a, shared parts, independent lifecycle</td><td>Medium</td></tr>
-            <tr><td><strong>Composition</strong></td><td>Solid line, filled diamond <code>*--</code></td><td>Owns-a, parts die with the whole</td><td>Strong</td></tr>
-            <tr><td><strong>Inheritance</strong></td><td>Solid line, hollow triangle <code>&lt;|--</code></td><td>Is-a, subtype extends supertype</td><td>Type</td></tr>
-            <tr><td><strong>Realization</strong></td><td>Dashed line, hollow triangle <code>&lt;|..</code></td><td>Implements an interface contract</td><td>Type</td></tr>
+            <tr><td><strong>Association</strong></td><td>Solid line, optional open arrow</td><td>A structural link; one object holds a reference to another. <code>Order</code> knows its <code>Customer</code>.</td></tr>
+            <tr><td><strong>Aggregation</strong></td><td>Solid line, hollow diamond at the whole</td><td>Whole-part with shared, independent lifetime. A <code>Product</code> can belong to many <code>Order</code> line items.</td></tr>
+            <tr><td><strong>Composition</strong></td><td>Solid line, filled diamond at the whole</td><td>Whole-part with owned lifetime. <code>LineItem</code> objects die with their <code>Order</code>.</td></tr>
+            <tr><td><strong>Dependency</strong></td><td>Dashed line, open arrow</td><td>Transient use; <code>Order</code> uses a <code>PaymentGateway</code> passed to <code>checkout()</code>.</td></tr>
+            <tr><td><strong>Generalization</strong></td><td>Solid line, hollow triangle at the parent</td><td>Inheritance; a subclass is a kind of its superclass.</td></tr>
+            <tr><td><strong>Realization</strong></td><td>Dashed line, hollow triangle at the interface</td><td>A class implements an interface contract.</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> the diamond always sits on the <em>owner</em> (the whole), and the triangle always points at the <em>more general</em> type (the parent or interface). Solid means a lasting reference, dashed means a passing use. Get those three cues right and you can read any class diagram.</div>
+      <div class="callout"><strong>Key mental model:</strong> the diamond answers "who owns the lifetime?" and the line style answers "how long is the link?" A filled diamond means the part cannot outlive the whole; a dashed line means the connection is momentary, not stored.</div>
     </div>
   </section>
 
@@ -91,12 +91,12 @@
     <div class="wrap">
       <div class="eyebrow">02 - Why</div>
       <h2>Why the distinctions matter</h2>
-      <p class="muted">These are not pedantic drawing rules. Each relationship implies different lifecycle management, coupling, and testability. Blurring them produces designs that leak memory, resist change, or break in surprising ways when one object is shared.</p>
+      <p class="muted">These arrows are not decoration. Choosing composition over association changes cascade-delete rules, testability, and how tightly two modules are bound. A diagram that mislabels them will steer real engineering decisions in the wrong direction.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🗂️ Encodes ownership</h4><p>Composition versus aggregation tells the reader whether one object must create and destroy another, or merely borrow a shared reference. That single decision drives your constructors, cleanup, and copying.</p></div>
-        <div class="card"><h4>🔧 Reveals coupling</h4><p>A dependency is cheap to break; a composition is not. Seeing the relationship type up front tells you how expensive a change will ripple through the system.</p></div>
-        <div class="card"><h4>🧭 Communicates intent</h4><p>An interface realization signals "swap me freely," while inheritance signals "I am a specialized kind of." Readers plan extensions differently based on which arrow they see.</p></div>
-        <div class="card"><h4>🧮 Sets multiplicity contracts</h4><p>Labels like 1, 0..1, and 1..* state exactly how many objects sit on each end, catching invalid states, such as an order with zero line items, before you write a single test.</p></div>
+        <div class="card"><h4>🗑️ Lifetime &amp; cleanup</h4><p>Composition tells you a part must be created and destroyed with its owner. That maps directly to cascade deletes, ownership of database rows, and who calls <code>dispose()</code>. Aggregation says the opposite: the part lives on its own.</p></div>
+        <div class="card"><h4>🔌 Coupling you can see</h4><p>Dependency versus association is the difference between "uses briefly" and "holds forever." Preferring dependency (a parameter) over a stored field keeps classes loosely coupled and far easier to test with a fake.</p></div>
+        <div class="card"><h4>📐 Contracts before implementations</h4><p>Realization lets you draw the <code>PaymentGateway</code> interface once and swap Stripe, PayPal, or a sandbox behind it. The diagram documents the seam where implementations plug in.</p></div>
+        <div class="card"><h4>🧭 Shared vocabulary</h4><p>UML is a lingua franca across teams and tools. A reviewer who sees a filled diamond knows the ownership rule instantly, without reading the constructor, so design conversations move faster.</p></div>
       </div>
     </div>
   </section>
@@ -106,12 +106,12 @@
     <div class="wrap">
       <div class="eyebrow">In Plain Terms</div>
       <h2>UML class relationships explained with analogies</h2>
-      <p class="muted">Same six ideas, four ways to picture them, so ownership and lifecycle click whoever you are.</p>
+      <p class="muted">Same six connectors, four ways to picture the difference between "knows", "owns", and "is a kind of".</p>
       <div class="grid cols-2">
-        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of your <strong>backpack and your books</strong>. Books in the bag are <em>aggregation</em>: take them out and they still exist. Your <em>heartbeat and your body</em> are composition: remove the body and the heartbeat is gone. Borrowing a friend's calculator for one exam is a <em>dependency</em>.</p></div>
-        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>A field that holds another object is an <strong>association</strong>. If you <code>new</code> that object inside the constructor and never share it, that is <em>composition</em>. If it arrives via a parameter and you just store it, that is <em>aggregation</em>. A type you <code>implements</code> is <em>realization</em>; a class you <code>extends</code> is <em>inheritance</em>.</p></div>
-        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A <strong>company and its departments</strong>: dissolve the company and the departments vanish (composition). A <strong>project team</strong> of people borrowed from other units is aggregation; when the project ends the people remain. Hiring a consultant for one meeting is a dependency.</p></div>
-        <div class="card"><h4><span class="ico">🏠</span> Everyday version</h4><p>A <strong>house and its rooms</strong> are composition: demolish the house and the rooms go with it. The <strong>furniture</strong> is aggregation: it moves to the next house. "Is-a" is a <em>cabin is a house</em> (inheritance); "acts-as" is a house that <em>can be rented</em> (realization of a Rentable contract).</p></div>
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of a school. You are <strong>associated</strong> with your teacher (you both exist independently), your <strong>notes</strong> are composed into your notebook (shred the notebook and the notes are gone), and the library book is an <strong>aggregation</strong> (borrowed, then returned to live on without you).</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>A stored field is association or composition; a method parameter is a <strong>dependency</strong>. <code>implements PaymentGateway</code> is realization; <code>extends BaseController</code> is generalization. The keyword in code is the arrowhead in the diagram.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A company <strong>owns</strong> its departments (composition - dissolve the company, dissolve the departments) but only <strong>employs</strong> contractors (aggregation - the contractor keeps existing). It <strong>uses</strong> an accountant at tax time (dependency), and every manager <strong>is a</strong> employee (generalization).</p></div>
+        <div class="card"><h4><span class="ico">🏠</span> Everyday version</h4><p>A house and its rooms are composition: demolish the house and the rooms vanish. The house and its furniture are aggregation: the furniture can move to a new house. The plumber you call is a dependency: used for an hour, then gone.</p></div>
       </div>
     </div>
   </section>
@@ -120,118 +120,258 @@
   <section id="how">
     <div class="wrap">
       <div class="eyebrow">03 - How</div>
-      <h2>How each relationship maps to code</h2>
-      <p class="muted">Every UML relationship has a direct code fingerprint. The trick is learning to read a class body and name the relationship, and vice versa. The diagram below shows all six on one canvas, then the Java that produces them.</p>
+      <h2>How the relationships map to code</h2>
+      <p class="muted">Each UML arrow corresponds to a concrete code shape. Below, an <strong>ecommerce checkout</strong> domain shows all six at once: <code>Order</code>, <code>LineItem</code>, <code>Customer</code>, <code>Product</code>, and a <code>PaymentGateway</code> interface with two implementations.</p>
 
       <div class="grid cols-2">
         <div class="card">
-          <h4><span class="ico">💎</span> Diamonds = ownership</h4>
-          <p>A filled diamond (composition) means the whole creates its parts internally and they share its lifetime. A hollow diamond (aggregation) means the parts are passed in and outlive the whole.</p>
+          <h4><span class="ico">💎</span> Ownership shows up in constructors</h4>
+          <p>Composition means the whole builds its parts internally: <code>Order</code> creates its own <code>LineItem</code> objects, so no outside code hands them in. Aggregation and association mean references are passed in from outside and outlive the holder.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🔺</span> Triangles = type</h4>
-          <p>A hollow triangle on a solid line is <code>extends</code> (inheritance). The same triangle on a dashed line is <code>implements</code> (realization). Both point toward the more abstract type.</p>
+          <h4><span class="ico">🧾</span> Coupling shows up in signatures</h4>
+          <p>A dependency appears as a parameter type on a single method - <code>checkout(gateway)</code> - not as a stored field. Realization appears as <code>implements</code>; generalization as <code>extends</code>. The narrower the link, the looser the coupling.</p>
         </div>
       </div>
 
-      <h3>All six relationships on one diagram</h3>
+      <h3>The domain as a class diagram</h3>
       <div class="diagram">
-        <div class="cap">Structure - the six UML relationships between a small set of classes</div>
+        <div class="cap">Class diagram - all six relationships in one checkout model</div>
         <pre class="mermaid">
 classDiagram
-    class Payable {
+    class PaymentGateway {
         &lt;&lt;interface&gt;&gt;
-        +pay() void
+        +charge(amount, token) Receipt
     }
-    class Person {
-        +String name
+    class StripeGateway {
+        +charge(amount, token) Receipt
     }
-    class Employee {
-        +String title
-        +pay() void
+    class PayPalGateway {
+        +charge(amount, token) Receipt
     }
-    class Department {
-        +String name
+    class Customer {
+        +id string
+        +email string
     }
-    class Company {
-        +String legalName
+    class Product {
+        +sku string
+        +price Money
     }
-    class Address {
-        +String city
+    class LineItem {
+        +quantity int
+        +subtotal() Money
     }
-    class TaxService {
-        +calc(Employee) double
+    class Order {
+        +id string
+        +addItem(product, qty)
+        +total() Money
+        +checkout(gateway) Receipt
     }
 
-    Person &lt;|-- Employee : inheritance
-    Payable &lt;|.. Employee : realization
-    Company *-- Department : composition
-    Department o-- Employee : aggregation
-    Employee --&gt; Address : association
-    Employee ..&gt; TaxService : dependency
-
-    Company "1" *-- "1..*" Department
-    Department "1" o-- "0..*" Employee
-    Employee "1" --&gt; "1" Address
+    PaymentGateway &lt;|.. StripeGateway : realization
+    PaymentGateway &lt;|.. PayPalGateway : realization
+    Order --&gt; Customer : association
+    Order *-- LineItem : composition
+    LineItem o-- Product : aggregation
+    Order ..&gt; PaymentGateway : dependency
         </pre>
       </div>
 
-      <h3>The same relationships in Java</h3>
-      <pre><code>// Realization: Employee implements the Payable contract (dashed triangle)
-interface Payable {
-    void pay();
+      <h3>The same model in three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// PaymentGateway is an interface: StripeGateway REALIZES it.
+interface PaymentGateway {
+  charge(amountCents: number, token: string): Receipt;
 }
 
-// Inheritance / generalization: Employee IS-A Person (solid triangle)
-class Person {
-    protected String name;
-    Person(String name) { this.name = name; }
+interface Receipt { id: string; amountCents: number; status: string; }
+
+class StripeGateway implements PaymentGateway {            // realization
+  charge(amountCents: number, token: string): Receipt {
+    return { id: `ch_${token}`, amountCents, status: "paid" };
+  }
 }
 
-class Address {                       // a value the Employee references
-    final String city;
-    Address(String city) { this.city = city; }
+class Customer {
+  constructor(readonly id: string, readonly email: string) {}
 }
 
-class TaxService {                    // used, but never stored
-    double calc(Employee e) { return 0.0; }
+class Product {
+  constructor(readonly sku: string, readonly priceCents: number) {}
 }
 
-class Employee extends Person implements Payable {
-    private final Address address;    // association: holds a reference, 1..1
-
-    Employee(String name, Address address) {
-        super(name);
-        this.address = address;       // reference passed in, not owned
-    }
-
-    @Override public void pay() { /* ... */ }
-
-    // Dependency: TaxService is a parameter, used and discarded (dashed arrow)
-    double taxes(TaxService service) {
-        return service.calc(this);
-    }
+// LineItem AGGREGATES a Product: the Product exists independently,
+// it is passed in and shared across many orders.
+class LineItem {
+  constructor(readonly product: Product, readonly quantity: number) {}   // aggregation
+  subtotalCents(): number { return this.product.priceCents * this.quantity; }
 }
 
-class Department {
-    private final String name;
-    // Aggregation: employees are passed in and outlive the department (hollow diamond)
-    private final List&lt;Employee&gt; members = new ArrayList&lt;&gt;();
+class Order {
+  // COMPOSITION: the Order builds and owns its own LineItems.
+  private readonly items: LineItem[] = [];
 
-    Department(String name) { this.name = name; }
-    void add(Employee e) { members.add(e); }   // shared, borrowed reference
+  // ASSOCIATION: the Order holds a Customer reference it does not own.
+  constructor(readonly id: string, private readonly customer: Customer) {}
+
+  addItem(product: Product, quantity: number): void {
+    this.items.push(new LineItem(product, quantity));      // owns its parts
+  }
+
+  totalCents(): number {
+    return this.items.reduce((sum, li) => sum + li.subtotalCents(), 0);
+  }
+
+  // DEPENDENCY: the gateway is used only inside this call, never stored.
+  checkout(gateway: PaymentGateway, token: string): Receipt {
+    return gateway.charge(this.totalCents(), token);
+  }
 }
 
-class Company {
-    // Composition: the company CREATES its departments; they die with it (filled diamond)
-    private final List&lt;Department&gt; departments = new ArrayList&lt;&gt;();
+const order = new Order("ord_1001", new Customer("cus_7", "amir@example.com"));
+order.addItem(new Product("SKU-KB-01", 8900), 2);          // create + call method
+order.addItem(new Product("SKU-MS-04", 4500), 1);
+const receipt = order.checkout(new StripeGateway(), "tok_visa");
+console.log(order.totalCents(), receipt.status);           // 22300 paid</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass
+from typing import Protocol
 
-    Company() {
-        departments.add(new Department("Engineering")); // owned, built internally
-        departments.add(new Department("Finance"));
-    }
-}</code></pre>
-      <p class="muted">Read the code and the relationships fall out: <em>extends</em> is inheritance, <em>implements</em> is realization, a stored field passed in is association or aggregation, a field the class <code>new</code>s internally and never leaks is composition, and a method parameter used once is a dependency.</p>
+
+# PaymentGateway is a Protocol (interface): StripeGateway REALIZES it.
+class PaymentGateway(Protocol):
+    def charge(self, amount_cents: int, token: str) -&gt; "Receipt": ...
+
+
+@dataclass
+class Receipt:
+    id: str
+    amount_cents: int
+    status: str
+
+
+class StripeGateway:                                        # realization
+    def charge(self, amount_cents: int, token: str) -&gt; Receipt:
+        return Receipt(id=f"ch_{token}", amount_cents=amount_cents, status="paid")
+
+
+@dataclass
+class Customer:
+    id: str
+    email: str
+
+
+@dataclass
+class Product:
+    sku: str
+    price_cents: int
+
+
+# LineItem AGGREGATES a Product: the Product is passed in and shared.
+@dataclass
+class LineItem:
+    product: Product                                        # aggregation
+    quantity: int
+
+    def subtotal_cents(self) -&gt; int:
+        return self.product.price_cents * self.quantity
+
+
+class Order:
+    # ASSOCIATION: holds a reference to a Customer it does not own.
+    def __init__(self, id: str, customer: Customer) -&gt; None:
+        self.id = id
+        self.customer = customer
+        self._items: list[LineItem] = []                    # composition
+
+    # COMPOSITION: the Order builds and owns its own LineItems.
+    def add_item(self, product: Product, quantity: int) -&gt; None:
+        self._items.append(LineItem(product, quantity))
+
+    def total_cents(self) -&gt; int:
+        return sum(li.subtotal_cents() for li in self._items)
+
+    # DEPENDENCY: the gateway is used only inside this call, never stored.
+    def checkout(self, gateway: PaymentGateway, token: str) -&gt; Receipt:
+        return gateway.charge(self.total_cents(), token)
+
+
+order = Order("ord_1001", Customer("cus_7", "amir@example.com"))
+order.add_item(Product("SKU-KB-01", 8900), 2)               # create + call method
+order.add_item(Product("SKU-MS-04", 4500), 1)
+receipt = order.checkout(StripeGateway(), "tok_visa")
+print(order.total_cents(), receipt.status)                  # 22300 paid</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>Receipt = Struct.new(:id, :amount_cents, :status)
+
+# Ruby has no formal interface; the gateway duck-types the contract.
+# StripeGateway REALIZES the PaymentGateway role by responding to #charge.
+class StripeGateway                                          # realization
+  def charge(amount_cents, token)
+    Receipt.new("ch_#{token}", amount_cents, "paid")
+  end
+end
+
+class Customer
+  attr_reader :id, :email
+  def initialize(id, email)
+    @id = id
+    @email = email
+  end
+end
+
+class Product
+  attr_reader :sku, :price_cents
+  def initialize(sku, price_cents)
+    @sku = sku
+    @price_cents = price_cents
+  end
+end
+
+# LineItem AGGREGATES a Product: the Product is passed in and shared.
+class LineItem
+  attr_reader :product, :quantity
+  def initialize(product, quantity)                          # aggregation
+    @product = product
+    @quantity = quantity
+  end
+
+  def subtotal_cents = product.price_cents * quantity
+end
+
+class Order
+  attr_reader :id, :customer
+
+  # ASSOCIATION: holds a reference to a Customer it does not own.
+  def initialize(id, customer)
+    @id = id
+    @customer = customer
+    @items = []                                              # composition
+  end
+
+  # COMPOSITION: the Order builds and owns its own LineItems.
+  def add_item(product, quantity)
+    @items &lt;&lt; LineItem.new(product, quantity)
+  end
+
+  def total_cents = @items.sum(&amp;:subtotal_cents)
+
+  # DEPENDENCY: the gateway is used only inside this call, never stored.
+  def checkout(gateway, token)
+    gateway.charge(total_cents, token)
+  end
+end
+
+order = Order.new("ord_1001", Customer.new("cus_7", "amir@example.com"))
+order.add_item(Product.new("SKU-KB-01", 8900), 2)           # create + call method
+order.add_item(Product.new("SKU-MS-04", 4500), 1)
+receipt = order.checkout(StripeGateway.new, "tok_visa")
+puts "#{order.total_cents} #{receipt.status}"               # 22300 paid</code></pre>
+      </div>
+      <p class="muted">Read the code against the arrows: <code>implements</code> (or the duck-typed <code>charge</code> in Ruby) is realization, the stored <code>customer</code> field is association, <code>new LineItem(...)</code> inside <code>Order</code> is composition, the passed-in <code>product</code> is aggregation, and the <code>gateway</code> parameter on <code>checkout</code> is a dependency. The same six links appear identically across all three languages.</p>
     </div>
   </section>
 
@@ -239,64 +379,74 @@ class Company {
   <section id="diagrams">
     <div class="wrap">
       <div class="eyebrow">04 - Sequence Diagrams</div>
-      <h2>Relationships in motion</h2>
-      <p class="muted">Class diagrams show static structure; these sequences show how the lifecycle differs at runtime, which is exactly what the notation is trying to warn you about.</p>
+      <h2>How the objects actually interact</h2>
+      <p class="muted">Three views of the same checkout: building the order (composition and aggregation in motion), charging through the gateway (dependency and realization), and a declined-payment path.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 - Composition: the whole creates and destroys its parts</div>
+        <div class="cap">Diagram 1 - Building an order: composition creates parts, aggregation reuses a shared Product</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant Client as 👤 Client
-    participant Company as 🏢 Company
-    participant Dept as 🗂️ Department
+    participant Client as 🛒 Checkout UI
+    participant Order as 📦 Order
+    participant Catalog as 🗂️ Product catalog
+    participant Item as 🧾 LineItem
 
-    Client->>Company: new Company()
-    Company->>Dept: new Department("Engineering")
-    Company->>Dept: new Department("Finance")
-    Note over Company,Dept: Parts are created inside the whole
-    Client->>Company: close()
-    Company->>Dept: dispose()
-    Note over Company,Dept: Parts die with the whole (filled diamond)
+    Client->>Catalog: lookup(sku)
+    Catalog-->>Client: Product (shared, independent lifetime)
+    Client->>Order: addItem(product, qty)
+    Note over Order,Item: Composition - Order creates and owns the LineItem
+    Order->>Item: new LineItem(product, qty)
+    Note over Item,Catalog: Aggregation - LineItem references the shared Product
+    Item-->>Order: line item stored
+    Order-->>Client: item added
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 - Aggregation vs dependency: borrowing vs passing through</div>
+        <div class="cap">Diagram 2 - Checkout: dependency on a PaymentGateway realized by StripeGateway</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant Client as 👤 Client
-    participant Emp as 👷 Employee
-    participant Dept as 🗂️ Department
-    participant Tax as 🧮 TaxService
+    participant Client as 🛒 Checkout UI
+    participant Order as 📦 Order
+    participant Gateway as 💳 StripeGateway
+    participant Bank as 🏦 Card network
 
-    Client->>Emp: new Employee(addr)
-    Client->>Dept: add(employee)
-    Note over Dept,Emp: Aggregation - Dept borrows a shared Employee
-    Client->>Emp: taxes(taxService)
-    Emp->>Tax: calc(this)
-    Tax-->>Emp: amount
-    Note over Emp,Tax: Dependency - TaxService used then discarded
+    Client->>Order: checkout(gateway, token)
+    Note over Order,Gateway: Dependency - gateway is a parameter, not a field
+    Order->>Order: total() over composed LineItems
+    Order->>Gateway: charge(totalCents, token)
+    Note over Gateway: Realizes the PaymentGateway interface
+    Gateway->>Bank: authorize(amount, token)
+    Bank-->>Gateway: approved
+    Gateway-->>Order: Receipt(status = paid)
+    Order-->>Client: Receipt + order confirmed
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 3 - Inheritance and realization: polymorphic dispatch</div>
+        <div class="cap">Diagram 3 - Declined path: same dependency, a different realization result</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant Client as 👤 Client
-    participant Payable as 📜 Payable
-    participant Emp as 👷 Employee
-    participant Person as 🧍 Person
+    participant Client as 🛒 Checkout UI
+    participant Order as 📦 Order
+    participant Gateway as 💳 PaymentGateway
+    participant Bank as 🏦 Card network
 
-    Client->>Payable: pay()
-    Note over Client,Payable: Client depends on the interface, not the class
-    Payable->>Emp: dispatch pay() (realization)
-    Emp->>Person: super reference (inheritance)
-    Person-->>Emp: inherited state
-    Emp-->>Client: paid
+    Client->>Order: checkout(gateway, token)
+    Order->>Gateway: charge(totalCents, token)
+    Gateway->>Bank: authorize(amount, token)
+    alt insufficient funds
+        Bank-->>Gateway: declined
+        Gateway-->>Order: Receipt(status = declined)
+        Order-->>Client: show retry with another method
+    else approved
+        Bank-->>Gateway: approved
+        Gateway-->>Order: Receipt(status = paid)
+        Order-->>Client: order confirmed
+    end
         </pre>
       </div>
     </div>
@@ -307,20 +457,20 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">05 - Step by Step</div>
       <h2>The 0 → 100 flow</h2>
-      <p class="muted">From two unconnected classes to a correctly annotated, multiplicity-labeled diagram that maps cleanly to code.</p>
+      <p class="muted">From requirements to a correct class diagram - deciding, for every pair of classes, which of the six relationships truly applies.</p>
 
       <div class="steps">
-        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>List the classes</h4><p>Write down the nouns in your domain as candidate classes. Do not draw any lines yet; just get the boxes on the canvas.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Ask "is-a"</span><h4>Find inheritance</h4><p>For each pair, ask whether one is a specialized kind of the other. If yes and the substitution holds everywhere, draw a solid line with a hollow triangle toward the parent.</p></div></div>
-        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Ask "acts-as"</span><h4>Find realization</h4><p>Does a class promise to fulfill a contract, an interface, without being a subtype? Draw a dashed line with a hollow triangle to the interface.</p></div></div>
-        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Ask "has-a"</span><h4>Find the structural links</h4><p>Where one class holds another as a field, you have association, aggregation, or composition. The next steps tell them apart.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Ownership</span><h4>Test the lifecycle</h4><p>If the whole creates the part and the part cannot outlive it, it is composition (filled diamond). If the part is passed in and survives independently, it is aggregation (hollow diamond).</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Reference</span><h4>Default to association</h4><p>If a class simply keeps a reference with no strong part-whole ownership claim, a plain solid line with an open arrow (association) is the honest choice.</p></div></div>
-        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Usage</span><h4>Spot dependencies</h4><p>Where a class only touches another as a method parameter, return type, or local variable, draw a dashed line with an open arrow. Nothing is stored.</p></div></div>
-        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Direction</span><h4>Add navigability</h4><p>Arrowheads show who can reach whom. If Employee knows its Address but Address never references Employee, point the arrow one way only.</p></div></div>
-        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Multiplicity</span><h4>Label the ends</h4><p>Annotate each end with counts: 1, 0..1, 1..*, or 0..*. A Company has 1..* Departments; a Department has 0..* Employees.</p></div></div>
-        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Verify</span><h4>Cross-check against code</h4><p>Walk each line back to a constructor, field, or method. If the code does not match the arrow, one of them is lying; fix the mismatch.</p></div></div>
-        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Communicate</span><h4>Share the model</h4><p>You now have a diagram anyone can read the same way: ownership, direction, and cardinality are all explicit and enforced by the notation.</p></div></div>
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Identify</span><h4>List the classes</h4><p>Pull the nouns from the domain: <code>Order</code>, <code>LineItem</code>, <code>Customer</code>, <code>Product</code>, <code>PaymentGateway</code>. These become the boxes on the diagram.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Link</span><h4>Find the references</h4><p>For each class, ask which other classes it holds. An <code>Order</code> holds a <code>Customer</code> and a list of <code>LineItem</code> objects. Every held reference is at least an association.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Ownership</span><h4>Ask who controls lifetime</h4><p>Does deleting the whole delete the part? Delete an <code>Order</code> and its <code>LineItem</code> objects should vanish. That is composition, drawn with a filled diamond.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Sharing</span><h4>Spot the shared parts</h4><p>A <code>Product</code> lives in the catalog and is referenced by many line items. It outlives any single order, so <code>LineItem</code> to <code>Product</code> is aggregation, a hollow diamond.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Plain link</span><h4>Mark the plain associations</h4><p>The <code>Order</code> to <code>Customer</code> link is neither owned nor a whole-part; both exist on their own. It is a plain association, a solid line.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Transient</span><h4>Separate use from having</h4><p>The <code>PaymentGateway</code> is only used inside <code>checkout()</code> and never stored. That is a dependency, a dashed arrow, not an association.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Abstract</span><h4>Introduce interfaces</h4><p>Define <code>PaymentGateway</code> as an interface so multiple providers can plug in. Draw it as a class with the interface stereotype.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Realize</span><h4>Connect implementations</h4><p><code>StripeGateway</code> and <code>PayPalGateway</code> implement the contract. Draw realization: a dashed line with a hollow triangle at the interface.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Generalize</span><h4>Factor shared subtypes</h4><p>If several classes share fields and behavior, extract a superclass and connect with generalization: a solid line with a hollow triangle at the parent.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Multiplicity</span><h4>Annotate the ends</h4><p>Add multiplicities: <code>Order</code> "1" to <code>LineItem</code> "1..*", <code>Customer</code> "1" to <code>Order</code> "0..*". These bounds catch invalid states early.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Verify</span><h4>Read the diagram back as code</h4><p>Walk each arrow and confirm the constructor, field, or parameter matches. If the code stores what the diagram calls a dependency, fix one of them so they agree.</p></div></div>
       </div>
     </div>
   </section>
@@ -330,40 +480,40 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">Common Pitfalls</div>
       <h2>Pitfalls &amp; anti-patterns</h2>
-      <p class="muted">Most UML mistakes come from overstating a relationship. When in doubt, pick the weaker one.</p>
+      <p class="muted">Most relationship errors come from confusing "knows about" with "owns" or from reaching for inheritance when a link would do.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>💠 Composition when it is aggregation</h4><p>Drawing a filled diamond for parts that are passed in and shared implies the whole owns their lifecycle. Readers then write cleanup code that destroys objects other classes still use.</p></div>
-        <div class="card"><h4>🧬 Inheritance for code reuse</h4><p>Extending a class just to borrow its methods, when no true is-a relationship exists, creates fragile hierarchies. Prefer composition; reserve inheritance for genuine substitutability.</p></div>
-        <div class="card"><h4>🔢 Missing multiplicity</h4><p>Leaving ends unlabeled hides invalid states. Without "1..*" nothing stops an Order from having zero line items, and the ambiguity leaks straight into buggy code.</p></div>
-        <div class="card"><h4>↔️ Bidirectional by default</h4><p>Adding arrowheads on both ends, or none, when navigation is really one-way inflates coupling and complicates updates. Draw navigability only where it exists.</p></div>
-        <div class="card"><h4>🔗 Association masquerading as dependency</h4><p>Storing an object in a field but drawing a dashed use-arrow understates the coupling. If it is a member, it is at least an association, not a passing dependency.</p></div>
-        <div class="card"><h4>🎭 Realization drawn as inheritance</h4><p>Using a solid triangle for an interface implementation loses the distinction between "is a kind of" and "fulfills a contract," misleading anyone planning extensions.</p></div>
+        <div class="card"><h4>💠 Composition vs aggregation confusion</h4><p>Marking a shared <code>Product</code> as composed into a <code>LineItem</code> implies deleting the order deletes the catalog entry. Pick the diamond by asking whether the part can outlive the whole.</p></div>
+        <div class="card"><h4>🪢 Association where a dependency belongs</h4><p>Storing the <code>PaymentGateway</code> as a field just to call it once tightens coupling and complicates tests. If it is used in one method, pass it as a parameter and draw a dashed dependency.</p></div>
+        <div class="card"><h4>🧬 Inheritance for code reuse</h4><p>Subclassing <code>Order</code> to reuse a discount method creates a fake "is a" relationship. Prefer a collaborator (composition) over generalization when you only want to share behavior.</p></div>
+        <div class="card"><h4>➡️ Missing or wrong direction</h4><p>Arrowless or backwards associations hide who depends on whom. Direction encodes navigability; drawing <code>Customer</code> pointing at <code>Order</code> when only the order holds the reference is simply wrong.</p></div>
+        <div class="card"><h4>🔢 No multiplicity</h4><p>Leaving ends unlabeled hides whether an order has one line item or many, or whether a customer is optional. Missing bounds let invalid object graphs slip through review.</p></div>
+        <div class="card"><h4>🔁 Bidirectional by default</h4><p>Making every association two-way creates reference cycles that leak memory and complicate serialization. Keep links one-directional unless both sides genuinely need to navigate.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- METRICS -->
-  <section id="metrics">
+  <!-- SIGNALS -->
+  <section id="signals">
     <div class="wrap">
-      <div class="eyebrow">Trade-offs</div>
-      <h2>Trade-offs &amp; when to use</h2>
-      <p class="muted">The relationships form a spectrum from loose to tight. Reach for the loosest one that still expresses the truth of your design.</p>
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You can sanity-check relationship choices against how the code and the object graph actually behave.</p>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Aspect</th><th>Detail</th></tr>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Pros</strong></td><td>A shared, unambiguous vocabulary; ownership and lifecycle become explicit; multiplicity catches invalid states; diagrams map directly to code.</td></tr>
-            <tr><td><strong>Cons</strong></td><td>Easy to over-specify; distinctions like aggregation vs association are informal and debated; diagrams drift from code if not maintained.</td></tr>
-            <tr><td><strong>Use when</strong></td><td>Designing or documenting a domain model, onboarding engineers, reviewing coupling, or agreeing on ownership before writing lifecycle-sensitive code.</td></tr>
-            <tr><td><strong>Avoid when</strong></td><td>A quick sketch will do, or the extra ceremony (precise diamonds and multiplicity) outweighs the value for a throwaway prototype.</td></tr>
-            <tr><td><strong>Complexity</strong></td><td>Low to draw, but the semantics are subtle. The hard part is judgment: composition vs aggregation and inheritance vs realization.</td></tr>
-            <tr><td><strong>Related</strong></td><td>Composition-over-inheritance, coupling and cohesion, SOLID principles, and structural patterns like Composite that lean on these links.</td></tr>
+            <tr><td><strong>Cascade-delete behavior</strong></td><td>If removing the whole must remove the part, the link is composition. If the part survives, it is aggregation or association.</td></tr>
+            <tr><td><strong>Constructor origin of a field</strong></td><td>Parts created with <code>new</code> inside the owner point to composition; references passed into the constructor point to aggregation or association.</td></tr>
+            <tr><td><strong>Field vs parameter</strong></td><td>A collaborator kept as a field is an association; one that appears only in a method signature is a dependency.</td></tr>
+            <tr><td><strong>Afferent / efferent coupling</strong></td><td>Counting incoming and outgoing dependencies per class flags boxes with too many arrows, a design smell worth refactoring.</td></tr>
+            <tr><td><strong>Interface fan-in</strong></td><td>Many classes realizing one interface is healthy abstraction; zero realizations means the interface earns its keep only as future-proofing.</td></tr>
+            <tr><td><strong>Inheritance depth</strong></td><td>Deep generalization chains (more than three levels) usually signal misused inheritance that composition would model more cleanly.</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Rule of thumb:</strong> prefer the weakest relationship that is still accurate. Dependency over association, association over aggregation, aggregation over composition, and composition over inheritance. Strength is a cost, not a feature, so pay for it only when the design truly demands it.</div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you cannot answer "does the part die with the whole?" and "is it stored or just used?" you cannot yet pick the right arrow. Answer those two questions first, then draw.</div>
     </div>
   </section>
 
@@ -372,39 +522,39 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">06 - Case Studies</div>
       <h2>Real-world case studies</h2>
-      <p class="muted">Three familiar systems, each hinging on getting one relationship right.</p>
+      <p class="muted">How relationship choices play out in production software systems.</p>
 
       <div class="case">
-        <div class="hd"><span class="badge">🛒</span><div><h3>1 · E-commerce order and line items</h3><div class="role">Pattern: composition with strict multiplicity</div></div></div>
-        <p class="muted">An order aggregates line items that make no sense on their own. Deleting the order must delete its items.</p>
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · Ecommerce checkout at scale</h3><div class="role">Pattern: composition for order lines, dependency for payment</div></div></div>
+        <p class="muted">A commerce platform models orders that must be immutable snapshots once placed, while the product catalog keeps changing.</p>
         <ul>
-          <li>Order composes OrderLine with a filled diamond; the order creates and owns each line.</li>
-          <li>Multiplicity "1 to 1..*" enforces that an order always has at least one line item.</li>
-          <li>Product is referenced by association, not owned, because products exist independently of any order.</li>
+          <li><code>Order</code> composes its <code>LineItem</code> objects and snapshots the price, so a later catalog change never rewrites a past order.</li>
+          <li><code>LineItem</code> aggregates the shared <code>Product</code> only by reference and SKU, keeping the catalog a single source of truth.</li>
+          <li><code>PaymentGateway</code> is a dependency injected into <code>checkout()</code>, letting the same order flow run against Stripe in production and a fake in tests.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> Cascading deletes and invariants fall out of the model, so no orphaned line items or empty orders slip into the database.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Historical orders stay correct and auditable, and swapping payment providers touches one interface instead of the order model.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">🎓</span><div><h3>2 · University enrollment</h3><div class="role">Pattern: aggregation with shared parts</div></div></div>
-        <p class="muted">A course groups students, but students exist before and after the course and belong to many courses at once.</p>
+        <div class="hd"><span class="badge">🏦</span><div><h3>2 · Banking ledger and accounts</h3><div class="role">Pattern: composition for entries, realization for posting rules</div></div></div>
+        <p class="muted">A core banking system records transactions as ledger entries that must never exist without their parent transaction.</p>
         <ul>
-          <li>Course aggregates Student with a hollow diamond; students are passed in, never created by the course.</li>
-          <li>Multiplicity "0..* to 0..*" captures the many-to-many enrollment relationship.</li>
-          <li>Dropping a course leaves every student intact, exactly what the aggregation notation promises.</li>
+          <li>A <code>Transaction</code> composes its <code>LedgerEntry</code> lines; deleting or reversing the transaction cascades to the entries by design.</li>
+          <li>Each <code>Account</code> is associated with an <code>AccountHolder</code> that exists independently across many accounts.</li>
+          <li>Different products realize a common <code>PostingPolicy</code> interface, so savings, checking, and loan accounts share one posting seam.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> Lifecycle bugs disappear; ending a course never deletes a person, because the diagram made the shared ownership explicit.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Double-entry invariants are structurally enforced, and new account types plug into posting without altering the ledger core.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">💳</span><div><h3>3 · Payment gateway abstraction</h3><div class="role">Pattern: realization for pluggable providers</div></div></div>
-        <p class="muted">A checkout service must support Stripe, PayPal, and others without changing its own code.</p>
+        <div class="hd"><span class="badge">🚚</span><div><h3>3 · Shipping and fulfillment</h3><div class="role">Pattern: aggregation for carriers, generalization for shipment types</div></div></div>
+        <p class="muted">A logistics service assembles shipments from warehouse packages and routes them through external carriers.</p>
         <ul>
-          <li>Each provider realizes a PaymentGateway interface with a dashed triangle.</li>
-          <li>Checkout depends on the interface, a dependency, so any provider drops in interchangeably.</li>
-          <li>Adding a new provider means one more realization, with zero edits to the checkout class.</li>
+          <li>A <code>Shipment</code> composes its <code>Package</code> contents but aggregates a <code>Carrier</code> that serves thousands of shipments at once.</li>
+          <li><code>ExpressShipment</code> and <code>FreightShipment</code> generalize a base <code>Shipment</code>, sharing tracking while overriding rate calculation.</li>
+          <li>A <code>RateProvider</code> dependency is passed into <code>quote()</code>, so carrier pricing APIs stay behind a single, mockable seam.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> New payment methods ship without touching core logic, because realization plus dependency isolated the contract from the implementations.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Adding a carrier or a shipment type is a local change, and the object graph mirrors real ownership so cleanup and reporting stay simple.</div>
       </div>
     </div>
   </section>
@@ -414,16 +564,16 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">07 - Relevance</div>
       <h2>Modern relevance</h2>
-      <p class="muted">UML as a heavyweight process faded, but its relationship vocabulary is more useful than ever in a world of quick sketches and generated diagrams.</p>
+      <p class="muted">Class relationships predate today's stacks, yet the same distinctions drive how modern systems are modeled and generated.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>📝 Diagrams as code</h4><p>Mermaid, PlantUML, and D2 let you version class diagrams alongside source. The six relationships are first-class syntax, so the notation now lives in your repo.</p></div>
-        <div class="card"><h4>🤖 AI-generated models</h4><p>LLMs sketch class diagrams from a description in seconds. Knowing the semantics lets you catch when a tool draws composition where aggregation belongs.</p></div>
-        <div class="card"><h4>🧩 Domain-driven design</h4><p>Aggregates, entities, and value objects map directly onto composition and association. The relationships underpin how you draw bounded contexts.</p></div>
-        <div class="card"><h4>🔍 Code review shorthand</h4><p>Saying "that should be aggregation, not composition" is a precise, fast way to flag a lifecycle bug in review, no diagram required.</p></div>
-        <div class="card"><h4>🏗️ Architecture whiteboarding</h4><p>Interview and design sessions still run on boxes and arrows. Correct notation signals seniority and prevents costly ownership misunderstandings.</p></div>
-        <div class="card"><h4>🔗 Foundation for patterns</h4><p>Every design pattern is described in these relationships. Composite, Strategy, and Observer are all just specific arrangements of composition, realization, and dependency.</p></div>
+        <div class="card"><h4>🗄️ ORM mappings</h4><p>Composition versus aggregation maps directly to cascade rules and ownership in ORMs like Prisma, Hibernate, and ActiveRecord. The diagram decides your <code>onDelete</code> behavior.</p></div>
+        <div class="card"><h4>🧩 Domain-driven design</h4><p>Aggregates in DDD are UML composition made explicit: a root owns its parts and guards their invariants, and outside code holds only the root.</p></div>
+        <div class="card"><h4>💉 Dependency injection</h4><p>Preferring dependency over stored association is the whole premise of DI containers. Realization against interfaces is what lets them swap implementations.</p></div>
+        <div class="card"><h4>🤖 Diagrams as code</h4><p>Tools like Mermaid and PlantUML put these exact arrows in version control, so relationships live beside the code and stay in review.</p></div>
+        <div class="card"><h4>🔗 API and event schemas</h4><p>GraphQL types, protobuf messages, and event payloads encode the same has-a and is-a choices; getting ownership right prevents leaky, cyclic schemas.</p></div>
+        <div class="card"><h4>🧠 AI-assisted modeling</h4><p>When a model generates a class diagram from requirements, the hard part it still gets wrong is exactly this: composition versus aggregation, and dependency versus association.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> you may never draw a full UML spec again, but you will read and reason about these six relationships constantly. Master the diamonds, triangles, and multiplicity, and you can describe any object model precisely, in a diagram or a sentence.</div>
+      <div class="callout"><strong>Bottom line:</strong> the six relationships are a compact vocabulary for ownership, lifetime, and coupling. Master them and every class diagram, ORM mapping, and dependency graph you touch becomes easier to reason about and safer to change.</div>
     </div>
   </section>
 
@@ -432,12 +582,12 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">Keep Exploring</div>
       <h2>Related topics</h2>
-      <p class="muted">These pair naturally with a solid grasp of class relationships.</p>
+      <p class="muted">Relationships sit at the center of OOP design. These topics pair naturally with it.</p>
       <div class="topic-grid">
-        <a class="topic-card" href="../oop-core/"><span class="ico">🧱</span><h4>OOP core concepts</h4><p>The objects and classes these relationships connect.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🔀</span><h4>Composition over inheritance</h4><p>Why has-a usually beats is-a in practice.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🧲</span><h4>Coupling &amp; cohesion</h4><p>How relationship strength drives maintainability.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../composite/"><span class="ico">🌳</span><h4>Composite pattern</h4><p>A structural pattern built on part-whole composition.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../objects-and-classes/"><span class="ico">🧱</span><h4>Objects &amp; classes</h4><p>The boxes that these arrows connect.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧩</span><h4>Composition over inheritance</h4><p>When a has-a link beats an is-a hierarchy.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🔌</span><h4>Coupling &amp; cohesion</h4><p>What association versus dependency does to coupling.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../inheritance/"><span class="ico">🧬</span><h4>Inheritance</h4><p>Generalization and realization up close.</p><span class="go">Read →</span></a>
       </div>
     </div>
   </section>

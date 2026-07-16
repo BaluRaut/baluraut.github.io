@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dependency Injection in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to Dependency Injection in OOP: constructor, setter, and method injection, DI vs the Dependency Inversion Principle, IoC containers, testing with fakes and stubs, and why you avoid 'new' inside a class." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Dependency Injection - hand a class its collaborators instead of building them</h1>
+      <p class="lede">A class that reaches out and constructs its own database client, mailer, and clock is welded to those exact implementations forever. Dependency Injection flips that: collaborators are <strong>passed in</strong> from outside, so the same <code>OrderService</code> can run against a real Postgres repository in production and a fast in-memory fake in tests, with zero code changes.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Constructor injection</span>
+        <span class="pill">Inversion of Control</span>
+        <span class="pill">Testable seams</span>
+        <span class="pill">No hidden new</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is Dependency Injection?</h2>
+      <p class="muted"><strong>Dependency Injection (DI)</strong> is the practice of giving an object the collaborators it needs from the outside rather than letting it create or locate them itself. Instead of an <code>OrderService</code> calling <code>new PostgresOrderRepository()</code>, <code>new SmtpMailer()</code>, and <code>new SystemClock()</code> in its own body, those three objects are handed to it, usually through its constructor. The service depends on <em>what they do</em>, expressed as interfaces, not on <em>which concrete class</em> provides it.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🏗️</span> Constructor injection</h4>
+          <p>Required collaborators arrive as constructor arguments. The object is never valid without them, so there is no half-built state. This is the default and preferred form.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔧</span> Setter injection</h4>
+          <p>An optional collaborator is supplied after construction through a setter or property. Useful for genuinely optional behavior like a metrics sink, but it allows an object to exist before it is fully wired.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📨</span> Method injection</h4>
+          <p>A collaborator is passed as an argument to the single method that needs it, rather than stored on the object. Good when the dependency is per-call, like a request-scoped clock or user context.</p>
+        </div>
+      </div>
+
+      <h3>The moving parts</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Term</th><th>What it is</th><th>In the OrderService example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Dependent / client</strong></td><td>The class that needs collaborators</td><td><code>OrderService</code></td></tr>
+            <tr><td><strong>Dependency / service</strong></td><td>The collaborator being used</td><td><code>Repository</code>, <code>Mailer</code>, <code>Clock</code></td></tr>
+            <tr><td><strong>Injection point</strong></td><td>Where the collaborator enters</td><td>The constructor parameters</td></tr>
+            <tr><td><strong>Injector / composition root</strong></td><td>The place that builds and wires the graph</td><td><code>main()</code> or an IoC container</td></tr>
+            <tr><td><strong>Contract</strong></td><td>The interface the client depends on</td><td><code>Mailer</code> interface, not <code>SmtpMailer</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> DI does not remove the <code>new</code> keyword from your program, it <em>relocates</em> it. Objects still get constructed, but the construction moves out of business logic and up into a single wiring layer at the edge of the app, the composition root.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Dependency Injection exists</h2>
+      <p class="muted">When a class builds its own collaborators, it hard-codes decisions that belong to the caller: which database, which mail provider, which clock. That coupling makes the class impossible to reuse, hard to configure per environment, and painful to test. DI pulls those decisions out to where they can vary.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧪 Testability without the world</h4><p>Pass a fake repository and a stub clock and you can assert that placing an order saves the right row and emails the customer, all in memory, in milliseconds, with no network or database.</p></div>
+        <div class="card"><h4>🔁 Swap implementations freely</h4><p>Move from SMTP to a transactional email API, or from Postgres to an in-memory store for a demo, by changing one line in the composition root. The service body never changes.</p></div>
+        <div class="card"><h4>🔍 Honest, visible dependencies</h4><p>A constructor that lists a repository, a mailer, and a clock tells you exactly what the class touches. Hidden <code>new</code> calls and global singletons hide that surface and surprise the next reader.</p></div>
+        <div class="card"><h4>⚙️ Configuration lives at the edge</h4><p>Connection strings, API keys, and retry policies are decided once where objects are wired, not scattered through business logic. Each environment builds its own graph.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Dependency Injection explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is the difference between an exam that <strong>hands you a calculator</strong> and one that makes you build a calculator from scratch first. You focus on the problem because the tool is provided; a different exam could hand you a different tool.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Instead of your <code>OrderService</code> writing <code>new SmtpMailer()</code> deep inside <code>placeOrder</code>, the mailer is <strong>a constructor argument</strong>. Production passes the real one, tests pass a recording fake, and the method under test never knows the difference.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A well-run team does not let each new hire <strong>procure their own laptop and vendor accounts</strong>. IT provisions the standard tools centrally. The employee does the job; the organization decides which tools back it.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>Your kettle has a <strong>plug, not hard-wired mains cabling</strong>. The socket supplies power however the building sources it. Swap the building's supply and the kettle keeps working, because it depends on the socket, not the power plant.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">The client class declares interfaces for what it needs and stores whatever it is given. Something else, a composition root or an IoC container, decides the concrete classes and wires the object graph together at startup.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📐</span> Depend on contracts</h4>
+          <p><code>OrderService</code> holds a <code>Repository</code>, a <code>Mailer</code>, and a <code>Clock</code>, all interfaces. It calls <code>save</code>, <code>send</code>, and <code>now</code> without knowing whether those talk to Postgres, an email API, or the system clock.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧬</span> Wire at the composition root</h4>
+          <p>A single startup location builds <code>SmtpMailer</code>, <code>PostgresOrderRepository</code>, and <code>SystemClock</code>, then passes them into <code>OrderService</code>. Tests build a different graph with fakes and stubs instead.</p>
+        </div>
+      </div>
+
+      <h3>The class relationships</h3>
+      <div class="diagram">
+        <div class="cap">OrderService depends on three interfaces; concrete classes are chosen elsewhere</div>
+        <pre class="mermaid">
+classDiagram
+    class OrderService {
+        -Repository repo
+        -Mailer mailer
+        -Clock clock
+        +placeOrder(customerId, items) Order
+    }
+    class Repository {
+        &lt;&lt;interface&gt;&gt;
+        +save(order) void
+        +nextId() string
+    }
+    class Mailer {
+        &lt;&lt;interface&gt;&gt;
+        +send(to, subject, body) void
+    }
+    class Clock {
+        &lt;&lt;interface&gt;&gt;
+        +now() DateTime
+    }
+    class PostgresOrderRepository {
+        +save(order) void
+        +nextId() string
+    }
+    class SmtpMailer {
+        +send(to, subject, body) void
+    }
+    class SystemClock {
+        +now() DateTime
+    }
+    class FakeRepository {
+        +save(order) void
+        +nextId() string
+    }
+    OrderService o-- Repository
+    OrderService o-- Mailer
+    OrderService o-- Clock
+    Repository &lt;|.. PostgresOrderRepository
+    Repository &lt;|.. FakeRepository
+    Mailer &lt;|.. SmtpMailer
+    Clock &lt;|.. SystemClock
+        </pre>
+      </div>
+
+      <h3>Constructor injection with a test double</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Contracts the service depends on, not concrete classes
+interface Clock { now(): Date; }
+interface Mailer { send(to: string, subject: string, body: string): void; }
+interface Repository {
+  nextId(): string;
+  save(order: Order): void;
+}
+
+interface Order { id: string; customerId: string; total: number; placedAt: Date; }
+
+class OrderService {
+  // Collaborators are injected, never constructed inside
+  constructor(
+    private readonly repo: Repository,
+    private readonly mailer: Mailer,
+    private readonly clock: Clock,
+  ) {}
+
+  placeOrder(customerId: string, total: number): Order {
+    const order: Order = {
+      id: this.repo.nextId(),
+      customerId,
+      total,
+      placedAt: this.clock.now(),
+    };
+    this.repo.save(order);
+    this.mailer.send(customerId, "Order confirmed", `Total ${order.total}`);
+    return order;
+  }
+}
+
+// ----- Test double: a fake repo + stub clock + spy mailer -----
+class FakeRepository implements Repository {
+  saved: Order[] = [];
+  nextId() { return "ord_001"; }
+  save(order: Order) { this.saved.push(order); }
+}
+class SpyMailer implements Mailer {
+  sent: { to: string }[] = [];
+  send(to: string) { this.sent.push({ to }); }
+}
+const fixedClock: Clock = { now: () => new Date("2026-07-16T00:00:00Z") };
+
+const repo = new FakeRepository();
+const mailer = new SpyMailer();
+const service = new OrderService(repo, mailer, fixedClock);
+
+const order = service.placeOrder("cust_42", 89.90);
+console.assert(repo.saved.length === 1);
+console.assert(mailer.sent[0].to === "cust_42");
+console.assert(order.placedAt.toISOString() === "2026-07-16T00:00:00.000Z");</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Protocol
+
+# Contracts the service depends on, not concrete classes
+class Clock(Protocol):
+    def now(self) -> datetime: ...
+
+class Mailer(Protocol):
+    def send(self, to: str, subject: str, body: str) -> None: ...
+
+class Repository(Protocol):
+    def next_id(self) -> str: ...
+    def save(self, order: "Order") -> None: ...
+
+@dataclass
+class Order:
+    id: str
+    customer_id: str
+    total: float
+    placed_at: datetime
+
+class OrderService:
+    # Collaborators are injected, never constructed inside
+    def __init__(self, repo: Repository, mailer: Mailer, clock: Clock) -> None:
+        self._repo = repo
+        self._mailer = mailer
+        self._clock = clock
+
+    def place_order(self, customer_id: str, total: float) -> Order:
+        order = Order(
+            id=self._repo.next_id(),
+            customer_id=customer_id,
+            total=total,
+            placed_at=self._clock.now(),
+        )
+        self._repo.save(order)
+        self._mailer.send(customer_id, "Order confirmed", f"Total {order.total}")
+        return order
+
+# ----- Test double: a fake repo + stub clock + spy mailer -----
+@dataclass
+class FakeRepository:
+    saved: list = field(default_factory=list)
+    def next_id(self) -> str: return "ord_001"
+    def save(self, order: Order) -> None: self.saved.append(order)
+
+@dataclass
+class SpyMailer:
+    sent: list = field(default_factory=list)
+    def send(self, to, subject, body) -> None: self.sent.append(to)
+
+class FixedClock:
+    def now(self) -> datetime:
+        return datetime(2026, 7, 16, tzinfo=timezone.utc)
+
+repo, mailer = FakeRepository(), SpyMailer()
+service = OrderService(repo, mailer, FixedClock())
+
+order = service.place_order("cust_42", 89.90)
+assert len(repo.saved) == 1
+assert mailer.sent[0] == "cust_42"
+assert order.placed_at == datetime(2026, 7, 16, tzinfo=timezone.utc)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>require "time"
+
+Order = Struct.new(:id, :customer_id, :total, :placed_at)
+
+class OrderService
+  # Collaborators are injected, never constructed inside.
+  # Ruby is duck-typed: any object answering these methods qualifies.
+  def initialize(repo:, mailer:, clock:)
+    @repo = repo
+    @mailer = mailer
+    @clock = clock
+  end
+
+  def place_order(customer_id, total)
+    order = Order.new(@repo.next_id, customer_id, total, @clock.now)
+    @repo.save(order)
+    @mailer.send(customer_id, "Order confirmed", "Total #{order.total}")
+    order
+  end
+end
+
+# ----- Test double: a fake repo + stub clock + spy mailer -----
+class FakeRepository
+  attr_reader :saved
+  def initialize = @saved = []
+  def next_id = "ord_001"
+  def save(order) = @saved &lt;&lt; order
+end
+
+class SpyMailer
+  attr_reader :sent
+  def initialize = @sent = []
+  def send(to, subject, body) = @sent &lt;&lt; to
+end
+
+class FixedClock
+  def now = Time.utc(2026, 7, 16)
+end
+
+repo = FakeRepository.new
+mailer = SpyMailer.new
+service = OrderService.new(repo: repo, mailer: mailer, clock: FixedClock.new)
+
+order = service.place_order("cust_42", 89.90)
+raise unless repo.saved.length == 1
+raise unless mailer.sent.first == "cust_42"
+raise unless order.placed_at == Time.utc(2026, 7, 16)</code></pre>
+      </div>
+      <p class="muted">The service body is identical in production and in tests. Only the composition root differs: production hands it a Postgres repository, an SMTP mailer, and the system clock, while the test hands it a fake, a spy, and a frozen clock. That interchangeable seam is the entire payoff of injecting collaborators instead of newing them up.</p>
+
+      <h3>Before and after: removing a hidden dependency</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// BEFORE: dependencies constructed inside, untestable, welded to SMTP + Postgres
+class OrderService {
+  placeOrder(customerId: string, total: number) {
+    const mailer = new SmtpMailer("smtp.prod.internal", 587); // hidden new
+    const repo = new PostgresOrderRepository(process.env.DB_URL!); // hidden new
+    const placedAt = new Date(); // untestable clock
+    // ... business logic entangled with wiring
+  }
+}
+
+// AFTER: same logic, collaborators injected -> swappable and testable
+class OrderService {
+  constructor(
+    private repo: Repository,
+    private mailer: Mailer,
+    private clock: Clock,
+  ) {}
+  placeOrder(customerId: string, total: number) {
+    const placedAt = this.clock.now();
+    // ... business logic, wiring lives at the composition root
+  }
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># BEFORE: dependencies constructed inside, untestable, welded to SMTP + Postgres
+class OrderService:
+    def place_order(self, customer_id, total):
+        mailer = SmtpMailer("smtp.prod.internal", 587)   # hidden new
+        repo = PostgresOrderRepository(os.environ["DB_URL"])  # hidden new
+        placed_at = datetime.now()                        # untestable clock
+        # ... business logic entangled with wiring
+
+# AFTER: same logic, collaborators injected -> swappable and testable
+class OrderService:
+    def __init__(self, repo, mailer, clock):
+        self._repo, self._mailer, self._clock = repo, mailer, clock
+
+    def place_order(self, customer_id, total):
+        placed_at = self._clock.now()
+        # ... business logic, wiring lives at the composition root</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># BEFORE: dependencies constructed inside, untestable, welded to SMTP + Postgres
+class OrderService
+  def place_order(customer_id, total)
+    mailer = SmtpMailer.new("smtp.prod.internal", 587)   # hidden new
+    repo = PostgresOrderRepository.new(ENV["DB_URL"])     # hidden new
+    placed_at = Time.now                                 # untestable clock
+    # ... business logic entangled with wiring
+  end
+end
+
+# AFTER: same logic, collaborators injected -> swappable and testable
+class OrderService
+  def initialize(repo:, mailer:, clock:)
+    @repo, @mailer, @clock = repo, mailer, clock
+  end
+
+  def place_order(customer_id, total)
+    placed_at = @clock.now
+    # ... business logic, wiring lives at the composition root
+  end
+end</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: wiring the graph at startup, placing an order in production, and exercising the same service with test doubles.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Composition root wires concrete collaborators into the service</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Main as 🚀 Composition root
+    participant Repo as 🗄️ PostgresOrderRepository
+    participant Mail as 📧 SmtpMailer
+    participant Clk as ⏰ SystemClock
+    participant Svc as 🧾 OrderService
+
+    Main->>Repo: new PostgresOrderRepository(dbUrl)
+    Repo-->>Main: repository instance
+    Main->>Mail: new SmtpMailer(host, port)
+    Mail-->>Main: mailer instance
+    Main->>Clk: new SystemClock()
+    Clk-->>Main: clock instance
+    Main->>Svc: new OrderService(repo, mailer, clock)
+    Svc-->>Main: ready, fully wired
+    Note over Main,Svc: All construction happens once, here, at the edge
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Placing an order: the service drives its injected collaborators</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 Caller
+    participant Svc as 🧾 OrderService
+    participant Clk as ⏰ Clock
+    participant Repo as 🗄️ Repository
+    participant Mail as 📧 Mailer
+
+    U->>Svc: placeOrder(customerId, total)
+    Svc->>Repo: nextId()
+    Repo-->>Svc: "ord_001"
+    Svc->>Clk: now()
+    Clk-->>Svc: 2026-07-16T00:00:00Z
+    Svc->>Repo: save(order)
+    Repo-->>Svc: ok
+    Svc->>Mail: send(customerId, subject, body)
+    Mail-->>Svc: queued
+    Svc-->>U: Order
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Same service under test with a fake, a spy, and a frozen clock</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as 🧪 Test
+    participant Svc as 🧾 OrderService
+    participant FClk as ⏱️ FixedClock
+    participant FRepo as 📦 FakeRepository
+    participant SMail as 🕵️ SpyMailer
+
+    T->>Svc: new OrderService(fakeRepo, spyMailer, fixedClock)
+    T->>Svc: placeOrder("cust_42", 89.90)
+    Svc->>FRepo: nextId()
+    FRepo-->>Svc: "ord_001"
+    Svc->>FClk: now()
+    FClk-->>Svc: frozen 2026-07-16
+    Svc->>FRepo: save(order)
+    Svc->>SMail: send(...)
+    Svc-->>T: Order
+    alt assertions
+        T->>FRepo: saved.length == 1 ?
+        T->>SMail: sent[0].to == "cust_42" ?
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a class that news up its own collaborators to a fully injected, testable service wired at the composition root.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Smell</span><h4>Spot the hidden new</h4><p>You find <code>new SmtpMailer()</code> and <code>new PostgresOrderRepository()</code> buried inside <code>placeOrder</code>. The method cannot be tested without a real mail server and database.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Name</span><h4>Identify the collaborators</h4><p>List what the class truly depends on: a repository to persist orders, a mailer to notify the customer, and a clock to timestamp. Three real dependencies, three responsibilities to inject.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Contract</span><h4>Define interfaces</h4><p>Write a <code>Repository</code>, <code>Mailer</code>, and <code>Clock</code> interface capturing only the methods the service calls, such as <code>save</code>, <code>send</code>, and <code>now</code>.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Depend</span><h4>Point the service at contracts</h4><p>Change field types from concrete classes to interfaces. The service now speaks to abstractions, satisfying the Dependency Inversion Principle.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Inject</span><h4>Add constructor parameters</h4><p>Accept the three collaborators as constructor arguments and store them. Delete every <code>new</code> for a collaborator from the method bodies.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Adapt</span><h4>Write concrete implementations</h4><p>Implement <code>PostgresOrderRepository</code>, <code>SmtpMailer</code>, and <code>SystemClock</code> against the interfaces. These are the production adapters.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Wire</span><h4>Build the composition root</h4><p>In <code>main()</code> construct each concrete collaborator and pass them into <code>new OrderService(...)</code>. This is now the only place that knows the concrete types.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Fake</span><h4>Create test doubles</h4><p>Write a <code>FakeRepository</code> that stores orders in a list, a <code>SpyMailer</code> that records recipients, and a <code>FixedClock</code> that returns a constant time.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Test</span><h4>Inject the doubles</h4><p>Construct the service with the fakes and call <code>placeOrder</code>. Assert the order was saved, the customer was emailed, and the timestamp is deterministic.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Scale</span><h4>Introduce an IoC container</h4><p>As the graph grows, register bindings such as <code>Mailer to SmtpMailer</code> in a container that resolves and constructs the whole tree, so you stop wiring by hand.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Vary</span><h4>Swap per environment</h4><p>Bind a fake mailer in staging, a real one in production, and an in-memory repository in a demo, all without touching <code>OrderService</code>. The seam pays off forever.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">DI is easy to overdo and easy to fake. These are the mistakes that turn a clean seam into a mess.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Service locator in disguise</h4><p>Passing a container into the class and calling <code>container.resolve(Mailer)</code> inside a method hides dependencies again. The constructor should list them; do not smuggle a global lookup back in.</p></div>
+        <div class="card"><h4>🧨 Constructor over-injection</h4><p>A constructor taking ten collaborators is not a DI win, it is a Single Responsibility failure. The class is doing too much. Split it before you inject the crowd.</p></div>
+        <div class="card"><h4>🔓 Setter injection for required deps</h4><p>Using a setter for a mandatory repository lets the object exist half-wired, so a forgotten call crashes at runtime. Required collaborators belong in the constructor.</p></div>
+        <div class="card"><h4>🎯 Injecting concretes, not contracts</h4><p>Declaring the parameter as <code>SmtpMailer</code> instead of <code>Mailer</code> re-welds the class to one implementation. You get the ceremony of DI with none of the swappability.</p></div>
+        <div class="card"><h4>🏭 Newing up inside anyway</h4><p>Accepting a mailer but still writing <code>new SystemClock()</code> for the timestamp leaves an untestable seam. Every non-trivial collaborator, including the clock, should be injected.</p></div>
+        <div class="card"><h4>🎭 Mocking everything</h4><p>Replacing every collaborator with an auto-mock that returns nulls tests the wiring, not the behavior. Prefer simple hand-written fakes and stubs that model real responses.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot count DI directly, but a healthy injection culture leaves fingerprints in the code and the test suite.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Count of <code>new</code> in business classes</strong></td><td>Near zero for collaborators means construction has moved to the composition root; a rising count means hidden coupling is creeping back.</td></tr>
+            <tr><td><strong>Tests needing no I/O</strong></td><td>If unit tests hit no real database, network, or mail server, the dependencies are genuinely injected and faked.</td></tr>
+            <tr><td><strong>Test setup line count</strong></td><td>If wiring a class under test takes twenty lines of mocks, the class likely has too many dependencies or leaks concretes.</td></tr>
+            <tr><td><strong>Constructor parameter count</strong></td><td>Two to four collaborators is healthy; consistently high counts flag a Single Responsibility problem, not a DI success.</td></tr>
+            <tr><td><strong>Time to add an implementation</strong></td><td>Swapping SMTP for an email API by editing one wiring line signals a clean seam; edits scattered across the codebase signal leaky abstractions.</td></tr>
+            <tr><td><strong>Non-determinism in tests</strong></td><td>Flaky time or random-id assertions reveal an un-injected clock or id source that should have been passed in.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you cannot instantiate a class in a test without starting a server, it is not injecting its dependencies, no matter how many interfaces it declares. The test harness is the honest judge of your DI.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-shaped systems where injecting collaborators is the load-bearing decision.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · Checkout service in an e-commerce backend</h3><div class="role">Pattern: constructor injection across a payment, inventory, and notification graph</div></div></div>
+        <p class="muted">A checkout flow must charge a card, reserve inventory, and email a receipt, all of which are external systems that must be faked in tests.</p>
+        <ul>
+          <li>The <code>CheckoutService</code> takes a payment gateway, an inventory repository, and a mailer as constructor arguments.</li>
+          <li>Integration tests inject a sandbox gateway and an in-memory inventory store so the full flow runs without real charges.</li>
+          <li>A frozen clock makes receipt timestamps and idempotency keys deterministic under test.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The entire purchase path is exercised in unit tests with no live payment provider, so regressions are caught before deploy.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>2 · Ledger posting in a banking core</h3><div class="role">Pattern: injected clock and repository for auditable, testable transactions</div></div></div>
+        <p class="muted">A ledger must post debit and credit entries atomically and stamp each with an exact posting time that auditors can reproduce.</p>
+        <ul>
+          <li>The posting engine depends on an injected <code>Clock</code> so tests can assert entries land on a precise business date.</li>
+          <li>A repository interface lets the same engine run against Postgres in production and an in-memory double in property-based tests.</li>
+          <li>Swapping the clock lets the team replay end-of-day batches for any historical date without changing engine code.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Time and storage are controllable seams, so audit scenarios and edge-of-day boundaries are tested exhaustively and reproducibly.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🚚</span><div><h3>3 · Shipping label generation in logistics</h3><div class="role">Pattern: IoC container binding one carrier client per region</div></div></div>
+        <p class="muted">A fulfillment service generates labels through several carrier APIs, and the right carrier depends on destination and contract.</p>
+        <ul>
+          <li>Each carrier client implements a common <code>CarrierGateway</code> interface, injected into the <code>LabelService</code>.</li>
+          <li>An IoC container binds the concrete carrier based on configuration, so new carriers are added without touching the service.</li>
+          <li>A fake carrier gateway returns canned tracking numbers so the label workflow is tested offline.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Onboarding a new carrier is a container binding plus one adapter class, with the core label logic untouched and fully tested.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Dependency Injection is decades old, but the shape it takes keeps shifting with frameworks, languages, and testing culture.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧰 Framework-native containers</h4><p>Spring, NestJS, ASP.NET Core, and Angular ship IoC containers as the default composition mechanism, making constructor injection the standard way to assemble apps.</p></div>
+        <div class="card"><h4>🪶 Container-free by hand</h4><p>Many teams push back on magic and wire graphs in plain code at the composition root, keeping DI the pattern while dropping the heavyweight container.</p></div>
+        <div class="card"><h4>🧩 Functional injection</h4><p>Passing collaborators as function arguments or partial applications brings the same substitutability to code that is not built from classes.</p></div>
+        <div class="card"><h4>⏱️ Deterministic testing</h4><p>Injecting clocks, id generators, and random sources is now table stakes for reproducible tests and stable snapshots in CI.</p></div>
+        <div class="card"><h4>🔒 Boundaries for security</h4><p>Injecting a permission-aware repository or scoped credential provider keeps authorization decisions at the edges and testable in isolation.</p></div>
+        <div class="card"><h4>🤖 Testing agentic and LLM code</h4><p>Injecting the model client and tool gateways lets teams stub responses, so pipelines that call language models stay fast and deterministic under test.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> whether you use a full container or wire three objects in <code>main()</code>, the discipline is the same: keep <code>new</code> out of business logic and hand classes their collaborators. That single habit is what makes large object-oriented systems configurable, swappable, and testable.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Dependency Injection sits in a web of design principles. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../dependency-inversion/"><span class="ico">🔄</span><h4>Dependency Inversion</h4><p>The principle that makes injecting contracts, not concretes, matter.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single Responsibility</h4><p>Why a bloated constructor is a design smell, not a DI win.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../composition-over-inheritance/"><span class="ico">🧱</span><h4>Composition over Inheritance</h4><p>Assembling behavior from injected parts instead of subclassing.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">🦆</span><h4>Interfaces &amp; Duck Typing</h4><p>The contracts that let any conforming collaborator be injected.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Dependency Injection · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

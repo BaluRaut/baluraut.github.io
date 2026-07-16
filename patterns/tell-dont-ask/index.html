@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tell, Don't Ask in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to Tell, Don't Ask: send an object a command instead of reading its state and deciding for it, move behavior next to data, keep encapsulation intact, and know when asking is legitimate. With TypeScript, Python and Ruby code." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Tell, Don't Ask - let objects act on their own data</h1>
+      <p class="lede">Instead of pulling an object's state out, making a decision, and pushing a mutation back in, you <strong>tell</strong> the object what you want and let it decide how. The behavior lives next to the data it needs. That is what keeps encapsulation real rather than a comment on a public getter.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Command over query</span>
+        <span class="pill">Behavior next to data</span>
+        <span class="pill">Encapsulation</span>
+        <span class="pill">Rich domain models</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is Tell, Don't Ask?</h2>
+      <p class="muted"><strong>Tell, Don't Ask</strong> is a design guideline: rather than asking an object for its internal state and then making decisions on its behalf, you should <em>tell</em> the object what to do and let it apply its own rules. A caller that reads <code>account.getBalance()</code>, checks it, and then sets a new balance has taken responsibility that belongs inside <code>Account</code>. The fix is a single command, <code>account.withdraw(amount)</code>, that enforces the rule where the data lives.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📤</span> Send a command</h4>
+          <p>Call a method that expresses intent, like <code>cart.applyDiscount(code)</code>, instead of fetching fields and computing the result outside the object.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧲</span> Behavior next to data</h4>
+          <p>The logic that needs a field should live in the class that owns the field. Decisions move to where the state already is, not the other way around.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛡️</span> Encapsulation, enforced</h4>
+          <p>When callers cannot reach in and mutate state, the object controls every transition. Invariants hold because there is only one door in.</p>
+        </div>
+      </div>
+
+      <h3>Ask-then-act versus tell</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Ask-then-act (avoid)</th><th>Tell (prefer)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Who decides</strong></td><td>The caller reads state and branches</td><td>The object applies its own rule</td></tr>
+            <tr><td><strong>Where logic lives</strong></td><td>Scattered across callers</td><td>Inside the class that owns the data</td></tr>
+            <tr><td><strong>State access</strong></td><td>Getters and setters exposed</td><td>State stays private; intent is public</td></tr>
+            <tr><td><strong>Invariants</strong></td><td>Duplicated and easy to skip</td><td>Enforced in one place, every time</td></tr>
+            <tr><td><strong>Change cost</strong></td><td>Edit every call site</td><td>Edit one method</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> Tell, Don't Ask is not a ban on questions. It is a rule about <em>decisions</em>. Reading state to display a report is fine. Reading state to decide what the object should do to itself is the smell.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why Tell, Don't Ask exists</h2>
+      <p class="muted">When callers make decisions from an object's exposed state, the object becomes a bag of data and the real logic leaks into services and controllers. Telling keeps each rule in one place, so the system stays coherent as it grows.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔒 Protects invariants</h4><p>An account can refuse an overdraft in <code>withdraw</code>. If every caller instead reads the balance and subtracts, one forgotten check overdraws the account.</p></div>
+        <div class="card"><h4>🧹 Removes duplication</h4><p>A discount rule enforced by the cart appears once. The same rule copied across checkout, admin, and API endpoints drifts out of sync fast.</p></div>
+        <div class="card"><h4>🧭 Localizes change</h4><p>When the withdrawal policy changes, you edit one method. Ask-then-act forces you to hunt down and update every branch that touched the balance.</p></div>
+        <div class="card"><h4>🧠 Reveals intent</h4><p><code>order.markShipped()</code> reads like a business action. A sequence of getters and setters reads like plumbing and hides what the code is trying to do.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Tell, Don't Ask explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>You <strong>tell the librarian</strong> "check out this book for me." You do not ask for the shelf status, the loan rules, and the stamp so you can update the ledger yourself. The librarian owns those rules.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Prefer <code>account.withdraw(amount)</code> over <code>if (account.balance &gt;= amount) account.balance -= amount</code>. The second version scatters the overdraft rule across every call site and breaks encapsulation.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>You <strong>delegate to a specialist</strong>: you tell finance to process a refund. You do not demand their spreadsheet, apply the policy yourself, and hand back edited numbers. They own the decision that touches their data.</p></div>
+        <div class="card"><h4><span class="ico">🍽️</span> Everyday version</h4><p>At a restaurant you <strong>order the dish</strong>; you do not walk into the kitchen, read the pantry, and cook it yourself. You state intent and the kitchen, which owns the ingredients, decides how.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">The move is mechanical: find a place where a caller reads an object's state, decides, then writes state back. Push the whole decision into a method on that object and expose only the intent.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔎</span> Spot the ask-then-act</h4>
+          <p>Look for a getter, a branch on its result, and a setter or field mutation that follows. That trio is a decision that belongs inside the object.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚚</span> Move the decision in</h4>
+          <p>Add a command method that takes the intent as arguments, runs the rule against private state, and either succeeds or raises. Delete the getters that only fed the decision.</p>
+        </div>
+      </div>
+
+      <h3>The classes at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Account owns its balance and the withdrawal rule; the caller only sends commands</div>
+        <pre class="mermaid">
+classDiagram
+    class Account {
+        -balance: Money
+        -overdraftLimit: Money
+        +withdraw(amount) void
+        +deposit(amount) void
+        +statement() Statement
+    }
+    class InsufficientFundsError {
+        +message: string
+    }
+    class TransferService {
+        +transfer(from, to, amount) void
+    }
+    TransferService ..> Account : tells
+    Account ..> InsufficientFundsError : raises
+    note for Account "balance stays private; withdraw enforces the rule"
+        </pre>
+      </div>
+
+      <h3>Ask-then-act versus tell, three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// ASK-THEN-ACT: the caller reads state and decides. The overdraft
+// rule now lives outside Account and must be repeated everywhere.
+if (account.getBalance() >= amount) {
+  account.setBalance(account.getBalance() - amount);
+} else {
+  throw new Error("Insufficient funds");
+}
+
+// TELL: send a command; Account owns balance and the rule.
+class Account {
+  constructor(
+    private balance: number,
+    private readonly overdraftLimit = 0,
+  ) {}
+
+  withdraw(amount: number): void {
+    if (amount <= 0) throw new Error("Amount must be positive");
+    if (this.balance - amount < -this.overdraftLimit) {
+      throw new Error("Insufficient funds");
+    }
+    this.balance -= amount;
+  }
+
+  deposit(amount: number): void {
+    if (amount <= 0) throw new Error("Amount must be positive");
+    this.balance += amount;
+  }
+
+  // A legitimate ASK: a read-only query for reporting, not a decision.
+  get available(): number {
+    return this.balance + this.overdraftLimit;
+  }
+}
+
+const account = new Account(100);
+account.withdraw(30);   // tell it what to do
+account.deposit(50);
+console.log(account.available); // 120 - asking is fine for a report</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># ASK-THEN-ACT: the caller reads state and decides. The overdraft
+# rule now lives outside Account and must be repeated everywhere.
+if account.balance >= amount:
+    account.balance -= amount
+else:
+    raise ValueError("Insufficient funds")
+
+# TELL: send a command; Account owns balance and the rule.
+class Account:
+    def __init__(self, balance: float, overdraft_limit: float = 0) -> None:
+        self._balance = balance
+        self._overdraft_limit = overdraft_limit
+
+    def withdraw(self, amount: float) -> None:
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        if self._balance - amount < -self._overdraft_limit:
+            raise ValueError("Insufficient funds")
+        self._balance -= amount
+
+    def deposit(self, amount: float) -> None:
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        self._balance += amount
+
+    # A legitimate ASK: a read-only query for reporting, not a decision.
+    @property
+    def available(self) -> float:
+        return self._balance + self._overdraft_limit
+
+
+account = Account(100)
+account.withdraw(30)    # tell it what to do
+account.deposit(50)
+print(account.available)  # 120 - asking is fine for a report</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># ASK-THEN-ACT: the caller reads state and decides. The overdraft
+# rule now lives outside Account and must be repeated everywhere.
+if account.balance >= amount
+  account.balance -= amount
+else
+  raise "Insufficient funds"
+end
+
+# TELL: send a command; Account owns balance and the rule.
+class Account
+  def initialize(balance, overdraft_limit = 0)
+    @balance = balance
+    @overdraft_limit = overdraft_limit
+  end
+
+  def withdraw(amount)
+    raise ArgumentError, "Amount must be positive" if amount <= 0
+    raise "Insufficient funds" if @balance - amount < -@overdraft_limit
+    @balance -= amount
+  end
+
+  def deposit(amount)
+    raise ArgumentError, "Amount must be positive" if amount <= 0
+    @balance += amount
+  end
+
+  # A legitimate ASK: a read-only query for reporting, not a decision.
+  def available
+    @balance + @overdraft_limit
+  end
+end
+
+account = Account.new(100)
+account.withdraw(30)    # tell it what to do
+account.deposit(50)
+puts account.available  # 120 - asking is fine for a report</code></pre>
+      </div>
+      <p class="muted">Notice the withdrawal rule appears exactly once, inside <code>withdraw</code>, and callers never touch the balance directly. The <code>available</code> query is still allowed because it only reports; it does not decide what the account should do to itself.</p>
+
+      <h3>A second case: a cart that applies its own discount</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// TELL: the cart owns its lines and the discount policy.
+class Cart {
+  private lines: { price: number; qty: number }[] = [];
+  private discountPct = 0;
+
+  add(price: number, qty: number): void {
+    this.lines.push({ price, qty });
+  }
+
+  applyCoupon(code: string): void {
+    // The cart decides whether the coupon is valid for its contents.
+    if (code === "SAVE10" && this.subtotal() >= 50) {
+      this.discountPct = 10;
+    } else {
+      throw new Error("Coupon not applicable");
+    }
+  }
+
+  total(): number {
+    return this.subtotal() * (1 - this.discountPct / 100);
+  }
+
+  private subtotal(): number {
+    return this.lines.reduce((s, l) => s + l.price * l.qty, 0);
+  }
+}
+
+const cart = new Cart();
+cart.add(30, 2);          // tell it to hold items
+cart.applyCoupon("SAVE10"); // tell it to apply the coupon
+console.log(cart.total());  // 54</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># TELL: the cart owns its lines and the discount policy.
+class Cart:
+    def __init__(self) -> None:
+        self._lines: list[tuple[float, int]] = []
+        self._discount_pct = 0
+
+    def add(self, price: float, qty: int) -> None:
+        self._lines.append((price, qty))
+
+    def apply_coupon(self, code: str) -> None:
+        # The cart decides whether the coupon is valid for its contents.
+        if code == "SAVE10" and self._subtotal() >= 50:
+            self._discount_pct = 10
+        else:
+            raise ValueError("Coupon not applicable")
+
+    def total(self) -> float:
+        return self._subtotal() * (1 - self._discount_pct / 100)
+
+    def _subtotal(self) -> float:
+        return sum(price * qty for price, qty in self._lines)
+
+
+cart = Cart()
+cart.add(30, 2)             # tell it to hold items
+cart.apply_coupon("SAVE10") # tell it to apply the coupon
+print(cart.total())         # 54</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># TELL: the cart owns its lines and the discount policy.
+class Cart
+  def initialize
+    @lines = []
+    @discount_pct = 0
+  end
+
+  def add(price, qty)
+    @lines << [price, qty]
+  end
+
+  def apply_coupon(code)
+    # The cart decides whether the coupon is valid for its contents.
+    if code == "SAVE10" && subtotal >= 50
+      @discount_pct = 10
+    else
+      raise "Coupon not applicable"
+    end
+  end
+
+  def total
+    subtotal * (1 - @discount_pct / 100.0)
+  end
+
+  private
+
+  def subtotal
+    @lines.sum { |price, qty| price * qty }
+  end
+end
+
+cart = Cart.new
+cart.add(30, 2)            # tell it to hold items
+cart.apply_coupon("SAVE10") # tell it to apply the coupon
+puts cart.total           # 54</code></pre>
+      </div>
+      <p class="muted">The caller never reads the line items to compute eligibility. It tells the cart to apply a coupon, and the cart, which owns both the items and the policy, decides. Move the rule and no call site changes.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the ask-then-act anti-pattern, the tell version of the same withdrawal, and a transfer that tells two accounts.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Ask-then-act: the caller pulls state and decides (the smell)</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧾 Caller
+    participant A as 🏦 Account
+
+    C->>A: getBalance()
+    A-->>C: 100
+    C->>C: balance >= amount ?
+    alt enough funds
+        C->>A: setBalance(70)
+        A-->>C: ok
+    else not enough
+        C->>C: throw Insufficient funds
+    end
+    Note over C,A: the overdraft rule lives in the caller, not the account
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Tell: one command, the account enforces its own rule</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧾 Caller
+    participant A as 🏦 Account
+
+    C->>A: withdraw(30)
+    A->>A: check amount and overdraft limit
+    alt rule satisfied
+        A->>A: balance -= 30
+        A-->>C: ok
+    else rule violated
+        A-->>C: raise InsufficientFundsError
+    end
+    Note over C,A: balance never leaves the account; the rule lives with the data
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Transfer: a service tells two accounts, deciding nothing itself</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant S as 🔁 TransferService
+    participant F as 🏦 From account
+    participant T as 🏦 To account
+
+    S->>F: withdraw(amount)
+    alt withdrawal allowed
+        F-->>S: ok
+        S->>T: deposit(amount)
+        T-->>S: ok
+        S-->>S: commit
+    else withdrawal refused
+        F-->>S: raise InsufficientFundsError
+        S-->>S: abort, nothing moved
+    end
+    Note over S,T: the service coordinates commands but owns no balance rule
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an ask-then-act tangle to a clean command, the whole refactor in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Find</span><h4>Locate a decision on foreign state</h4><p>Scan for a caller that reads an object's field, branches on it, and writes a field back. That trio is behavior stranded away from its data.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Name</span><h4>Name the intent</h4><p>Ask what the caller is really trying to do, not how. "Withdraw," "apply coupon," "mark shipped." The verb becomes the new method.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Add</span><h4>Add a command method</h4><p>Create a method on the owning class that takes the intent as arguments and returns nothing meaningful, or raises on violation.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Move</span><h4>Move the rule inside</h4><p>Copy the branch condition and the mutation into the method, now reading and writing private state directly instead of through getters.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Guard</span><h4>Enforce the invariant</h4><p>Validate inputs and reject illegal transitions at the top of the method, so the object can never be left in a bad state.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Replace</span><h4>Swap call sites</h4><p>Change each caller from read-decide-write to a single call to the new command. The branching disappears from the caller.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Prune</span><h4>Remove needless getters and setters</h4><p>Delete accessors that only existed to feed the old decision. State becomes private again and the surface area shrinks.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Keep</span><h4>Keep legitimate queries</h4><p>Retain reads that only report, like a balance shown on a statement. These ask without deciding, and that is allowed.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Test</span><h4>Test the command directly</h4><p>Unit test the method for both success and rejection. Because the rule is in one place, one test suite covers every caller.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Coordinate</span><h4>Let services tell, not decide</h4><p>Where a workflow spans objects, have the service send commands and handle failures, without re-implementing any object's rules.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Done</span><h4>Behavior sits with its data</h4><p>Every decision now lives in the object that owns the state. Changing a rule touches one method, and encapsulation holds by construction.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Applying Tell, Don't Ask carelessly creates its own messes. These are the usual traps.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🩸 Anemic domain model</h4><p>Classes that are only getters and setters, with all logic in services, are the ask-then-act smell at scale. The data has no behavior, so callers must decide for it.</p></div>
+        <div class="card"><h4>🎣 Getter, branch, setter</h4><p>The classic trio: <code>if (x.getState() == READY) x.setState(DONE)</code>. The state machine belongs in the object as a <code>complete()</code> command.</p></div>
+        <div class="card"><h4>🚂 Train-wreck chains</h4><p><code>order.getCustomer().getAddress().getCity()</code> asks through several objects. It couples you to their internals and pairs badly with the Law of Demeter.</p></div>
+        <div class="card"><h4>🕳️ Fake encapsulation</h4><p>A getter that returns the internal list by reference lets callers mutate private state anyway. Telling means no back door, so return copies or expose commands.</p></div>
+        <div class="card"><h4>🔨 Dogmatic no-queries</h4><p>Forbidding all reads breaks reporting, serialization, and UIs. Tell, Don't Ask targets decisions, not honest queries. Do not contort code to avoid every getter.</p></div>
+        <div class="card"><h4>🧨 Over-command</h4><p>Cramming unrelated logic into an object to avoid asking bloats it and violates single responsibility. If the behavior does not need the object's private state, it may belong elsewhere.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot put a single number on this, but these signals tell you whether behavior sits with its data.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Getter-then-setter pairs per class</strong></td><td>Many read-decide-write sequences on the same object mean decisions have leaked out of it.</td></tr>
+            <tr><td><strong>Ratio of commands to accessors</strong></td><td>A class that is mostly getters and setters is anemic; intent-revealing methods should dominate the public surface.</td></tr>
+            <tr><td><strong>Duplicated business rules</strong></td><td>The same condition appearing in several callers shows a rule that should live once, inside the owning object.</td></tr>
+            <tr><td><strong>Call-site changes per rule change</strong></td><td>If tweaking one policy forces edits across many files, the policy was never encapsulated.</td></tr>
+            <tr><td><strong>Method-chain depth</strong></td><td>Deep <code>a.getB().getC()</code> chains signal asking through objects and coupling to their internals.</td></tr>
+            <tr><td><strong>Test setup complexity</strong></td><td>If testing a behavior means stubbing many getters on an object, the behavior probably belongs inside that object.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> before you read an object's state to make a decision, ask whether the object could make that decision itself. If yes, add a command and delete the getter. If you only need the value to show or record it, asking is fine.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where telling objects, instead of asking them, kept the rules coherent.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>1 · Ledger and account balances in a payments system</h3><div class="role">Pattern: commands enforce financial invariants</div></div></div>
+        <p class="muted">A payments platform needed to guarantee that no account could be overdrawn beyond its arranged limit, across dozens of entry points.</p>
+        <ul>
+          <li>Callers were rewritten from reading the balance and subtracting to a single <code>account.withdraw(amount)</code> command.</li>
+          <li>The overdraft rule and currency checks moved inside the account, so every path enforced the same invariant.</li>
+          <li>Read-only statement queries stayed as plain accessors because they report, they do not decide.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> A whole class of overdraft bugs disappeared, because the rule could no longer be skipped by any caller.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>2 · Checkout carts applying their own discounts</h3><div class="role">Pattern: pricing policy lives with the cart</div></div></div>
+        <p class="muted">An e-commerce team had coupon logic copied across the web checkout, the mobile API, and an internal admin tool, and the three drifted apart.</p>
+        <ul>
+          <li>Eligibility checks that read line items in each client moved into <code>cart.applyCoupon(code)</code>.</li>
+          <li>The cart became the single owner of totals, discounts, and validity rules for its contents.</li>
+          <li>Clients now tell the cart to apply a coupon and render whatever it returns, deciding nothing.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Coupon behavior became consistent everywhere, and new promotions shipped by editing one class.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📦</span><div><h3>3 · Order state machine in a fulfillment service</h3><div class="role">Pattern: transitions as commands, not setters</div></div></div>
+        <p class="muted">An order fulfillment service was littered with <code>if (order.getStatus() == PAID) order.setStatus(SHIPPED)</code> checks that let illegal transitions slip through.</p>
+        <ul>
+          <li>Status setters were replaced with intent commands like <code>order.markShipped()</code> and <code>order.cancel()</code>.</li>
+          <li>Each command validated the current state and rejected illegal transitions from inside the order.</li>
+          <li>The status field became private, so no caller could force an invalid jump.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Invalid state transitions became impossible by construction, and the order's lifecycle read as business verbs.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Tell, Don't Ask predates most of today's frameworks, but the pressure it relieves only grows as systems get more distributed.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Domain-driven design</h4><p>Rich aggregates that guard their own invariants are Tell, Don't Ask by another name. DDD explicitly fights the anemic model this concept warns against.</p></div>
+        <div class="card"><h4>📨 CQRS and commands</h4><p>Command-query separation formalizes the split: commands tell and change state; queries ask and only report. The two are treated as different citizens.</p></div>
+        <div class="card"><h4>🌐 Distributed services</h4><p>Sending a message to a service to do something, rather than fetching its data to decide, keeps behavior and state together across process boundaries too.</p></div>
+        <div class="card"><h4>🧵 Concurrency safety</h4><p>When an object mutates only through its own commands, it can guard those transitions with a lock in one place. Externalized read-decide-write races.</p></div>
+        <div class="card"><h4>🎭 Actors and messages</h4><p>The actor model is Tell, Don't Ask at the runtime level: you send an actor a message and it acts on its private state; you cannot reach in.</p></div>
+        <div class="card"><h4>🧪 Testable design</h4><p>Behavior colocated with its data is easy to unit test in isolation, without elaborate stubbing of getters, which keeps test suites fast and honest.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> Tell, Don't Ask is how you keep decisions next to the data they depend on, so encapsulation is real and rules live in one place. Ask freely when you only need to report; tell when the object should act on itself.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Tell, Don't Ask sits in a web of related OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🛡️</span><h4>Encapsulation</h4><p>The principle telling enforces: state stays private behind behavior.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../law-of-demeter/"><span class="ico">🚉</span><h4>Law of Demeter</h4><p>Talk to friends, not strangers, and avoid asking through chains.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../anemic-domain-model/"><span class="ico">🩸</span><h4>Anemic domain model</h4><p>The anti-pattern of data with no behavior that asking produces.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single responsibility</h4><p>Keep each object's commands focused on one reason to change.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>Tell, Don't Ask · Send commands, do not query state and decide · Behavior next to data · Encapsulation · When asking is legitimate</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

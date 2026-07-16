@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Single Responsibility Principle in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to the Single Responsibility Principle (SRP): one reason to change, high cohesion, separating concerns, spotting violations, and splitting a god class, with TypeScript, Python and Ruby code." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>The Single Responsibility Principle - one reason to change</h1>
+      <p class="lede">A class should have one, and only one, reason to change. When an <strong>Invoice</strong> also formats itself, emails itself, and saves itself to the database, three unrelated forces tug on the same code. SRP splits that god class into focused collaborators, so each piece changes for its own reason and nothing else.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">One reason to change</span>
+        <span class="pill">High cohesion</span>
+        <span class="pill">Separation of concerns</span>
+        <span class="pill">Focused collaborators</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Single Responsibility Principle?</h2>
+      <p class="muted"><strong>SRP</strong> is the "S" in SOLID. Robert C. Martin's precise wording is that a module should have <em>one reason to change</em>, where a reason to change maps to a single actor or stakeholder. A billing <code>Invoice</code> that computes totals, renders a PDF, sends email, and writes to Postgres answers to four different actors: finance, design, the mail platform team, and the DBA. Any one of them can force an edit, so the class is never stable.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🎯</span> One reason to change</h4>
+          <p>A responsibility is an axis of change owned by one actor. Group code so that a single business change touches a single class.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧲</span> High cohesion</h4>
+          <p>Everything inside a class works toward the same purpose. Fields and methods belong together because they serve one job, not five.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🪓</span> Separation of concerns</h4>
+          <p>Formatting, transport, and persistence are distinct concerns. Give each its own collaborator so they evolve independently.</p>
+        </div>
+      </div>
+
+      <h3>Responsibilities hiding in one god class</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Responsibility</th><th>Who asks for the change (actor)</th><th>Belongs in</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Calculate totals &amp; tax</strong></td><td>Finance / accounting rules</td><td>The <code>Invoice</code> domain object</td></tr>
+            <tr><td><strong>Render to PDF / HTML</strong></td><td>Design &amp; brand team</td><td><code>InvoiceRenderer</code></td></tr>
+            <tr><td><strong>Send to the customer</strong></td><td>Messaging / deliverability team</td><td><code>InvoiceMailer</code></td></tr>
+            <tr><td><strong>Persist to storage</strong></td><td>DBA / infrastructure</td><td><code>InvoiceRepository</code></td></tr>
+            <tr><td><strong>Orchestrate the workflow</strong></td><td>Product / use case</td><td><code>BillingService</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> SRP is not "one method per class" or "make everything tiny." It is about <em>audience</em>. Ask who would request a change and why. If two answers name two different teams, those are two responsibilities and they want two classes.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why SRP matters</h2>
+      <p class="muted">A god class couples unrelated reasons to change. Touch the PDF layout and you risk breaking tax math; swap the mail provider and you recompile the domain. SRP keeps those forces apart so change stays cheap and local.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Change isolation</h4><p>When the mail vendor changes from SMTP to a provider API, only <code>InvoiceMailer</code> moves. The totals logic and the database code never open in the diff, so the blast radius shrinks.</p></div>
+        <div class="card"><h4>🧪 Testability</h4><p>A pure <code>Invoice</code> with no I/O is tested with plain assertions, no database or SMTP stub. Persistence and mail are tested behind their own seams with fakes.</p></div>
+        <div class="card"><h4>🔁 Reuse</h4><p>The same <code>InvoiceRenderer</code> serves email, the customer portal download, and a nightly batch export. Bundled inside a god class, that rendering logic could never be reused.</p></div>
+        <div class="card"><h4>👥 Parallel work</h4><p>Because responsibilities map to teams, the design team edits rendering while the DBA tunes queries, with no merge conflicts on one 900-line file.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>SRP explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>A study group where <strong>one person takes notes, one books the room, one photocopies handouts</strong>. If the copier breaks, only the handout person is stuck. Give one member all three jobs and every hiccup stalls the whole group.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Your <code>Order</code> class should not also open a socket to Stripe and write SQL. Keep the <strong>domain object pure</strong> and push payment and persistence into a <code>PaymentGateway</code> and an <code>OrderRepository</code> it collaborates with.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A company has <strong>separate departments</strong> for finance, legal, and shipping. Nobody wants the shipping clerk rewriting tax law. Departments are responsibilities: each changes for its own reason under its own boss.</p></div>
+        <div class="card"><h4><span class="ico">🍽️</span> Everyday version</h4><p>In a restaurant the <strong>chef cooks, the waiter serves, the cashier bills</strong>. One person doing all three means a change to the menu, the till, and the floor plan all land on the same overworked human.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How to apply SRP under the hood</h2>
+      <p class="muted">Start from the god class, name each reason to change, then extract a focused collaborator per reason. The domain object keeps the business rules; formatting, mailing, and persistence move behind interfaces that a thin service wires together.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔍</span> Name the reasons to change</h4>
+          <p>List every method on the god class and label its actor: math (finance), layout (design), delivery (messaging), storage (DBA). Each distinct label is a seam where a class should split.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧩</span> Extract focused collaborators</h4>
+          <p>Move each concern into its own class behind a small interface. The <code>Invoice</code> holds data and totals; a <code>BillingService</code> composes the renderer, mailer, and repository to run the use case.</p>
+        </div>
+      </div>
+
+      <h3>The classes and their collaborators</h3>
+      <div class="diagram">
+        <div class="cap">After the refactor: a pure Invoice plus one collaborator per reason to change</div>
+        <pre class="mermaid">
+classDiagram
+    class Invoice {
+        +id string
+        +lineItems LineItem[]
+        +subtotal() Money
+        +tax() Money
+        +total() Money
+    }
+    class InvoiceRenderer {
+        &lt;&lt;interface&gt;&gt;
+        +render(inv) Document
+    }
+    class InvoiceMailer {
+        &lt;&lt;interface&gt;&gt;
+        +send(to, doc) void
+    }
+    class InvoiceRepository {
+        &lt;&lt;interface&gt;&gt;
+        +save(inv) void
+    }
+    class BillingService {
+        +issue(inv, email) void
+    }
+    class PdfRenderer {
+        +render(inv) Document
+    }
+    class SmtpMailer {
+        +send(to, doc) void
+    }
+    class SqlInvoiceRepository {
+        +save(inv) void
+    }
+    BillingService o-- Invoice
+    BillingService o-- InvoiceRenderer
+    BillingService o-- InvoiceMailer
+    BillingService o-- InvoiceRepository
+    InvoiceRenderer &lt;|-- PdfRenderer
+    InvoiceMailer &lt;|-- SmtpMailer
+    InvoiceRepository &lt;|-- SqlInvoiceRepository
+        </pre>
+      </div>
+
+      <h3>Before: one Invoice that does everything</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// SMELL: one class, four reasons to change
+class Invoice {
+  constructor(
+    public id: string,
+    public lineItems: { amount: number; qty: number }[],
+    public customerEmail: string,
+  ) {}
+
+  subtotal(): number {
+    return this.lineItems.reduce((s, li) =&gt; s + li.amount * li.qty, 0);
+  }
+  tax(): number {
+    return this.subtotal() * 0.2;
+  }
+  total(): number {
+    return this.subtotal() + this.tax();
+  }
+
+  // Reason to change #2: the design team
+  toHtml(): string {
+    return `&lt;h1&gt;Invoice ${this.id}&lt;/h1&gt;&lt;p&gt;Total ${this.total()}&lt;/p&gt;`;
+  }
+
+  // Reason to change #3: the messaging team
+  email(): void {
+    const smtp = new SmtpClient("mail.internal", 25);
+    smtp.send(this.customerEmail, "Your invoice", this.toHtml());
+  }
+
+  // Reason to change #4: the DBA
+  save(): void {
+    const db = new PgConnection(process.env.DATABASE_URL!);
+    db.exec("INSERT INTO invoices(id, total) VALUES($1, $2)", [
+      this.id,
+      this.total(),
+    ]);
+  }
+}
+
+// Callers must know about mail and SQL just to make an invoice
+const inv = new Invoice("INV-1024", [{ amount: 50, qty: 2 }], "buyer@acme.com");
+inv.save();
+inv.email();</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># SMELL: one class, four reasons to change
+class Invoice:
+    def __init__(self, id, line_items, customer_email):
+        self.id = id
+        self.line_items = line_items
+        self.customer_email = customer_email
+
+    def subtotal(self):
+        return sum(li["amount"] * li["qty"] for li in self.line_items)
+
+    def tax(self):
+        return self.subtotal() * 0.2
+
+    def total(self):
+        return self.subtotal() + self.tax()
+
+    # Reason to change #2: the design team
+    def to_html(self):
+        return f"&lt;h1&gt;Invoice {self.id}&lt;/h1&gt;&lt;p&gt;Total {self.total()}&lt;/p&gt;"
+
+    # Reason to change #3: the messaging team
+    def email(self):
+        smtp = SmtpClient("mail.internal", 25)
+        smtp.send(self.customer_email, "Your invoice", self.to_html())
+
+    # Reason to change #4: the DBA
+    def save(self):
+        db = PgConnection(os.environ["DATABASE_URL"])
+        db.exec(
+            "INSERT INTO invoices(id, total) VALUES(%s, %s)",
+            [self.id, self.total()],
+        )
+
+
+# Callers must know about mail and SQL just to make an invoice
+inv = Invoice("INV-1024", [{"amount": 50, "qty": 2}], "buyer@acme.com")
+inv.save()
+inv.email()</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># SMELL: one class, four reasons to change
+class Invoice
+  attr_reader :id, :line_items, :customer_email
+
+  def initialize(id, line_items, customer_email)
+    @id = id
+    @line_items = line_items
+    @customer_email = customer_email
+  end
+
+  def subtotal
+    line_items.sum { |li| li[:amount] * li[:qty] }
+  end
+
+  def tax
+    subtotal * 0.2
+  end
+
+  def total
+    subtotal + tax
+  end
+
+  # Reason to change #2: the design team
+  def to_html
+    "&lt;h1&gt;Invoice #{id}&lt;/h1&gt;&lt;p&gt;Total #{total}&lt;/p&gt;"
+  end
+
+  # Reason to change #3: the messaging team
+  def email
+    smtp = SmtpClient.new("mail.internal", 25)
+    smtp.send(customer_email, "Your invoice", to_html)
+  end
+
+  # Reason to change #4: the DBA
+  def save
+    db = PgConnection.new(ENV.fetch("DATABASE_URL"))
+    db.exec("INSERT INTO invoices(id, total) VALUES($1, $2)", [id, total])
+  end
+end
+
+# Callers must know about mail and SQL just to make an invoice
+inv = Invoice.new("INV-1024", [{ amount: 50, qty: 2 }], "buyer@acme.com")
+inv.save
+inv.email</code></pre>
+      </div>
+
+      <h3>After: focused collaborators wired by a service</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Invoice now has ONE reason to change: billing math
+class Invoice {
+  constructor(
+    public id: string,
+    public lineItems: { amount: number; qty: number }[],
+  ) {}
+
+  subtotal(): number {
+    return this.lineItems.reduce((s, li) =&gt; s + li.amount * li.qty, 0);
+  }
+  tax(): number { return this.subtotal() * 0.2; }
+  total(): number { return this.subtotal() + this.tax(); }
+}
+
+interface InvoiceRenderer { render(inv: Invoice): string; }
+interface InvoiceMailer { send(to: string, body: string): void; }
+interface InvoiceRepository { save(inv: Invoice): void; }
+
+class PdfRenderer implements InvoiceRenderer {
+  render(inv: Invoice): string {
+    return `Invoice ${inv.id} - total ${inv.total()}`;
+  }
+}
+class SmtpMailer implements InvoiceMailer {
+  constructor(private smtp: SmtpClient) {}
+  send(to: string, body: string): void {
+    this.smtp.send(to, "Your invoice", body);
+  }
+}
+class SqlInvoiceRepository implements InvoiceRepository {
+  constructor(private db: PgConnection) {}
+  save(inv: Invoice): void {
+    this.db.exec("INSERT INTO invoices(id, total) VALUES($1, $2)", [
+      inv.id, inv.total(),
+    ]);
+  }
+}
+
+// The use case composes collaborators; each changes for its own reason
+class BillingService {
+  constructor(
+    private renderer: InvoiceRenderer,
+    private mailer: InvoiceMailer,
+    private repo: InvoiceRepository,
+  ) {}
+
+  issue(inv: Invoice, email: string): void {
+    this.repo.save(inv);
+    const doc = this.renderer.render(inv);
+    this.mailer.send(email, doc);
+  }
+}
+
+const billing = new BillingService(
+  new PdfRenderer(),
+  new SmtpMailer(new SmtpClient("mail.internal", 25)),
+  new SqlInvoiceRepository(new PgConnection(process.env.DATABASE_URL!)),
+);
+billing.issue(new Invoice("INV-1024", [{ amount: 50, qty: 2 }]), "buyer@acme.com");</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from typing import Protocol
+
+# Invoice now has ONE reason to change: billing math
+class Invoice:
+    def __init__(self, id, line_items):
+        self.id = id
+        self.line_items = line_items
+
+    def subtotal(self):
+        return sum(li["amount"] * li["qty"] for li in self.line_items)
+
+    def tax(self):
+        return self.subtotal() * 0.2
+
+    def total(self):
+        return self.subtotal() + self.tax()
+
+
+class InvoiceRenderer(Protocol):
+    def render(self, inv: "Invoice") -&gt; str: ...
+
+class InvoiceMailer(Protocol):
+    def send(self, to: str, body: str) -&gt; None: ...
+
+class InvoiceRepository(Protocol):
+    def save(self, inv: "Invoice") -&gt; None: ...
+
+
+class PdfRenderer:
+    def render(self, inv):
+        return f"Invoice {inv.id} - total {inv.total()}"
+
+class SmtpMailer:
+    def __init__(self, smtp):
+        self.smtp = smtp
+    def send(self, to, body):
+        self.smtp.send(to, "Your invoice", body)
+
+class SqlInvoiceRepository:
+    def __init__(self, db):
+        self.db = db
+    def save(self, inv):
+        self.db.exec(
+            "INSERT INTO invoices(id, total) VALUES(%s, %s)",
+            [inv.id, inv.total()],
+        )
+
+
+# The use case composes collaborators; each changes for its own reason
+class BillingService:
+    def __init__(self, renderer, mailer, repo):
+        self.renderer = renderer
+        self.mailer = mailer
+        self.repo = repo
+
+    def issue(self, inv, email):
+        self.repo.save(inv)
+        doc = self.renderer.render(inv)
+        self.mailer.send(email, doc)
+
+
+billing = BillingService(
+    PdfRenderer(),
+    SmtpMailer(SmtpClient("mail.internal", 25)),
+    SqlInvoiceRepository(PgConnection(os.environ["DATABASE_URL"])),
+)
+billing.issue(Invoice("INV-1024", [{"amount": 50, "qty": 2}]), "buyer@acme.com")</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Invoice now has ONE reason to change: billing math
+class Invoice
+  attr_reader :id, :line_items
+
+  def initialize(id, line_items)
+    @id = id
+    @line_items = line_items
+  end
+
+  def subtotal
+    line_items.sum { |li| li[:amount] * li[:qty] }
+  end
+
+  def tax
+    subtotal * 0.2
+  end
+
+  def total
+    subtotal + tax
+  end
+end
+
+# Each collaborator has a single job (duck-typed interfaces)
+class PdfRenderer
+  def render(inv)
+    "Invoice #{inv.id} - total #{inv.total}"
+  end
+end
+
+class SmtpMailer
+  def initialize(smtp)
+    @smtp = smtp
+  end
+
+  def send(to, body)
+    @smtp.send(to, "Your invoice", body)
+  end
+end
+
+class SqlInvoiceRepository
+  def initialize(db)
+    @db = db
+  end
+
+  def save(inv)
+    @db.exec("INSERT INTO invoices(id, total) VALUES($1, $2)", [inv.id, inv.total])
+  end
+end
+
+# The use case composes collaborators; each changes for its own reason
+class BillingService
+  def initialize(renderer:, mailer:, repo:)
+    @renderer = renderer
+    @mailer = mailer
+    @repo = repo
+  end
+
+  def issue(inv, email)
+    @repo.save(inv)
+    doc = @renderer.render(inv)
+    @mailer.send(email, doc)
+  end
+end
+
+billing = BillingService.new(
+  renderer: PdfRenderer.new,
+  mailer: SmtpMailer.new(SmtpClient.new("mail.internal", 25)),
+  repo: SqlInvoiceRepository.new(PgConnection.new(ENV.fetch("DATABASE_URL"))),
+)
+billing.issue(Invoice.new("INV-1024", [{ amount: 50, qty: 2 }]), "buyer@acme.com")</code></pre>
+      </div>
+      <p class="muted">The domain object shrank to pure billing math, and each external concern lives behind an interface. Swapping SMTP for a provider API now touches only <code>SmtpMailer</code>; changing the PDF layout touches only <code>PdfRenderer</code>. <code>BillingService</code> is the one place that knows the workflow, and even it depends on abstractions rather than concrete vendors.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the god class doing everything, the refactored collaboration, and how an isolated change stays contained after SRP.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Before: the caller leans on one Invoice that hides mail and SQL</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Caller
+    participant I as 🧾 Invoice (god class)
+    participant DB as 🗄️ Postgres
+    participant M as 📮 SMTP
+
+    C-&gt;&gt;I: new Invoice(id, lineItems, email)
+    C-&gt;&gt;I: save()
+    I-&gt;&gt;DB: INSERT invoice row
+    DB--&gt;&gt;I: ok
+    C-&gt;&gt;I: email()
+    I-&gt;&gt;I: toHtml()
+    I-&gt;&gt;M: send(to, body)
+    M--&gt;&gt;I: queued
+    Note over C,M: One class answers to finance, design, DBA and messaging
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - After: BillingService orchestrates focused collaborators</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 🧑 Caller
+    participant S as 🧭 BillingService
+    participant I as 🧾 Invoice
+    participant R as 🖨️ PdfRenderer
+    participant Repo as 🗄️ SqlInvoiceRepository
+    participant M as 📮 SmtpMailer
+
+    C-&gt;&gt;S: issue(invoice, email)
+    S-&gt;&gt;Repo: save(invoice)
+    Repo--&gt;&gt;S: persisted
+    S-&gt;&gt;R: render(invoice)
+    R-&gt;&gt;I: total()
+    I--&gt;&gt;R: money
+    R--&gt;&gt;S: document
+    S-&gt;&gt;M: send(email, document)
+    M--&gt;&gt;S: queued
+    S--&gt;&gt;C: issued
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Change isolation: swapping the mail vendor touches one class</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Dev as 🧑‍💻 Messaging team
+    participant S as 🧭 BillingService
+    participant M as 📮 InvoiceMailer
+
+    Note over Dev,M: Provider migration from SMTP to an HTTP API
+    Dev-&gt;&gt;M: replace SmtpMailer with ApiMailer
+    alt interface unchanged
+        S-&gt;&gt;M: send(email, document)
+        M--&gt;&gt;S: queued
+        Note over S,M: Invoice, renderer and repository never open in the diff
+    else contract broke
+        Dev-&gt;&gt;S: update only the wiring in the composition root
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a bloated Invoice god class to focused collaborators, the whole refactor in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Observe</span><h4>Notice the god class</h4><p>The <code>Invoice</code> imports an SMTP client and a database driver and is 900 lines long. That import list is the first smell: a data object should not depend on transport and storage.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Inventory</span><h4>List every method and its actor</h4><p>Write each method beside the team that would request a change: totals (finance), toHtml (design), email (messaging), save (DBA). Four actors means four reasons to change.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Group</span><h4>Cluster by reason to change</h4><p>Draw boxes around methods that share an actor. High cohesion means everything in a box moves together and rarely with anything outside it.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Name</span><h4>Name a class per cluster</h4><p>Give each cluster an intention-revealing name: <code>InvoiceRenderer</code>, <code>InvoiceMailer</code>, <code>InvoiceRepository</code>. The name should describe one job, not "manager" or "helper."</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Interface</span><h4>Define a seam for each concern</h4><p>Declare a small interface per collaborator so callers depend on a contract, not a vendor. This is where SRP starts enabling dependency inversion.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Extract</span><h4>Move rendering out</h4><p>Cut <code>toHtml</code> into <code>PdfRenderer.render(invoice)</code>. The renderer reads the invoice through its public methods and returns a document.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Extract</span><h4>Move mailing out</h4><p>Cut <code>email</code> into <code>SmtpMailer.send(to, body)</code>. The mailer now depends only on a string body, not on invoice internals.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Extract</span><h4>Move persistence out</h4><p>Cut <code>save</code> into <code>SqlInvoiceRepository.save(invoice)</code>. All SQL and connection handling leaves the domain object for good.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Compose</span><h4>Introduce a use-case service</h4><p>Create <code>BillingService.issue(invoice, email)</code> that takes the three collaborators as constructor arguments and sequences save, render, send.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Wire</span><h4>Assemble at the composition root</h4><p>In main or a factory, build the concrete renderer, mailer, and repository and hand them to the service. Nothing else knows the vendors.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Verify</span><h4>Confirm one reason each</h4><p>Re-run the inventory: <code>Invoice</code> now changes only for billing math, and each collaborator for its own actor. Unit tests on the pure invoice need no I/O.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">SRP is easy to over-apply or misread. These are the usual mistakes on both sides.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🐙 The god class</h4><p>An <code>OrderManager</code> that validates, charges, ships, emails, and logs. It touches every table and never stops changing because every team has a reason to edit it.</p></div>
+        <div class="card"><h4>🔬 Over-splitting</h4><p>Reacting by making one class per method: <code>InvoiceTotalCalculator</code>, <code>InvoiceSubtotalCalculator</code>, <code>InvoiceTaxCalculator</code>. Now a single change fans out across five files. SRP is about actors, not line counts.</p></div>
+        <div class="card"><h4>🏷️ Vague names</h4><p>Classes ending in <code>Manager</code>, <code>Helper</code>, <code>Util</code>, or <code>Processor</code> are magnets for unrelated code because their responsibility was never defined. The vague name invites scope creep.</p></div>
+        <div class="card"><h4>🧵 Hidden side effects</h4><p>A <code>total()</code> getter that also writes an audit row to the database. A method that reads should not persist. Mixed intent hides a second responsibility inside an innocent-looking call.</p></div>
+        <div class="card"><h4>💉 Shotgun surgery</h4><p>The opposite smell: one logical change forces edits across many classes because a responsibility was scattered rather than split cleanly. Cohesion leaked out during a rushed extraction.</p></div>
+        <div class="card"><h4>🧊 Anemic split</h4><p>Pulling all behavior out so <code>Invoice</code> becomes a bag of getters with logic living in services. Taken too far this drifts into an anemic domain model where objects hold data but no rules.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot count "responsibilities" directly, but several signals reliably expose an overloaded class.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Reasons to change</strong></td><td>Name the actors that could request an edit. More than one distinct team usually means more than one responsibility.</td></tr>
+            <tr><td><strong>Import / dependency spread</strong></td><td>A domain class that imports an SMTP client, a PDF library, and a DB driver is doing transport, formatting, and storage at once.</td></tr>
+            <tr><td><strong>LCOM (lack of cohesion)</strong></td><td>Methods that share no fields form disjoint clusters. High LCOM means the class is really several classes stuck together.</td></tr>
+            <tr><td><strong>Commit co-change churn</strong></td><td>If unrelated features keep editing the same file, its responsibilities are entangled. Git history exposes the coupling.</td></tr>
+            <tr><td><strong>Test setup weight</strong></td><td>Needing a database, an SMTP fake, and a PDF stub just to test one method signals mixed concerns behind one door.</td></tr>
+            <tr><td><strong>The "and" test</strong></td><td>If describing the class needs "and" (formats and mails and saves), each clause is a candidate responsibility to extract.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you cannot describe a class in one sentence without the word "and," it probably has more than one reason to change. Split by actor, not by arbitrary size.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where separating responsibilities paid off.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Splitting a billing god class in a subscriptions platform</h3><div class="role">Pattern: extract collaborators from an overloaded domain object</div></div></div>
+        <p class="muted">A SaaS billing service had an <code>Invoice</code> that computed proration, rendered PDFs, sent email, and wrote to Postgres, so every team fought over one file.</p>
+        <ul>
+          <li>Proration math stayed on <code>Invoice</code>; rendering moved to an <code>InvoiceRenderer</code> interface with PDF and HTML implementations.</li>
+          <li>Delivery moved behind an <code>InvoiceMailer</code>, letting the messaging team swap providers without touching finance logic.</li>
+          <li>Persistence moved to an <code>InvoiceRepository</code>, so the DBA could change the schema without recompiling the domain.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Tax rule changes and vendor migrations stopped colliding in the same pull request, and the pure invoice became trivial to unit test.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>2 · Untangling checkout in an e-commerce order flow</h3><div class="role">Pattern: one use-case service coordinating single-purpose classes</div></div></div>
+        <p class="muted">An <code>OrderService</code> validated carts, charged cards, reserved inventory, and emailed receipts inside one method, so any change risked the whole checkout.</p>
+        <ul>
+          <li>Payment moved behind a <code>PaymentGateway</code> interface, isolating the card-processor SDK from order rules.</li>
+          <li>Stock changes moved to an <code>InventoryReservation</code> class owned by the warehouse team.</li>
+          <li>A thin <code>PlaceOrder</code> use case sequenced validate, charge, reserve, notify, each delegated to a focused collaborator.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Switching from one payment processor to another became a one-class change, and inventory logic evolved independently of checkout.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔔</span><div><h3>3 · Decoupling a notification pipeline at a logistics company</h3><div class="role">Pattern: separate what to send from how to send it</div></div></div>
+        <p class="muted">A shipment tracker built email bodies, formatted SMS, called three vendor APIs, and logged delivery status all in one <code>Notifier</code> class.</p>
+        <ul>
+          <li>Message content moved to per-event <code>NotificationTemplate</code> classes owned by product.</li>
+          <li>Each channel became its own sender (<code>EmailSender</code>, <code>SmsSender</code>, <code>PushSender</code>) behind a shared interface.</li>
+          <li>A <code>DispatchService</code> chose channels by user preference and delegated, holding no vendor code itself.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Adding a WhatsApp channel meant writing one new sender class, with template and dispatch code untouched.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">SRP predates SOLID's popularity but has only grown more central as systems decompose into services and functions.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Microservices boundaries</h4><p>A service that owns one bounded context is SRP at the deployment scale. The same "one reason to change" test that splits classes also draws service seams.</p></div>
+        <div class="card"><h4>⚡ Serverless functions</h4><p>A single-purpose function per event is SRP made physical. Each handler changes for one trigger, and unrelated logic lives in its own deployment.</p></div>
+        <div class="card"><h4>🧭 Hexagonal architecture</h4><p>Ports and adapters formalize SRP: the domain holds rules, and each adapter (mail, DB, HTTP) is a single-responsibility edge that plugs in behind a port.</p></div>
+        <div class="card"><h4>🧪 Testability at scale</h4><p>Pure domain objects with no I/O give fast, deterministic unit tests. SRP is what makes that purity possible without heavyweight mocks.</p></div>
+        <div class="card"><h4>🤖 AI-assisted refactors</h4><p>Extract-class refactors are exactly what coding assistants do well, but they still need a human to name the actors. SRP gives that judgment a rule.</p></div>
+        <div class="card"><h4>📦 Domain-driven design</h4><p>Aggregates, repositories, and application services in DDD are named responsibilities. SRP is the low-level discipline that keeps each of them focused.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> SRP scales from a single method to a whole service. Whenever you find one thing that changes for many reasons, split it by actor. Focused collaborators cost a little more wiring and repay it every time requirements shift.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">SRP sits in a web of related design ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../coupling-cohesion/"><span class="ico">🧲</span><h4>Coupling &amp; cohesion</h4><p>The forces SRP is really about: keep the inside tight, the outside loose.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../open-closed/"><span class="ico">🚪</span><h4>Open/closed principle</h4><p>Once concerns are split, extend behavior without editing the core.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../dependency-injection/"><span class="ico">💉</span><h4>Dependency injection</h4><p>How the composition root wires focused collaborators together.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../anemic-domain-model/"><span class="ico">🧊</span><h4>Anemic domain model</h4><p>The over-correction to avoid when you split too aggressively.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Single Responsibility Principle · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

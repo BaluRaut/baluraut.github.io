@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polymorphism in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to polymorphism in object-oriented programming: subtype polymorphism and dynamic dispatch, method overriding, ad-hoc vs parametric, duck typing, and how dispatch replaces conditionals - with TypeScript, Python, and Ruby." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Polymorphism - one call, many behaviors</h1>
+      <p class="lede">Polymorphism lets a single call site work with objects of many types, each responding in its own way. A checkout service calls <strong>charge()</strong> once; a card gateway, a wallet, and a bank transfer each run their own logic. The caller stays ignorant of the concrete type, and the runtime picks the right method by <strong>dynamic dispatch</strong>.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Dynamic dispatch</span>
+        <span class="pill">Method overriding</span>
+        <span class="pill">Duck typing</span>
+        <span class="pill">Fewer conditionals</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is polymorphism?</h2>
+      <p class="muted"><strong>Polymorphism</strong> means "many forms": one interface, many implementations. You program against an abstract contract, such as a <code>PaymentMethod</code> with a <code>charge()</code> method, and at runtime any concrete method that honors that contract can be substituted in. The caller sends one message; the receiving object decides how to respond. This is the mechanism that lets you add a new payment provider without editing the code that triggers payments.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧬</span> Subtype polymorphism</h4>
+          <p>A <code>StripeCard</code> is-a <code>PaymentMethod</code>. Wherever the base type is expected, any subtype works. The classic OO form, resolved by dynamic dispatch.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔀</span> Ad-hoc (overloading)</h4>
+          <p>The same operation name handles different argument types with distinct code, like <code>format(amount)</code> versus <code>format(amount, currency)</code>. Resolved per signature.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📦</span> Parametric (generics)</h4>
+          <p>One implementation works for any type, like a <code>Repository&lt;T&gt;</code> or a generic <code>Cache</code>. Type-agnostic code, no branching on type.</p>
+        </div>
+      </div>
+
+      <h3>Flavors you will actually meet</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Kind</th><th>How it binds</th><th>Real-world example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Subtype</strong></td><td>Runtime, by the object's concrete class</td><td>One <code>Notifier.send()</code> call; email, SMS, and push each override it</td></tr>
+            <tr><td><strong>Overriding</strong></td><td>Runtime, child replaces parent method</td><td><code>RefundableOrder.total()</code> subtracts refunds over the base</td></tr>
+            <tr><td><strong>Ad-hoc / overloading</strong></td><td>Compile time, by argument signature</td><td><code>export(rows)</code> vs <code>export(rows, columns)</code> in a reporting API</td></tr>
+            <tr><td><strong>Parametric</strong></td><td>Type parameters, one body for all types</td><td><code>Queue&lt;Job&gt;</code>, <code>Repository&lt;User&gt;</code>, generic result wrappers</td></tr>
+            <tr><td><strong>Duck typing</strong></td><td>Runtime, by capability not declared type</td><td>Any object with <code>read()</code> works as a stream source</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> polymorphism moves the decision "which behavior runs" out of a <code>switch</code> statement and into the type system. You stop asking "what kind of thing is this?" and instead tell the thing "do your job."</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why polymorphism matters</h2>
+      <p class="muted">Systems grow by adding cases: a new payment provider, a new export format, a new notification channel. Without polymorphism, every new case edits every conditional that already exists. With it, new behavior arrives as a new class the old code never sees.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>➕ Extensible by addition</h4><p>Add a <code>ApplePayMethod</code> class and register it. The checkout service, invoices, and receipts keep working untouched. New behavior does not mean new branches.</p></div>
+        <div class="card"><h4>🧹 Kills conditional sprawl</h4><p>A giant <code>if method == "card" ... elif method == "wallet"</code> spread across the codebase collapses into a single <code>method.charge()</code>. The type carries the decision.</p></div>
+        <div class="card"><h4>🧪 Trivially testable</h4><p>Because callers depend on an interface, tests inject a fake <code>PaymentMethod</code> that records calls. No network, no real gateway, no monkey-patched globals.</p></div>
+        <div class="card"><h4>🔗 Decoupled layers</h4><p>The order service knows the contract, not the vendor. Swap Stripe for Adyen behind the same interface and nothing upstream changes. Dependencies point at abstractions.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Polymorphism explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is a <strong>universal remote</strong>. You press "power" once; the TV, the soundbar, and the projector each interpret that same signal in their own way. One button, many devices, correct behavior everywhere.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>You call <code>paymentMethod.charge(amount)</code> against an interface. The concrete object, injected at runtime, decides whether that means a card authorization, a wallet debit, or a bank transfer. The call site never branches on type.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of an <strong>invoice that renders to PDF, HTML, or CSV</strong>. Accounting asks the invoice to "render"; the format object handles the details. Add a new format and the billing screen does not change.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>A <strong>wall socket</strong> accepts any appliance that fits the plug. The socket does not care if it powers a lamp or a laptop charger; it just delivers, and each device does its own thing.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Polymorphism rests on two pieces: a shared <strong>contract</strong> (an interface or base class declaring a method), and <strong>dynamic dispatch</strong>, the runtime lookup that routes a call to the concrete object's own override rather than the base version.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📜</span> The contract</h4>
+          <p>An abstract <code>PaymentMethod</code> declares <code>charge(amount): Receipt</code>. It says what, never how. Every concrete method promises to fulfill it, so callers can hold the base type safely.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> Dynamic dispatch</h4>
+          <p>When you call <code>m.charge(amount)</code>, the runtime inspects the actual object behind <code>m</code> and jumps to that class's <code>charge</code>. This late binding is what makes overriding take effect.</p>
+        </div>
+      </div>
+
+      <h3>The classes and objects at a glance</h3>
+      <div class="diagram">
+        <div class="cap">Class diagram - one abstract contract, three concrete payment methods, one caller</div>
+        <pre class="mermaid">
+classDiagram
+    class PaymentMethod {
+        &lt;&lt;abstract&gt;&gt;
+        +charge(amount) Receipt
+        +label() string
+    }
+    class CardGateway {
+        +charge(amount) Receipt
+        +label() string
+    }
+    class DigitalWallet {
+        +charge(amount) Receipt
+        +label() string
+    }
+    class BankTransfer {
+        +charge(amount) Receipt
+        +label() string
+    }
+    class CheckoutService {
+        +settle(method, amount) Receipt
+    }
+    PaymentMethod &lt;|-- CardGateway
+    PaymentMethod &lt;|-- DigitalWallet
+    PaymentMethod &lt;|-- BankTransfer
+    CheckoutService ..&gt; PaymentMethod
+        </pre>
+      </div>
+
+      <h3>One call, three behaviors - in three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Shared contract: every payment method honors charge()
+interface Receipt { method: string; amount: number; reference: string; }
+
+abstract class PaymentMethod {
+  abstract charge(amount: number): Receipt;
+  abstract label(): string;
+}
+
+class CardGateway extends PaymentMethod {
+  constructor(private last4: string) { super(); }
+  charge(amount: number): Receipt {
+    // authorize + capture against the card network
+    return { method: this.label(), amount, reference: `auth_${this.last4}` };
+  }
+  label() { return `Card ****${this.last4}`; }
+}
+
+class DigitalWallet extends PaymentMethod {
+  constructor(private walletId: string) { super(); }
+  charge(amount: number): Receipt {
+    // debit the stored wallet balance
+    return { method: this.label(), amount, reference: `wlt_${this.walletId}` };
+  }
+  label() { return `Wallet ${this.walletId}`; }
+}
+
+class BankTransfer extends PaymentMethod {
+  constructor(private iban: string) { super(); }
+  charge(amount: number): Receipt {
+    // initiate an ACH / SEPA pull
+    return { method: this.label(), amount, reference: `sepa_${this.iban.slice(-4)}` };
+  }
+  label() { return `Bank ${this.iban.slice(-4)}`; }
+}
+
+// The caller branches on nothing. Dynamic dispatch does the routing.
+class CheckoutService {
+  settle(method: PaymentMethod, amount: number): Receipt {
+    const receipt = method.charge(amount);
+    console.log(`Settled ${amount} via ${receipt.method} -&gt; ${receipt.reference}`);
+    return receipt;
+  }
+}
+
+const checkout = new CheckoutService();
+const methods: PaymentMethod[] = [
+  new CardGateway("4242"),
+  new DigitalWallet("acct_9f2"),
+  new BankTransfer("DE89370400440532013000"),
+];
+for (const m of methods) checkout.settle(m, 4999);</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+@dataclass
+class Receipt:
+    method: str
+    amount: int
+    reference: str
+
+class PaymentMethod(ABC):
+    @abstractmethod
+    def charge(self, amount: int) -&gt; Receipt: ...
+    @abstractmethod
+    def label(self) -&gt; str: ...
+
+class CardGateway(PaymentMethod):
+    def __init__(self, last4: str):
+        self.last4 = last4
+    def charge(self, amount: int) -&gt; Receipt:
+        # authorize + capture against the card network
+        return Receipt(self.label(), amount, f"auth_{self.last4}")
+    def label(self) -&gt; str:
+        return f"Card ****{self.last4}"
+
+class DigitalWallet(PaymentMethod):
+    def __init__(self, wallet_id: str):
+        self.wallet_id = wallet_id
+    def charge(self, amount: int) -&gt; Receipt:
+        # debit the stored wallet balance
+        return Receipt(self.label(), amount, f"wlt_{self.wallet_id}")
+    def label(self) -&gt; str:
+        return f"Wallet {self.wallet_id}"
+
+class BankTransfer(PaymentMethod):
+    def __init__(self, iban: str):
+        self.iban = iban
+    def charge(self, amount: int) -&gt; Receipt:
+        # initiate an ACH / SEPA pull
+        return Receipt(self.label(), amount, f"sepa_{self.iban[-4:]}")
+    def label(self) -&gt; str:
+        return f"Bank {self.iban[-4:]}"
+
+class CheckoutService:
+    def settle(self, method: PaymentMethod, amount: int) -&gt; Receipt:
+        receipt = method.charge(amount)  # dynamic dispatch, no isinstance checks
+        print(f"Settled {amount} via {receipt.method} -&gt; {receipt.reference}")
+        return receipt
+
+checkout = CheckoutService()
+methods = [
+    CardGateway("4242"),
+    DigitalWallet("acct_9f2"),
+    BankTransfer("DE89370400440532013000"),
+]
+for m in methods:
+    checkout.settle(m, 4999)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>Receipt = Struct.new(:method, :amount, :reference)
+
+class PaymentMethod
+  def charge(amount) = raise NotImplementedError
+  def label = raise NotImplementedError
+end
+
+class CardGateway &lt; PaymentMethod
+  def initialize(last4) = @last4 = last4
+  def charge(amount)
+    # authorize + capture against the card network
+    Receipt.new(label, amount, "auth_#{@last4}")
+  end
+  def label = "Card ****#{@last4}"
+end
+
+class DigitalWallet &lt; PaymentMethod
+  def initialize(wallet_id) = @wallet_id = wallet_id
+  def charge(amount)
+    # debit the stored wallet balance
+    Receipt.new(label, amount, "wlt_#{@wallet_id}")
+  end
+  def label = "Wallet #{@wallet_id}"
+end
+
+class BankTransfer &lt; PaymentMethod
+  def initialize(iban) = @iban = iban
+  def charge(amount)
+    # initiate an ACH / SEPA pull
+    Receipt.new(label, amount, "sepa_#{@iban[-4..]}")
+  end
+  def label = "Bank #{@iban[-4..]}"
+end
+
+class CheckoutService
+  def settle(method, amount)
+    receipt = method.charge(amount) # duck typing: anything with charge works
+    puts "Settled #{amount} via #{receipt.method} -&gt; #{receipt.reference}"
+    receipt
+  end
+end
+
+checkout = CheckoutService.new
+methods = [
+  CardGateway.new("4242"),
+  DigitalWallet.new("acct_9f2"),
+  BankTransfer.new("DE89370400440532013000"),
+]
+methods.each { |m| checkout.settle(m, 4999) }</code></pre>
+      </div>
+      <p class="muted">The three snippets are behaviorally identical. Note the difference in binding style: TypeScript and Python declare an explicit base contract, while Ruby leans on <strong>duck typing</strong> - <code>settle</code> accepts any object that responds to <code>charge</code>, no shared ancestor required. In every case the caller has zero branches on payment type.</p>
+
+      <h3>Before and after - dispatch replaces the conditional</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// BEFORE: the caller owns every case. Each new method edits this switch.
+function settle(kind: string, amount: number) {
+  if (kind === "card") {
+    return authorizeCard(amount);
+  } else if (kind === "wallet") {
+    return debitWallet(amount);
+  } else if (kind === "bank") {
+    return initiateTransfer(amount);
+  }
+  throw new Error(`Unknown method ${kind}`);
+}
+
+// AFTER: the object owns its case. New method = new class, caller untouched.
+function settle(method: PaymentMethod, amount: number) {
+  return method.charge(amount);
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># BEFORE: the caller owns every case. Each new method edits this branch.
+def settle(kind: str, amount: int):
+    if kind == "card":
+        return authorize_card(amount)
+    elif kind == "wallet":
+        return debit_wallet(amount)
+    elif kind == "bank":
+        return initiate_transfer(amount)
+    raise ValueError(f"Unknown method {kind}")
+
+# AFTER: the object owns its case. New method = new class, caller untouched.
+def settle(method: PaymentMethod, amount: int):
+    return method.charge(amount)</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># BEFORE: the caller owns every case. Each new method edits this case.
+def settle(kind, amount)
+  case kind
+  when "card"   then authorize_card(amount)
+  when "wallet" then debit_wallet(amount)
+  when "bank"   then initiate_transfer(amount)
+  else raise "Unknown method #{kind}"
+  end
+end
+
+# AFTER: the object owns its case. New method = new class, caller untouched.
+def settle(method, amount)
+  method.charge(amount)
+end</code></pre>
+      </div>
+      <p class="muted">This is the payoff. The conditional did not vanish; it moved. Each concrete class holds exactly one branch of the old <code>switch</code>, and the runtime's dispatch table replaces the manual dispatch you used to write by hand.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: the polymorphic charge call, iterating a mixed collection, and invoice rendering across formats with a fallback.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Dynamic dispatch: one call, resolved to the concrete method</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 Buyer
+    participant CO as 🖥️ CheckoutService
+    participant PM as 📜 PaymentMethod ref
+    participant CG as 💳 CardGateway
+
+    U-&gt;&gt;CO: settle(method, 4999)
+    CO-&gt;&gt;PM: charge(4999)
+    Note over PM,CG: runtime resolves the ref to CardGateway
+    PM-&gt;&gt;CG: dispatch charge(4999)
+    CG--&gt;&gt;CO: Receipt(auth_4242)
+    CO--&gt;&gt;U: Settled via Card ****4242
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - One loop over a heterogeneous collection, each object its own behavior</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant CO as 🖥️ CheckoutService
+    participant W as 👛 DigitalWallet
+    participant B as 🏦 BankTransfer
+
+    Note over CO: methods = [wallet, bank]
+    loop for each method
+        CO-&gt;&gt;W: charge(4999)
+        W--&gt;&gt;CO: Receipt(wlt_acct_9f2)
+        CO-&gt;&gt;B: charge(4999)
+        B--&gt;&gt;CO: Receipt(sepa_3000)
+    end
+    Note over CO: no type checks, same call site
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Invoice rendering: same render() call, format decides, fallback on unsupported</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant AC as 🧾 Billing
+    participant INV as 📄 Invoice
+    participant R as 🎨 Renderer
+
+    AC-&gt;&gt;INV: render(format)
+    INV-&gt;&gt;R: emit(invoiceData)
+    alt format supported
+        R--&gt;&gt;INV: bytes (PDF or HTML or CSV)
+        INV--&gt;&gt;AC: rendered document
+    else unknown format
+        R--&gt;&gt;INV: raise UnsupportedFormat
+        INV--&gt;&gt;AC: fall back to HTML
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a hardcoded conditional to clean polymorphic dispatch, and adding a brand new payment method without touching the caller.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Smell</span><h4>Spot the growing switch</h4><p>Payments run through a sprawling <code>if kind == "card" ... elif "wallet"</code>. Every provider added means editing this block plus the receipt and refund paths.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Contract</span><h4>Name the shared behavior</h4><p>List what all methods must do: <code>charge(amount)</code> and <code>label()</code>. Declare it as an abstract base class or interface, the <code>PaymentMethod</code> contract.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Model</span><h4>Give each case a class</h4><p>Create <code>CardGateway</code>, <code>DigitalWallet</code>, and <code>BankTransfer</code>, each implementing the contract. One branch of the old switch moves into each class.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Override</span><h4>Implement charge() per class</h4><p>Each subtype overrides <code>charge()</code> with its own logic: authorize a card, debit a wallet, pull a transfer. Same signature, different bodies.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Depend</span><h4>Type the caller to the base</h4><p><code>CheckoutService.settle</code> now accepts a <code>PaymentMethod</code>, not a string. It depends on the abstraction, never the concrete provider.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Dispatch</span><h4>Replace the switch with one call</h4><p>Delete the conditional. The body becomes <code>method.charge(amount)</code>. Dynamic dispatch routes to the right override at runtime.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Construct</span><h4>Pick the type at the edge</h4><p>Something must still choose the concrete class, usually a factory reading the checkout request. That choice lives at one boundary, not scattered everywhere.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Iterate</span><h4>Process mixed collections uniformly</h4><p>A list of assorted <code>PaymentMethod</code> objects loops through one call site. Retries, split payments, and receipts treat them identically.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Extend</span><h4>Add ApplePay with zero edits upstream</h4><p>Write <code>ApplePayMethod</code> implementing the contract and register it in the factory. Checkout, refunds, and reporting compile and run unchanged.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Inject a fake method</h4><p>Tests pass a stub <code>PaymentMethod</code> that records the amount. The polymorphic seam makes the service testable without any real gateway.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Behavior scales by classes, not branches</h4><p>The codebase now grows by adding types, not by widening conditionals. New behavior is additive, isolated, and safe to deploy.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Polymorphism done carelessly recreates the very coupling it was meant to remove. Watch for these.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔎 Type-checking the abstraction</h4><p>Writing <code>if (method instanceof CardGateway)</code> inside the caller defeats the point. If you must ask an object its concrete type, the behavior belongs on the object as another method.</p></div>
+        <div class="card"><h4>⚠️ Violating Liskov substitution</h4><p>A <code>BankTransfer.charge()</code> that throws where the base promised a receipt breaks callers that trusted the contract. Subtypes must honor the base's guarantees, not weaken them.</p></div>
+        <div class="card"><h4>🧩 Fat interfaces</h4><p>A contract with <code>charge</code>, <code>refund</code>, <code>tokenize</code>, and <code>threeDSecure</code> forces every method to stub out what it cannot do. Split into focused roles instead.</p></div>
+        <div class="card"><h4>🪜 Deep inheritance chains</h4><p>Five levels of <code>PaymentMethod</code> subclasses to share code makes overrides impossible to trace. Prefer composition and small mixins over tall hierarchies.</p></div>
+        <div class="card"><h4>🕳️ Silent default cases</h4><p>An overridden method that quietly returns <code>null</code> or an empty receipt for the case it does not handle hides bugs. Fail loudly or make the missing behavior explicit in the type.</p></div>
+        <div class="card"><h4>🎭 Duck typing without a check</h4><p>In dynamic languages, passing an object that lacks <code>charge</code> fails deep in production, not at the boundary. Validate the required methods at the edge, or use protocols.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot put polymorphism on a dashboard, but these code signals tell you whether it is helping or missing.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Type-switch count</strong></td><td>Repeated <code>switch</code> or <code>instanceof</code> on the same set of kinds signals a missing polymorphic hierarchy. Each duplicate is a place a new case will be forgotten.</td></tr>
+            <tr><td><strong>Shotgun surgery per feature</strong></td><td>If adding one payment method touches many files, dispatch is still manual. Good polymorphism makes it a single new class.</td></tr>
+            <tr><td><strong>Cyclomatic complexity of callers</strong></td><td>High branching in the service layer often means logic that belongs on the objects. Dispatch should flatten these numbers.</td></tr>
+            <tr><td><strong>Override consistency</strong></td><td>Do all subtypes accept the same inputs and return the same shape? Divergent signatures warn of a leaky contract and Liskov risk.</td></tr>
+            <tr><td><strong>Test double ease</strong></td><td>If faking a dependency requires patching internals rather than passing an implementation, your seams are not polymorphic enough.</td></tr>
+            <tr><td><strong>Open-closed adherence</strong></td><td>Track whether new behavior arrives as added classes versus modified conditionals in existing files. The former is the healthy pattern.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you find yourself writing the same <code>if</code>-ladder on the same set of types in more than two places, that is the type system asking for a polymorphic method. Move the branch onto the object.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where polymorphism carries the weight.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment orchestration across providers</h3><div class="role">Pattern: one charge() call, many gateways</div></div></div>
+        <p class="muted">A marketplace routes payments through Stripe, Adyen, and local bank rails depending on the buyer's region and method.</p>
+        <ul>
+          <li>Every provider implements a common <code>PaymentMethod.charge()</code>, so the checkout flow is provider-agnostic.</li>
+          <li>A factory at the request boundary picks the concrete gateway; nothing downstream branches on it.</li>
+          <li>Adding a new regional provider ships as one class plus a factory entry, with refunds and receipts untouched.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> New markets launch by adding classes, and the core settlement path stays stable and heavily tested.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📣</span><div><h3>2 · Multi-channel notification service</h3><div class="role">Pattern: one send() across email, SMS, push</div></div></div>
+        <p class="muted">A platform sends transactional alerts over email, SMS, push, and in-app channels from a single dispatch loop.</p>
+        <ul>
+          <li>Each channel is a <code>Notifier</code> that overrides <code>send(message, recipient)</code> with its own transport.</li>
+          <li>User preferences yield a list of channel objects; the dispatcher iterates and calls <code>send</code> uniformly.</li>
+          <li>A new WhatsApp channel drops in as a class implementing the same contract, no dispatcher changes.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Channels evolve independently and the fan-out engine never learns a new <code>if</code> branch.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🧾</span><div><h3>3 · Report and invoice export pipeline</h3><div class="role">Pattern: one render() to PDF, HTML, CSV</div></div></div>
+        <p class="muted">A billing system exports the same invoice to PDF for customers, HTML for the web view, and CSV for accounting imports.</p>
+        <ul>
+          <li>Each format is a <code>Renderer</code> overriding <code>render(invoice)</code>; the invoice holds the data, the renderer the form.</li>
+          <li>The export endpoint resolves the requested format to a renderer object and calls one method.</li>
+          <li>A new XLSX export is added without editing the invoice model or the endpoint's dispatch code.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Output formats multiply freely while the invoice domain model stays clean and single-purpose.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Polymorphism is not a relic of classic OO; it underpins how modern typed and dynamic languages compose behavior.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Protocols and traits</h4><p>Swift protocols, Rust traits, and Go interfaces are polymorphism without inheritance: behavior is bound by capability, echoing structural and duck typing at compile time.</p></div>
+        <div class="card"><h4>🔤 Structural typing</h4><p>TypeScript matches shapes, not names. Anything with the right methods satisfies an interface, blending static safety with duck-typed flexibility.</p></div>
+        <div class="card"><h4>🧬 Bounded generics</h4><p>Parametric polymorphism with constraints, like <code>&lt;T extends PaymentMethod&gt;</code>, gives one implementation that works for many types while keeping guarantees.</p></div>
+        <div class="card"><h4>🧩 Sum types and pattern match</h4><p>Functional languages and modern Rust and Scala pair closed sum types with exhaustive matching, an intentional alternative to open subtype dispatch.</p></div>
+        <div class="card"><h4>🔌 Plugin architectures</h4><p>Extensions, adapters, and drivers all lean on a shared interface so third parties add behavior without forking the core, the same open-closed payoff.</p></div>
+        <div class="card"><h4>🌐 Polyglot service contracts</h4><p>gRPC and OpenAPI define a contract many language implementations satisfy, subtype substitution stretched across process and network boundaries.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> polymorphism is how you make code open to new cases and closed to change. Whether by class, interface, protocol, or generic, the goal is constant: call one thing, let the type decide the behavior, and grow by adding rather than editing.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Polymorphism sits in a web of OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../inheritance/"><span class="ico">🧬</span><h4>Inheritance</h4><p>The is-a relationship that enables method overriding.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">🦆</span><h4>Interfaces &amp; duck typing</h4><p>Contracts and capability-based substitution.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../abstraction/"><span class="ico">🎚️</span><h4>Abstraction</h4><p>Programming to a contract, hiding the how.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../open-closed/"><span class="ico">🔓</span><h4>Open-closed principle</h4><p>Open to extension, closed to modification.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to polymorphism · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

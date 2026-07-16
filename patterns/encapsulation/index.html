@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Encapsulation in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to encapsulation in object-oriented programming: data hiding, access modifiers, behavior-rich objects vs get/set bags, protecting invariants, with TypeScript, Python and Ruby code, diagrams, a 0-100 flow, and case studies." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Encapsulation - keep the data private, expose the behavior</h1>
+      <p class="lede">Encapsulation bundles state and the rules that govern it inside one object, then hides the raw fields behind a small, intentional API. Callers cannot reach in and corrupt a balance or an order total; they can only ask the object to do things it knows are safe. The result is code where an object is <strong>always valid</strong>, because the only path to change it runs through methods that protect its invariants.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Data hiding</span>
+        <span class="pill">Access modifiers</span>
+        <span class="pill">Invariants</span>
+        <span class="pill">Behavior-rich objects</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is encapsulation?</h2>
+      <p class="muted"><strong>Encapsulation</strong> is the practice of hiding an object's internal state and letting the outside world touch it only through a controlled set of methods. The object owns its data and the rules about what makes that data valid. Instead of exposing a mutable <code>balance</code> field, a <code>BankAccount</code> exposes <code>deposit()</code> and <code>withdraw()</code>, and those methods refuse anything that would break the account.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Data hiding</h4>
+          <p>Fields are marked private so no caller can assign them directly. The only way to change state is to go through methods that enforce the rules.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🚪</span> A narrow public API</h4>
+          <p>The object exposes intent-revealing operations like <code>withdraw(amount)</code>, not raw setters. The surface stays small and hard to misuse.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛡️</span> Protected invariants</h4>
+          <p>Rules such as "balance never goes negative" or "an order total equals the sum of its lines" hold at every moment because only trusted code can mutate state.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Concrete example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Private state</strong></td><td>Fields the object owns and no one else can touch</td><td><code>#balanceCents</code> on an account</td></tr>
+            <tr><td><strong>Constructor guard</strong></td><td>Rejects invalid objects at birth</td><td>An account cannot start below its overdraft limit</td></tr>
+            <tr><td><strong>Command methods</strong></td><td>Mutate state only if the change is legal</td><td><code>withdraw()</code> throws on insufficient funds</td></tr>
+            <tr><td><strong>Query methods</strong></td><td>Read derived, safe views of state</td><td><code>availableCredit()</code> computes, never exposes raw fields</td></tr>
+            <tr><td><strong>Invariant</strong></td><td>A truth that must always hold</td><td>Order total is never negative and matches its lines</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> encapsulation is not about hiding data for secrecy - it is about making illegal states unrepresentable. If the only door into an object's state enforces the rules, then a corrupt object simply cannot exist in your running system.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why encapsulation exists</h2>
+      <p class="muted">When state is public, every line of code in the system becomes a potential place a bug can corrupt it. Encapsulation shrinks that blast radius to a handful of methods you can read, test, and trust.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🐛 Fewer corrupt-state bugs</h4><p>If a negative balance ever appears, the cause is inside one class, not scattered across dozens of call sites that each poked the field directly.</p></div>
+        <div class="card"><h4>🔧 Freedom to change internals</h4><p>Store money as cents, then switch to a <code>Money</code> value type, and no caller breaks because they only ever saw methods, never the field.</p></div>
+        <div class="card"><h4>🧪 Easier to test and reason about</h4><p>You test the rules in one place. Given a valid object, you know its invariants hold, so downstream code needs fewer defensive checks.</p></div>
+        <div class="card"><h4>🤝 Clear contracts between teams</h4><p>The public method list is the contract. Teams integrate against intent-revealing operations instead of guessing which field combinations are safe.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Encapsulation explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Encapsulation is like a <strong>vending machine</strong>. You press buttons and insert coins; you never open the panel to grab the wiring. The machine decides whether it can dispense, and it protects its own coin count.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It is a class where fields are <strong>private and mutation runs through methods</strong>. Instead of <code>order.total = 90</code>, you call <code>order.addLine(item)</code> and the total recomputes itself, so it can never disagree with the lines.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>bank teller window</strong>. Customers do not walk into the vault; they hand a slip to the teller, who checks the rules before money moves. The vault stays consistent because access is mediated.</p></div>
+        <div class="card"><h4><span class="ico">💊</span> Everyday version</h4><p>A <strong>medicine bottle with a child-proof cap</strong>. The contents are reachable, but only through a deliberate motion that stops accidental, unsafe access. The barrier is the point.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How encapsulation works in practice</h2>
+      <p class="muted">You start by deciding which invariants the object must guarantee, then make every field private and route all changes through methods that enforce those invariants. Access modifiers are the language-level tool that turns "please do not touch this" into "you cannot touch this".</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔐</span> Access modifiers</h4>
+          <p><strong>private</strong> means only this class sees it, <strong>protected</strong> means this class and subclasses, <strong>public</strong> means everyone. Python signals intent with a leading underscore (<code>_field</code>) and name-mangles <code>__field</code>; Ruby makes state private by default and exposes it only via <code>attr_reader</code> or methods.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🎯</span> Behavior-rich objects vs get/set bags</h4>
+          <p>An anemic object with a public getter and setter for every field is just a struct wearing a class costume. A behavior-rich object exposes verbs (<code>deposit</code>, <code>cancel</code>, <code>applyDiscount</code>) that carry the rules, so callers ask for outcomes instead of shuffling raw fields.</p>
+        </div>
+      </div>
+
+      <h3>The classes at a glance</h3>
+      <div class="diagram">
+        <div class="cap">A BankAccount owns its balance and enforces the overdraft rule; nobody writes the field directly</div>
+        <pre class="mermaid">
+classDiagram
+    class BankAccount {
+        -balanceCents int
+        -overdraftLimitCents int
+        +deposit(amountCents) void
+        +withdraw(amountCents) void
+        +balance() Money
+        +availableToSpend() Money
+    }
+    class Money {
+        &lt;&lt;value object&gt;&gt;
+        -cents int
+        +plus(other) Money
+        +isNegative() bool
+    }
+    class InsufficientFundsError {
+        +message string
+    }
+    BankAccount o-- Money : exposes as
+    BankAccount ..> InsufficientFundsError : throws
+        </pre>
+      </div>
+
+      <h3>A real BankAccount in three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money is stored as integer cents so we never leak floating-point rounding.
+class InsufficientFundsError extends Error {}
+
+class BankAccount {
+  // Truly private: the # fields are invisible and unwritable from outside.
+  #balanceCents: number;
+  readonly #overdraftLimitCents: number;
+
+  constructor(openingCents: number, overdraftLimitCents = 0) {
+    if (overdraftLimitCents &lt; 0) throw new Error("Overdraft limit must be >= 0");
+    if (openingCents &lt; -overdraftLimitCents) {
+      throw new Error("Opening balance breaks the overdraft limit");
+    }
+    this.#balanceCents = openingCents;
+    this.#overdraftLimitCents = overdraftLimitCents;
+  }
+
+  deposit(amountCents: number): void {
+    if (amountCents &lt;= 0) throw new Error("Deposit must be positive");
+    this.#balanceCents += amountCents;
+  }
+
+  withdraw(amountCents: number): void {
+    if (amountCents &lt;= 0) throw new Error("Withdrawal must be positive");
+    if (this.#balanceCents - amountCents &lt; -this.#overdraftLimitCents) {
+      throw new InsufficientFundsError("Withdrawal exceeds available funds");
+    }
+    this.#balanceCents -= amountCents;
+  }
+
+  // Queries return safe, derived views. No setter for the balance exists.
+  get balanceCents(): number { return this.#balanceCents; }
+  get availableToSpendCents(): number {
+    return this.#balanceCents + this.#overdraftLimitCents;
+  }
+}
+
+const acct = new BankAccount(5_000, 2_000); // $50.00, $20 overdraft
+acct.deposit(2_500);                        // $75.00
+acct.withdraw(9_000);                       // dips into overdraft, still legal
+console.log(acct.balanceCents);             // -500  (i.e. -$5.00)
+// acct.#balanceCents = 1_000_000;          // compile error: private field
+try {
+  acct.withdraw(5_000);                     // would exceed overdraft
+} catch (e) {
+  console.log((e as Error).message);        // "Withdrawal exceeds available funds"
+}</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Money is stored as integer cents so we never leak floating-point rounding.
+class InsufficientFundsError(Exception):
+    pass
+
+
+class BankAccount:
+    def __init__(self, opening_cents: int, overdraft_limit_cents: int = 0):
+        if overdraft_limit_cents &lt; 0:
+            raise ValueError("Overdraft limit must be >= 0")
+        if opening_cents &lt; -overdraft_limit_cents:
+            raise ValueError("Opening balance breaks the overdraft limit")
+        # Double underscore triggers name mangling: hard to touch by accident.
+        self.__balance_cents = opening_cents
+        self.__overdraft_limit_cents = overdraft_limit_cents
+
+    def deposit(self, amount_cents: int) -> None:
+        if amount_cents &lt;= 0:
+            raise ValueError("Deposit must be positive")
+        self.__balance_cents += amount_cents
+
+    def withdraw(self, amount_cents: int) -> None:
+        if amount_cents &lt;= 0:
+            raise ValueError("Withdrawal must be positive")
+        if self.__balance_cents - amount_cents &lt; -self.__overdraft_limit_cents:
+            raise InsufficientFundsError("Withdrawal exceeds available funds")
+        self.__balance_cents -= amount_cents
+
+    # Read-only property: exposes a view, never a setter for the balance.
+    @property
+    def balance_cents(self) -> int:
+        return self.__balance_cents
+
+    @property
+    def available_to_spend_cents(self) -> int:
+        return self.__balance_cents + self.__overdraft_limit_cents
+
+
+acct = BankAccount(5_000, 2_000)   # $50.00, $20 overdraft
+acct.deposit(2_500)                # $75.00
+acct.withdraw(9_000)               # dips into overdraft, still legal
+print(acct.balance_cents)          # -500  (i.e. -$5.00)
+# acct.balance_cents = 1_000_000   # AttributeError: no setter defined
+try:
+    acct.withdraw(5_000)           # would exceed overdraft
+except InsufficientFundsError as e:
+    print(e)                       # "Withdrawal exceeds available funds"</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Money is stored as integer cents so we never leak floating-point rounding.
+class InsufficientFundsError &lt; StandardError; end
+
+class BankAccount
+  # attr_reader exposes a getter only; there is no writer for the balance.
+  attr_reader :balance_cents
+
+  def initialize(opening_cents, overdraft_limit_cents = 0)
+    raise ArgumentError, "Overdraft limit must be >= 0" if overdraft_limit_cents &lt; 0
+    if opening_cents &lt; -overdraft_limit_cents
+      raise ArgumentError, "Opening balance breaks the overdraft limit"
+    end
+    @balance_cents = opening_cents
+    @overdraft_limit_cents = overdraft_limit_cents
+  end
+
+  def deposit(amount_cents)
+    raise ArgumentError, "Deposit must be positive" if amount_cents &lt;= 0
+    @balance_cents += amount_cents
+  end
+
+  def withdraw(amount_cents)
+    raise ArgumentError, "Withdrawal must be positive" if amount_cents &lt;= 0
+    if @balance_cents - amount_cents &lt; -@overdraft_limit_cents
+      raise InsufficientFundsError, "Withdrawal exceeds available funds"
+    end
+    @balance_cents -= amount_cents
+  end
+
+  def available_to_spend_cents
+    @balance_cents + @overdraft_limit_cents
+  end
+end
+
+acct = BankAccount.new(5_000, 2_000)  # $50.00, $20 overdraft
+acct.deposit(2_500)                   # $75.00
+acct.withdraw(9_000)                  # dips into overdraft, still legal
+puts acct.balance_cents               # -500  (i.e. -$5.00)
+# acct.balance_cents = 1_000_000      # NoMethodError: no writer exists
+begin
+  acct.withdraw(5_000)                # would exceed overdraft
+rescue InsufficientFundsError =&gt; e
+  puts e.message                      # "Withdrawal exceeds available funds"
+end</code></pre>
+      </div>
+      <p class="muted">In all three, the balance can only move through <code>deposit</code> and <code>withdraw</code>, and both check the overdraft rule before mutating. There is no public setter, so the invariant "balance never falls below the overdraft limit" is guaranteed by construction, not by hoping every caller behaves.</p>
+
+      <h3>From an anemic get/set bag to a behavior-rich object</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// BEFORE: anemic Order. Public fields, no rules. Any caller can corrupt it.
+class OrderBag {
+  totalCents = 0;
+  status = "open";
+}
+const bad = new OrderBag();
+bad.totalCents = -999;        // negative total, nobody stopped it
+bad.status = "shpped";        // typo, meaningless state, no complaint
+
+// AFTER: Order owns its lines and derives its total. Illegal states blocked.
+type Line = { sku: string; unitCents: number; qty: number };
+
+class Order {
+  #lines: Line[] = [];
+  #status: "open" | "placed" | "cancelled" = "open";
+
+  addLine(sku: string, unitCents: number, qty: number): void {
+    if (this.#status !== "open") throw new Error("Cannot edit a closed order");
+    if (unitCents &lt; 0 || qty &lt;= 0) throw new Error("Invalid line");
+    this.#lines.push({ sku, unitCents, qty });
+  }
+
+  place(): void {
+    if (this.#lines.length === 0) throw new Error("Cannot place an empty order");
+    this.#status = "placed";
+  }
+
+  // Total is DERIVED, so it can never disagree with the lines.
+  get totalCents(): number {
+    return this.#lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0);
+  }
+  get status(): string { return this.#status; }
+}
+
+const order = new Order();
+order.addLine("SKU-42", 1_299, 2);   // $25.98
+order.place();
+console.log(order.totalCents);       // 2598, always in sync with the lines</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># BEFORE: anemic Order. Public fields, no rules. Any caller can corrupt it.
+class OrderBag:
+    def __init__(self):
+        self.total_cents = 0
+        self.status = "open"
+
+bad = OrderBag()
+bad.total_cents = -999      # negative total, nobody stopped it
+bad.status = "shpped"       # typo, meaningless state, no complaint
+
+
+# AFTER: Order owns its lines and derives its total. Illegal states blocked.
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class Line:
+    sku: str
+    unit_cents: int
+    qty: int
+
+
+class Order:
+    def __init__(self):
+        self.__lines: list[Line] = []
+        self.__status = "open"
+
+    def add_line(self, sku: str, unit_cents: int, qty: int) -> None:
+        if self.__status != "open":
+            raise ValueError("Cannot edit a closed order")
+        if unit_cents &lt; 0 or qty &lt;= 0:
+            raise ValueError("Invalid line")
+        self.__lines.append(Line(sku, unit_cents, qty))
+
+    def place(self) -> None:
+        if not self.__lines:
+            raise ValueError("Cannot place an empty order")
+        self.__status = "placed"
+
+    # Total is DERIVED, so it can never disagree with the lines.
+    @property
+    def total_cents(self) -> int:
+        return sum(l.unit_cents * l.qty for l in self.__lines)
+
+    @property
+    def status(self) -> str:
+        return self.__status
+
+
+order = Order()
+order.add_line("SKU-42", 1_299, 2)   # $25.98
+order.place()
+print(order.total_cents)             # 2598, always in sync with the lines</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># BEFORE: anemic Order. Public fields, no rules. Any caller can corrupt it.
+class OrderBag
+  attr_accessor :total_cents, :status
+  def initialize
+    @total_cents = 0
+    @status = "open"
+  end
+end
+
+bad = OrderBag.new
+bad.total_cents = -999   # negative total, nobody stopped it
+bad.status = "shpped"    # typo, meaningless state, no complaint
+
+
+# AFTER: Order owns its lines and derives its total. Illegal states blocked.
+Line = Struct.new(:sku, :unit_cents, :qty)
+
+class Order
+  attr_reader :status
+
+  def initialize
+    @lines = []
+    @status = "open"
+  end
+
+  def add_line(sku, unit_cents, qty)
+    raise "Cannot edit a closed order" unless @status == "open"
+    raise "Invalid line" if unit_cents &lt; 0 || qty &lt;= 0
+    @lines &lt;&lt; Line.new(sku, unit_cents, qty)
+  end
+
+  def place
+    raise "Cannot place an empty order" if @lines.empty?
+    @status = "placed"
+  end
+
+  # Total is DERIVED, so it can never disagree with the lines.
+  def total_cents
+    @lines.sum { |l| l.unit_cents * l.qty }
+  end
+end
+
+order = Order.new
+order.add_line("SKU-42", 1_299, 2)   # $25.98
+order.place
+puts order.total_cents               # 2598, always in sync with the lines</code></pre>
+      </div>
+      <p class="muted">The anemic bag lets any caller assign a nonsense total or a misspelled status. The behavior-rich <code>Order</code> never stores a total at all; it derives one from lines it validated on the way in, so the total and the lines can never drift apart.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a safe withdrawal, a rejected withdrawal that protects the invariant, and an order that derives its total instead of trusting a caller.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - A withdrawal that passes the guard and mutates private state</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant A as 🏦 BankAccount
+    participant S as 🔒 Private balance
+
+    C->>A: withdraw(9000)
+    A->>A: check amount is positive
+    A->>S: read current balance
+    S-->>A: 7500 cents
+    A->>A: verify 7500 - 9000 within overdraft
+    A->>S: set balance to -1500
+    A-->>C: return (void)
+    Note over A,S: Caller never reads or writes the field directly
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - A rejected withdrawal: the guard throws and state is untouched</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant A as 🏦 BankAccount
+    participant S as 🔒 Private balance
+
+    C->>A: withdraw(5000)
+    A->>S: read current balance
+    S-->>A: -500 cents
+    A->>A: evaluate overdraft rule
+    alt breaks overdraft limit
+        A-->>C: throw InsufficientFundsError
+        Note over A,S: Balance stays -500, invariant preserved
+    else within limit
+        A->>S: apply new balance
+        A-->>C: return (void)
+    end
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - An order derives its total, so it can never disagree with its lines</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as 👤 Caller
+    participant O as 🧾 Order
+    participant L as 🔒 Private lines
+
+    C->>O: addLine("SKU-42", 1299, 2)
+    O->>O: validate order is open and line is sane
+    O->>L: append validated line
+    C->>O: place()
+    O->>L: read lines
+    L-->>O: one line present
+    O->>O: mark status placed
+    C->>O: totalCents
+    O->>L: read lines
+    L-->>O: [SKU-42 x2]
+    O-->>C: 2598 (computed on demand)
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an unprotected pile of fields to a class whose objects are always valid - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Name the concept</h4><p>Decide the object you are protecting, such as a BankAccount or an Order, and what real-world thing it stands for.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Invariants</span><h4>Write down the rules</h4><p>List the truths that must always hold: balance never below the overdraft limit, order total never negative, total equals the sum of lines.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">State</span><h4>Choose the internal representation</h4><p>Pick fields that make the rules easy to enforce, such as integer cents for money to dodge floating-point rounding.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Hide</span><h4>Make every field private</h4><p>Use private in TypeScript, a leading or double underscore in Python, and default-private instance variables in Ruby.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Guard</span><h4>Validate in the constructor</h4><p>Reject any arguments that would create an invalid object, so a corrupt instance cannot even be born.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Commands</span><h4>Expose intent-revealing verbs</h4><p>Add methods like deposit, withdraw, addLine, and cancel that describe outcomes rather than exposing raw fields.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Enforce</span><h4>Check rules before mutating</h4><p>Inside each command, verify the invariant first and throw a meaningful error if the change would break it.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Queries</span><h4>Return safe, derived views</h4><p>Offer read-only queries such as availableToSpend or totalCents that compute from state instead of leaking the fields.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Refuse</span><h4>Remove the setters</h4><p>Delete blanket setters. If a value must change, it changes through a command that owns the rule, not an open field.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Prove the invariant holds</h4><p>Write tests that try to break the object from outside and assert it refuses, so the guarantee is verified, not assumed.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Trust</span><h4>Rely on always-valid objects</h4><p>Downstream code drops defensive checks because any instance it receives is already valid by construction.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Encapsulation is easy to fake and easy to leak. These are the smells that quietly undo it.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🎭 Getter/setter theater</h4><p>Wrapping every private field in a public getter and setter that do nothing but assign is the same as making the field public. The rules still live nowhere.</p></div>
+        <div class="card"><h4>🩸 Leaking mutable internals</h4><p>Returning the actual internal list or map lets a caller mutate it behind the object's back. Return a copy or a read-only view instead.</p></div>
+        <div class="card"><h4>🧟 Anemic domain model</h4><p>Objects that hold only data while all the logic lives in service classes are structs in disguise. Behavior and the data it guards belong together.</p></div>
+        <div class="card"><h4>🔓 Constructor that trusts input</h4><p>Building an object without validating arguments lets an invalid instance exist from birth, so every later method has to re-check the same things.</p></div>
+        <div class="card"><h4>📢 Over-exposed API</h4><p>Marking helpers public because it is convenient widens the contract. Callers start depending on internals you meant to keep free to change.</p></div>
+        <div class="card"><h4>🧮 Storing derived values</h4><p>Caching an order total in a field alongside the lines invites drift; add a line and forget to update it, and the two disagree. Derive on demand.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot put a single number on encapsulation, but these signals tell you whether your objects are actually protecting themselves.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Public setter count</strong></td><td>Many blanket setters means state is effectively open and rules live elsewhere or nowhere.</td></tr>
+            <tr><td><strong>Ratio of commands to accessors</strong></td><td>Mostly verbs signals behavior-rich objects; mostly get/set signals an anemic data bag.</td></tr>
+            <tr><td><strong>Invariant checks per field</strong></td><td>The same validation repeated at many call sites means the object is not guarding its own state.</td></tr>
+            <tr><td><strong>External mutation of returned collections</strong></td><td>If callers can change what a getter returns, internals are leaking and encapsulation is broken.</td></tr>
+            <tr><td><strong>Bug reports of impossible states</strong></td><td>Negative balances or totals in production point straight at a missing or bypassable guard.</td></tr>
+            <tr><td><strong>Change blast radius</strong></td><td>How many files break when you rename a field measures how well the internals were hidden.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you can construct an invalid object, or reach in and corrupt a valid one from outside the class, the object is not encapsulated no matter how many private keywords it sports.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where encapsulation is what keeps the data trustworthy.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>1 · Ledger service in a payments platform</h3><div class="role">Pattern: account balance that can never go invalid</div></div></div>
+        <p class="muted">A payments platform records every movement of money and must guarantee an account never silently goes below its allowed limit.</p>
+        <ul>
+          <li>Balance is a private integer of cents; the only mutations are post and reverse operations that check limits first.</li>
+          <li>The constructor rejects opening states that already breach the overdraft rule, so no invalid account is ever persisted.</li>
+          <li>Queries expose available-to-spend as a computed value, never the raw field, so callers cannot bypass the rule.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Impossible balances stop appearing in reconciliation because the single class that owns the money is the only code that can move it.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>2 · Checkout &amp; cart in an e-commerce backend</h3><div class="role">Pattern: order total derived from validated lines</div></div></div>
+        <p class="muted">An e-commerce backend must ensure an order total always equals the sum of its lines after discounts, even as items are added and removed.</p>
+        <ul>
+          <li>The Order holds a private list of lines and computes the total on demand, so the two can never drift apart.</li>
+          <li>Adding a line to a placed order throws, protecting the invariant that placed orders are frozen.</li>
+          <li>Discounts are applied through methods that clamp the result at zero, so a total can never turn negative.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Pricing disputes from mismatched totals disappear because the total is a computed truth, not a field a caller can set.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📦</span><div><h3>3 · Inventory counts in a warehouse system</h3><div class="role">Pattern: stock level guarded against oversell</div></div></div>
+        <p class="muted">A warehouse system tracks on-hand and reserved quantities and must never let reserved exceed on-hand.</p>
+        <ul>
+          <li>Both counts are private; reserve and release are the only ways to change them, and each checks the invariant.</li>
+          <li>A reservation that would push reserved above on-hand is rejected with a clear domain error instead of silently oversetting.</li>
+          <li>Available stock is exposed as on-hand minus reserved, computed each time rather than stored and risked going stale.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Overselling incidents drop sharply because the stock object refuses any operation that would break its own consistency.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Encapsulation predates most of today's stacks, yet every modern trend leans on it harder, not less.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Domain-driven design</h4><p>Aggregates are encapsulation at scale: one root guards a cluster of objects and their invariants, and outside code touches the cluster only through it.</p></div>
+        <div class="card"><h4>🔗 Microservice boundaries</h4><p>A service hiding its database behind an API is encapsulation across the network. The private state is the schema; the public surface is the contract.</p></div>
+        <div class="card"><h4>🧊 Value objects &amp; immutability</h4><p>Money, Email, and Quantity types encapsulate validation once, so a valid value stays valid everywhere it travels, no re-checking needed.</p></div>
+        <div class="card"><h4>🦀 Language-enforced privacy</h4><p>Rust modules, TypeScript private fields, and Kotlin visibility make the compiler enforce hiding, turning a convention into a guarantee.</p></div>
+        <div class="card"><h4>🤖 Safer code generation</h4><p>When objects enforce their own rules, generated or agent-written call sites cannot corrupt state, because the only door still validates.</p></div>
+        <div class="card"><h4>⚡ Concurrency safety</h4><p>State reachable through one guarded object is far easier to synchronize than fields poked from everywhere, so encapsulation is a concurrency ally.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> encapsulation is the discipline of making illegal states impossible by putting the data and its rules in the same guarded place. As systems grow and more code, human or generated, touches them, an object that protects itself is what keeps the whole system honest.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Encapsulation sits at the center of a web of OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../objects-and-classes/"><span class="ico">🧩</span><h4>Objects &amp; classes</h4><p>The unit that bundles state with the behavior guarding it.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../tell-dont-ask/"><span class="ico">📣</span><h4>Tell, don't ask</h4><p>Ask objects to act, do not pull their data out to decide for them.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../encapsulating-collections/"><span class="ico">📚</span><h4>Encapsulating collections</h4><p>Hide the list and expose safe operations over it.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🛠️</span><h4>Construction invariants</h4><p>Guarantee validity the moment an object is born.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Encapsulation · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

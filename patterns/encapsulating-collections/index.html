@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Encapsulating Collections in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A practical guide to encapsulating collections: never expose the internal list or map, return copies or read-only views, mutate only through methods that keep invariants, and avoid the risks of leaking collections. With TypeScript, Python, and Ruby." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Encapsulating collections - guard the list, don't hand it out</h1>
+      <p class="lede">A class that owns a list of order line items, playlist tracks, or team members owns the <strong>rules</strong> about that list too. The moment you return the raw collection from a getter, any caller can add, remove, or clear it behind your back and your invariants quietly die. Encapsulating collections means exposing behavior, not the container: return copies or read-only views for reading, and mutate only through methods that enforce the rules.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Read-only views</span>
+        <span class="pill">Defensive copies</span>
+        <span class="pill">Invariant-keeping methods</span>
+        <span class="pill">No leaked references</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is encapsulating collections?</h2>
+      <p class="muted"><strong>Encapsulating a collection</strong> means the internal list, set, or map is a private implementation detail that the outside world never touches directly. Callers ask the object to <em>do</em> things - add a line item, remove a track, count members - and the object mutates its own collection while enforcing rules like uniqueness, totals, limits, and ordering. Reads hand back a <em>copy</em> or an <em>unmodifiable view</em>, never the live reference.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔒</span> Hide the container</h4>
+          <p>The field holding the list or map is private. There is no getter that returns it and no setter that swaps it. Callers cannot reach in.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">👁️</span> Expose safe reads</h4>
+          <p>Reading returns an immutable view or a fresh copy. Iterating or counting is fine; mutating the returned value must not touch the owner's state.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛠️</span> Mutate through methods</h4>
+          <p><code>addItem</code> and <code>removeItem</code> are the only doors in. Each one validates input and re-checks invariants before the change sticks.</p>
+        </div>
+      </div>
+
+      <h3>The moving parts</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Typical shape</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Private backing field</strong></td><td>Holds the real collection, never shared</td><td><code>private items: LineItem[]</code></td></tr>
+            <tr><td><strong>Read accessor</strong></td><td>Returns a copy or read-only view for iteration</td><td><code>get lineItems(): readonly ...</code></td></tr>
+            <tr><td><strong>Command methods</strong></td><td>Add, remove, and update while keeping rules</td><td><code>addItem(sku, qty)</code></td></tr>
+            <tr><td><strong>Derived queries</strong></td><td>Answer questions without leaking the list</td><td><code>total()</code>, <code>count()</code></td></tr>
+            <tr><td><strong>Invariant guards</strong></td><td>Reject changes that break the object</td><td>max size, uniqueness, non-negative qty</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a getter that returns the internal collection is a public setter in disguise. If a caller can hold the reference, it can call <code>.push()</code>, <code>.clear()</code>, or reassign an element, and your object's rules never get a say.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why encapsulate the collection</h2>
+      <p class="muted">A collection is not just data; it is data plus the rules that keep it valid. Leaking the container splits the rules from the data and invites corruption from anywhere in the codebase.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Invariants stay true</h4><p>An order total that must equal the sum of its line items can only be trusted if every add and remove goes through the order. One direct <code>push</code> from outside and the cached total is a lie.</p></div>
+        <div class="card"><h4>🧭 One place to change rules</h4><p>Need a limit of 500 tracks per playlist, or to block duplicate SKUs? You add the check in one method instead of auditing every caller that ever touched the list.</p></div>
+        <div class="card"><h4>🔎 Bugs have a short trail</h4><p>When state can only change through named methods, a corrupt collection has a handful of suspects, not the whole application. You set breakpoints on the doors, not the walls.</p></div>
+        <div class="card"><h4>🔀 Freedom to swap internals</h4><p>Because nobody depends on it being an array, you can switch to a set for uniqueness or a map for fast lookup without breaking a single caller.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Encapsulating collections explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It is a <strong>library, not a free book pile</strong>. You do not walk into the stacks and rearrange shelves. You ask at the desk to borrow or return, and the librarian keeps the catalog consistent.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>The getter should return <code>readonly</code> or a copy. Handing back the live array is like returning a mutable reference to a private field - the <code>private</code> keyword becomes decoration and every invariant is now optional.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>bank ledger</strong>. Clerks do not scribble directly in the book; they file transactions that the system posts. The ledger stays balanced because every entry passes through a controlled operation.</p></div>
+        <div class="card"><h4><span class="ico">🎟️</span> Everyday version</h4><p>A <strong>concert with a guest list</strong>. Guests do not edit the list at the door; they ask the host to add or remove a name, so capacity and duplicates are always under control.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works in code</h2>
+      <p class="muted">Take an <code>Order</code> that owns its line items. The list is private. Reads return a read-only view. Adds and removes go through methods that validate and keep the total honest.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📥</span> Guard the writes</h4>
+          <p><code>addItem</code> validates quantity, merges duplicate SKUs, and enforces a max-item cap before the change is committed. Nothing bypasses it.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📤</span> Neuter the reads</h4>
+          <p><code>lineItems</code> returns a frozen or read-only sequence. Callers can loop and sum, but a stray <code>push</code> or <code>clear</code> either fails or hits a throwaway copy.</p>
+        </div>
+      </div>
+
+      <h3>Class diagram</h3>
+      <div class="diagram">
+        <div class="cap">Order guards a private collection of LineItem; callers only see behavior</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        -items : LineItem[]
+        -maxItems : int
+        +addItem(sku, name, unitPrice, qty)
+        +removeItem(sku)
+        +changeQuantity(sku, qty)
+        +lineItems() ReadonlyList
+        +total() Money
+        +count() int
+    }
+    class LineItem {
+        +sku : string
+        +name : string
+        +unitPrice : Money
+        +quantity : int
+        +subtotal() Money
+    }
+    class CheckoutService {
+        +place(order) Receipt
+    }
+    Order o-- LineItem : owns
+    CheckoutService ..> Order : reads via methods
+        </pre>
+      </div>
+
+      <h3>A class that guards its collection</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>class LineItem {
+  constructor(
+    readonly sku: string,
+    readonly name: string,
+    readonly unitPriceCents: number,
+    readonly quantity: number,
+  ) {}
+  subtotalCents(): number {
+    return this.unitPriceCents * this.quantity;
+  }
+}
+
+class Order {
+  // Private backing collection: no getter returns it, no setter replaces it.
+  private readonly items: LineItem[] = [];
+
+  constructor(private readonly maxItems = 100) {}
+
+  addItem(sku: string, name: string, unitPriceCents: number, qty: number): void {
+    if (qty &lt;= 0) throw new Error("quantity must be positive");
+    if (unitPriceCents &lt; 0) throw new Error("price cannot be negative");
+
+    const existing = this.items.find((i) =&gt; i.sku === sku);
+    if (existing) {
+      this.replace(sku, new LineItem(sku, name, unitPriceCents, existing.quantity + qty));
+      return;
+    }
+    if (this.items.length &gt;= this.maxItems) throw new Error("order is full");
+    this.items.push(new LineItem(sku, name, unitPriceCents, qty));
+  }
+
+  removeItem(sku: string): void {
+    const idx = this.items.findIndex((i) =&gt; i.sku === sku);
+    if (idx === -1) throw new Error(`no line item for ${sku}`);
+    this.items.splice(idx, 1);
+  }
+
+  changeQuantity(sku: string, qty: number): void {
+    if (qty &lt;= 0) { this.removeItem(sku); return; }
+    const cur = this.items.find((i) =&gt; i.sku === sku);
+    if (!cur) throw new Error(`no line item for ${sku}`);
+    this.replace(sku, new LineItem(sku, cur.name, cur.unitPriceCents, qty));
+  }
+
+  // Read-only view: callers can iterate but cannot mutate our state.
+  get lineItems(): readonly LineItem[] {
+    return this.items as readonly LineItem[];
+  }
+
+  totalCents(): number {
+    return this.items.reduce((sum, i) =&gt; sum + i.subtotalCents(), 0);
+  }
+
+  count(): number {
+    return this.items.length;
+  }
+
+  private replace(sku: string, next: LineItem): void {
+    const idx = this.items.findIndex((i) =&gt; i.sku === sku);
+    this.items[idx] = next;
+  }
+}
+
+const order = new Order();
+order.addItem("SKU-APT-12", "Aeropress filter", 899, 2);
+order.addItem("SKU-APT-12", "Aeropress filter", 899, 1); // merges to qty 3
+order.changeQuantity("SKU-APT-12", 4);
+console.log(order.count(), order.totalCents()); // 1  3596
+
+// The leak that never compiles: readonly forbids mutation.
+// order.lineItems.push(...);  // Error: push does not exist on readonly[]
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass
+from typing import Sequence
+
+
+@dataclass(frozen=True)
+class LineItem:
+    sku: str
+    name: str
+    unit_price_cents: int
+    quantity: int
+
+    def subtotal_cents(self) -&gt; int:
+        return self.unit_price_cents * self.quantity
+
+
+class Order:
+    def __init__(self, max_items: int = 100) -&gt; None:
+        # Name-mangled backing list: no accessor returns it directly.
+        self.__items: list[LineItem] = []
+        self.__max_items = max_items
+
+    def add_item(self, sku: str, name: str, unit_price_cents: int, qty: int) -&gt; None:
+        if qty &lt;= 0:
+            raise ValueError("quantity must be positive")
+        if unit_price_cents &lt; 0:
+            raise ValueError("price cannot be negative")
+
+        existing = self.__find(sku)
+        if existing is not None:
+            self.__replace(sku, LineItem(sku, name, unit_price_cents,
+                                         existing.quantity + qty))
+            return
+        if len(self.__items) &gt;= self.__max_items:
+            raise ValueError("order is full")
+        self.__items.append(LineItem(sku, name, unit_price_cents, qty))
+
+    def remove_item(self, sku: str) -&gt; None:
+        item = self.__find(sku)
+        if item is None:
+            raise KeyError(f"no line item for {sku}")
+        self.__items.remove(item)
+
+    def change_quantity(self, sku: str, qty: int) -&gt; None:
+        if qty &lt;= 0:
+            self.remove_item(sku)
+            return
+        cur = self.__find(sku)
+        if cur is None:
+            raise KeyError(f"no line item for {sku}")
+        self.__replace(sku, LineItem(sku, cur.name, cur.unit_price_cents, qty))
+
+    @property
+    def line_items(self) -&gt; Sequence[LineItem]:
+        # Read-only copy: mutating the tuple cannot touch our list.
+        return tuple(self.__items)
+
+    def total_cents(self) -&gt; int:
+        return sum(i.subtotal_cents() for i in self.__items)
+
+    def count(self) -&gt; int:
+        return len(self.__items)
+
+    def __find(self, sku: str) -&gt; LineItem | None:
+        return next((i for i in self.__items if i.sku == sku), None)
+
+    def __replace(self, sku: str, nxt: LineItem) -&gt; None:
+        idx = next(i for i, it in enumerate(self.__items) if it.sku == sku)
+        self.__items[idx] = nxt
+
+
+order = Order()
+order.add_item("SKU-APT-12", "Aeropress filter", 899, 2)
+order.add_item("SKU-APT-12", "Aeropress filter", 899, 1)  # merges to qty 3
+order.change_quantity("SKU-APT-12", 4)
+print(order.count(), order.total_cents())  # 1 3596
+
+# The leak that does nothing: appending to the copy leaves the order intact.
+order.line_items  # a tuple; it has no append at all
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>LineItem = Struct.new(:sku, :name, :unit_price_cents, :quantity) do
+  def subtotal_cents
+    unit_price_cents * quantity
+  end
+end
+
+class Order
+  def initialize(max_items: 100)
+    # Private backing array; no attr_accessor exposes it.
+    @items = []
+    @max_items = max_items
+  end
+
+  def add_item(sku, name, unit_price_cents, qty)
+    raise ArgumentError, "quantity must be positive" if qty &lt;= 0
+    raise ArgumentError, "price cannot be negative"  if unit_price_cents &lt; 0
+
+    existing = find(sku)
+    if existing
+      replace(sku, LineItem.new(sku, name, unit_price_cents,
+                                existing.quantity + qty))
+      return
+    end
+    raise "order is full" if @items.size &gt;= @max_items
+    @items &lt;&lt; LineItem.new(sku, name, unit_price_cents, qty)
+  end
+
+  def remove_item(sku)
+    item = find(sku) or raise KeyError, "no line item for #{sku}"
+    @items.delete(item)
+  end
+
+  def change_quantity(sku, qty)
+    return remove_item(sku) if qty &lt;= 0
+    cur = find(sku) or raise KeyError, "no line item for #{sku}"
+    replace(sku, LineItem.new(sku, cur.name, cur.unit_price_cents, qty))
+  end
+
+  # Frozen copy: callers iterate, but cannot mutate our state.
+  def line_items
+    @items.map(&amp;:dup).freeze
+  end
+
+  def total_cents
+    @items.sum(&amp;:subtotal_cents)
+  end
+
+  def count
+    @items.size
+  end
+
+  private
+
+  def find(sku)
+    @items.find { |i| i.sku == sku }
+  end
+
+  def replace(sku, nxt)
+    idx = @items.index { |i| i.sku == sku }
+    @items[idx] = nxt
+  end
+end
+
+order = Order.new
+order.add_item("SKU-APT-12", "Aeropress filter", 899, 2)
+order.add_item("SKU-APT-12", "Aeropress filter", 899, 1) # merges to qty 3
+order.change_quantity("SKU-APT-12", 4)
+puts "#{order.count} #{order.total_cents}" # 1 3596
+
+# The leak that raises: pushing onto a frozen array is refused.
+# order.line_items &lt;&lt; something  # FrozenError
+</code></pre>
+      </div>
+      <p class="muted">All three define <code>Order</code>, create one, and drive it only through methods. Adding the same SKU twice merges quantities instead of duplicating a row, and the total is always derived from the live items, never cached and left to rot. The read accessor hands back something the caller cannot use to corrupt the order: a <code>readonly</code> type in TypeScript, a <code>tuple</code> in Python, a frozen copy in Ruby.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Object interactions, step by step</h2>
+      <p class="muted">Three views: a guarded write that keeps invariants, a safe read that hands out a view, and the leak you are preventing.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - A guarded write goes through addItem and re-checks the rules</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Svc as 🖥️ CartService
+    participant Ord as 📦 Order
+    participant Items as 🔒 items (private)
+
+    Svc->>Ord: addItem("SKU-APT-12", price, qty)
+    Ord->>Ord: validate qty &gt; 0 and price &gt;= 0
+    Ord->>Items: find existing SKU
+    Items-->>Ord: match found
+    Ord->>Items: replace with merged quantity
+    Note over Ord,Items: total stays equal to sum of line items
+    Ord-->>Svc: ok (no reference leaked)
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - A read returns a read-only view, not the live list</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Rep as 🧾 ReceiptBuilder
+    participant Ord as 📦 Order
+    participant Items as 🔒 items (private)
+
+    Rep->>Ord: lineItems()
+    Ord->>Items: snapshot / freeze
+    Items-->>Ord: read-only copy
+    Ord-->>Rep: readonly view
+    Rep->>Rep: iterate and sum for receipt
+    Note over Rep,Ord: mutating the view cannot touch the order
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - The leak this prevents: a getter that returns the raw list</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Bad as ⚠️ PromoModule
+    participant Ord as 📦 Order (leaky getter)
+    participant Items as 🔓 items (exposed)
+
+    Bad->>Ord: getItems()
+    Ord-->>Bad: live array reference
+    alt collection leaked
+        Bad->>Items: push(freeItem) directly
+        Note over Ord,Items: order never validated it; total now wrong
+    else properly encapsulated
+        Bad->>Ord: addItem(freeItem)
+        Ord->>Items: validated insert
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a naive exposed list to a fully guarded collection - the whole refactor in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Find the leaky getter</h4><p>Search for accessors that return the raw array, list, or map. A <code>get items()</code> returning the field is the smell that starts it all.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Privatize</span><h4>Make the field private</h4><p>Mark the backing collection private and remove any setter that replaces the whole thing. Nobody outside gets the reference anymore.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Inventory</span><h4>List how callers use it</h4><p>Grep every call site. Group them into reads (iterate, count, sum) and writes (add, remove, clear, reorder). This becomes your method surface.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Reads</span><h4>Add a read-only accessor</h4><p>Return a <code>readonly</code> type, a tuple, or a frozen copy. Callers keep iterating; they just cannot mutate what they get back.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Queries</span><h4>Push derived questions inward</h4><p>Replace <code>order.items.length</code> and manual sums with <code>order.count()</code> and <code>order.total()</code>. Callers ask, they do not compute.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Writes</span><h4>Add command methods</h4><p>Create <code>addItem</code> and <code>removeItem</code>. Move every external mutation into them, one call site at a time.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Invariants</span><h4>Enforce the rules inside</h4><p>Validate quantity, block duplicates or merge them, cap the size. The checks that were scattered now live in one place.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Migrate</span><h4>Rewrite each caller</h4><p>Swap direct <code>push</code>/<code>splice</code> calls for the new methods. The compiler and failing tests point you at the stragglers.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Seal</span><h4>Delete the raw getter</h4><p>Remove the accessor that returned the live collection. Now the only paths in and out are the ones you control.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Prove</span><h4>Test the guards</h4><p>Write tests that try to break invariants: negative quantity, over the cap, duplicate SKU, and mutating the returned view. All should be rejected or harmless.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Evolve</span><h4>Swap internals freely</h4><p>With nobody depending on the shape, change the array to a set or map for uniqueness or fast lookup. Callers never notice.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Encapsulating collections is easy to half-do. These are the leaks that slip through review.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔓 Returning the live reference</h4><p>A getter that returns the field itself, not a copy, hands callers a private setter. They can <code>push</code>, <code>splice</code>, or <code>clear</code> your state with zero validation.</p></div>
+        <div class="card"><h4>🪟 Shallow copy, mutable elements</h4><p>You copy the list but the elements are still shared mutable objects. A caller edits <code>item.quantity</code> in place and your total silently drifts. Copy deeply or make elements immutable.</p></div>
+        <div class="card"><h4>🏗️ Leaking through the constructor</h4><p>Storing the exact array a caller passed in means they still hold it and can mutate it later. Copy incoming collections on the way in, not just on the way out.</p></div>
+        <div class="card"><h4>📊 Cached total that rots</h4><p>Keeping a <code>total</code> field updated by hand only works if every mutation goes through you. One direct edit and the cache lies. Derive it, or update it only inside the guarded methods.</p></div>
+        <div class="card"><h4>🧵 Iterator invalidation</h4><p>Handing out a live iterator or view and then mutating the collection can throw or skip elements mid-loop. Snapshot before you expose, or forbid mutation during iteration.</p></div>
+        <div class="card"><h4>🕳️ Anemic wrapper</h4><p>Wrapping the list but adding <code>getItems()</code> that returns it anyway. The encapsulation is theater; the behavior still lives in the callers, not the object.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot unit-test taste, but you can watch for the fingerprints of a leaked collection.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Getter returns the field</strong></td><td>The collection is leaked; any caller can mutate it. This is the primary smell to grep for.</td></tr>
+            <tr><td><strong>Callers call <code>.push</code>/<code>.add</code> on a getter result</strong></td><td>Mutation logic lives outside the owner, so invariants are not enforced consistently.</td></tr>
+            <tr><td><strong>Duplicated validation across call sites</strong></td><td>The same "reject empty / cap at N" check is copy-pasted; it belongs in one command method.</td></tr>
+            <tr><td><strong>Bugs where state is wrong but no method looks guilty</strong></td><td>Something mutated the collection behind the object's back through a leaked reference.</td></tr>
+            <tr><td><strong>Cached aggregate disagrees with the items</strong></td><td>A total or count is maintained by hand while mutations bypass it. Strong sign of a leak.</td></tr>
+            <tr><td><strong>Hard to change the data structure</strong></td><td>Callers depend on it being an array; a set or map swap breaks them. Encapsulation would have hidden the shape.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you can point at a line outside the owning class that mutates its collection, the collection is not encapsulated. Reads leave the class as copies or read-only views; writes enter only through named methods.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three systems where guarding a collection is the difference between correct and corrupt.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · Checkout: Order and its line items</h3><div class="role">Pattern: totals derived from a guarded collection</div></div></div>
+        <p class="muted">An e-commerce order must keep its total, tax, and discounts consistent with its line items at all times.</p>
+        <ul>
+          <li><code>Order</code> exposes <code>addItem</code>, <code>removeItem</code>, and <code>changeQuantity</code>; the list is private.</li>
+          <li>Adding an existing SKU merges quantities so no duplicate rows appear on the receipt.</li>
+          <li>The total is derived from the items, so it can never disagree with what the customer sees.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> pricing bugs where the shown total drifts from the charged amount disappear, because every mutation re-derives from the same source of truth.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎵</span><div><h3>2 · Music app: Playlist and its tracks</h3><div class="role">Pattern: ordering and limits as invariants</div></div></div>
+        <p class="muted">A streaming playlist must respect a maximum length, preserve order, and forbid the same track twice in a row.</p>
+        <ul>
+          <li><code>Playlist.addTrack</code> checks the cap and the no-adjacent-duplicate rule before inserting.</li>
+          <li><code>tracks</code> returns a read-only view so the UI can render without being able to reorder state directly.</li>
+          <li>Reordering is a method that moves an index, keeping positions valid rather than trusting callers.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> the client and server agree on track order and length limits, because only the playlist can change its own sequence.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">👥</span><div><h3>3 · Collaboration tool: Team and its members</h3><div class="role">Pattern: uniqueness and role invariants</div></div></div>
+        <p class="muted">A workspace team must always have at least one owner and never list the same user twice.</p>
+        <ul>
+          <li><code>Team.addMember</code> rejects duplicates and validates the role against allowed values.</li>
+          <li><code>removeMember</code> refuses to remove the last owner, protecting the "always one owner" invariant.</li>
+          <li><code>members</code> returns copies, so the permissions UI can iterate without demoting anyone by accident.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> no orphaned teams and no duplicate seats on the bill, because membership rules are enforced in one guarded place.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Guarding collections is not a legacy nicety; it underpins how modern systems stay correct under concurrency, immutability, and rich domain models.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Domain-driven aggregates</h4><p>An aggregate root owns its child collection and is the only gateway for changing it. Encapsulating collections is exactly how aggregates protect their consistency boundary.</p></div>
+        <div class="card"><h4>🧊 Immutability by default</h4><p>Records, frozen dataclasses, and readonly types make elements safe to hand out. The trend is toward reads that literally cannot be mutated.</p></div>
+        <div class="card"><h4>🔁 Concurrency safety</h4><p>A leaked collection mutated from two threads is a data race. Keeping mutation inside guarded methods gives you one place to add locking or copy-on-write.</p></div>
+        <div class="card"><h4>🧪 Testability</h4><p>When state only changes through named methods, you assert on behavior, not on private fields. Guards become small, targeted unit tests.</p></div>
+        <div class="card"><h4>🌐 API and DTO boundaries</h4><p>Serializing an entity should project a copy, not expose the live model. The same discipline that guards the collection guards the wire format.</p></div>
+        <div class="card"><h4>♻️ Event sourcing</h4><p>State is rebuilt by applying events through methods, never by poking the collection. Encapsulation is a prerequisite for a trustworthy event log.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> a collection is behavior wearing the costume of data. Hide the container, hand out copies or read-only views, and let every change pass through a method that keeps the rules. Do that and your invariants hold no matter who calls you.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Guarding a collection sits inside a family of encapsulation ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔒</span><h4>Encapsulation</h4><p>Hiding state behind behavior, the principle this is built on.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../tell-dont-ask/"><span class="ico">📣</span><h4>Tell, don't ask</h4><p>Send commands to the owner instead of pulling out its data.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../immutability/"><span class="ico">🧊</span><h4>Immutability</h4><p>Making the elements you hand out impossible to mutate.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🏗️</span><h4>Construction invariants</h4><p>Starting valid so guarded methods only have to stay valid.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>Encapsulating collections · Hide the container · Return copies &amp; views · Mutate through methods · Keep invariants</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

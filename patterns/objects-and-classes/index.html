@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Objects &amp; Classes in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to objects and classes in OOP: class as blueprint vs object as instance, state and behavior and identity, constructors and this/self, instance vs static members, with real-world code in TypeScript, Python, and Ruby." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Objects &amp; Classes - blueprints and the instances they stamp out</h1>
+      <p class="lede">A <strong>class</strong> is a blueprint: it declares what data an object holds and what it can do. An <strong>object</strong> is a live instance built from that blueprint, with its own state and its own identity. Master this split and the rest of OOP - encapsulation, inheritance, polymorphism - all falls into place.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">State &amp; fields</span>
+        <span class="pill">Behavior &amp; methods</span>
+        <span class="pill">Identity</span>
+        <span class="pill">Constructors</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What are objects and classes?</h2>
+      <p class="muted">A <strong>class</strong> defines a type: the fields every instance will carry and the methods every instance can run. An <strong>object</strong> is one concrete instance of that type, created at runtime. Think of a shopping <code>Cart</code> class describing "a cart has line items and can add or total them," versus the actual cart Ada is filling right now with three items in it.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">📐</span> Class = blueprint</h4>
+          <p>A template written once. It names the fields and methods but holds no live data itself. <code>class Cart { ... }</code> is a plan, not a purchase.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛒</span> Object = instance</h4>
+          <p>A concrete thing built from the blueprint with <code>new</code>. Two carts made from the same class are two separate objects with independent contents.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🆔</span> Identity</h4>
+          <p>Each object has its own reference. Two carts holding the same items are still distinct objects; equality of contents is not the same as being the same object.</p>
+        </div>
+      </div>
+
+      <h3>The three things an object bundles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>What it means</th><th>Cart example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>State (fields)</strong></td><td>The data an instance holds right now</td><td><code>items</code>, <code>currency</code>, <code>customerId</code></td></tr>
+            <tr><td><strong>Behavior (methods)</strong></td><td>Operations the object can perform on its state</td><td><code>addItem()</code>, <code>removeItem()</code>, <code>total()</code></td></tr>
+            <tr><td><strong>Identity</strong></td><td>A distinct reference separating this object from all others</td><td>two carts with equal items are still not the same cart</td></tr>
+            <tr><td><strong>Constructor</strong></td><td>The code that initializes a fresh instance's state</td><td><code>new Cart("USD")</code> sets currency and an empty list</td></tr>
+            <tr><td><strong>Static member</strong></td><td>Data or behavior owned by the class, shared by all instances</td><td><code>Cart.MAX_ITEMS</code>, <code>Cart.fromOrder()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> a class is a cookie cutter and objects are the cookies. The cutter defines the shape once; each cookie is its own physical thing with its own sprinkles. Changing one cookie never changes the cutter or the other cookies.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why classes and objects exist</h2>
+      <p class="muted">Bundling related data with the operations that act on it keeps a system understandable as it grows. Instead of loose dictionaries passed everywhere, you get named types that guard their own rules.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Modeling the domain</h4><p>Classes let code mirror the business: an <code>Account</code>, a <code>Cart</code>, an <code>Invoice</code>. Readers map concepts to types instantly instead of decoding raw maps and tuples.</p></div>
+        <div class="card"><h4>🔒 Invariants in one place</h4><p>A balance can never go negative if only the <code>Account</code>'s methods can touch it. The class becomes the single guardian of its own rules rather than scattering checks across the codebase.</p></div>
+        <div class="card"><h4>♻️ Reuse without copy-paste</h4><p>Define the blueprint once and stamp out thousands of instances. Every cart shares the same tested behavior; you fix a bug in one place, not per copy.</p></div>
+        <div class="card"><h4>🧩 A vocabulary to build on</h4><p>Objects and classes are the foundation the other pillars stand on: encapsulation hides fields, inheritance shares blueprints, polymorphism swaps instances behind a shared type.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Objects &amp; Classes explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>A class is the <strong>syllabus</strong>; an object is <strong>your enrolled section</strong>. The syllabus lists what the course covers; your section has real students, a real room, and its own attendance. Many sections, one syllabus.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>A class is a <strong>struct plus the functions that operate on it</strong>, glued together. The constructor is the factory function that returns an initialized value; methods are functions whose first hidden argument is the instance itself.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A class is a <strong>job description</strong>; an object is <strong>the person hired into that role</strong>. The description defines responsibilities and data (title, salary band); each hire is a distinct individual doing the job.</p></div>
+        <div class="card"><h4><span class="ico">🏦</span> Everyday version</h4><p>A bank's <strong>account-opening form</strong> is the class: it dictates which fields exist and what you can do. <strong>Your actual account</strong>, with its own number and balance, is the object stamped from that form.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Defining a class registers a type. Calling the constructor allocates a fresh object, runs the initializer to set its fields, and hands back a reference. Method calls then dispatch through that reference using <code>this</code> or <code>self</code> to reach the instance's own state.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🏗️</span> Instance members</h4>
+          <p>Fields and methods that belong to each object. <code>this.balance</code> is per-instance; every <code>Account</code> has its own. Methods read and mutate the state of the specific object they were called on.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📌</span> Static / class members</h4>
+          <p>Data and behavior owned by the class itself, shared across all instances: constants like <code>Account.MIN_BALANCE</code>, counters, or factory methods like <code>Account.open()</code> that build and return new objects.</p>
+        </div>
+      </div>
+
+      <h3>The class and its objects at a glance</h3>
+      <div class="diagram">
+        <div class="cap">A Cart class, its instance and static members, and two live objects stamped from it</div>
+        <pre class="mermaid">
+classDiagram
+    class Cart {
+        -String currency
+        -List items
+        +int MAX_ITEMS$
+        +addItem(sku, qty, price) void
+        +removeItem(sku) void
+        +total() Money
+        +fromOrder(order) Cart$
+    }
+    class LineItem {
+        -String sku
+        -int qty
+        -Money unitPrice
+        +subtotal() Money
+    }
+    Cart o-- LineItem : holds
+    note for Cart "MAX_ITEMS and fromOrder are static (class-level)"
+    Cart ..> adaCart : instance of
+    Cart ..> liamCart : instance of
+</pre>
+      </div>
+
+      <h3>A real class, an object, and its methods in three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// A bank Account: state, behavior, identity, and a static factory.
+class Account {
+  // static/class member: shared by every instance
+  static readonly MIN_BALANCE = 0;
+  private static nextId = 1;
+
+  // instance state (fields)
+  readonly id: number;
+  private balance: number;
+
+  // constructor: initializes a fresh instance
+  constructor(private readonly owner: string, opening: number) {
+    if (opening &lt; Account.MIN_BALANCE) {
+      throw new Error("Opening balance cannot be negative");
+    }
+    this.id = Account.nextId++;   // identity, assigned once
+    this.balance = opening;
+  }
+
+  // behavior: methods act on this instance's state via `this`
+  deposit(amount: number): void {
+    this.balance += amount;
+  }
+
+  withdraw(amount: number): void {
+    if (amount &gt; this.balance) throw new Error("Insufficient funds");
+    this.balance -= amount;
+  }
+
+  getBalance(): number {
+    return this.balance;
+  }
+
+  // static factory method: builds and returns a new object
+  static open(owner: string): Account {
+    return new Account(owner, 0);
+  }
+}
+
+// create objects (instances) from the blueprint
+const ada = new Account("Ada Lovelace", 100);
+const liam = Account.open("Liam Reyes");
+
+// call methods on each independent object
+ada.deposit(50);
+ada.withdraw(30);
+
+console.log(ada.id, ada.getBalance());   // 1 120
+console.log(liam.id, liam.getBalance()); // 2 0
+console.log(ada === liam);               // false: distinct identities
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># A bank Account: state, behavior, identity, and a static factory.
+class Account:
+    # class member: shared by every instance
+    MIN_BALANCE = 0
+    _next_id = 1
+
+    # constructor: initializes a fresh instance
+    def __init__(self, owner: str, opening: float):
+        if opening &lt; Account.MIN_BALANCE:
+            raise ValueError("Opening balance cannot be negative")
+        self.id = Account._next_id      # identity, assigned once
+        Account._next_id += 1
+        self._owner = owner
+        self._balance = opening         # instance state (fields)
+
+    # behavior: methods act on this instance via `self`
+    def deposit(self, amount: float) -&gt; None:
+        self._balance += amount
+
+    def withdraw(self, amount: float) -&gt; None:
+        if amount &gt; self._balance:
+            raise ValueError("Insufficient funds")
+        self._balance -= amount
+
+    def get_balance(self) -&gt; float:
+        return self._balance
+
+    # classmethod factory: builds and returns a new object
+    @classmethod
+    def open(cls, owner: str) -&gt; "Account":
+        return cls(owner, 0)
+
+
+# create objects (instances) from the blueprint
+ada = Account("Ada Lovelace", 100)
+liam = Account.open("Liam Reyes")
+
+# call methods on each independent object
+ada.deposit(50)
+ada.withdraw(30)
+
+print(ada.id, ada.get_balance())    # 1 120
+print(liam.id, liam.get_balance())  # 2 0
+print(ada is liam)                  # False: distinct identities
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># A bank Account: state, behavior, identity, and a static factory.
+class Account
+  MIN_BALANCE = 0            # class-level constant, shared by all
+  @next_id = 1              # class-level state
+
+  class &lt;&lt; self
+    attr_accessor :next_id   # class member accessors
+  end
+
+  attr_reader :id            # expose identity, keep balance private
+
+  # constructor: initializes a fresh instance
+  def initialize(owner, opening)
+    raise ArgumentError, "Opening balance cannot be negative" if opening &lt; MIN_BALANCE
+
+    @id = self.class.next_id           # identity, assigned once
+    self.class.next_id += 1
+    @owner = owner
+    @balance = opening                 # instance state (fields)
+  end
+
+  # behavior: methods act on this instance via `self`/@ivars
+  def deposit(amount)
+    @balance += amount
+  end
+
+  def withdraw(amount)
+    raise "Insufficient funds" if amount &gt; @balance
+
+    @balance -= amount
+  end
+
+  def balance
+    @balance
+  end
+
+  # class method factory: builds and returns a new object
+  def self.open(owner)
+    new(owner, 0)
+  end
+end
+
+# create objects (instances) from the blueprint
+ada  = Account.new("Ada Lovelace", 100)
+liam = Account.open("Liam Reyes")
+
+# call methods on each independent object
+ada.deposit(50)
+ada.withdraw(30)
+
+puts "#{ada.id} #{ada.balance}"    # 1 120
+puts "#{liam.id} #{liam.balance}"  # 2 0
+puts ada.equal?(liam)              # false: distinct identities
+</code></pre>
+      </div>
+      <p class="muted">All three define the same blueprint, stamp out two independent objects, and mutate each one's private balance through its own methods. Notice how <code>this</code> (TypeScript), <code>self</code> (Python), and instance variables (Ruby) all point at the specific object a method runs on, while <code>MIN_BALANCE</code> and the <code>open</code> factory live on the class, shared by every instance.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: constructing an object, calling behavior that enforces an invariant, and using a static factory versus a direct constructor.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Construction: from `new` to an initialized instance with identity</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Class as 📐 Account class
+    participant Obj as 🏦 Account instance
+
+    Caller-&gt;&gt;Class: new Account("Ada", 100)
+    Class-&gt;&gt;Class: validate opening &gt;= MIN_BALANCE
+    Class-&gt;&gt;Obj: allocate fresh object
+    Class-&gt;&gt;Obj: run constructor (set id, balance)
+    Note over Class,Obj: id taken from class counter, then incremented
+    Obj--&gt;&gt;Class: initialized instance
+    Class--&gt;&gt;Caller: reference to the new object
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Behavior: a method mutating its own state and guarding an invariant</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Ada as 🏦 ada (instance)
+
+    Caller-&gt;&gt;Ada: deposit(50)
+    Ada-&gt;&gt;Ada: this.balance += 50
+    Ada--&gt;&gt;Caller: ok
+    Caller-&gt;&gt;Ada: withdraw(30)
+    alt amount &gt; balance
+        Ada--&gt;&gt;Caller: throw Insufficient funds
+    else enough funds
+        Ada-&gt;&gt;Ada: this.balance -= 30
+        Ada--&gt;&gt;Caller: ok
+    end
+    Caller-&gt;&gt;Ada: getBalance()
+    Ada--&gt;&gt;Caller: 120
+</pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Static factory vs direct constructor producing distinct objects</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Class as 📐 Account class
+    participant A1 as 🏦 ada
+    participant A2 as 🏦 liam
+
+    Caller-&gt;&gt;Class: new Account("Ada", 100)
+    Class-&gt;&gt;A1: construct (id = 1)
+    A1--&gt;&gt;Caller: ada
+    Caller-&gt;&gt;Class: Account.open("Liam")
+    Note over Class: static factory calls the constructor with 0
+    Class-&gt;&gt;A2: construct (id = 2)
+    A2--&gt;&gt;Caller: liam
+    Note over A1,A2: two references, two identities, independent state
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From naming a concept to holding a live, working object that guards its own rules - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Spot a concept worth a type</h4><p>You notice "a cart" or "an account" keeps recurring in the domain. That recurring noun, with its data and its rules, is a candidate class.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Fields</span><h4>Decide the state</h4><p>List what each instance must remember: a cart's items and currency, an account's owner and balance. These become the instance fields.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Behavior</span><h4>Decide the methods</h4><p>List what the object can do to its own state: <code>addItem</code>, <code>total</code>, <code>deposit</code>, <code>withdraw</code>. Behavior lives with the data it touches.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Invariants</span><h4>Name the rules</h4><p>Write down what must always hold: balance never negative, quantity always positive. The class will enforce these so no caller can break them.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Blueprint</span><h4>Declare the class</h4><p>Write <code>class Account { ... }</code> with its fields and method signatures. Nothing runs yet; you have only defined the type.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Constructor</span><h4>Write the initializer</h4><p>Define how a fresh instance sets itself up: validate inputs, assign an identity, seed the starting state. This is the one entry point to a valid object.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Instantiate</span><h4>Create an object</h4><p>Call <code>new Account("Ada", 100)</code>. Memory is allocated, the constructor runs, and you get back a reference to a live instance.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Identity</span><h4>The object is its own thing</h4><p>Each instance carries a distinct reference. A second account with the same balance is still a separate object; equality of data is not sameness of identity.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Invoke</span><h4>Call its methods</h4><p>Send messages: <code>ada.deposit(50)</code>. Inside, <code>this</code>/<code>self</code> refers to <em>this</em> object, so only ada's balance changes.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Static</span><h4>Reach for class-level members</h4><p>Use shared constants and factories: <code>Account.MIN_BALANCE</code>, <code>Account.open(...)</code>. These belong to the class, not any single instance.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Compose</span><h4>Objects collaborate</h4><p>Instances hold and call other instances - a cart holds line items, an order references an account. From these blueprints you build the whole system.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most trouble with objects and classes comes from blurring the blueprint/instance line or leaking state that the class should guard.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🩹 Anemic classes</h4><p>A class that is only public fields with no behavior is just a struct in disguise. Logic then leaks into every caller, and invariants go unguarded. Put the methods where the data lives.</p></div>
+        <div class="card"><h4>🌐 Global mutable statics</h4><p>Stashing per-request data in static fields makes all instances share it, causing cross-talk between users. Statics are for constants and factories, not for holding instance state.</p></div>
+        <div class="card"><h4>🪢 Misusing this/self</h4><p>Passing a method as a bare callback in TypeScript loses its <code>this</code> binding; the instance vanishes at call time. Bind it or use arrow methods so behavior keeps its object.</p></div>
+        <div class="card"><h4>🧨 Constructors that do too much</h4><p>A constructor firing network calls or heavy work makes objects hard to build and test. Keep it to validating inputs and setting state; move side effects to a factory or an explicit method.</p></div>
+        <div class="card"><h4>🎭 Confusing equality with identity</h4><p>Comparing objects with <code>==</code> when you meant "same instance," or reference-comparing when you meant "same value," causes subtle bugs. Decide which you need and implement it deliberately.</p></div>
+        <div class="card"><h4>🏰 God objects</h4><p>One class that models the whole domain - a <code>Cart</code> that also does payments, shipping, and email - becomes unchangeable. Split responsibilities across focused, collaborating classes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You rarely score "objects" directly, but these signals tell you whether your classes are pulling their weight.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Methods per class vs public fields</strong></td><td>Lots of exposed fields and few methods suggests anemic, behavior-less classes leaking logic to callers.</td></tr>
+            <tr><td><strong>Invariant violations reaching production</strong></td><td>If invalid objects (negative balances, empty required fields) exist at runtime, construction or methods are not guarding state.</td></tr>
+            <tr><td><strong>Places that mutate an object's fields directly</strong></td><td>Many external writers to a field mean encapsulation is broken and the class no longer owns its own state.</td></tr>
+            <tr><td><strong>Constructor complexity / side effects</strong></td><td>Heavy or effectful constructors show objects are hard to create and test in isolation.</td></tr>
+            <tr><td><strong>Static state that changes at runtime</strong></td><td>Mutable statics beyond constants signal hidden shared state and likely concurrency bugs.</td></tr>
+            <tr><td><strong>Class size and responsibilities</strong></td><td>Growing line count and many unrelated methods hint at a god object that should be split.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> a healthy class can only be created in a valid state and can only be changed through its own methods. If callers can build a broken instance or poke its fields directly, the blueprint is not doing its job.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where the class/object split does real work.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>1 · Checkout carts in an e-commerce backend</h3><div class="role">Pattern: one class, millions of independent instances</div></div></div>
+        <p class="muted">A retail platform models each shopper's cart as an instance of a single <code>Cart</code> class serving traffic concurrently.</p>
+        <ul>
+          <li>Every active session holds its own <code>Cart</code> object with private line items and totals; instances never share state.</li>
+          <li><code>addItem</code> and <code>applyCoupon</code> enforce quantity and stock invariants inside the class, not in controllers.</li>
+          <li>A static <code>Cart.fromSavedOrder</code> factory rebuilds a cart from a stored order, keeping construction rules in one place.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Thousands of concurrent carts stay isolated and consistent, because each is a distinct object guarding its own contents.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🏦</span><div><h3>2 · Ledger accounts in a banking core</h3><div class="role">Pattern: identity and invariants as first-class concerns</div></div></div>
+        <p class="muted">A payments system represents each customer balance as an <code>Account</code> object with a stable identity across the ledger.</p>
+        <ul>
+          <li>Each account has an immutable id assigned at construction; transfers reference accounts by identity, never by matching balances.</li>
+          <li><code>debit</code> and <code>credit</code> are the only paths that change the balance, so the "never overdraw" rule holds everywhere.</li>
+          <li>Class-level constants (minimum balance, currency precision) live as static members shared by every account.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Money movements stay auditable and correct because identity and invariants are enforced by the object itself.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔔</span><div><h3>3 · Notification messages in a delivery service</h3><div class="role">Pattern: value-carrying objects created by factories</div></div></div>
+        <p class="muted">A notifications platform builds a <code>Notification</code> object per outbound message across email, SMS, and push.</p>
+        <ul>
+          <li>Each message is an instance with its own recipient, channel, and payload; the class validates required fields in its constructor.</li>
+          <li>Static factories like <code>Notification.forPasswordReset</code> assemble correctly shaped instances for common events.</li>
+          <li>Behavior such as <code>render</code> and <code>markSent</code> operates only on that instance's state via <code>this</code>.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Millions of independent message objects flow through the pipeline, each self-contained and impossible to construct half-formed.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Even amid functional and data-oriented styles, the class/object distinction remains a core way to structure state and behavior.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Immutable objects &amp; records</h4><p>Modern languages favor objects you construct valid and never mutate. The blueprint idea stays; you swap in-place edits for producing new instances.</p></div>
+        <div class="card"><h4>🧬 Data classes &amp; case classes</h4><p>Concise class syntax in Python, Kotlin, and Scala keeps the type and its data but cuts boilerplate, making small value objects cheap to define.</p></div>
+        <div class="card"><h4>🧭 Domain-driven design</h4><p>Entities (identity matters) versus value objects (only the data matters) is exactly the class/object/identity split applied to real domains.</p></div>
+        <div class="card"><h4>⚙️ Objects at service boundaries</h4><p>Even functional cores wrap I/O and connections - clients, sessions, repositories - as objects, because they carry state and behavior naturally.</p></div>
+        <div class="card"><h4>🧰 Composition over deep hierarchies</h4><p>Teams now build objects by combining small collaborators rather than long inheritance chains, but the unit of composition is still the class.</p></div>
+        <div class="card"><h4>🔎 Type systems reward good classes</h4><p>Rich types and pattern matching make well-defined classes safer and more expressive, catching invalid instances at compile time.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> classes and objects are the alphabet of OOP. Get the blueprint-versus-instance distinction, the state/behavior/identity trio, and the instance-versus-static split right, and every higher pattern becomes a natural sentence built from them.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Objects and classes are the base the other pillars build on. These pair naturally with them.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔒</span><h4>Encapsulation</h4><p>Hiding an object's fields behind its own methods.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../abstraction/"><span class="ico">🎚️</span><h4>Abstraction</h4><p>Exposing what a class does, hiding how it does it.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../inheritance/"><span class="ico">🧬</span><h4>Inheritance</h4><p>Deriving new blueprints from existing ones.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">🧭</span><h4>Value objects vs entities</h4><p>When identity matters and when only data does.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Objects &amp; Classes · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

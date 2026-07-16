@@ -144,6 +144,15 @@ pre:hover .copy-btn { opacity: 1; }
 .copy-btn:hover { background: rgba(255,255,255,.16); }
 .copy-btn.copied { background: #0ea5a4; color: #fff; border-color: transparent; }
 
+/* Tabbed multi-language code blocks (TypeScript / Python / Ruby) */
+.code-tabs { margin-top: 18px; }
+.code-tabbar { display: flex; gap: 2px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+.code-tab { background: none; border: none; padding: 8px 15px; font-size: .84rem; font-weight: 600; color: var(--text-soft); cursor: pointer; border-radius: 8px 8px 0 0; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; }
+.code-tab:hover { color: var(--text); background: var(--bg-soft); }
+.code-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.code-tabs .code-panel { margin-top: 10px; }
+.code-panel[hidden] { display: none; }
+
 /* Mermaid diagram - fixed light panel so it is readable under every page theme */
 .diagram { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-top: 20px; overflow-x: auto; box-shadow: var(--shadow); }
 .diagram .cap { font-size: .85rem; color: var(--text-soft); margin-bottom: 10px; font-weight: 600; }

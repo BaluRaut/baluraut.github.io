@@ -30,10 +30,10 @@
         <a class="btn ghost" href="strategy/">Start with Strategy</a>
       </div>
       <div class="pill-row">
-        <span class="pill">28 topics</span>
+        <span class="pill">48 topics</span>
+        <span class="pill">TypeScript · Python · Ruby</span>
         <span class="pill">Class &amp; sequence diagrams</span>
-        <span class="pill">0-100 flows</span>
-        <span class="pill">Trade-offs</span>
+        <span class="pill">Real-world examples</span>
         <span class="pill">EN · मराठी</span>
       </div>
     </div>
@@ -43,13 +43,43 @@
     <div class="wrap">
       <div class="eyebrow">Foundations</div>
       <h2>Object-Oriented Programming</h2>
-      <p class="group-sub">The principles the patterns are built on.</p>
+      <p class="group-sub">25 topics with real-world code in TypeScript, Python, and Ruby. The ideas the patterns are built on.</p>
+
+      <h3 class="group-title">🏛️ Fundamentals</h3>
       <div class="topic-grid">
-        <a class="topic-card" href="oop-core/"><span class="status live">Live</span><span class="ico">🏛️</span><h4>The Four Pillars</h4><p>Encapsulation, inheritance, polymorphism, and abstraction.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="solid/"><span class="status live">Live</span><span class="ico">🧱</span><h4>SOLID Principles</h4><p>Five rules for classes that stay flexible and maintainable.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="composition-over-inheritance/"><span class="status live">Live</span><span class="ico">🧩</span><h4>Composition over Inheritance</h4><p>Why "has-a" usually beats "is-a" for reuse.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="coupling-cohesion/"><span class="status live">Live</span><span class="ico">🔗</span><h4>Coupling &amp; Cohesion</h4><p>The two forces that decide how changeable your code is.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="uml-relationships/"><span class="status live">Live</span><span class="ico">📐</span><h4>UML Class Relationships</h4><p>Association, aggregation, composition, dependency, inheritance.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="objects-and-classes/"><span class="status live">Live</span><span class="ico">🧩</span><h4>Objects &amp; Classes</h4><p>State, behavior, and identity: the building blocks.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="encapsulation/"><span class="status live">Live</span><span class="ico">🔒</span><h4>Encapsulation</h4><p>Hide data, expose behavior, protect invariants.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="abstraction/"><span class="status live">Live</span><span class="ico">🎭</span><h4>Abstraction</h4><p>Model the essentials, hide the rest.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="inheritance/"><span class="status live">Live</span><span class="ico">🧬</span><h4>Inheritance</h4><p>Reuse via is-a, and where it goes wrong.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="polymorphism/"><span class="status live">Live</span><span class="ico">🔀</span><h4>Polymorphism</h4><p>One interface, many behaviors at runtime.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="interfaces-duck-typing/"><span class="status live">Live</span><span class="ico">🦆</span><h4>Interfaces &amp; Duck Typing</h4><p>Program to contracts, not concrete classes.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="composition-over-inheritance/"><span class="status live">Live</span><span class="ico">🧱</span><h4>Composition over Inheritance</h4><p>Why has-a usually beats is-a for reuse.</p><span class="go">Read →</span></a>
+      </div>
+
+      <h3 class="group-title">🏷️ Modeling</h3>
+      <div class="topic-grid">
+        <a class="topic-card" href="value-objects-vs-entities/"><span class="status live">Live</span><span class="ico">🏷️</span><h4>Value Objects vs Entities</h4><p>Identity versus equality by value.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="immutability/"><span class="status live">Live</span><span class="ico">🧊</span><h4>Immutability</h4><p>Objects that never change after creation.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="construction-invariants/"><span class="status live">Live</span><span class="ico">🏗️</span><h4>Construction &amp; Invariants</h4><p>Valid objects from the very first line.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="equality-identity/"><span class="status live">Live</span><span class="ico">⚖️</span><h4>Equality &amp; Identity</h4><p>When are two objects the same object.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="encapsulating-collections/"><span class="status live">Live</span><span class="ico">📚</span><h4>Encapsulating Collections</h4><p>Never leak your internal lists and maps.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="errors-as-objects/"><span class="status live">Live</span><span class="ico">🚨</span><h4>Errors as Objects</h4><p>Model failure in the type system.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="anemic-domain-model/"><span class="status live">Live</span><span class="ico">🩸</span><h4>Anemic Domain Model</h4><p>The anti-pattern of logic-less objects.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="uml-relationships/"><span class="status live">Live</span><span class="ico">📐</span><h4>UML Class Relationships</h4><p>Association, aggregation, composition, dependency.</p><span class="go">Read →</span></a>
+      </div>
+
+      <h3 class="group-title">🧭 Design principles</h3>
+      <div class="topic-grid">
+        <a class="topic-card" href="single-responsibility/"><span class="status live">Live</span><span class="ico">1️⃣</span><h4>Single Responsibility</h4><p>One reason to change, per class.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="open-closed/"><span class="status live">Live</span><span class="ico">🔓</span><h4>Open / Closed</h4><p>Open to extension, closed to modification.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="liskov-substitution/"><span class="status live">Live</span><span class="ico">🔁</span><h4>Liskov Substitution</h4><p>Subtypes must honor the base contract.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="interface-segregation/"><span class="status live">Live</span><span class="ico">✂️</span><h4>Interface Segregation</h4><p>Many small interfaces beat one fat one.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="dependency-inversion/"><span class="status live">Live</span><span class="ico">🔗</span><h4>Dependency Inversion</h4><p>Depend on abstractions, not details.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="dependency-injection/"><span class="status live">Live</span><span class="ico">💉</span><h4>Dependency Injection</h4><p>Pass collaborators in, do not new them up.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="coupling-cohesion/"><span class="status live">Live</span><span class="ico">🧲</span><h4>Coupling &amp; Cohesion</h4><p>The two forces behind changeable code.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="law-of-demeter/"><span class="status live">Live</span><span class="ico">📞</span><h4>Law of Demeter</h4><p>Talk to friends, not strangers.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="tell-dont-ask/"><span class="status live">Live</span><span class="ico">🗣️</span><h4>Tell, Don't Ask</h4><p>Send commands, do not interrogate state.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="when-not-to-use-oop/"><span class="status live">Live</span><span class="ico">🚫</span><h4>When NOT to Use OOP</h4><p>Where functions or data beat objects.</p><span class="go">Read →</span></a>
       </div>
     </div>
   </section>

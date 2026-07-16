@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Value Objects vs Entities in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to Value Objects vs Entities: identity and lifecycle vs attribute-based equality and immutability, with Money, Email, Address, Order and Customer examples in a payments and orders domain, diagrams, a 0-100 flow, and case studies." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Value Objects vs Entities - modeling identity and equality</h1>
+      <p class="lede">In a payments and orders system, some things <strong>are</strong> what they contain, and some things <strong>are</strong> who they are. A <strong>value object</strong> like Money or Email is defined entirely by its attributes and never changes. An <strong>entity</strong> like an Order or Customer has a stable identity and a lifecycle that outlives any single set of field values.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Identity</span>
+        <span class="pill">Immutability</span>
+        <span class="pill">Structural equality</span>
+        <span class="pill">Lifecycle</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What are value objects and entities?</h2>
+      <p class="muted">This is the most consequential modeling decision in domain design. An <strong>entity</strong> is a thing with a distinct identity that persists through change: an <code>Order</code> is the same order whether it is pending, paid, or shipped. A <strong>value object</strong> is a thing defined only by its attributes: two <code>Money</code> instances of 25.00 USD are interchangeable, and neither has a life story worth tracking.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🆔</span> Entity</h4>
+          <p>Has an identity (an id) that stays fixed while its attributes mutate over time. <code>Order</code>, <code>Customer</code>, and <code>Payment</code> each have a lifecycle worth tracking.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">💠</span> Value object</h4>
+          <p>Has no id. It is fully described by its fields and is immutable. <code>Money</code>, <code>Email</code>, and <code>Address</code> are compared by content, not reference.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚖️</span> Equality split</h4>
+          <p>Entities are equal when their ids match. Value objects are equal when every attribute matches. Getting this wrong corrupts caches, sets, and lookups.</p>
+        </div>
+      </div>
+
+      <h3>Entity vs value object at a glance</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Trait</th><th>Entity</th><th>Value object</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Identity</strong></td><td>Distinct id, assigned once</td><td>None; the content is the identity</td></tr>
+            <tr><td><strong>Equality</strong></td><td>Same id means same entity</td><td>Same attributes mean equal</td></tr>
+            <tr><td><strong>Mutability</strong></td><td>Attributes change over the lifecycle</td><td>Immutable; changes produce a new instance</td></tr>
+            <tr><td><strong>Lifecycle</strong></td><td>Created, tracked, archived, deleted</td><td>Created and discarded freely, no tracking</td></tr>
+            <tr><td><strong>Examples</strong></td><td>Order, Customer, Payment, Shipment</td><td>Money, Email, Address, DateRange</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> ask "if two of these had all the same fields, would I still care which is which?" If yes, it is an entity and needs an id. If no, it is a value object and should be immutable and compared by content.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why the distinction matters</h2>
+      <p class="muted">Blurring these two categories is the root of a whole class of bugs: mutable amounts that drift, entities compared by fields that silently duplicate, and equality that behaves differently in a set than in an <code>if</code>. Naming the category up front makes correctness the default.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🛡️ Immutability removes shared-state bugs</h4><p>A <code>Money</code> that cannot change cannot be mutated by one part of the checkout while another reads it. You pass value objects around freely without defensive copies.</p></div>
+        <div class="card"><h4>🎯 Correct equality powers collections</h4><p>Value objects that are equal by content deduplicate correctly in sets, act as reliable map keys, and let caches hit instead of leaking duplicates.</p></div>
+        <div class="card"><h4>🧭 Identity tracks the real thing</h4><p>An <code>Order</code> keeps one id from cart to delivery. Every state transition, event, and audit row hangs off that stable identity, not off a snapshot of its fields.</p></div>
+        <div class="card"><h4>🧱 Rich types replace primitive soup</h4><p>An <code>Email</code> or <code>Money</code> type validates once at construction, so the rest of the system trusts the value instead of re-checking raw strings and floats everywhere.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Value objects vs entities explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>A <strong>student id number</strong> is an entity: it is still you after you change your name, address, or major. A <strong>ten dollar bill</strong> is a value object: any ten dollar bill spends exactly the same, so nobody tracks which one you hold.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>A database row with a primary key is an entity; you update its columns but the key never moves. A <code>Color(255, 0, 0)</code> or <code>Money(25, "USD")</code> is a value object: equal by fields, replaced rather than edited.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A <strong>customer account</strong> is an entity your business tracks for years across every order. The <strong>shipping address</strong> printed on one order is a value object: a snapshot of fields, valid on its own, not something with a life of its own.</p></div>
+        <div class="card"><h4><span class="ico">🏦</span> Everyday version</h4><p>Your <strong>bank account</strong> is an entity: same account number as the balance rises and falls. A <strong>banknote</strong> is a value object: two twenties of the same currency are interchangeable, defined only by their denomination.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How to model each one</h2>
+      <p class="muted">A value object validates in its constructor, exposes read-only fields, and returns new instances from any operation. An entity carries an id, guards its own state transitions, and defines equality on the id alone.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">💠</span> Building a value object</h4>
+          <p>Freeze the fields, validate once, and compare by content. Arithmetic like adding two <code>Money</code> values returns a fresh <code>Money</code> rather than mutating either operand.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🆔</span> Building an entity</h4>
+          <p>Assign an id at creation, keep it constant, and let methods drive the lifecycle. An <code>Order</code> holds value objects for its total and address while its status evolves.</p>
+        </div>
+      </div>
+
+      <h3>The classes and how they relate</h3>
+      <div class="diagram">
+        <div class="cap">An Order entity composes Money and Address value objects; equality differs by category</div>
+        <pre class="mermaid">
+classDiagram
+    class Order {
+        +OrderId id
+        +CustomerId customerId
+        +Money total()
+        +addLine(sku, qty, price)
+        +pay(payment) void
+        +equals(other) bool
+    }
+    class Customer {
+        +CustomerId id
+        +Email email
+        +equals(other) bool
+    }
+    class Money {
+        +int amountCents
+        +string currency
+        +add(other) Money
+        +equals(other) bool
+    }
+    class Email {
+        +string address
+        +equals(other) bool
+    }
+    class Address {
+        +string street
+        +string city
+        +string postalCode
+        +equals(other) bool
+    }
+    class Identifiable {
+        &lt;&lt;interface&gt;&gt;
+        +id
+    }
+    Identifiable &lt;|-- Order
+    Identifiable &lt;|-- Customer
+    Order o-- Money
+    Order o-- Address
+    Customer o-- Email
+    Order --> Customer
+        </pre>
+      </div>
+
+      <h3>The same model in three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money: a value object - immutable, equal by attributes
+class Money {
+  constructor(
+    readonly amountCents: number,
+    readonly currency: string,
+  ) {
+    if (!Number.isInteger(amountCents)) throw new Error("amount must be whole cents");
+    Object.freeze(this);
+  }
+
+  add(other: Money): Money {
+    if (other.currency !== this.currency) throw new Error("currency mismatch");
+    return new Money(this.amountCents + other.amountCents, this.currency);
+  }
+
+  equals(other: Money): boolean {
+    return this.amountCents === other.amountCents && this.currency === other.currency;
+  }
+}
+
+// Order: an entity - equal by identity, mutable lifecycle
+class Order {
+  private lines: Money[] = [];
+  status: "pending" | "paid" = "pending";
+
+  constructor(readonly id: string, readonly customerId: string) {}
+
+  addLine(price: Money): void {
+    this.lines.push(price); // attributes change; id does not
+  }
+
+  total(): Money {
+    return this.lines.reduce((sum, m) => sum.add(m), new Money(0, "USD"));
+  }
+
+  pay(): void {
+    this.status = "paid";
+  }
+
+  equals(other: Order): boolean {
+    return this.id === other.id; // identity, not fields
+  }
+}
+
+const order = new Order("ord_1001", "cus_42");
+order.addLine(new Money(1999, "USD"));
+order.addLine(new Money(500, "USD"));
+console.log(order.total().equals(new Money(2499, "USD"))); // true
+order.pay();
+console.log(order.status); // "paid"</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from dataclasses import dataclass, field
+
+# Money: a value object - frozen and equal by attributes
+@dataclass(frozen=True)
+class Money:
+    amount_cents: int
+    currency: str
+
+    def add(self, other: "Money") -> "Money":
+        if other.currency != self.currency:
+            raise ValueError("currency mismatch")
+        return Money(self.amount_cents + other.amount_cents, self.currency)
+
+# frozen dataclass gives __eq__ by fields and __hash__ for free
+
+# Order: an entity - equal by identity, mutable lifecycle
+class Order:
+    def __init__(self, id: str, customer_id: str):
+        self.id = id
+        self.customer_id = customer_id
+        self._lines: list[Money] = []
+        self.status = "pending"
+
+    def add_line(self, price: Money) -> None:
+        self._lines.append(price)  # attributes change; id does not
+
+    def total(self) -> Money:
+        total = Money(0, "USD")
+        for line in self._lines:
+            total = total.add(line)
+        return total
+
+    def pay(self) -> None:
+        self.status = "paid"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Order) and self.id == other.id  # identity
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
+order = Order("ord_1001", "cus_42")
+order.add_line(Money(1999, "USD"))
+order.add_line(Money(500, "USD"))
+print(order.total() == Money(2499, "USD"))  # True
+order.pay()
+print(order.status)  # "paid"</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Money: a value object - immutable and equal by attributes
+class Money
+  attr_reader :amount_cents, :currency
+
+  def initialize(amount_cents, currency)
+    raise ArgumentError, "amount must be whole cents" unless amount_cents.is_a?(Integer)
+    @amount_cents = amount_cents
+    @currency = currency
+    freeze
+  end
+
+  def add(other)
+    raise ArgumentError, "currency mismatch" unless other.currency == currency
+    Money.new(amount_cents + other.amount_cents, currency)
+  end
+
+  def ==(other)
+    other.is_a?(Money) && amount_cents == other.amount_cents && currency == other.currency
+  end
+  alias eql? ==
+
+  def hash
+    [amount_cents, currency].hash
+  end
+end
+
+# Order: an entity - equal by identity, mutable lifecycle
+class Order
+  attr_reader :id, :customer_id
+  attr_accessor :status
+
+  def initialize(id, customer_id)
+    @id = id
+    @customer_id = customer_id
+    @lines = []
+    @status = :pending
+  end
+
+  def add_line(price)
+    @lines << price # attributes change; id does not
+  end
+
+  def total
+    @lines.reduce(Money.new(0, "USD")) { |sum, m| sum.add(m) }
+  end
+
+  def pay
+    @status = :paid
+  end
+
+  def ==(other)
+    other.is_a?(Order) && id == other.id # identity, not fields
+  end
+end
+
+order = Order.new("ord_1001", "cus_42")
+order.add_line(Money.new(1999, "USD"))
+order.add_line(Money.new(500, "USD"))
+puts order.total == Money.new(2499, "USD") # true
+order.pay
+puts order.status # paid</code></pre>
+      </div>
+      <p class="muted">Notice the split: <code>Money</code> is frozen and defines equality over its fields, so 2499 cents equals 2499 cents no matter which instance you hold. <code>Order</code> keeps a fixed id, mutates its lines and status, and compares only by id, so a paid order still equals the pending order it once was.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: constructing a validated value object, mutating an entity through its lifecycle, and how equality behaves differently for each category.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Constructing an immutable Money value object</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🖥️ Checkout code
+    participant Money as 💠 Money
+    participant Guard as 🛡️ Invariant check
+
+    Client->>Money: new Money(1999, "USD")
+    Money->>Guard: validate whole cents and currency
+    alt invalid input
+        Guard-->>Money: raise error
+        Money-->>Client: construction fails
+    else valid
+        Guard-->>Money: ok
+        Money->>Money: freeze fields
+        Money-->>Client: immutable instance
+    end
+    Client->>Money: add(new Money(500, "USD"))
+    Money-->>Client: new Money(2499, "USD")
+    Note over Client,Money: original instances are never mutated
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - An Order entity moving through its lifecycle</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User as 👤 Shopper
+    participant Order as 🆔 Order entity
+    participant Money as 💠 Money
+    participant Repo as 🗄️ Order repository
+
+    User->>Order: new Order(ord_1001, cus_42)
+    Order-->>User: id fixed, status pending
+    User->>Order: addLine(Money 1999 USD)
+    Order->>Money: total() adds line values
+    Money-->>Order: Money 1999 USD
+    User->>Order: pay(payment)
+    Order->>Order: status becomes paid
+    Order->>Repo: save(order by id)
+    Repo-->>User: same id, new state persisted
+    Note over Order,Repo: id is stable across every transition
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Equality: identity for entities, attributes for value objects</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Test as 🧪 Comparison
+    participant A as 🆔 Order A
+    participant B as 🆔 Order B
+    participant M1 as 💠 Money 2499 USD
+    participant M2 as 💠 Money 2499 USD
+
+    Test->>A: equals(B) where ids match
+    A-->>Test: true even if fields differ
+    Test->>M1: equals(M2) where amounts match
+    M1-->>Test: true because attributes match
+    Note over Test,M2: same id equals same entity; same fields equal same value
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an unmodeled concept to a clean split of entities and value objects across the orders domain, in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>List the domain nouns</h4><p>Write down every concept in the checkout: order, customer, money, email, address, payment, line item. These are your candidates.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Ask</span><h4>Does it need an identity?</h4><p>For each noun ask whether two of them with identical fields are still distinct things you must track. If yes, it is an entity.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Classify</span><h4>Split the two groups</h4><p>Order, Customer, and Payment become entities. Money, Email, and Address become value objects defined by their attributes.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Freeze</span><h4>Make value objects immutable</h4><p>Give value objects read-only fields so no caller can mutate a shared amount or address after it is created.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Validate</span><h4>Guard invariants in the constructor</h4><p>Reject a negative fractional cent, a malformed email, or an empty currency at construction so every existing value is already valid.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Equality</span><h4>Define value equality by fields</h4><p>Implement equals and hash over all attributes so two equal Money values behave identically in sets and as map keys.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Identity</span><h4>Assign entity ids</h4><p>Give each entity an id at creation and compare entities only by that id, never by their current field values.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Compose</span><h4>Embed values inside entities</h4><p>Let the Order hold a Money total and an Address, and the Customer hold an Email. Entities own value objects, not the reverse.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Transition</span><h4>Drive the lifecycle with methods</h4><p>Move the Order from pending to paid to shipped through methods that enforce rules, while the id stays fixed throughout.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Persist</span><h4>Store entities by id, values inline</h4><p>Save entities keyed on their id and inline their value objects as columns or embedded documents, since values have no identity to store.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Trust</span><h4>Reason with confidence</h4><p>The rest of the system now trusts that values are valid and immutable and that entities are tracked by stable identity, killing a whole class of bugs.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most identity bugs trace back to mixing the two categories. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧨 Mutable value objects</h4><p>Adding a setter to Money or Address means one caller can mutate a shared instance and silently change an order total elsewhere. Value objects must be frozen and replaced, not edited.</p></div>
+        <div class="card"><h4>🪞 Comparing entities by fields</h4><p>Overriding entity equality to compare all attributes makes two customers with the same name look equal, duplicating records and breaking lookups. Entities compare by id only.</p></div>
+        <div class="card"><h4>🆔 Identity on a value object</h4><p>Slapping a database id on Money or Email turns a simple value into a tracked row nobody needs, cluttering the schema and inviting accidental duplicates that should have been equal.</p></div>
+        <div class="card"><h4>💵 Floats for money</h4><p>Storing amounts as floating point invites rounding drift where 0.1 plus 0.2 is not 0.3. Model Money over integer cents or a decimal type inside the value object.</p></div>
+        <div class="card"><h4>🧵 Primitive obsession</h4><p>Passing raw strings for email and raw numbers for amounts scatters validation everywhere and lets a currency string land in an email field. Wrap them in typed value objects.</p></div>
+        <div class="card"><h4>♻️ Forgetting hash with equals</h4><p>Defining value equality but not a matching hash means equal Money values land in different set buckets, so deduplication and caching quietly fail.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You can feel the split in the shape of the code. These signals tell you whether the boundary is drawn correctly.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Setters on a value type</strong></td><td>A leaking abstraction; the value object is mutable and will cause shared-state bugs</td></tr>
+            <tr><td><strong>Entity equals reads fields</strong></td><td>Identity is being confused with content, so distinct records can compare as equal</td></tr>
+            <tr><td><strong>Duplicate rows for equal values</strong></td><td>A value object was given an id it does not need, breaking natural deduplication</td></tr>
+            <tr><td><strong>Validation repeated at call sites</strong></td><td>A missing value object; the same check lives in many places instead of one constructor</td></tr>
+            <tr><td><strong>Set or map keys behaving oddly</strong></td><td>equals and hash are out of sync on a value object</td></tr>
+            <tr><td><strong> id changes during a lifecycle</strong></td><td>The entity boundary is wrong; identity must be stable from creation to deletion</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if a type has a setter, it should have no id; if a type has an id, its equality should read only that id. When both halves of that rule hold across the model, the entity and value boundary is clean.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where the entity and value object split is load-bearing.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payments ledger with a Money value object</h3><div class="role">Pattern: immutable amounts, tracked transactions</div></div></div>
+        <p class="muted">A payments platform must add, split, and convert amounts without ever losing a cent or mutating shared state.</p>
+        <ul>
+          <li>Money is a frozen value object over integer minor units plus a currency code, equal by content.</li>
+          <li>Every Transaction is an entity with a stable id, an immutable Money amount, and a status lifecycle.</li>
+          <li>Arithmetic returns new Money instances, so ledger entries never drift when reused across reports.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Reconciliation matches to the cent because amounts are immutable values while each transaction stays independently tracked by id.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📦</span><div><h3>2 · E-commerce orders and addresses</h3><div class="role">Pattern: entity lifecycle over value snapshots</div></div></div>
+        <p class="muted">An online store needs an order to survive edits and shipping while preserving the exact address it was placed with.</p>
+        <ul>
+          <li>Order and Customer are entities; the shipping Address and line prices are value objects.</li>
+          <li>The Address captured at checkout is a frozen snapshot, so later profile edits never rewrite past orders.</li>
+          <li>The Order id stays fixed from cart through delivery while its status and lines evolve.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Historical orders keep their original addresses and totals, while the live customer entity keeps evolving under one identity.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📧</span><div><h3>3 · Accounts and auth with an Email value object</h3><div class="role">Pattern: validated values guarding an entity</div></div></div>
+        <p class="muted">A user-accounts service must treat an email as a validated, comparable value while the account itself is a long-lived entity.</p>
+        <ul>
+          <li>Email is a value object that normalizes and validates its address once at construction.</li>
+          <li>Customer is an entity keyed on a user id, so changing an email never changes who the customer is.</li>
+          <li>Equal Email values compare and hash identically, powering uniqueness checks and lookups.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Duplicate-email checks are reliable and account identity is stable, because the value is validated and the entity is tracked by id.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">The entity and value object split predates modern frameworks and keeps getting more useful as languages add first-class support for immutable data.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Records and frozen data</h4><p>TypeScript readonly, Python frozen dataclasses, Kotlin data classes, and Java records make value objects a one-liner, so there is no excuse for mutable value types.</p></div>
+        <div class="card"><h4>🏗️ Domain-driven design</h4><p>DDD builds aggregates from exactly this split: entities with identity anchor an aggregate while value objects express its measurements and descriptions.</p></div>
+        <div class="card"><h4>🔗 Event sourcing</h4><p>Events are immutable value objects; the entity is the aggregate reconstructed by replaying them, making the identity-versus-content line explicit.</p></div>
+        <div class="card"><h4>🧪 Easier testing</h4><p>Immutable value objects need no setup or teardown and compare by content, so assertions read cleanly and tests do not leak state between cases.</p></div>
+        <div class="card"><h4>🧵 Concurrency safety</h4><p>Immutable values are safe to share across threads and async tasks without locks, which matters as services get more concurrent.</p></div>
+        <div class="card"><h4>🗃️ ORM mapping</h4><p>Modern ORMs map value objects as embedded or owned types and entities to tables with keys, encoding the distinction right in the persistence layer.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> deciding entity versus value object is the first real modeling call you make, and it pays off everywhere: correct equality, safe sharing, clean persistence, and code that says what it means.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">This distinction sits in a web of related OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../immutability/"><span class="ico">🧊</span><h4>Immutability</h4><p>Why value objects never change after construction.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../equality-identity/"><span class="ico">⚖️</span><h4>Equality &amp; identity</h4><p>Comparing by content versus comparing by id.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🛡️</span><h4>Construction &amp; invariants</h4><p>Validating a value once so it is always valid.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../objects-and-classes/"><span class="ico">🧱</span><h4>Objects &amp; classes</h4><p>The building blocks these categories are made from.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Value Objects vs Entities · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equality &amp; Identity in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to equality and identity in object-oriented design: reference identity vs value equality, implementing equals/hashCode, entities vs value objects, and the equality contract, in TypeScript, Python, and Ruby." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Equality &amp; Identity - when are two objects "the same"?</h1>
+      <p class="lede">Two <code>Money</code> objects holding 5 USD should count as equal, but two <code>User</code> records for different people never should, even if every visible field matches. Getting this wrong corrupts sets, breaks deduplication, and lets stale copies masquerade as the real thing. This is the line between <strong>identity</strong> (same object) and <strong>equality</strong> (same value).</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code ↓</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Reference identity</span>
+        <span class="pill">Value equality</span>
+        <span class="pill">equals / hashCode</span>
+        <span class="pill">Entities vs value objects</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is equality vs identity?</h2>
+      <p class="muted"><strong>Identity</strong> asks "are these the exact same object in memory?" <strong>Equality</strong> asks "do these two objects represent the same value?" A payment ledger cares that two <code>Money</code> amounts of 5 USD are interchangeable; an auth system cares that two <code>User</code> handles point at the same account, not merely at people who happen to share a name. Every language gives you a default, and the default is almost always identity, which is rarely what your domain wants for value objects.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧷</span> Reference identity</h4>
+          <p>Two variables are identical when they point at the same instance. Default for <code>===</code> on objects in TS, <code>is</code> in Python, <code>equal?</code> in Ruby.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">⚖️</span> Value equality</h4>
+          <p>Two instances are equal when their meaningful fields match. You opt into this by implementing an equals method, <code>__eq__</code>, or <code>==</code>.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔑</span> Hashing</h4>
+          <p>If equal objects must be usable as set members or map keys, they need matching hash codes. Equality and hashing travel together.</p>
+        </div>
+      </div>
+
+      <h3>The vocabulary across languages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Concept</th><th>TypeScript</th><th>Python</th><th>Ruby</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Identity check</strong></td><td><code>a === b</code> (objects)</td><td><code>a is b</code></td><td><code>a.equal?(b)</code></td></tr>
+            <tr><td><strong>Value equality</strong></td><td>custom <code>equals(b)</code></td><td><code>__eq__</code> / <code>==</code></td><td><code>==</code></td></tr>
+            <tr><td><strong>Hash-key equality</strong></td><td>key string / Map</td><td><code>__hash__</code> + <code>__eq__</code></td><td><code>eql?</code> + <code>hash</code></td></tr>
+            <tr><td><strong>Default for objects</strong></td><td>identity</td><td>identity (unless overridden)</td><td>identity</td></tr>
+            <tr><td><strong>Best fit</strong></td><td>value objects</td><td>value objects (dataclass)</td><td>value objects (Comparable / Data)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> identity is a property of the <em>reference</em>; equality is a property of the <em>value</em>. Value objects want equality by content; entities want identity by a stable key (an id), never by content, because an entity keeps its identity even as every attribute changes.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why equality &amp; identity matter</h2>
+      <p class="muted">Collections, caches, and deduplication all silently depend on your equality definition. Leave it as the default and a shopping cart will hold two "identical" line items it thinks are different, or a set of authorized users will accept duplicates.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧺 Collections behave correctly</h4><p>Sets, maps, and <code>includes</code> checks rely on equality. A <code>Money</code> value object with proper equality lets a discount engine ask "is this amount already in the applied set?" and get a truthful answer.</p></div>
+        <div class="card"><h4>🧭 Entities stay themselves</h4><p>A <code>User</code> who changes email, name, and avatar is still the same user. Identity keyed on a stable id survives every edit, so audit logs and permissions stay attached to the right account.</p></div>
+        <div class="card"><h4>🔁 Deduplication actually works</h4><p>Merging orders from two systems needs a defined notion of "same order line." Value equality on the meaningful fields lets you fold duplicates instead of double-charging.</p></div>
+        <div class="card"><h4>🧱 The contract prevents corruption</h4><p>Honoring the equals/hashCode contract keeps hash-based structures consistent. Break it and objects vanish from sets, or two "equal" keys both live in the same map.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Equality &amp; identity explained with analogies</h2>
+      <p class="muted">Same distinction, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Two ten-dollar bills are <strong>equal</strong> in value, you would trade one for the other without a thought. But your student ID card is <strong>identity</strong>: a reprinted card with a new photo is still <em>your</em> record, and no other student's card is interchangeable with it.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Reference identity is comparing two <strong>pointers</strong>; value equality is comparing what they point at. The default <code>===</code> checks the pointer, so you override equality when your domain cares about the contents, not the address.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Two invoices for the same amount are <strong>equal amounts</strong> but <strong>different invoices</strong>. The finance system keys each invoice by its number (identity) while comparing the money figures by value.</p></div>
+        <div class="card"><h4><span class="ico">🚚</span> Everyday version</h4><p>Two identical courier boxes off the same shelf are <strong>equal</strong>. Once one has your tracking number on it, it becomes <strong>that</strong> parcel: swap in another box and the delivery is wrong, even though the boxes look the same.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How to implement equality correctly</h2>
+      <p class="muted">Model <strong>value objects</strong> (like <code>Money</code>) with equality by content and a matching hash; model <strong>entities</strong> (like <code>User</code>) with equality by a stable id. Never mix the two: an entity that compares by its mutable fields will "change identity" the moment someone edits it.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">💵</span> Value object: Money</h4>
+          <p>Immutable, no id. Two amounts are equal when currency and minor units match. Equality and hash both derive from those two fields, so <code>Money</code> works as a map key and set member.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧑</span> Entity: User</h4>
+          <p>Has a lifecycle and a stable <code>id</code>. Equality compares ids only. Email, name, and role can all change without affecting whether two references mean the same account.</p>
+        </div>
+      </div>
+
+      <h3>The class model</h3>
+      <div class="diagram">
+        <div class="cap">Money compares by value; User compares by id; both honor the equality contract</div>
+        <pre class="mermaid">
+classDiagram
+    class Equatable {
+        &lt;&lt;interface&gt;&gt;
+        +equals(other) boolean
+        +hashCode() int
+    }
+    class Money {
+        -amountMinor int
+        -currency string
+        +equals(other) boolean
+        +hashCode() int
+        +add(other) Money
+    }
+    class User {
+        -id string
+        -email string
+        -displayName string
+        +equals(other) boolean
+        +hashCode() int
+        +changeEmail(email) void
+    }
+    Equatable &lt;|.. Money
+    Equatable &lt;|.. User
+    note for Money "Value object: equal by currency + amount"
+    note for User "Entity: equal by stable id only"
+        </pre>
+      </div>
+
+      <h3>Implementing value equality on Money</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money is a value object: two amounts are equal by content, not by reference.
+class Money {
+  private constructor(
+    readonly amountMinor: number, // cents, avoids float drift
+    readonly currency: string,
+  ) {}
+
+  static of(amountMinor: number, currency: string): Money {
+    return new Money(amountMinor, currency);
+  }
+
+  add(other: Money): Money {
+    if (other.currency !== this.currency) {
+      throw new Error(`Currency mismatch: ${this.currency} vs ${other.currency}`);
+    }
+    return new Money(this.amountMinor + other.amountMinor, this.currency);
+  }
+
+  // Value equality: same currency AND same amount.
+  equals(other: unknown): boolean {
+    return (
+      other instanceof Money &&
+      other.amountMinor === this.amountMinor &&
+      other.currency === this.currency
+    );
+  }
+
+  // Stable string key for use in a Map/Set that lacks value hashing.
+  hashKey(): string {
+    return `${this.currency}:${this.amountMinor}`;
+  }
+}
+
+const a = Money.of(500, "USD");
+const b = Money.of(500, "USD");
+
+console.log(a === b);        // false -> different references (identity)
+console.log(a.equals(b));    // true  -> same value (equality)
+
+// Dedup by value using the hash key, since === would keep both.
+const seen = new Map&lt;string, Money&gt;();
+for (const m of [a, b, Money.of(750, "USD")]) seen.set(m.hashKey(), m);
+console.log(seen.size);      // 2 -> the two 5.00 USD amounts collapsed</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Money is a value object: __eq__ and __hash__ derive from the same fields.
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)  # frozen -> immutable and auto-hashable
+class Money:
+    amount_minor: int  # cents, avoids float drift
+    currency: str
+
+    def add(self, other: "Money") -&gt; "Money":
+        if other.currency != self.currency:
+            raise ValueError(f"Currency mismatch: {self.currency} vs {other.currency}")
+        return Money(self.amount_minor + other.amount_minor, self.currency)
+
+    # dataclass generates __eq__ (compares fields) and __hash__ (from the tuple
+    # of fields) for us, so equal Money objects share a hash automatically.
+
+
+a = Money(500, "USD")
+b = Money(500, "USD")
+
+print(a is b)      # False -> different objects (identity)
+print(a == b)      # True  -> same value (equality)
+
+# Because __hash__ matches __eq__, a set deduplicates by value.
+seen = {a, b, Money(750, "USD")}
+print(len(seen))   # 2 -> the two 5.00 USD amounts collapsed</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Money is a value object: == for equality, eql? + hash for hashing.
+class Money
+  attr_reader :amount_minor, :currency
+
+  def initialize(amount_minor, currency)
+    @amount_minor = amount_minor # cents, avoids float drift
+    @currency = currency
+    freeze                       # immutable value object
+  end
+
+  def add(other)
+    unless other.currency == currency
+      raise ArgumentError, "Currency mismatch: #{currency} vs #{other.currency}"
+    end
+    Money.new(amount_minor + other.amount_minor, currency)
+  end
+
+  # Value equality: same class, same fields.
+  def ==(other)
+    other.is_a?(Money) &&
+      other.amount_minor == amount_minor &&
+      other.currency == currency
+  end
+
+  # Hash-key equality for Set / Hash keys. eql? and hash must agree with ==.
+  alias eql? ==
+
+  def hash
+    [amount_minor, currency].hash
+  end
+end
+
+a = Money.new(500, "USD")
+b = Money.new(500, "USD")
+
+puts a.equal?(b)  # false -> different objects (identity)
+puts a == b       # true  -> same value (equality)
+
+# eql? + hash agree, so a Set deduplicates by value.
+seen = [a, b, Money.new(750, "USD")].to_set
+puts seen.size    # 2 -> the two 5.00 USD amounts collapsed</code></pre>
+      </div>
+      <p class="muted">Notice the same object created twice fails the identity check (<code>===</code> / <code>is</code> / <code>equal?</code>) but passes value equality. And because hashing is defined consistently with equality, a set folds the duplicates instead of storing both.</p>
+
+      <h3>Contrast: an entity keyed by id</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// User is an entity: equality is its identity (id), never its mutable fields.
+class User {
+  constructor(
+    readonly id: string,
+    private email: string,
+    private displayName: string,
+  ) {}
+
+  changeEmail(email: string): void {
+    this.email = email; // identity is unaffected by attribute changes
+  }
+
+  equals(other: unknown): boolean {
+    return other instanceof User &amp;&amp; other.id === this.id;
+  }
+
+  hashKey(): string {
+    return `user:${this.id}`;
+  }
+}
+
+const u1 = new User("u-42", "ada@corp.io", "Ada");
+const u2 = new User("u-42", "ada.new@corp.io", "Ada L.");
+
+console.log(u1.equals(u2)); // true -> same account despite different email/name
+
+u1.changeEmail("ada@newco.io");
+console.log(u1.equals(u2)); // still true -> identity survives edits</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># User is an entity: equality is its identity (id), never its mutable fields.
+class User:
+    def __init__(self, user_id: str, email: str, display_name: str):
+        self.id = user_id
+        self.email = email
+        self.display_name = display_name
+
+    def change_email(self, email: str) -&gt; None:
+        self.email = email  # identity is unaffected by attribute changes
+
+    def __eq__(self, other: object) -&gt; bool:
+        return isinstance(other, User) and other.id == self.id
+
+    def __hash__(self) -&gt; int:
+        return hash(self.id)  # hash on the stable id, matching __eq__
+
+
+u1 = User("u-42", "ada@corp.io", "Ada")
+u2 = User("u-42", "ada.new@corp.io", "Ada L.")
+
+print(u1 == u2)  # True -> same account despite different email/name
+
+u1.change_email("ada@newco.io")
+print(u1 == u2)  # still True -> identity survives edits</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># User is an entity: equality is its identity (id), never its mutable fields.
+class User
+  attr_reader :id
+  attr_accessor :email, :display_name
+
+  def initialize(id, email, display_name)
+    @id = id
+    @email = email
+    @display_name = display_name
+  end
+
+  def ==(other)
+    other.is_a?(User) &amp;&amp; other.id == id
+  end
+  alias eql? ==
+
+  def hash
+    id.hash # hash on the stable id, matching ==
+  end
+end
+
+u1 = User.new("u-42", "ada@corp.io", "Ada")
+u2 = User.new("u-42", "ada.new@corp.io", "Ada L.")
+
+puts u1 == u2      # true -> same account despite different email/name
+
+u1.email = "ada@newco.io"
+puts u1 == u2      # still true -> identity survives edits</code></pre>
+      </div>
+      <p class="muted">The entity compares only its id, so two references to account <code>u-42</code> stay equal even after the email and display name diverge. This is the opposite policy from <code>Money</code>, and choosing the right one per type is the whole discipline.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: identity vs value equality, deduplicating value objects in a set, and entity equality that survives edits.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Identity check vs value equality on two Money instances</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑 Checkout code
+    participant A as 💵 Money a (500 USD)
+    participant B as 💵 Money b (500 USD)
+
+    Client->>A: a === b (reference check)
+    A-->>Client: false (different instances)
+    Client->>A: a.equals(b)
+    A->>B: read amountMinor, currency
+    B-->>A: 500, USD
+    A-->>Client: true (same value)
+    Note over Client,B: Identity is about the reference, equality about the content
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Deduplicating value objects in a Set via hash + equals</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Client as 🧑 Discount engine
+    participant Set as 🧺 Set of Money
+    participant M as 💵 Money 500 USD
+
+    Client->>Set: add(Money 500 USD)
+    Set->>M: hashCode()
+    M-->>Set: h1
+    Set-->>Client: inserted
+    Client->>Set: add(another Money 500 USD)
+    Set->>M: hashCode()
+    M-->>Set: h1 (same bucket)
+    Set->>M: equals(existing)
+    M-->>Set: true
+    Set-->>Client: skipped, duplicate collapsed
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Entity identity survives attribute changes</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Admin as 🧑 Admin action
+    participant U1 as 🧑 User u-42 (ref A)
+    participant U2 as 🧑 User u-42 (ref B)
+
+    Admin->>U1: u1.equals(u2)
+    U1->>U2: compare id
+    U2-->>U1: same id u-42
+    U1-->>Admin: true
+    Admin->>U1: changeEmail("ada@newco.io")
+    U1-->>Admin: field updated
+    Admin->>U1: u1.equals(u2) again
+    alt id unchanged
+        U1-->>Admin: still true (identity preserved)
+    else id differs
+        U1-->>Admin: false (different account)
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From an undecided type to a correct, contract-honoring equality implementation, in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Classify</span><h4>Value object or entity?</h4><p>Ask whether the type is defined by its attributes (<code>Money</code>) or by a continuous identity over time (<code>User</code>). This one decision drives everything else.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Value</span><h4>Pick the equality fields</h4><p>For a value object, list the fields that define its value: for <code>Money</code>, the amount and the currency. Nothing else participates.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Entity</span><h4>Pick the identity key</h4><p>For an entity, choose a stable id assigned at creation. It must never change and must not be derived from mutable business fields.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Immutable</span><h4>Freeze value objects</h4><p>Make value objects immutable (<code>readonly</code>, <code>frozen=True</code>, <code>freeze</code>) so their identity-as-value can never drift after they are used as keys.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Equality</span><h4>Implement equals / __eq__ / ==</h4><p>Check the other object's type first, then compare the chosen fields (value) or the id (entity). Return false for foreign types instead of throwing.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Hash</span><h4>Implement a matching hash</h4><p>Derive the hash from exactly the same fields equality uses. Equal objects must hash the same, or sets and maps silently lose them.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Contract</span><h4>Verify reflexive, symmetric, transitive</h4><p>Confirm <code>a.equals(a)</code>, that <code>a.equals(b)</code> implies <code>b.equals(a)</code>, and that equality chains through a third object.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Null</span><h4>Handle null and other types</h4><p>Comparing to <code>null</code>/<code>None</code>/<code>nil</code> or an unrelated class returns false, never an exception. Guard the type before touching fields.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Collections</span><h4>Exercise in a set and a map</h4><p>Insert duplicates into a set and confirm they collapse; use the object as a map key and confirm lookups hit. This proves hash and equals agree.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Mutation</span><h4>Test identity across edits</h4><p>Change an entity's fields and confirm equality is unaffected. Confirm value objects cannot be mutated at all after construction.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Ship</span><h4>Document the policy</h4><p>State in the type's docs that <code>Money</code> is compared by value and <code>User</code> by id, so future callers never reach for the default again.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Equality bugs are quiet: nothing crashes, but sets leak duplicates and lookups miss. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧨 equals without hashCode</h4><p>Overriding value equality but leaving the default hash means two "equal" <code>Money</code> objects land in different buckets, so a set keeps both and a map key never resolves. Always define them together.</p></div>
+        <div class="card"><h4>🌀 Mutable fields in the hash</h4><p>Hashing on a field that later changes moves the object to a new bucket while it sits in a set, making it unfindable and un-removable. Hash only immutable data.</p></div>
+        <div class="card"><h4>🪞 Comparing entities by content</h4><p>Two different users with the same name become "equal," merging distinct accounts. Entities must compare by a stable id, never by their attributes.</p></div>
+        <div class="card"><h4>💥 Throwing on foreign types</h4><p>An <code>equals</code> that assumes the argument is the same class explodes when a collection compares it against <code>null</code> or another type. Guard with an instance check and return false.</p></div>
+        <div class="card"><h4>🔗 Asymmetric equality</h4><p>A subclass that considers itself equal to a base instance, but not vice versa, breaks the symmetry rule and corrupts any collection holding both. Keep equality symmetric.</p></div>
+        <div class="card"><h4>😵 Trusting == on references</h4><p>Reaching for <code>===</code> or <code>is</code> to compare two freshly loaded <code>Money</code> rows always returns false, because they are distinct instances. Use value equality for value objects.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You rarely get a stack trace for a broken equality contract. These signals expose it before it corrupts data.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Duplicates in a set</strong></td><td>Objects you consider equal are hashing differently, so equals and hash disagree.</td></tr>
+            <tr><td><strong>Map lookups miss with a valid key</strong></td><td>The key's hash changed after insertion, or hash is inconsistent with equals.</td></tr>
+            <tr><td><strong>Distinct records treated as one</strong></td><td>An entity is comparing by content, so unrelated rows collapse into a single identity.</td></tr>
+            <tr><td><strong>Equality throws in a collection op</strong></td><td>equals assumes a concrete type instead of guarding against null and foreign types.</td></tr>
+            <tr><td><strong>Flaky dedup counts</strong></td><td>Equality depends on a mutable or time-based field, so results shift between runs.</td></tr>
+            <tr><td><strong>Property tests fail on symmetry / transitivity</strong></td><td>The contract is violated; some comparison direction disagrees with another.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you override equality, override hashing in the same commit, from the same fields, and back it with a property test asserting reflexive, symmetric, and transitive behavior. Equal objects that hash differently are a data-corruption bug waiting to happen.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where the equality-vs-identity choice is load-bearing.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payments ledger with a Money value object</h3><div class="role">Pattern: value equality for amounts, identity for transactions</div></div></div>
+        <p class="muted">A billing service adds line amounts, applies discounts, and reconciles totals across currencies.</p>
+        <ul>
+          <li><code>Money</code> is immutable and compared by currency plus minor units, so 5.00 USD equals any other 5.00 USD.</li>
+          <li>Transactions are entities keyed by a transaction id; two transfers of the same amount are never the same transaction.</li>
+          <li>A set of applied discounts uses <code>Money</code>'s value hash to prevent applying the same amount twice.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Reconciliation math is correct across duplicated amounts, while every transfer stays uniquely auditable by its id.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔐</span><div><h3>2 · Auth system tracking User entities</h3><div class="role">Pattern: identity by stable id across profile edits</div></div></div>
+        <p class="muted">An identity provider manages accounts whose email, display name, and roles change constantly.</p>
+        <ul>
+          <li><code>User</code> equality compares only the immutable account id, so a rename or email change never forks the account.</li>
+          <li>Session and permission sets store users by id-based hash, so lookups survive profile updates.</li>
+          <li>Merging a duplicate signup is a deliberate id remap, not an accidental content match.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Audit trails and permissions stay bound to the correct account through every edit, with no accidental merges of look-alike users.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🛒</span><div><h3>3 · Cart and catalog deduplication</h3><div class="role">Pattern: value equality on SKUs and options</div></div></div>
+        <p class="muted">An e-commerce cart must fold repeated adds of the same product-and-options into one line with a quantity.</p>
+        <ul>
+          <li>A <code>LineItemKey</code> value object (SKU plus selected options) defines equality and hash for grouping.</li>
+          <li>Adding the same configured product twice increments quantity instead of creating a second row.</li>
+          <li>Orders are entities keyed by order id, so two carts with identical contents remain distinct orders.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The cart shows one line per distinct configuration with accurate quantities, while each placed order keeps its own identity.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Language features keep making correct equality cheaper, but the value-vs-entity decision stays a human one.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧊 Records &amp; data classes</h4><p>Python <code>@dataclass(frozen=True)</code> and Ruby's <code>Data.define</code> generate value equality and hashing for you, removing most hand-written boilerplate for value objects.</p></div>
+        <div class="card"><h4>🧩 Structural typing</h4><p>TypeScript's structural model shapes how you compare data, but object identity still defaults to reference, so value objects still need an explicit equals.</p></div>
+        <div class="card"><h4>🛡️ Branded &amp; opaque ids</h4><p>Branded id types stop you from comparing a <code>UserId</code> to an <code>OrderId</code> by accident, making entity identity checks type-safe.</p></div>
+        <div class="card"><h4>🧪 Property-based testing</h4><p>Tools like fast-check and Hypothesis assert the reflexive, symmetric, and transitive laws automatically, catching contract breaks early.</p></div>
+        <div class="card"><h4>🗃️ Domain-driven design</h4><p>DDD's explicit split between value objects and entities is now mainstream vocabulary, giving teams a shared name for the equality policy per type.</p></div>
+        <div class="card"><h4>🔀 Immutability by default</h4><p>Persistent data structures and readonly-by-default styles make value objects safe as keys, since their hash can never drift underneath a collection.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> tooling can generate equals and hashCode, but only you can decide whether a type is a value compared by content or an entity compared by id. Make that call explicitly, honor the contract, and your collections, caches, and dedup logic simply work.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Equality sits in a web of related OOP concepts. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">🏷️</span><h4>Value objects vs entities</h4><p>The distinction that decides your equality policy.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../immutability/"><span class="ico">🧊</span><h4>Immutability</h4><p>Why value objects must be frozen to be safe keys.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../objects-and-classes/"><span class="ico">🧱</span><h4>Objects &amp; classes</h4><p>The references and instances equality reasons about.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../encapsulating-collections/"><span class="ico">🧺</span><h4>Encapsulating collections</h4><p>Sets and maps that lean on hash and equals.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>Equality &amp; Identity · What · Why · How · Diagrams · Flow · Pitfalls · Signals · Cases · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

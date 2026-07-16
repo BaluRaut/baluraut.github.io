@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Coupling &amp; Cohesion Explained - What, How, Why &amp; Examples</title>
-  <meta name="description" content="A deep, visual guide to coupling and cohesion: what they are, the types of coupling, levels of cohesion, the Law of Demeter, how to measure them (afferent/efferent coupling, LCOM), and before/after code that lowers coupling." />
+  <title>Coupling &amp; Cohesion in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to coupling and cohesion in object-oriented design: the types of coupling, the levels of cohesion, how to measure them with afferent/efferent coupling and LCOM, and how the two forces decide how easily a system changes." />
   <link rel="stylesheet" href="../assets/style.css" />
 </head>
 <body>
@@ -19,7 +19,7 @@
         <a href="#diagrams">Diagrams</a>
         <a href="#flow">0-100 Flow</a>
         <a href="#pitfalls">Pitfalls</a>
-        <a href="#metrics">Trade-offs</a>
+        <a href="#signals">Signals</a>
         <a href="#cases">Cases</a>
         <a href="#future">Future</a>
       </div>
@@ -28,18 +28,18 @@
 
   <header class="hero">
     <div class="wrap">
-      <span class="kicker">OOP Foundation</span>
-      <h1>Coupling &amp; cohesion - the two forces that decide changeability</h1>
-      <p class="lede">Every design lives or dies on two questions: how tightly do modules depend on each other, and how focused is each module on one job? <strong>Low coupling</strong> means a change here does not ripple over there. <strong>High cohesion</strong> means everything in a module belongs together. Get both right and code stays soft, testable, and cheap to change.</p>
+      <span class="kicker">OOP Concept</span>
+      <h1>Coupling &amp; Cohesion - the two forces that decide how easily code changes</h1>
+      <p class="lede"><strong>Coupling</strong> is how much one module depends on the internals of another; <strong>cohesion</strong> is how tightly the responsibilities inside a single module belong together. Good design pushes coupling down and cohesion up, so a change stays local instead of rippling across the whole codebase. Get the balance wrong and a checkout flow that should take an hour to change takes a week.</p>
       <div class="cta">
-        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn primary" href="#how">See the code</a>
         <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
       </div>
       <div class="pill-row">
-        <span class="pill">Low coupling</span>
+        <span class="pill">Loose coupling</span>
         <span class="pill">High cohesion</span>
-        <span class="pill">Law of Demeter</span>
-        <span class="pill">LCOM &amp; fan-in/out</span>
+        <span class="pill">Afferent / efferent</span>
+        <span class="pill">LCOM</span>
       </div>
     </div>
   </header>
@@ -49,39 +49,39 @@
     <div class="wrap">
       <div class="eyebrow">01 - What</div>
       <h2>What are coupling and cohesion?</h2>
-      <p class="muted"><strong>Coupling</strong> measures how much one module depends on the internals of another - the strength of the connections between them. <strong>Cohesion</strong> measures how strongly the elements inside a single module belong together toward one purpose. The classic aim, stated by Larry Constable and refined by Meilir Page-Jones, is <em>low coupling and high cohesion</em>: modules that know as little as possible about each other, each doing exactly one well-defined job.</p>
+      <p class="muted"><strong>Coupling</strong> measures the strength of the connections <em>between</em> modules: how much a class needs to know about another class to do its job. <strong>Cohesion</strong> measures how focused a single module is <em>internally</em>: whether its methods and fields all serve one clear responsibility. The classic target is <em>loose coupling, high cohesion</em>. A tightly coupled <code>CheckoutService</code> that reaches into a <code>PaymentGateway</code>'s private fields is fragile; one that talks to a small <code>PaymentProcessor</code> interface is not.</p>
 
       <div class="grid cols-3">
         <div class="card">
-          <h4><span class="ico">🔗</span> Coupling (between)</h4>
-          <p>A property of the connections across module boundaries. The more one module must know about another's data, structure, or control flow, the higher the coupling and the wider a change ripples.</p>
+          <h4><span class="ico">🔗</span> Coupling (between modules)</h4>
+          <p>How dependent one module is on the details of another. Depending on a stable interface is fine; depending on private state, ordering, or global variables is dangerous.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🧲</span> Cohesion (within)</h4>
-          <p>A property of a single module. High cohesion means its responsibilities are related and serve one clear reason to exist. Low cohesion is a grab-bag of unrelated functions.</p>
+          <h4><span class="ico">🧲</span> Cohesion (inside a module)</h4>
+          <p>How well the parts of one module belong together. A cohesive <code>Invoice</code> handles invoice math and nothing else; an incohesive one also emails, logs, and formats HTML.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🎯</span> The goal</h4>
-          <p>Loose between, tight within. That combination localizes change: you touch one focused module, and nothing else needs to move with it.</p>
+          <h4><span class="ico">⚖️</span> The trade-off</h4>
+          <p>Splitting things for cohesion can add coupling if done carelessly. The art is drawing boundaries so each side is cohesive <em>and</em> the seam between them is thin and stable.</p>
         </div>
       </div>
 
-      <h3>Coupling and cohesion at a glance</h3>
+      <h3>The types of coupling, weakest connection last</h3>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Dimension</th><th>Question it answers</th><th>You want</th></tr>
+            <tr><th>Type</th><th>What connects the modules</th><th>How bad</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Coupling</strong></td><td>How much does module A depend on module B's internals?</td><td>As little as possible (loose)</td></tr>
-            <tr><td><strong>Cohesion</strong></td><td>Do the parts of this module belong together?</td><td>As much as possible (high)</td></tr>
-            <tr><td><strong>Directionality</strong></td><td>Does the dependency point at a stable abstraction or a volatile detail?</td><td>Point at abstractions, not concretes</td></tr>
-            <tr><td><strong>Visibility</strong></td><td>What does A need to know to use B?</td><td>Only B's public contract</td></tr>
-            <tr><td><strong>Change blast radius</strong></td><td>If B changes, how many modules must change too?</td><td>Ideally just B</td></tr>
+            <tr><td><strong>Content coupling</strong></td><td>One module reaches into another's internals, private fields, or implementation directly.</td><td>Worst</td></tr>
+            <tr><td><strong>Common coupling</strong></td><td>Modules share global mutable state, so a change in one silently affects the others.</td><td>Very high</td></tr>
+            <tr><td><strong>Control coupling</strong></td><td>One module passes a flag that tells another <em>which branch</em> to run, exposing its logic.</td><td>High</td></tr>
+            <tr><td><strong>Stamp coupling</strong></td><td>A whole record is passed when the callee needs only a couple of its fields.</td><td>Moderate</td></tr>
+            <tr><td><strong>Data coupling</strong></td><td>Only the primitive data actually needed is passed as parameters.</td><td>Best (aim here)</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> coupling and cohesion are two sides of one coin. Splitting responsibilities into focused modules raises cohesion, and doing it well usually lowers coupling at the same time. They are not opposites to balance - both should be optimized together.</div>
+      <div class="callout"><strong>Key mental model:</strong> coupling and cohesion are two ends of the same lever. You reduce coupling by hiding a module's internals behind a narrow interface, and that same act usually raises the module's cohesion because it now owns one job completely. Together they decide your <em>changeability</em>: how far a single edit spreads.</div>
     </div>
   </section>
 
@@ -89,13 +89,13 @@
   <section id="why">
     <div class="wrap">
       <div class="eyebrow">02 - Why</div>
-      <h2>Why coupling and cohesion matter</h2>
-      <p class="muted">These two forces are the strongest predictors of how expensive your software will be to change over its lifetime. Most maintenance pain traces back to a change that rippled further than expected, which is another way of saying coupling was too high.</p>
+      <h2>Why it matters</h2>
+      <p class="muted">Software cost is dominated by change, not by the first write. Coupling and cohesion are the strongest predictors of how expensive that change will be, and they show up in every code review, bug, and estimate.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🛡️ Contains the blast radius</h4><p>Low coupling means a change stays local. Fix a bug or swap an implementation and the edit stops at one module boundary instead of cascading across the codebase.</p></div>
-        <div class="card"><h4>🧪 Makes testing possible</h4><p>A loosely coupled, cohesive unit can be tested in isolation with simple fakes. Tightly coupled code drags in half the system just to instantiate one class.</p></div>
-        <div class="card"><h4>🔁 Enables reuse &amp; replacement</h4><p>A cohesive module with a narrow contract can be lifted into another context or replaced wholesale. Low-cohesion modules are welded to their original setting.</p></div>
-        <div class="card"><h4>🧠 Lowers cognitive load</h4><p>High cohesion means a file does one thing, so you can reason about it without holding the whole system in your head. Fewer surprises, faster onboarding.</p></div>
+        <div class="card"><h4>🎯 Localized change</h4><p>In a loosely coupled, highly cohesive design, adding a new payment method touches one class. In a tangled one, it touches the cart, the order, the receipt, and three tests you did not expect.</p></div>
+        <div class="card"><h4>🧪 Testable in isolation</h4><p>A class that depends on a small interface can be tested with a fake in milliseconds. A class wired to a live gateway and a global session forces slow, flaky, end-to-end tests.</p></div>
+        <div class="card"><h4>🔁 Safe to replace</h4><p>Swap Stripe for Adyen without rewriting checkout, because checkout depends on a <code>PaymentProcessor</code> abstraction, not on Stripe's SDK types leaking through every layer.</p></div>
+        <div class="card"><h4>👥 Parallel teams</h4><p>Thin, stable seams let one team own inventory and another own billing without stepping on each other. High coupling forces constant coordination and merge pain.</p></div>
       </div>
     </div>
   </section>
@@ -104,13 +104,13 @@
   <section id="analogies">
     <div class="wrap">
       <div class="eyebrow">In Plain Terms</div>
-      <h2>Coupling &amp; cohesion explained with analogies</h2>
+      <h2>Coupling &amp; Cohesion explained with analogies</h2>
       <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
       <div class="grid cols-2">
-        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Think of <strong>group projects</strong>. High cohesion is each teammate owning one clear part. Low coupling is agreeing on a shared interface up front so you can each work alone. Tight coupling is when you cannot finish your slide until you see exactly how someone else formatted theirs.</p></div>
-        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Cohesion is the <strong>single responsibility principle</strong> in action - one class, one reason to change. Coupling is your import list: does your class depend on an interface, or does it reach through <code>order.getCustomer().getAddress().getZip()</code> into three other objects?</p></div>
-        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A well-run company has <strong>departments with clear mandates</strong> (cohesion) that talk through defined processes, not by walking into each other's spreadsheets (coupling). Reorganizing one team should not require rewriting another team's playbook.</p></div>
-        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>Wall sockets are the win. Any appliance plugs into the same <strong>standard outlet</strong> (loose coupling via a contract), and each appliance does one job well (cohesion). Imagine instead if your lamp were hard-wired into the fridge's circuit board.</p></div>
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Cohesion is a <strong>well-organized binder</strong> where each tab holds one subject; coupling is how many other binders you must open to finish one assignment. You want each tab self-contained and few cross-references.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Loose coupling is <strong>programming to an interface</strong>: your <code>CheckoutService</code> holds a <code>PaymentProcessor</code>, not a concrete Stripe client. High cohesion is a class whose every method touches the same core state.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of <strong>departments in a company</strong>. A cohesive department owns one function end to end; loose coupling means they coordinate through clear contracts, not by rummaging through each other's desks.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>Wall sockets are <strong>loosely coupled</strong>: any appliance with the right plug works, and you never rewire the house to swap a lamp. A hardwired appliance is tightly coupled, replacing it means an electrician.</p></div>
       </div>
     </div>
   </section>
@@ -119,92 +119,253 @@
   <section id="how">
     <div class="wrap">
       <div class="eyebrow">03 - How</div>
-      <h2>How coupling and cohesion work under the hood</h2>
-      <p class="muted">Coupling comes in graded types, from worst (content) to best (data). Cohesion comes in graded levels, from worst (coincidental) to best (functional). Design is the act of moving both toward the good end of each scale.</p>
+      <h2>How to reduce coupling and raise cohesion</h2>
+      <p class="muted">The move is almost always the same: find the concrete dependency, hide it behind a small interface the caller owns, and pass in only the data the callee truly needs. Below, a checkout flow goes from tightly coupled to loosely coupled.</p>
 
       <div class="grid cols-2">
         <div class="card">
-          <h4><span class="ico">📉</span> Types of coupling (worst to best)</h4>
-          <p><strong>Content</strong>: A reaches into B's private internals. <strong>Common</strong>: shared global/mutable state. <strong>Control</strong>: A passes a flag telling B what to do. <strong>Stamp</strong>: A passes a whole record when B needs one field. <strong>Data</strong>: A passes only the simple values B needs. Aim for data coupling.</p>
+          <h4><span class="ico">🧱</span> Depend on abstractions</h4>
+          <p>Have <code>CheckoutService</code> hold a <code>PaymentProcessor</code> interface instead of <code>new StripeClient()</code>. The concrete gateway is injected, so checkout no longer imports Stripe's SDK at all.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">📈</span> Levels of cohesion (worst to best)</h4>
-          <p><strong>Coincidental</strong>: parts unrelated. <strong>Logical</strong>: grouped by category. <strong>Temporal</strong>: run at the same time. <strong>Procedural</strong>/<strong>Communicational</strong>: share a flow or data. <strong>Sequential</strong>: output feeds the next. <strong>Functional</strong>: all parts serve one task. Aim for functional cohesion.</p>
+          <h4><span class="ico">✂️</span> Split by responsibility</h4>
+          <p>Pull pricing, payment, and receipts into cohesive classes. Each owns one job, so a tax-rule change lands in <code>PricingService</code> alone and never touches payment code.</p>
         </div>
       </div>
 
-      <h3>The structure: dependency direction is everything</h3>
+      <h3>The classes and their collaborators</h3>
       <div class="diagram">
-        <div class="cap">Structure - depending on an abstraction inverts and loosens the coupling</div>
+        <div class="cap">Loosely coupled checkout: the service depends on a narrow PaymentProcessor interface</div>
         <pre class="mermaid">
 classDiagram
-    class OrderService {
-        +place(order)
+    class CheckoutService {
+      -PaymentProcessor processor
+      -OrderRepository orders
+      +checkout(cart, card) Receipt
     }
-    class Notifier {
-        &lt;&lt;interface&gt;&gt;
-        +send(msg)
+    class PaymentProcessor {
+      &lt;&lt;interface&gt;&gt;
+      +charge(amountCents, token) Payment
     }
-    class EmailNotifier {
-        +send(msg)
+    class StripeProcessor {
+      +charge(amountCents, token) Payment
     }
-    class SmsNotifier {
-        +send(msg)
+    class AdyenProcessor {
+      +charge(amountCents, token) Payment
     }
-    OrderService --> Notifier : depends on abstraction
-    Notifier <|.. EmailNotifier : implements
-    Notifier <|.. SmsNotifier : implements
+    class OrderRepository {
+      &lt;&lt;interface&gt;&gt;
+      +save(order) Order
+    }
+    CheckoutService o-- PaymentProcessor
+    CheckoutService o-- OrderRepository
+    PaymentProcessor &lt;|-- StripeProcessor
+    PaymentProcessor &lt;|-- AdyenProcessor
         </pre>
       </div>
 
-      <h3>Before and after: cutting coupling in Java</h3>
-      <pre><code>// BEFORE - tight coupling + low cohesion
-// OrderService reaches into concrete details (content/stamp coupling)
-// and mixes ordering logic with delivery mechanics (low cohesion).
-class OrderService {
-    private final SmtpClient smtp = new SmtpClient("smtp.acme.com", 587);
-
-    void placeOrder(Order order) {
-        // ...persist the order...
-        // Digs THROUGH the object graph - a Law of Demeter violation:
-        String email = order.getCustomer().getContact().getEmailAddress();
-        String host  = smtp.getConfig().getConnection().getHost(); // train wreck
-        // control coupling: a boolean flag decides behavior inside send()
-        smtp.send(email, "Order placed", true);
-    }
+      <h3>Before: tightly coupled checkout</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Tightly coupled: checkout builds its own Stripe client (content + control coupling)
+class StripeClient {
+  chargeCard(cents: number, token: string, live: boolean) {
+    // reaches a real gateway; the `live` flag selects a branch (control coupling)
+    return { id: "ch_1", ok: true, mode: live ? "live" : "test" };
+  }
 }
 
-// AFTER - data coupling + high cohesion
-// OrderService depends on a narrow abstraction and passes only what is needed.
-interface Notifier {
-    void notifyOrderPlaced(String recipient, String orderRef);
+class CheckoutService {
+  private stripe = new StripeClient(); // hard dependency on a concrete class
+
+  checkout(cart: { items: { priceCents: number }[] }, token: string) {
+    const total = cart.items.reduce((s, i) => s + i.priceCents, 0);
+    // passes a boolean flag that steers the callee's logic (control coupling)
+    const charge = this.stripe.chargeCard(total, token, true);
+    if (!charge.ok) throw new Error("payment failed");
+    return { paid: total, chargeId: charge.id };
+  }
 }
 
-class EmailNotifier implements Notifier {           // one job: send email
-    private final MailGateway mail;
-    EmailNotifier(MailGateway mail) { this.mail = mail; }
+const receipt = new CheckoutService().checkout(
+  { items: [{ priceCents: 1999 }, { priceCents: 500 }] },
+  "tok_visa",
+);
+console.log(receipt); // { paid: 2499, chargeId: "ch_1" }</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Tightly coupled: checkout builds its own Stripe client (content + control coupling)
+class StripeClient:
+    def charge_card(self, cents, token, live):
+        # reaches a real gateway; the `live` flag selects a branch (control coupling)
+        return {"id": "ch_1", "ok": True, "mode": "live" if live else "test"}
 
-    public void notifyOrderPlaced(String recipient, String orderRef) {
-        mail.send(recipient, "Order " + orderRef + " placed");
-    }
+
+class CheckoutService:
+    def __init__(self):
+        self._stripe = StripeClient()  # hard dependency on a concrete class
+
+    def checkout(self, cart, token):
+        total = sum(item["price_cents"] for item in cart["items"])
+        # passes a boolean flag that steers the callee's logic (control coupling)
+        charge = self._stripe.charge_card(total, token, True)
+        if not charge["ok"]:
+            raise RuntimeError("payment failed")
+        return {"paid": total, "charge_id": charge["id"]}
+
+
+receipt = CheckoutService().checkout(
+    {"items": [{"price_cents": 1999}, {"price_cents": 500}]},
+    "tok_visa",
+)
+print(receipt)  # {'paid': 2499, 'charge_id': 'ch_1'}</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Tightly coupled: checkout builds its own Stripe client (content + control coupling)
+class StripeClient
+  def charge_card(cents, token, live)
+    # reaches a real gateway; the `live` flag selects a branch (control coupling)
+    { id: "ch_1", ok: true, mode: live ? "live" : "test" }
+  end
+end
+
+class CheckoutService
+  def initialize
+    @stripe = StripeClient.new # hard dependency on a concrete class
+  end
+
+  def checkout(cart, token)
+    total = cart[:items].sum { |item| item[:price_cents] }
+    # passes a boolean flag that steers the callee's logic (control coupling)
+    charge = @stripe.charge_card(total, token, true)
+    raise "payment failed" unless charge[:ok]
+
+    { paid: total, charge_id: charge[:id] }
+  end
+end
+
+receipt = CheckoutService.new.checkout(
+  { items: [{ price_cents: 1999 }, { price_cents: 500 }] },
+  "tok_visa"
+)
+puts receipt.inspect # {:paid=&gt;2499, :charge_id=&gt;"ch_1"}</code></pre>
+      </div>
+
+      <h3>After: loosely coupled with an injected processor</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Loosely coupled: depend on a narrow interface, pass only the data needed (data coupling)
+interface PaymentProcessor {
+  charge(amountCents: number, token: string): { id: string; ok: boolean };
 }
 
-class OrderService {                                 // one job: place orders
-    private final OrderRepository repo;
-    private final Notifier notifier;                 // injected abstraction
+class StripeProcessor implements PaymentProcessor {
+  charge(amountCents: number, token: string) {
+    return { id: "ch_1", ok: amountCents &gt; 0 };
+  }
+}
 
-    OrderService(OrderRepository repo, Notifier notifier) {
-        this.repo = repo;
-        this.notifier = notifier;
-    }
+// Highly cohesive: this class only prices a cart, nothing else
+class PricingService {
+  totalCents(items: { priceCents: number }[]): number {
+    return items.reduce((sum, i) => sum + i.priceCents, 0);
+  }
+}
 
-    void placeOrder(Order order) {
-        repo.save(order);
-        // Tell, don't ask: the order exposes exactly what callers need.
-        notifier.notifyOrderPlaced(order.recipientEmail(), order.reference());
-    }
-}</code></pre>
-      <p class="muted">The after version depends only on the <code>Notifier</code> contract and passes plain values, not object graphs. Swapping email for SMS, or faking the notifier in a test, now touches nothing inside <code>OrderService</code>. That is data coupling plus functional cohesion working together.</p>
+class CheckoutService {
+  constructor(
+    private readonly processor: PaymentProcessor, // injected abstraction
+    private readonly pricing: PricingService,
+  ) {}
+
+  checkout(items: { priceCents: number }[], token: string) {
+    const total = this.pricing.totalCents(items);
+    const charge = this.processor.charge(total, token); // no flags, no globals
+    if (!charge.ok) throw new Error("payment failed");
+    return { paid: total, chargeId: charge.id };
+  }
+}
+
+// wiring happens once, at the edge
+const service = new CheckoutService(new StripeProcessor(), new PricingService());
+const receipt = service.checkout([{ priceCents: 1999 }, { priceCents: 500 }], "tok_visa");
+console.log(receipt); // { paid: 2499, chargeId: "ch_1" }</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Loosely coupled: depend on a narrow interface, pass only the data needed (data coupling)
+from typing import Protocol
+
+
+class PaymentProcessor(Protocol):
+    def charge(self, amount_cents: int, token: str) -> dict: ...
+
+
+class StripeProcessor:
+    def charge(self, amount_cents: int, token: str) -> dict:
+        return {"id": "ch_1", "ok": amount_cents &gt; 0}
+
+
+# Highly cohesive: this class only prices a cart, nothing else
+class PricingService:
+    def total_cents(self, items) -> int:
+        return sum(item["price_cents"] for item in items)
+
+
+class CheckoutService:
+    def __init__(self, processor: PaymentProcessor, pricing: PricingService):
+        self._processor = processor  # injected abstraction
+        self._pricing = pricing
+
+    def checkout(self, items, token):
+        total = self._pricing.total_cents(items)
+        charge = self._processor.charge(total, token)  # no flags, no globals
+        if not charge["ok"]:
+            raise RuntimeError("payment failed")
+        return {"paid": total, "charge_id": charge["id"]}
+
+
+# wiring happens once, at the edge
+service = CheckoutService(StripeProcessor(), PricingService())
+receipt = service.checkout([{"price_cents": 1999}, {"price_cents": 500}], "tok_visa")
+print(receipt)  # {'paid': 2499, 'charge_id': 'ch_1'}</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Loosely coupled: depend on a narrow interface (duck type), pass only the data needed
+class StripeProcessor
+  # honors the informal PaymentProcessor contract: charge(amount_cents, token)
+  def charge(amount_cents, token)
+    { id: "ch_1", ok: amount_cents &gt; 0 }
+  end
+end
+
+# Highly cohesive: this class only prices a cart, nothing else
+class PricingService
+  def total_cents(items)
+    items.sum { |item| item[:price_cents] }
+  end
+end
+
+class CheckoutService
+  def initialize(processor:, pricing:)
+    @processor = processor # injected abstraction
+    @pricing = pricing
+  end
+
+  def checkout(items, token)
+    total = @pricing.total_cents(items)
+    charge = @processor.charge(total, token) # no flags, no globals
+    raise "payment failed" unless charge[:ok]
+
+    { paid: total, charge_id: charge[:id] }
+  end
+end
+
+# wiring happens once, at the edge
+service = CheckoutService.new(processor: StripeProcessor.new, pricing: PricingService.new)
+receipt = service.checkout([{ price_cents: 1999 }, { price_cents: 500 }], "tok_visa")
+puts receipt.inspect # {:paid=&gt;2499, :charge_id=&gt;"ch_1"}</code></pre>
+      </div>
+      <p class="muted">The two versions behave identically, but the second injects a <code>PaymentProcessor</code> and pulls pricing into its own cohesive class. Now a new gateway is a new implementation, a tax change lives in one place, and every collaborator is a fake away from a fast unit test. That is coupling and cohesion working together to buy changeability.</p>
     </div>
   </section>
 
@@ -213,61 +374,67 @@ class OrderService {                                 // one job: place orders
     <div class="wrap">
       <div class="eyebrow">04 - Sequence Diagrams</div>
       <h2>Detailed sequence diagrams</h2>
-      <p class="muted">Three views: a tightly coupled call that reaches through objects, the same call after respecting the Law of Demeter, and how dependency injection loosens the seam at construction time.</p>
+      <p class="muted">Three views of the same checkout: the tightly coupled call chain, the loosely coupled one with injection, and swapping the payment provider without touching checkout.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 - Tight coupling: reaching through the object graph (a train wreck)</div>
+        <div class="cap">Diagram 1 - Tightly coupled: checkout owns and drives a concrete Stripe client</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant OS as 🧩 OrderService
-    participant O as 📦 Order
-    participant C as 👤 Customer
-    participant Ct as 📇 Contact
+    participant U as 👤 Buyer
+    participant CO as 🛒 CheckoutService
+    participant SC as 💳 StripeClient
 
-    OS->>O: getCustomer()
-    O-->>OS: customer
-    OS->>C: getContact()
-    C-->>OS: contact
-    OS->>Ct: getEmailAddress()
-    Ct-->>OS: email
-    Note over OS,Ct: OrderService now depends on 3 hidden classes
+    U->>CO: checkout(cart, token)
+    CO->>CO: build new StripeClient()
+    CO->>CO: sum item prices inline
+    CO->>SC: chargeCard(total, token, live=true)
+    Note over CO,SC: boolean flag steers logic (control coupling)
+    SC-->>CO: charge result
+    CO-->>U: receipt or thrown error
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 - Loose coupling: tell, don't ask (one hop, Law of Demeter honored)</div>
+        <div class="cap">Diagram 2 - Loosely coupled: dependencies injected, pricing delegated</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant OS as 🧩 OrderService
-    participant O as 📦 Order
-    participant N as 📨 Notifier
+    participant U as 👤 Buyer
+    participant CO as 🛒 CheckoutService
+    participant PR as 🧮 PricingService
+    participant PP as 🔌 PaymentProcessor
 
-    OS->>O: recipientEmail()
-    O-->>OS: email
-    OS->>N: notifyOrderPlaced(email, ref)
-    N-->>OS: done
-    Note over OS,N: OrderService talks only to direct collaborators
+    U->>CO: checkout(items, token)
+    CO->>PR: totalCents(items)
+    PR-->>CO: total
+    CO->>PP: charge(total, token)
+    Note over CO,PP: depends on interface, passes only data
+    alt payment ok
+        PP-->>CO: payment id
+        CO-->>U: receipt
+    else declined
+        PP-->>CO: not ok
+        CO-->>U: payment failed
+    end
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 3 - Dependency injection: the seam that lets you swap or fake behavior</div>
+        <div class="cap">Diagram 3 - Swapping the provider without editing CheckoutService</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant Main as 🏗️ Composition root
-    participant OS as 🧩 OrderService
-    participant N as 📨 Notifier impl
+    participant Main as 🧩 Composition root
+    participant CO as 🛒 CheckoutService
+    participant Adyen as 🏦 AdyenProcessor
 
-    Main->>N: new EmailNotifier(mailGateway)
-    Main->>OS: new OrderService(repo, notifier)
-    Note over Main,OS: dependencies wired from outside
-    OS->>N: notifyOrderPlaced(email, ref)
-    alt swap in a test
-        Main->>OS: new OrderService(repo, fakeNotifier)
-        OS->>N: no real email sent
+    Main->>Adyen: new AdyenProcessor()
+    Main->>CO: new CheckoutService(adyen, pricing)
+    Note over Main,CO: only wiring changes, checkout code is untouched
+    loop each order
+        CO->>Adyen: charge(total, token)
+        Adyen-->>CO: payment id
     end
         </pre>
       </div>
@@ -279,20 +446,20 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">05 - Step by Step</div>
       <h2>The 0 → 100 flow</h2>
-      <p class="muted">From a tangled class to a loosely coupled, highly cohesive design - the refactor journey in order.</p>
+      <p class="muted">From a tangled checkout to a loosely coupled, highly cohesive one, and how to measure the improvement along the way.</p>
 
       <div class="steps">
-        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the pain</h4><p>A small change forces edits in five files, or a unit test needs a database and a mail server to run. That friction is your coupling and cohesion signal.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Map</span><h4>Draw the dependencies</h4><p>List what each class imports and calls. Look for classes that reach through others (<code>a.getB().getC()</code>) and classes doing several unrelated jobs.</p></div></div>
-        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Classify</span><h4>Name the coupling type</h4><p>Is it content, common, control, stamp, or data coupling? Naming the type tells you how far the current design sits from the good end of the scale.</p></div></div>
-        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Classify</span><h4>Rate the cohesion level</h4><p>Does the module have one reason to exist (functional), or is it a coincidental pile of helpers? Low cohesion is where you split next.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Split</span><h4>Separate responsibilities</h4><p>Pull unrelated jobs into their own cohesive modules. One class saves orders, another sends notifications - each with a single reason to change.</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Abstract</span><h4>Introduce an interface</h4><p>Define a narrow contract (<code>Notifier</code>) that captures only what the caller needs. Depend on the interface, not the concrete class.</p></div></div>
-        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Invert</span><h4>Inject the dependency</h4><p>Stop constructing collaborators inside the class. Pass them in through the constructor so the caller decides which implementation to wire up.</p></div></div>
-        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Demeter</span><h4>Apply tell, don't ask</h4><p>Replace object-graph digging with a single method call that returns exactly what you need, so each object talks only to its direct neighbors.</p></div></div>
-        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Trim</span><h4>Pass data, not records</h4><p>Where a method took a whole object to use one field, pass the field. This turns stamp coupling into data coupling and shrinks the contract.</p></div></div>
-        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Measure</span><h4>Check the numbers</h4><p>Recompute afferent (fan-in) and efferent (fan-out) coupling and LCOM. Falling LCOM and lower fan-out confirm the refactor actually helped.</p></div></div>
-        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Verify</span><h4>Test in isolation</h4><p>Each module now tests alone with a simple fake, and changes stay local. That is the payoff: soft, changeable code you can trust.</p></div></div>
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Smell</span><h4>Feel the pain</h4><p>A one-line pricing change breaks payment tests. That ripple is the signal that coupling is high and cohesion is low.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Map</span><h4>Draw the dependencies</h4><p>List who calls whom. Note every <code>new ConcreteClass()</code>, shared global, and boolean flag passed between modules.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Classify</span><h4>Name the coupling</h4><p>Tag each edge: content, common, control, stamp, or data. Anything worse than data coupling is a candidate to fix.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Measure</span><h4>Baseline the numbers</h4><p>Compute afferent (Ca) and efferent (Ce) coupling per module and LCOM per class so you can prove the refactor helped.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Extract</span><h4>Give each job a home</h4><p>Pull pricing, payment, and receipts into separate classes. Each ends up cohesive: its methods share the same state.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Abstract</span><h4>Introduce an interface</h4><p>Define <code>PaymentProcessor</code> that <code>CheckoutService</code> owns, so checkout stops importing the gateway SDK.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Invert</span><h4>Inject the dependency</h4><p>Pass the concrete processor into the constructor at the composition root instead of newing it up inside checkout.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Flatten</span><h4>Kill the control flags</h4><p>Replace boolean parameters that select behavior with distinct methods or separate implementations, removing control coupling.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Slim</span><h4>Pass only what is used</h4><p>Where a whole cart record was handed over for two fields, pass those fields. Stamp coupling becomes data coupling.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Fake the seams</h4><p>Write fast unit tests against fakes of each interface. The ease of faking is direct evidence coupling dropped.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Verify</span><h4>Re-measure and lock it in</h4><p>Recompute LCOM and Ce; they should fall. Add a fitness function so the numbers cannot silently creep back up.</p></div></div>
       </div>
     </div>
   </section>
@@ -302,40 +469,40 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">Common Pitfalls</div>
       <h2>Pitfalls &amp; anti-patterns</h2>
-      <p class="muted">Coupling and cohesion problems hide in plain sight. These are the recurring smells.</p>
+      <p class="muted">Most coupling damage is self-inflicted by good intentions applied without measurement. These are the usual traps.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🚂 Train wrecks</h4><p><code>order.getCustomer().getAddress().getCity()</code> chains reach through the object graph and couple you to every class in the path. A change to any link breaks the caller. Ask the first object for what you actually need.</p></div>
-        <div class="card"><h4>🌐 Global mutable state</h4><p>Singletons and shared static variables create common coupling: anything can read and write them, so behavior depends on hidden order of execution and nothing can be tested in isolation.</p></div>
-        <div class="card"><h4>🚩 Boolean flag parameters</h4><p><code>send(msg, true)</code> is control coupling: the caller steers the callee's internal branching. Split it into two clear methods so intent is explicit and the callee owns its logic.</p></div>
-        <div class="card"><h4>🗑️ God objects</h4><p>A class that touches everything has near-zero cohesion and maximum coupling. Every feature edits it, so every change risks every feature. Break it along its distinct responsibilities.</p></div>
-        <div class="card"><h4>🎈 Over-abstraction</h4><p>Loose coupling taken too far - an interface per class, indirection everywhere - trades one kind of pain for another. Add a seam when you have a real second implementation or a testing need, not by reflex.</p></div>
-        <div class="card"><h4>🧰 Utility grab-bags</h4><p>A <code>Utils</code> or <code>Helpers</code> class collecting unrelated static methods is textbook coincidental cohesion. Nobody can predict what lives there, and everything imports it. Move each method to where it belongs.</p></div>
+        <div class="card"><h4>🕳️ Reaching into internals</h4><p>Content coupling: <code>checkout</code> reads <code>gateway._session</code> or mutates another object's private fields. One rename in the callee and the caller explodes. Talk through public methods only.</p></div>
+        <div class="card"><h4>🌍 Shared global state</h4><p>Common coupling: a global <code>currentCart</code> or singleton config that many modules read and write. Order of execution becomes load-bearing and bugs turn spooky and non-local.</p></div>
+        <div class="card"><h4>🚩 Flag arguments</h4><p>Control coupling: <code>charge(amount, token, isRefund)</code> where the flag picks a branch. The caller now depends on the callee's control flow. Split into <code>charge</code> and <code>refund</code>.</p></div>
+        <div class="card"><h4>📦 Passing the whole record</h4><p>Stamp coupling: handing an entire <code>Order</code> to a function that needs only <code>total</code> and <code>currency</code>. It couples you to the record's shape and hides the real inputs.</p></div>
+        <div class="card"><h4>🧺 The god class</h4><p>Low cohesion: a <code>CheckoutService</code> that prices, charges, emails, logs, and renders HTML. Its LCOM is sky-high because no two methods share the same state. Split by responsibility.</p></div>
+        <div class="card"><h4>🎭 Interfaces that leak</h4><p>An abstraction that mirrors one vendor's SDK one-to-one is fake decoupling. If the interface exposes Stripe-specific types, swapping providers still rewrites checkout.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- METRICS -->
-  <section id="metrics">
+  <!-- SIGNALS -->
+  <section id="signals">
     <div class="wrap">
-      <div class="eyebrow">Trade-offs</div>
-      <h2>Trade-offs &amp; when to use</h2>
-      <p class="muted">Lowering coupling and raising cohesion is almost always right, but the mechanisms have costs worth naming. You can also measure both directly.</p>
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot manage what you do not measure. These signals turn "this feels tangled" into numbers you can track over time.</p>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Aspect</th><th>Detail</th></tr>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Pros</strong></td><td>Local changes, isolated testing, safe reuse and replacement, lower cognitive load, parallel team work.</td></tr>
-            <tr><td><strong>Cons</strong></td><td>Interfaces and injection add indirection; overdone, they scatter logic and make flow harder to follow.</td></tr>
-            <tr><td><strong>Use when</strong></td><td>A module has more than one reason to change, a dependency is volatile, or you need to test or swap an implementation.</td></tr>
-            <tr><td><strong>Avoid when</strong></td><td>The abstraction has exactly one implementation forever and no test seam - premature indirection is its own coupling to a bad guess.</td></tr>
-            <tr><td><strong>How to measure</strong></td><td><strong>Efferent (Ce, fan-out)</strong>: classes this module depends on. <strong>Afferent (Ca, fan-in)</strong>: classes that depend on it. <strong>Instability I = Ce / (Ce + Ca)</strong>. <strong>LCOM</strong>: lack of cohesion of methods - low is cohesive.</td></tr>
-            <tr><td><strong>Related</strong></td><td>Single Responsibility &amp; Dependency Inversion (SOLID), Law of Demeter, Facade, Mediator, dependency injection.</td></tr>
+            <tr><td><strong>Afferent coupling (Ca)</strong></td><td>How many other modules depend on this one. High Ca means it is a stable core, so changing it is risky and expensive.</td></tr>
+            <tr><td><strong>Efferent coupling (Ce)</strong></td><td>How many modules this one depends on. High Ce means it is fragile, easily broken when its many collaborators change.</td></tr>
+            <tr><td><strong>Instability (I = Ce / (Ca + Ce))</strong></td><td>Near 1 means volatile and dependent; near 0 means depended-upon and stable. Details should be unstable, abstractions stable.</td></tr>
+            <tr><td><strong>LCOM (lack of cohesion of methods)</strong></td><td>How little the methods of a class share fields. A high LCOM flags a class doing several unrelated jobs that should be split.</td></tr>
+            <tr><td><strong>Fan-in / fan-out per method</strong></td><td>Local coupling at the call level. A method that calls ten different objects is a coordination hotspot and a change magnet.</td></tr>
+            <tr><td><strong>Change coupling (from git history)</strong></td><td>Files that keep changing together in commits are coupled in practice even if the code looks independent. It reveals hidden seams.</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Rule of thumb:</strong> high fan-in with low fan-out (stable, depended-upon) is fine for core abstractions; high fan-out (depends on many things) plus high LCOM (does many unrelated things) is the danger zone. Refactor those first.</div>
+      <div class="callout"><strong>Rule of thumb:</strong> aim for low efferent coupling and low LCOM on the classes you change most. If a class has both high Ca (many depend on it) and high instability, stabilize it behind an interface before it becomes a bottleneck the whole system inherits.</div>
     </div>
   </section>
 
@@ -344,39 +511,39 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">06 - Case Studies</div>
       <h2>Real-world case studies</h2>
-      <p class="muted">Three situations where getting coupling and cohesion right changed the outcome.</p>
+      <p class="muted">Three production-shaped situations where coupling and cohesion decided the outcome.</p>
 
       <div class="case">
-        <div class="hd"><span class="badge">💳</span><div><h3>1 · Swapping a payment provider without a rewrite</h3><div class="role">Pattern: depend on an abstraction, inject the concrete</div></div></div>
-        <p class="muted">A checkout was hard-wired to one payment SDK, its calls sprinkled across order, refund, and reporting code.</p>
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Checkout that outgrew a single payment provider</h3><div class="role">Pattern: injected PaymentProcessor abstraction</div></div></div>
+        <p class="muted">A commerce team hardcoded Stripe throughout checkout, then had to add a regional gateway for a new market and could not without touching dozens of files.</p>
         <ul>
-          <li>Introduced a <code>PaymentGateway</code> interface capturing charge, refund, and status only.</li>
-          <li>Moved the vendor SDK behind one adapter implementing that interface.</li>
-          <li>Injected the gateway everywhere the SDK used to be called directly.</li>
+          <li>Every layer imported Stripe types, so the gateway was content-coupled into pricing, orders, and receipts.</li>
+          <li>They introduced a <code>PaymentProcessor</code> interface owned by checkout and injected the concrete client at the edge.</li>
+          <li>The regional gateway shipped as a new implementation with no change to checkout logic or its tests.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> adding a second provider became a single new adapter class, and the change touched no business logic - coupling dropped from many-to-one to one narrow seam.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Adding a provider went from a multi-week cross-cutting change to a single new class, and payment code became unit-testable with a fake.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">🧾</span><div><h3>2 · Breaking up a 4,000-line God service</h3><div class="role">Pattern: raise cohesion by splitting responsibilities</div></div></div>
-        <p class="muted">One <code>AccountManager</code> handled auth, billing, email, and reporting. Every feature edited it and LCOM was sky-high.</p>
+        <div class="hd"><span class="badge">📦</span><div><h3>2 · Order service tangled with inventory via shared state</h3><div class="role">Pattern: removing common coupling</div></div></div>
+        <p class="muted">An order pipeline and an inventory job both read and wrote a shared in-memory stock map, so reservations depended on execution order and produced oversells.</p>
         <ul>
-          <li>Grouped methods by the data they touched to reveal four cohesive clusters.</li>
-          <li>Extracted each cluster into its own service with a single responsibility.</li>
-          <li>Replaced shared fields with explicit parameters, killing common coupling.</li>
+          <li>Common coupling on the global map made bugs non-local and impossible to reproduce reliably.</li>
+          <li>They replaced the shared map with an <code>InventoryLedger</code> exposing <code>reserve</code> and <code>release</code> methods.</li>
+          <li>Order and fulfillment now coordinate through explicit calls, not by mutating shared memory.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> merge conflicts on the file vanished, each service got focused tests, and a billing change no longer risked breaking login.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Oversell defects disappeared, and each service could be reasoned about and tested on its own, since the seam was an explicit contract.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">🕹️</span><div><h3>3 · Taming widget spaghetti with a mediator</h3><div class="role">Pattern: Law of Demeter plus a coordinator</div></div></div>
-        <p class="muted">A form's fields each reached into every other field to enable, disable, and validate - a fully connected mesh.</p>
+        <div class="hd"><span class="badge">📣</span><div><h3>3 · A notification god class split for cohesion</h3><div class="role">Pattern: raising cohesion, lowering LCOM</div></div></div>
+        <p class="muted">A single <code>Notifier</code> formatted emails, sent SMS, wrote push payloads, and logged, so any channel change risked breaking the others.</p>
         <ul>
-          <li>Removed direct field-to-field references so no widget knew another's internals.</li>
-          <li>Routed all cross-widget rules through a single mediator object.</li>
-          <li>Each widget now only reports events and reacts to the mediator.</li>
+          <li>Static analysis showed a very high LCOM: no two methods shared the same fields.</li>
+          <li>They split it into <code>EmailChannel</code>, <code>SmsChannel</code>, and <code>PushChannel</code> behind a small <code>Channel</code> interface.</li>
+          <li>A thin <code>NotificationService</code> now selects a channel and delegates, staying cohesive and small.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> adding a field became a one-place change in the mediator instead of edits across every sibling widget - the coupling graph collapsed from N-by-N to a hub.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Each channel evolved independently, LCOM dropped sharply, and adding WhatsApp support meant one new cohesive class rather than edits across a monolith.</div>
       </div>
     </div>
   </section>
@@ -386,16 +553,16 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">07 - Relevance</div>
       <h2>Modern relevance</h2>
-      <p class="muted">Coupling and cohesion predate objects and outlast every framework. At today's scale they matter more, not less.</p>
+      <p class="muted">Coupling and cohesion are older than object orientation, yet every modern architecture is really a bet on where to draw thin, cohesive seams.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🧱 Microservice boundaries</h4><p>Service boundaries are just coupling and cohesion at architecture scale. A chatty, shared-database split is a distributed monolith - the same forces, higher stakes.</p></div>
-        <div class="card"><h4>📦 Modular monoliths</h4><p>Teams increasingly keep one deployable but enforce module boundaries inside it. Low coupling between modules buys the option to extract a service later.</p></div>
-        <div class="card"><h4>🤖 AI-assisted refactoring</h4><p>Tools now surface fan-in/fan-out and LCOM automatically and suggest extractions. The metrics finally guide everyday work, not just audits.</p></div>
-        <div class="card"><h4>🧪 Test speed as a signal</h4><p>Fast, isolated tests are the runtime proof of low coupling. Slow tests that need the whole system are a coupling smell you can feel in CI.</p></div>
-        <div class="card"><h4>🔀 Event-driven designs</h4><p>Publishing events instead of calling neighbors directly is loose coupling by default - producers and consumers evolve without knowing each other.</p></div>
-        <div class="card"><h4>🧭 Domain-driven design</h4><p>Bounded contexts formalize high cohesion inside a boundary and loose coupling across boundaries, giving the two forces a shared vocabulary.</p></div>
+        <div class="card"><h4>🧩 Microservice boundaries</h4><p>A service boundary is just a coupling decision at network scale. High change-coupling between two services is the clearest sign they should be one.</p></div>
+        <div class="card"><h4>🛡️ Modular monoliths</h4><p>Teams keep the monolith but enforce cohesive modules with explicit interfaces, getting loose coupling without distributed-systems pain.</p></div>
+        <div class="card"><h4>📐 Fitness functions</h4><p>Architecture tests fail the build when a forbidden dependency appears, keeping efferent coupling and LCOM from drifting over time.</p></div>
+        <div class="card"><h4>🤖 AI-assisted refactoring</h4><p>Tools now suggest extract-class and dependency-injection moves by reading LCOM and change-coupling straight from the repository.</p></div>
+        <div class="card"><h4>🔍 Observability of change</h4><p>Mining git history for files that change together surfaces hidden coupling that static analysis alone misses.</p></div>
+        <div class="card"><h4>🧪 Contract testing</h4><p>Consumer-driven contracts let loosely coupled services evolve independently while proving the thin seam between them still holds.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> low coupling and high cohesion are the timeless levers for changeable software. Optimize both together, measure them with fan-in/fan-out and LCOM, and the code stays soft no matter how the tools change.</div>
+      <div class="callout"><strong>Bottom line:</strong> loose coupling and high cohesion are the timeless levers of changeability. Whatever the stack or scale, the winning move is the same: hide internals behind narrow interfaces, give each module one job, and measure the seams so they stay thin.</div>
     </div>
   </section>
 
@@ -404,12 +571,12 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">Keep Exploring</div>
       <h2>Related topics</h2>
-      <p class="muted">Coupling and cohesion underpin most other design ideas. These pair naturally with it.</p>
+      <p class="muted">Coupling and cohesion sit at the center of a web of design principles. These pair naturally with it.</p>
       <div class="topic-grid">
-        <a class="topic-card" href="../solid/"><span class="ico">🧯</span><h4>SOLID principles</h4><p>SRP and DIP are coupling and cohesion made concrete.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../oop-core/"><span class="ico">🧬</span><h4>OOP core concepts</h4><p>Encapsulation is how objects keep coupling low.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../mediator/"><span class="ico">🕹️</span><h4>Mediator pattern</h4><p>Replaces a mesh of dependencies with one hub.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../facade/"><span class="ico">🚪</span><h4>Facade pattern</h4><p>A narrow front that hides a subsystem's coupling.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single Responsibility</h4><p>The principle that drives cohesion up, one reason to change per class.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../law-of-demeter/"><span class="ico">🤝</span><h4>Law of Demeter</h4><p>Talk to friends, not strangers, to keep call chains loosely coupled.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../dependency-injection/"><span class="ico">💉</span><h4>Dependency Injection</h4><p>The mechanism for inverting dependencies and injecting abstractions.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../interface-segregation/"><span class="ico">🔪</span><h4>Interface Segregation</h4><p>Narrow interfaces so clients depend only on what they actually use.</p><span class="go">Read →</span></a>
       </div>
     </div>
   </section>
@@ -417,7 +584,7 @@ sequenceDiagram
   <footer>
     <div class="wrap">
       <p><a href="../">← Back to the Patterns hub</a></p>
-      <p>A visual guide to Coupling &amp; Cohesion · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+      <p>A visual guide to Coupling &amp; Cohesion · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
     </div>
   </footer>
 

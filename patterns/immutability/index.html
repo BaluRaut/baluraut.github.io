@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Immutability in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to Immutability in OOP: objects that never change after construction, thread safety, safe sharing and caching, functional updates, and readonly or frozen fields in TypeScript, Python, and Ruby." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Immutability - objects that never change after construction</h1>
+      <p class="lede">An immutable object is fully built by its constructor and never mutated again. Every field is set once and validated up front, so the object is always in a valid state. When you need a variant, you don't edit it - you compute a <strong>new</strong> object and leave the original untouched.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Readonly fields</span>
+        <span class="pill">Functional updates</span>
+        <span class="pill">Thread safety</span>
+        <span class="pill">Safe sharing</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is immutability?</h2>
+      <p class="muted">An <strong>immutable object</strong> exposes no operation that changes its observable state. Money, a date range, or an application config is created once, checked once, and from then on it is read-only. Callers that want a different value ask a method for a <em>fresh</em> object; the receiver is never rewritten in place. That single rule removes a whole class of bugs and unlocks safe sharing.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🧱</span> Set once, at construction</h4>
+          <p>All fields are assigned in the constructor and validated there. A <code>Money</code> with a negative minor-unit amount or mismatched currency simply cannot exist.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔒</span> No mutators</h4>
+          <p>There are no setters and no methods that reassign fields. The public surface is queries and pure transformations that return new instances.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">➕</span> Functional updates</h4>
+          <p>Operations like <code>add</code> or <code>withCurrency</code> return a brand-new object. The original stays exactly as it was, so old references never see surprise changes.</p>
+        </div>
+      </div>
+
+      <h3>The core building blocks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What it does</th><th>Common mechanism</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Readonly fields</strong></td><td>Prevent reassignment after construction</td><td>TS <code>readonly</code>, Python frozen dataclass, Ruby <code>freeze</code></td></tr>
+            <tr><td><strong>Validating constructor</strong></td><td>Guarantees every instance is valid up front</td><td>Guard clauses that throw on bad input</td></tr>
+            <tr><td><strong>Functional update</strong></td><td>Produces a changed copy, original intact</td><td><code>add()</code>, <code>with(...)</code>, <code>replace()</code></td></tr>
+            <tr><td><strong>Value equality</strong></td><td>Two instances with the same fields are equal</td><td>Field-by-field <code>equals</code> / <code>__eq__</code></td></tr>
+            <tr><td><strong>Deep freeze</strong></td><td>Stops nested collections from being edited</td><td>Frozen tuples, frozen arrays, copies on read</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> an immutable object is a <em>value</em>, not a <em>slot</em>. You never change what <code>5</code> means, and you never change what a given <code>Money(499, "USD")</code> means either. To get a different value you compute one; the original is permanent and safe to share.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why immutability exists</h2>
+      <p class="muted">Mutable shared state is the root of most concurrency bugs and aliasing surprises. When an object can change under you, every reference to it becomes a liability. Immutability trades a little copying for a large amount of certainty.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧵 Thread safety for free</h4><p>If no thread can change an object, no thread needs a lock to read it. Immutable <code>Money</code> and <code>Config</code> can be shared across a request pool with zero synchronization.</p></div>
+        <div class="card"><h4>🔗 Safe sharing &amp; caching</h4><p>You can hand the same instance to many callers, cache it, and use it as a hash-map key without fear that someone downstream mutates it and corrupts everyone else's copy.</p></div>
+        <div class="card"><h4>🐛 No aliasing bugs</h4><p>Two variables pointing at the same object can never diverge unexpectedly, because the object never changes. Passing it to a function cannot surprise the caller.</p></div>
+        <div class="card"><h4>🧭 Easy to reason about</h4><p>State only ever appears in constructors, so you audit correctness in one place. Undo, retries, and time-travel debugging become trivial when old values still exist.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Immutability explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>It's like an <strong>exam answer written in pen</strong>. Once it's down you don't erase it; if you change your mind you write a fresh, corrected copy. The old sheet stays exactly as it was.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Think of a <strong>string in most languages</strong>. <code>"hello".toUpperCase()</code> doesn't change the original; it returns a new string. Immutable domain objects behave the same way.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Like a <strong>signed contract</strong>. You never scribble on the executed document; you issue an amendment as a new versioned document. The original remains the record of what was agreed.</p></div>
+        <div class="card"><h4><span class="ico">🧾</span> Everyday version</h4><p>A <strong>printed receipt</strong>. To fix a charge the shop doesn't rewrite your receipt; it prints a new one. Both slips exist, and history stays honest.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">Immutability is two disciplines working together: <strong>lock the fields</strong> so nothing can reassign them, and <strong>replace whole objects</strong> instead of editing them. The language gives you the lock; you supply the functional-update methods.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🔐</span> Lock the fields</h4>
+          <p>Mark every field read-only at the type level. TypeScript uses <code>readonly</code>, Python uses a <code>frozen=True</code> dataclass, and Ruby calls <code>freeze</code> in the constructor. Any attempt to reassign is a compile error or runtime error.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Return new objects</h4>
+          <p>Every "change" is a method that reads the current fields, computes the next values, and constructs a fresh instance. The caller rebinds their variable; the old object is untouched and still valid.</p>
+        </div>
+      </div>
+
+      <h3>The class at a glance</h3>
+      <div class="diagram">
+        <div class="cap">A Money value object - no setters, only queries and functional updates that return new Money</div>
+        <pre class="mermaid">
+classDiagram
+    class Money {
+        +readonly amount int
+        +readonly currency string
+        +add(other Money) Money
+        +scale(factor int) Money
+        +withCurrency(code string) Money
+        +equals(other Money) bool
+        +format() string
+    }
+    class Currency {
+        &lt;&lt;enumeration&gt;&gt;
+        USD
+        EUR
+        INR
+    }
+    class Cart {
+        +total() Money
+    }
+    Money --> Currency : denominated in
+    Cart ..> Money : produces new
+    note for Money "Immutable: every op returns a fresh Money, the receiver never changes"
+        </pre>
+      </div>
+
+      <h3>The same immutable class in three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Money as an immutable value object. Amount is in minor units (cents).
+class Money {
+  constructor(
+    public readonly amount: number,
+    public readonly currency: string,
+  ) {
+    if (!Number.isInteger(amount)) throw new Error("amount must be integer minor units");
+    if (currency.length !== 3) throw new Error("currency must be an ISO code");
+    Object.freeze(this); // lock the instance at runtime too
+  }
+
+  // Functional update: returns a NEW Money, never mutates `this`.
+  add(other: Money): Money {
+    if (other.currency !== this.currency) throw new Error("currency mismatch");
+    return new Money(this.amount + other.amount, this.currency);
+  }
+
+  scale(factor: number): Money {
+    return new Money(Math.round(this.amount * factor), this.currency);
+  }
+
+  equals(other: Money): boolean {
+    return this.amount === other.amount && this.currency === other.currency;
+  }
+
+  format(): string {
+    return `${(this.amount / 100).toFixed(2)} ${this.currency}`;
+  }
+}
+
+const price = new Money(1999, "USD");
+const shipping = new Money(500, "USD");
+const total = price.add(shipping);   // -> new Money(2499, "USD")
+console.log(price.format());         // "19.99 USD" (unchanged)
+console.log(total.format());         // "24.99 USD"</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Money as an immutable value object using a frozen dataclass.
+from dataclasses import dataclass, replace
+
+@dataclass(frozen=True)          # frozen -> fields cannot be reassigned
+class Money:
+    amount: int                  # minor units (cents)
+    currency: str
+
+    def __post_init__(self):
+        if not isinstance(self.amount, int):
+            raise ValueError("amount must be integer minor units")
+        if len(self.currency) != 3:
+            raise ValueError("currency must be an ISO code")
+
+    # Functional update: returns a NEW Money, never mutates self.
+    def add(self, other: "Money") -> "Money":
+        if other.currency != self.currency:
+            raise ValueError("currency mismatch")
+        return replace(self, amount=self.amount + other.amount)
+
+    def scale(self, factor: float) -> "Money":
+        return replace(self, amount=round(self.amount * factor))
+
+    def format(self) -> str:
+        return f"{self.amount / 100:.2f} {self.currency}"
+
+price = Money(1999, "USD")
+shipping = Money(500, "USD")
+total = price.add(shipping)      # -> Money(amount=2499, currency='USD')
+print(price.format())            # "19.99 USD" (unchanged)
+print(total.format())            # "24.99 USD"
+# price.amount = 0              # FrozenInstanceError</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Money as an immutable value object. freeze locks the instance.
+class Money
+  attr_reader :amount, :currency   # readers only, no writers
+
+  def initialize(amount, currency)
+    raise ArgumentError, "amount must be integer minor units" unless amount.is_a?(Integer)
+    raise ArgumentError, "currency must be an ISO code" unless currency.length == 3
+    @amount = amount
+    @currency = currency.freeze
+    freeze                          # no ivar can be reassigned after this
+  end
+
+  # Functional update: returns a NEW Money, never mutates self.
+  def add(other)
+    raise ArgumentError, "currency mismatch" unless other.currency == @currency
+    Money.new(@amount + other.amount, @currency)
+  end
+
+  def scale(factor)
+    Money.new((@amount * factor).round, @currency)
+  end
+
+  def ==(other)
+    other.is_a?(Money) &amp;&amp; amount == other.amount &amp;&amp; currency == other.currency
+  end
+
+  def format
+    format_amount = (@amount / 100.0)
+    "%.2f %s" % [format_amount, @currency]
+  end
+end
+
+price = Money.new(1999, "USD")
+shipping = Money.new(500, "USD")
+total = price.add(shipping)       # -> new Money(2499, "USD")
+puts price.format                 # "19.99 USD" (unchanged)
+puts total.format                 # "24.99 USD"
+# price.instance_variable_set(:@amount, 0)  # FrozenError</code></pre>
+      </div>
+      <p class="muted">In all three, <code>add</code> reads the receiver, computes the next amount, and hands back a <em>new</em> <code>Money</code>. The original <code>price</code> still formats as <code>19.99</code> after the addition. The frozen or readonly declaration is what makes that guarantee enforceable rather than a convention.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a functional update returning a new object, safe sharing across threads, and rejecting an illegal mutation at construction.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - Functional update: add returns a new Money, the original is untouched</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cart as 🛒 Cart
+    participant Price as 💵 price Money
+    participant New as 🆕 total Money
+
+    Cart->>Price: add(shipping)
+    Price->>Price: validate same currency
+    Price->>New: new Money(amount + shipping.amount, currency)
+    New-->>Price: fresh instance
+    Price-->>Cart: return total (new object)
+    Note over Price,New: price still holds 1999, total holds 2499
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Safe sharing: two request threads read one Money with no locks</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T1 as 🧵 Thread A
+    participant T2 as 🧵 Thread B
+    participant M as 💵 shared Money
+
+    par no synchronization needed
+        T1->>M: format()
+        M-->>T1: "19.99 USD"
+    and
+        T2->>M: scale(2)
+        M-->>T2: new Money(3998, USD)
+    end
+    Note over T1,T2: neither thread changed M, so no lock and no race
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Construction guard: an invalid Money is rejected, never half-built</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑‍💻 Caller
+    participant Ctor as 🏗️ Money constructor
+    participant Obj as 💵 Money
+
+    Caller->>Ctor: new Money(-5, "US")
+    Ctor->>Ctor: check amount and currency
+    alt invalid input
+        Ctor-->>Caller: throw ValidationError
+    else valid input
+        Ctor->>Obj: assign fields then freeze
+        Obj-->>Caller: immutable Money
+    end
+    Note over Ctor,Obj: no setter exists, so a valid object can never become invalid later
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From designing a value to safely sharing it across a live system - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Identify a value</h4><p>Spot a concept defined entirely by its data, like Money, a DateRange, or an app Config. These are candidates for immutability because identity does not matter, only the fields do.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Fields</span><h4>Declare read-only fields</h4><p>List the minimal fields and mark them read-only: TS <code>readonly</code>, a Python frozen dataclass, or Ruby instance variables you will freeze.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Validate</span><h4>Guard in the constructor</h4><p>Reject bad input up front - non-integer amounts, unknown currency, a range whose end precedes its start. A constructed object is always valid.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Freeze</span><h4>Lock the instance</h4><p>Finalize immutability: <code>Object.freeze(this)</code>, the frozen dataclass machinery, or <code>freeze</code> as the last line of the constructor.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Query</span><h4>Expose read-only methods</h4><p>Add pure queries like <code>format()</code>, <code>contains(date)</code>, or <code>isEnabled(flag)</code> that compute from fields without changing anything.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Update</span><h4>Add functional updates</h4><p>Write <code>add</code>, <code>withCurrency</code>, or <code>extendTo(date)</code> that build and return a new instance instead of mutating the receiver.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Equality</span><h4>Compare by value</h4><p>Implement field-by-field equality and a matching hash so two equal values are interchangeable and usable as map keys.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Nesting</span><h4>Guard collections</h4><p>Ensure nested arrays or maps are also frozen or defensively copied, so a shared inner list cannot leak mutability.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Share</span><h4>Pass freely, no locks</h4><p>Hand the same instance to many callers and threads. Because it never changes, no synchronization is required to read it.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Cache</span><h4>Cache and key safely</h4><p>Memoize results and use the value as a cache key. Nothing downstream can corrupt a cached entry by mutating it.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Evolve</span><h4>Version through new objects</h4><p>When requirements change, produce new instances for new states. Old values persist, powering undo, audit trails, and easy reasoning.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Immutability is easy to declare and easy to accidentally break. These are the usual leaks.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🕳️ Shallow freeze</h4><p>Marking the object read-only but leaving a nested array or map mutable. Callers edit the inner collection and the "immutable" object silently changes. Freeze or copy the nested state too.</p></div>
+        <div class="card"><h4>🚪 Leaking internal references</h4><p>Returning the actual internal list from a getter lets callers mutate it directly. Return a copy, a frozen view, or an iterator instead of the live reference.</p></div>
+        <div class="card"><h4>🔧 Hidden setters</h4><p>Adding a convenience method that reassigns a field "just this once" destroys every guarantee. If any code path mutates state, it is not immutable. Keep the surface query-only.</p></div>
+        <div class="card"><h4>🐢 Copy churn in hot loops</h4><p>Building a new object per iteration when summing thousands of values can allocate heavily. Use a builder or accumulate primitives, then construct one final immutable result.</p></div>
+        <div class="card"><h4>🎭 Equality by identity</h4><p>Forgetting value equality means two equal Money instances look different, breaking sets, cache keys, and deduplication. Immutable values need field-based equals and hash.</p></div>
+        <div class="card"><h4>🧨 Mutable default arguments</h4><p>Sharing a mutable default like a list across instances in Python leaks state between objects. Use immutable defaults or a factory so each instance is independent.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You can tell whether immutability is real or aspirational by watching a few signals in the codebase and at runtime.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Setter count on value types</strong></td><td>Zero setters or field reassignments means the object is genuinely immutable, not just labeled so.</td></tr>
+            <tr><td><strong>Freeze / readonly coverage</strong></td><td>How many value classes actually declare frozen or readonly fields versus relying on convention.</td></tr>
+            <tr><td><strong>Defensive-copy audit</strong></td><td>Whether getters return copies or frozen views; leaked live references reveal hidden mutability.</td></tr>
+            <tr><td><strong>Locks around shared state</strong></td><td>Fewer locks needed as more shared objects become immutable - a direct concurrency-simplification signal.</td></tr>
+            <tr><td><strong>Aliasing bug rate</strong></td><td>Drop in "value changed unexpectedly" defects after converting a type to immutable.</td></tr>
+            <tr><td><strong>Allocation profile</strong></td><td>Object churn from functional updates in hot paths, telling you where a builder or batching is worth it.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you can find a single line of code that reassigns a field on a value object after construction, it is not immutable yet. Grep for setters and field writes before trusting the label.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where immutability is load-bearing.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Money in a payments ledger</h3><div class="role">Pattern: immutable value object for amounts</div></div></div>
+        <p class="muted">A payments platform represents every amount as an immutable Money in integer minor units, shared across pricing, tax, and settlement.</p>
+        <ul>
+          <li>Amounts never mutate: a discount produces a new Money, so the original line price is preserved for audit.</li>
+          <li>Currency mismatch is impossible to add together, caught at the operation instead of in a downstream report.</li>
+          <li>Ledger entries are safe to cache and reconcile because no code path can rewrite a posted amount.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Fewer rounding and currency defects, and a clean audit trail because historical amounts are permanent by construction.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📅</span><div><h3>2 · DateRange in a bookings engine</h3><div class="role">Pattern: immutable interval with functional updates</div></div></div>
+        <p class="muted">A reservations service models availability windows as an immutable DateRange validated so the end never precedes the start.</p>
+        <ul>
+          <li>Extending a stay returns a new DateRange, leaving the original booking window intact for the change log.</li>
+          <li>Overlap and contains checks are pure queries, safe to run concurrently across many availability workers.</li>
+          <li>Ranges are used as cache keys for pricing, which only works because they compare by value and never change.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Concurrency-safe availability checks and a trustworthy history of how each reservation window evolved.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🎛️</span><div><h3>3 · Immutable app Config at startup</h3><div class="role">Pattern: frozen configuration shared everywhere</div></div></div>
+        <p class="muted">A backend service loads its configuration once into an immutable Config object read by every request handler and thread.</p>
+        <ul>
+          <li>Config is validated and frozen at boot, so no request can accidentally flip a flag mid-flight.</li>
+          <li>A config reload builds a whole new Config and swaps the reference atomically, never editing the live one.</li>
+          <li>Because it never mutates, thousands of concurrent reads need no locks and no defensive copying.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Deterministic behavior per deploy, safe hot reloads via reference swap, and no lock contention on the hottest read path.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Immutability is not a relic of functional programming; it is central to how modern concurrent and reactive systems stay correct.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>⚛️ Reactive UI state</h4><p>Frameworks like React rely on immutable state so change detection is a cheap reference comparison. New state means a new object, never an in-place edit.</p></div>
+        <div class="card"><h4>🧵 Concurrency without locks</h4><p>As core counts rise, sharing immutable data beats guarding mutable data with locks. Value objects pass safely between threads and actors.</p></div>
+        <div class="card"><h4>🗃️ Event sourcing</h4><p>Immutable events are the source of truth; state is a fold over history. Nothing is overwritten, so audit and replay are built in.</p></div>
+        <div class="card"><h4>📦 Persistent data structures</h4><p>Structural sharing gives immutable maps and lists near-mutable performance, so functional updates stay cheap at scale.</p></div>
+        <div class="card"><h4>🧊 Language support</h4><p>Records in Java, data classes in Kotlin, frozen dataclasses in Python, and <code>readonly</code> in TypeScript make immutability a first-class, low-ceremony default.</p></div>
+        <div class="card"><h4>🔎 Caching and CDNs</h4><p>Immutable, content-addressed values are trivially cacheable, the same property that makes hashed asset URLs safe to keep forever.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> immutability turns shared state from a hazard into an asset. Build objects that never change, replace instead of mutate, and whole categories of concurrency and aliasing bugs simply stop happening.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Immutability sits alongside a web of related OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../value-objects-vs-entities/"><span class="ico">🧩</span><h4>Value objects vs entities</h4><p>When identity matters and when only the fields do.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../equality-identity/"><span class="ico">⚖️</span><h4>Equality &amp; identity</h4><p>Comparing by value, the natural partner of immutability.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../construction-invariants/"><span class="ico">🏗️</span><h4>Construction &amp; invariants</h4><p>Guarding state so every object starts valid.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔒</span><h4>Encapsulation</h4><p>Hiding state so only safe operations touch it.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Immutability · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

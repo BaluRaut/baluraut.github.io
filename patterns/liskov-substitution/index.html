@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liskov Substitution Principle (LSP) in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to the Liskov Substitution Principle (LSP): subtypes must be substitutable for their base type, the contract rules for preconditions, postconditions and invariants, how violations surface, with TypeScript, Python and Ruby examples." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Liskov Substitution Principle - subtypes you can trust anywhere the base type is expected</h1>
+      <p class="lede">The Liskov Substitution Principle says a program using a base type must keep working correctly when you hand it any subtype, with no special casing and no surprises. That promise only holds when the subtype <strong>honors the base contract</strong>: it cannot demand more from callers, cannot deliver less than they were told to expect, and cannot quietly break the guarantees the base type made. When a subtype cheats on that contract, code that looked polymorphic starts failing in production.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Behavioral subtyping</span>
+        <span class="pill">Preconditions &amp; postconditions</span>
+        <span class="pill">Invariants</span>
+        <span class="pill">Substitutability</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is the Liskov Substitution Principle?</h2>
+      <p class="muted"><strong>LSP</strong> is the "L" in SOLID. Barbara Liskov's original phrasing is that if <code>S</code> is a subtype of <code>T</code>, then objects of type <code>T</code> can be replaced with objects of type <code>S</code> without altering any of the desirable properties of the program. In plain terms: a subtype must behave like its base type, not just share its shape. Inheritance gives you the method signatures for free; LSP is about honoring the <em>behavior</em> those signatures promised.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🔁</span> Substitutability</h4>
+          <p>Any code written against the base type keeps working when a subtype is passed in. The caller should never need to check the concrete class.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">📜</span> Behavioral subtyping</h4>
+          <p>It is not enough to inherit or implement an interface. The subtype must respect the meaning of every method, not just match its parameters and return type.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🤝</span> Contract, not shape</h4>
+          <p>Each method carries a contract of what it needs and what it guarantees. The subtype is bound by that same contract, no tighter, no weaker.</p>
+        </div>
+      </div>
+
+      <h3>The three contract rules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Rule</th><th>What it means</th><th>Violation looks like</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Preconditions cannot strengthen</strong></td><td>The subtype cannot demand more of callers than the base type did</td><td>A subtype rejects inputs the base accepted, or requires extra setup</td></tr>
+            <tr><td><strong>Postconditions cannot weaken</strong></td><td>The subtype must guarantee at least what the base promised on return</td><td>A subtype returns null, a partial result, or skips a promised side effect</td></tr>
+            <tr><td><strong>Invariants preserved</strong></td><td>Truths that always hold on the base must still hold on the subtype</td><td>A subtype leaves an object in a state the base type forbids</td></tr>
+            <tr><td><strong>History constraint</strong></td><td>The subtype cannot allow state changes the base type disallowed</td><td>A mutable subtype of an immutable base lets callers mutate hidden state</td></tr>
+            <tr><td><strong>Exception compatibility</strong></td><td>The subtype should not throw new checked exceptions the base did not</td><td>A subtype throws <code>NotSupported</code> for a method the base said always works</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> inheritance answers "is this the same shape?" LSP answers "can I trust this thing to behave like the promise on the label?" A subtype that throws where the base returned, or that only accepts half the inputs, is a subtype in the type checker but a liar at runtime.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why LSP matters</h2>
+      <p class="muted">LSP is what makes polymorphism safe. Without it, every call site has to know which concrete subtype it received, and the abstraction you built collapses into a pile of type checks.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧱 Polymorphism you can rely on</h4><p>When subtypes are honest, one line of code works for every implementation. A checkout flow can accept any <code>PaymentGateway</code> and never branch on the vendor.</p></div>
+        <div class="card"><h4>🚫 Kills defensive type checks</h4><p>Code littered with <code>if (repo instanceof ReadOnlyRepo)</code> is the smell of a broken subtype. Honor the contract and those branches disappear.</p></div>
+        <div class="card"><h4>🔌 Safe extension points</h4><p>New subtypes can be added without touching the callers. That is the whole promise of the Open-Closed Principle, and LSP is what keeps it true.</p></div>
+        <div class="card"><h4>🐞 Fewer runtime surprises</h4><p>Violations surface as production incidents: a save that throws, a queue that silently drops, a null where a value was promised. LSP catches the design error before it ships.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Liskov Substitution explained with analogies</h2>
+      <p class="muted">Same principle, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>A substitute teacher must be able to run the class from the same lesson plan. If the substitute refuses to teach half the syllabus or demands a permission slip the regular teacher never needed, students are worse off. A good substitute is <strong>indistinguishable</strong> for the plan's purpose.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>If a function takes a <code>Repository</code> and calls <code>save()</code>, every repository you pass must actually save. A <strong>read-only repository that throws on save</strong> compiles fine and blows up at runtime. It fits the interface but breaks the contract.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>A vendor who signs your standard contract must meet its terms. If a new supplier accepts fewer order types or ships partial pallets while claiming to fulfill the same agreement, your operations break even though the paperwork matched.</p></div>
+        <div class="card"><h4><span class="ico">🔑</span> Everyday version</h4><p>A duplicate key should open the same lock the original did. A key that fits the keyhole but only turns halfway, or one that jams unless you push a hidden button first, is not a real substitute even though it looks identical.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How it works under the hood</h2>
+      <p class="muted">LSP shows up the moment you have a base type with a real contract and more than one implementation. The classic trap is modeling with the "is-a" test alone: an archived, read-only order repository "is a" repository in English, so people extend the writable one and override <code>save()</code> to throw. It typechecks. It violates LSP.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">🧨</span> The violation</h4>
+          <p>A <code>ReadOnlyOrderRepository</code> extends a writable base and overrides <code>save()</code> to throw <code>UnsupportedOperation</code>. Callers holding a base reference call <code>save()</code> and crash. The subtype strengthened the precondition to "never call save," which no caller can honor.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🛠️</span> The fix</h4>
+          <p>Split the contract. A narrow <code>ReadableOrders</code> base only promises reads; a <code>WritableOrders</code> subtype adds <code>save()</code>. The archive is read-only, so it never claims to write, and no caller can ever call a method the object cannot support.</p>
+        </div>
+      </div>
+
+      <h3>The classes and their contracts</h3>
+      <div class="diagram">
+        <div class="cap">Split the read contract from the write contract so no subtype has to lie</div>
+        <pre class="mermaid">
+classDiagram
+    class ReadableOrders {
+        &lt;&lt;interface&gt;&gt;
+        +findById(id) Order
+        +listOpen() Order[]
+    }
+    class WritableOrders {
+        &lt;&lt;interface&gt;&gt;
+        +save(order) void
+    }
+    class LiveOrderRepository {
+        +findById(id) Order
+        +listOpen() Order[]
+        +save(order) void
+    }
+    class ArchiveOrderRepository {
+        +findById(id) Order
+        +listOpen() Order[]
+    }
+    WritableOrders --|> ReadableOrders
+    ReadableOrders <|.. LiveOrderRepository
+    WritableOrders <|.. LiveOrderRepository
+    ReadableOrders <|.. ArchiveOrderRepository
+        </pre>
+      </div>
+
+      <h3>The violation and the fix, side by side</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// VIOLATION: an archive repo that "is a" repository but refuses to save.
+class OrderRepository {
+  save(order: Order): void { /* writes to the primary DB */ }
+  findById(id: string): Order | null { /* ... */ return null; }
+}
+
+class ArchiveOrderRepository extends OrderRepository {
+  // Strengthens the precondition to "never call me" - no caller can honor that.
+  save(_order: Order): void {
+    throw new Error("Archive is read-only");
+  }
+}
+
+// A caller written against the base type has no way to know:
+function reconcile(repo: OrderRepository, order: Order) {
+  order.status = "reconciled";
+  repo.save(order);            // 💥 blows up when repo is an archive
+}
+
+reconcile(new ArchiveOrderRepository(), someOrder); // runtime crash</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># VIOLATION: an archive repo that "is a" repository but refuses to save.
+class OrderRepository:
+    def save(self, order):        # writes to the primary DB
+        ...
+    def find_by_id(self, order_id):
+        ...
+
+class ArchiveOrderRepository(OrderRepository):
+    # Strengthens the precondition to "never call me" - no caller can honor that.
+    def save(self, order):
+        raise NotImplementedError("Archive is read-only")
+
+# A caller written against the base type has no way to know:
+def reconcile(repo, order):
+    order.status = "reconciled"
+    repo.save(order)              # blows up when repo is an archive
+
+reconcile(ArchiveOrderRepository(), some_order)  # runtime crash</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># VIOLATION: an archive repo that "is a" repository but refuses to save.
+class OrderRepository
+  def save(order)        # writes to the primary DB
+  end
+
+  def find_by_id(id)
+  end
+end
+
+class ArchiveOrderRepository < OrderRepository
+  # Strengthens the precondition to "never call me" - no caller can honor that.
+  def save(_order)
+    raise NotImplementedError, "Archive is read-only"
+  end
+end
+
+# A caller written against the base type has no way to know:
+def reconcile(repo, order)
+  order.status = "reconciled"
+  repo.save(order)       # blows up when repo is an archive
+end
+
+reconcile(ArchiveOrderRepository.new, some_order) # runtime crash</code></pre>
+      </div>
+
+      <p class="muted">Below is the fix: separate the readable contract from the writable one. Now the archive only implements what it can honor, the live repository implements both, and <code>reconcile</code> asks for exactly the capability it uses. Every subtype is fully substitutable for the interface it declares.</p>
+
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// FIX: split the contract so no subtype has to lie.
+interface ReadableOrders {
+  findById(id: string): Order | null;
+}
+interface WritableOrders extends ReadableOrders {
+  save(order: Order): void;
+}
+
+class LiveOrderRepository implements WritableOrders {
+  findById(id: string): Order | null { /* ... */ return null; }
+  save(order: Order): void { /* writes to the primary DB */ }
+}
+
+class ArchiveOrderRepository implements ReadableOrders {
+  findById(id: string): Order | null { /* reads cold storage */ return null; }
+  // No save() - it never claims a capability it cannot deliver.
+}
+
+// The caller asks only for what it uses, so substitution is always safe:
+function reconcile(repo: WritableOrders, order: Order) {
+  order.status = "reconciled";
+  repo.save(order);
+}
+
+const live = new LiveOrderRepository();
+reconcile(live, someOrder);         // works for every WritableOrders
+// reconcile(new ArchiveOrderRepository(), ...) // won't even compile</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># FIX: split the contract so no subtype has to lie.
+from abc import ABC, abstractmethod
+
+class ReadableOrders(ABC):
+    @abstractmethod
+    def find_by_id(self, order_id): ...
+
+class WritableOrders(ReadableOrders):
+    @abstractmethod
+    def save(self, order): ...
+
+class LiveOrderRepository(WritableOrders):
+    def find_by_id(self, order_id):
+        ...                           # reads from the primary DB
+    def save(self, order):
+        ...                           # writes to the primary DB
+
+class ArchiveOrderRepository(ReadableOrders):
+    def find_by_id(self, order_id):
+        ...                           # reads cold storage
+    # No save() - it never claims a capability it cannot deliver.
+
+# The caller asks only for what it uses, so substitution is always safe:
+def reconcile(repo: WritableOrders, order):
+    order.status = "reconciled"
+    repo.save(order)
+
+reconcile(LiveOrderRepository(), some_order)   # works for every WritableOrders
+# ArchiveOrderRepository() is not a WritableOrders, so it can't be passed</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># FIX: split the contract into role modules so no subtype has to lie.
+module ReadableOrders
+  def find_by_id(id)
+    raise NotImplementedError
+  end
+end
+
+module WritableOrders
+  include ReadableOrders
+  def save(order)
+    raise NotImplementedError
+  end
+end
+
+class LiveOrderRepository
+  include WritableOrders
+  def find_by_id(id); end            # reads from the primary DB
+  def save(order); end               # writes to the primary DB
+end
+
+class ArchiveOrderRepository
+  include ReadableOrders
+  def find_by_id(id); end            # reads cold storage
+  # No save - it never claims a capability it cannot deliver.
+end
+
+# The caller asks only for what it uses, so substitution is always safe:
+def reconcile(repo, order)
+  order.status = "reconciled"
+  repo.save(order)
+end
+
+reconcile(LiveOrderRepository.new, some_order) # any WritableOrders works
+# ArchiveOrderRepository has no save, so passing it fails fast and loud</code></pre>
+      </div>
+
+      <p class="muted">The lesson: the "is-a" relationship in English lied to you. An archive "is a kind of" order store, but it is not a <em>writable</em> one. Modeling the capability, not the noun, is what makes every subtype substitutable and keeps callers free of type checks.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: how a violation surfaces at runtime, how the fixed design substitutes safely, and how a strengthened precondition breaks a caller mid-flow.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - The violation: a base reference calls save on a read-only subtype</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Svc as 🧾 Reconcile service
+    participant Repo as 🗄️ OrderRepository ref
+    participant Arch as 🧊 ArchiveOrderRepository
+    Svc->>Repo: save(order)
+    Note over Repo,Arch: ref actually points at an archive
+    Repo->>Arch: save(order)
+    Arch-->>Svc: 💥 throw UnsupportedOperation
+    Note over Svc,Arch: contract said save always works - it lied
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - The fix: caller depends on WritableOrders, substitution is total</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Svc as 🧾 Reconcile service
+    participant W as ✍️ WritableOrders
+    participant Live as 🟢 LiveOrderRepository
+    Svc->>W: save(order)
+    W->>Live: save(order)
+    Live-->>W: persisted ok
+    W-->>Svc: return
+    Note over Svc,Live: archive never reaches here - it isn't Writable
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Strengthened precondition: a subtype rejects inputs the base accepted</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Ck as 🛒 Checkout
+    participant Gw as 💳 PaymentGateway
+    participant Sub as 🌍 RegionLockedGateway
+    Ck->>Gw: charge(amount, currency)
+    Gw->>Sub: charge(amount, currency)
+    alt currency is allowed
+        Sub-->>Ck: authorized
+    else currency not in region
+        Sub-->>Ck: ❌ reject - base accepted any currency
+        Note over Ck,Sub: precondition strengthened, caller cannot honor it
+    end
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 -&gt; 100 flow</h2>
+      <p class="muted">From spotting a shaky "is-a" to a set of subtypes that are fully substitutable, in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Model</span><h4>Name the base type and its job</h4><p>Write down what the base type promises. An <code>OrderRepository</code> promises "you can read and save orders." That sentence is the contract.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Contract</span><h4>State pre and postconditions per method</h4><p>For <code>save(order)</code>: precondition is a valid order; postcondition is the order is durably persisted. Make the promise explicit.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Invariants</span><h4>List truths that always hold</h4><p>An invariant might be "a saved order always has an id." Every subtype must keep it true, before and after every call.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Subtype</span><h4>Propose a candidate subtype</h4><p>Someone wants an <code>ArchiveOrderRepository</code> for cold storage. Ask: can it honor every method's contract, unchanged?</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Check</span><h4>Test preconditions - are they weaker or equal?</h4><p>The subtype must not demand more of callers. If the archive needs a special flag to read, it strengthened a precondition. Red flag.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Check</span><h4>Test postconditions - are they stronger or equal?</h4><p>The subtype must deliver at least what was promised. If <code>save()</code> throws instead of persisting, it weakened the postcondition to nothing.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Check</span><h4>Test invariants and history</h4><p>Confirm the subtype never leaves state the base forbids and never allows mutations the base disallowed. Immutable stays immutable.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Detect</span><h4>Spot the violation</h4><p>The archive cannot honor <code>save()</code>. Forcing it to throw is the violation. The "is-a" was really "is a read-only kind of."</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Refactor</span><h4>Split the contract by capability</h4><p>Extract <code>ReadableOrders</code> and <code>WritableOrders</code>. The archive implements only what it can honor; the live repo implements both.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Depend</span><h4>Point callers at the narrowest contract</h4><p>Rewrite <code>reconcile</code> to take <code>WritableOrders</code>. Now the compiler refuses any subtype that cannot save. Substitution is guaranteed.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Verify</span><h4>Run the same tests against every subtype</h4><p>A shared contract test suite runs against all implementations. If any subtype fails a base-level test, you have found an LSP break before shipping.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Most LSP breaks come from inheriting for code reuse when the behavior does not actually match. These are the usual culprits.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🚫 Throwing "not supported"</h4><p>Overriding a base method to throw <code>UnsupportedOperation</code> is the loudest LSP violation. If a subtype cannot do it, it should not inherit the promise that it can.</p></div>
+        <div class="card"><h4>🔒 Strengthening preconditions</h4><p>A subtype that rejects inputs the base accepted, like a region-locked <code>PaymentGateway</code> refusing currencies, breaks callers who relied on the wider contract.</p></div>
+        <div class="card"><h4>📉 Weakening postconditions</h4><p>Returning null, a partial list, or skipping a promised side effect leaves callers holding less than the base guaranteed. Silent data loss follows.</p></div>
+        <div class="card"><h4>🕵️ instanceof in the caller</h4><p><code>if (repo instanceof ArchiveRepo) skip()</code> is the caller compensating for a broken subtype. Every type check is a symptom, not a fix.</p></div>
+        <div class="card"><h4>🧊 Mutable subtype of immutable base</h4><p>Adding setters to a value type that callers assumed was frozen violates the history constraint and corrupts shared state in ways that are brutal to debug.</p></div>
+        <div class="card"><h4>🎣 Fat base interface</h4><p>One giant interface forces every subtype to implement methods it cannot honor. This pushes teams toward stub-and-throw, which is exactly the LSP trap.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot put a single number on LSP, but these signals reliably tell you whether your subtypes are honest.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Overrides that throw NotSupported</strong></td><td>A direct count of LSP violations - each one is a subtype refusing part of its contract</td></tr>
+            <tr><td><strong>instanceof / type-check density in callers</strong></td><td>How often calling code special-cases concrete subtypes, the fingerprint of a broken abstraction</td></tr>
+            <tr><td><strong>Shared contract tests passing on all subtypes</strong></td><td>Whether every implementation satisfies the base test suite - a red subtype is a confirmed violation</td></tr>
+            <tr><td><strong>Empty or stubbed override bodies</strong></td><td>Methods overridden to do nothing signal a subtype that cannot honor the promise but pretends to</td></tr>
+            <tr><td><strong>Runtime errors on polymorphic call sites</strong></td><td>Exceptions thrown only for certain concrete types point straight at a substitutability break</td></tr>
+            <tr><td><strong>Precondition drift in overrides</strong></td><td>Extra null checks or narrower input validation in a subtype reveals a strengthened precondition</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if you ever need to know the concrete class to call a method safely, the subtype is not truly substitutable. Write one contract test suite and run it against every implementation; the first subtype that fails is your violation.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where LSP decided whether the design held up.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment gateway abstraction over multiple processors</h3><div class="role">Pattern: honest subtypes behind one charge contract</div></div></div>
+        <p class="muted">A checkout system routes charges through several processors behind a single <code>PaymentGateway</code> interface with a <code>charge(amount, currency)</code> contract.</p>
+        <ul>
+          <li>One processor supported only domestic currency and threw on everything else, strengthening the precondition and crashing international checkout.</li>
+          <li>The fix declared the supported currencies as capability metadata and routed by it, so every gateway honored the full contract for the traffic it received.</li>
+          <li>A shared contract test ran the same charge, refund, and idempotency cases against every processor adapter.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Checkout branched on capability instead of catching processor-specific exceptions, and adding a new processor stopped requiring changes in the caller.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>2 · Repository layer with a read-only archive</h3><div class="role">Pattern: split read and write contracts</div></div></div>
+        <p class="muted">An orders service kept recent orders in a primary database and older ones in a read-only archive, both behind one repository interface.</p>
+        <ul>
+          <li>The archive repository inherited <code>save()</code> and threw, so background reconciliation jobs failed whenever they touched an archived order.</li>
+          <li>Splitting into <code>ReadableOrders</code> and <code>WritableOrders</code> let the archive implement only reads, and the compiler blocked any write path from reaching it.</li>
+          <li>Callers were rewritten to depend on the narrowest interface they actually used.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The class of "cannot save archived order" runtime errors disappeared entirely, and write jobs became provably safe at compile time.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">📨</span><div><h3>3 · Notification senders behind one delivery interface</h3><div class="role">Pattern: uniform postconditions across channels</div></div></div>
+        <p class="muted">A platform sent email, SMS, and push through a shared <code>NotificationSender</code> with a <code>send(message)</code> contract that promised a delivery receipt.</p>
+        <ul>
+          <li>The push sender returned early without a receipt when a device token was missing, weakening the postcondition and leaving audit logs incomplete.</li>
+          <li>The contract was tightened so every sender returned an explicit delivered or failed result, never a silent no-op.</li>
+          <li>A shared suite asserted the postcondition, that a receipt is always returned, for all three channels.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Downstream retry and audit logic worked identically for every channel, because each sender delivered exactly the guarantee the base type promised.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">LSP predates today's languages, but its core idea, behavioral substitutability, is more relevant than ever as systems lean on interfaces and plugins.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Interface segregation partners</h4><p>Splitting fat interfaces into role-based ones is often the cleanest way to satisfy LSP. The two SOLID principles reinforce each other directly.</p></div>
+        <div class="card"><h4>🔗 Plugin and adapter ecosystems</h4><p>Every plugin API is an LSP contract. A plugin that half-implements the interface breaks the host, so honest subtyping is a platform survival trait.</p></div>
+        <div class="card"><h4>🦆 Structural and duck typing</h4><p>In TypeScript structural types and Python protocols, the compiler checks shape but not behavior. LSP is the discipline that fills that gap by hand.</p></div>
+        <div class="card"><h4>🧪 Contract and property-based tests</h4><p>Running one shared suite against every implementation, or generating inputs to probe postconditions, turns LSP from a principle into an automated gate.</p></div>
+        <div class="card"><h4>🏗️ Composition over inheritance</h4><p>Modern designs favor composing behavior, which sidesteps many LSP traps by never claiming an "is-a" the subtype cannot back up.</p></div>
+        <div class="card"><h4>🤖 Typed API and RPC schemas</h4><p>Versioned service contracts are LSP at the network boundary: a new server version must remain substitutable for clients built against the old one.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> LSP is the rule that keeps polymorphism trustworthy. Design subtypes around the behavior they can truly honor, not the noun that sounds right, and your abstractions stay clean, your callers stay free of type checks, and your extensions stay safe.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">LSP sits in a web of related OOP ideas. These pair naturally with it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../inheritance/"><span class="ico">🧬</span><h4>Inheritance</h4><p>Where the "is-a" relationship comes from, and how it misleads.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">🦆</span><h4>Interfaces &amp; duck typing</h4><p>Contracts by shape, and why behavior still matters.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../open-closed/"><span class="ico">🚪</span><h4>Open-Closed Principle</h4><p>Safe extension that depends on honest subtypes.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../polymorphism/"><span class="ico">🎭</span><h4>Polymorphism</h4><p>The mechanism LSP makes safe to rely on.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to the Liskov Substitution Principle · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

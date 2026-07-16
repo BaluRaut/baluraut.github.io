@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abstraction in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A practical guide to abstraction in object-oriented programming: hiding complexity behind a simple interface, abstract classes vs interfaces and protocols, modeling only the essentials, and how abstraction differs from encapsulation - with real PaymentProcessor code in TypeScript, Python, and Ruby." />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <div class="brand"><a href="../">Patterns<span>·</span>Hub</a></div>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#why">Why</a>
+        <a href="#analogies">Analogies</a>
+        <a href="#how">How</a>
+        <a href="#diagrams">Diagrams</a>
+        <a href="#flow">0-100 Flow</a>
+        <a href="#pitfalls">Pitfalls</a>
+        <a href="#signals">Signals</a>
+        <a href="#cases">Cases</a>
+        <a href="#future">Future</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="kicker">OOP Concept</span>
+      <h1>Abstraction - hide the complexity, expose the intent</h1>
+      <p class="lede">Abstraction is the art of exposing <strong>what</strong> a component does while hiding <strong>how</strong> it does it. A checkout screen should call <code>processor.charge(order)</code> without knowing whether the money moves through Stripe, PayPal, or a bank file. Define the essential interface once, and every concrete provider slots in behind it.</p>
+      <div class="cta">
+        <a class="btn primary" href="#how">See the code</a>
+        <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Stable interfaces</span>
+        <span class="pill">Abstract classes</span>
+        <span class="pill">Protocols</span>
+        <span class="pill">Model the essentials</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="eyebrow">01 - What</div>
+      <h2>What is abstraction?</h2>
+      <p class="muted"><strong>Abstraction</strong> is deciding which details of a thing matter for a given purpose and hiding the rest behind a simple, stable interface. A <code>PaymentProcessor</code> abstraction says "you can <em>authorize</em>, <em>capture</em>, and <em>refund</em> money" without leaking HTTP calls, retry logic, or provider-specific field names. Callers program to the contract; the messy internals stay out of sight.</p>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h4><span class="ico">🪟</span> A simple surface</h4>
+          <p>The public interface is small and intention-revealing. Callers see <code>charge</code>, <code>refund</code>, <code>void</code>, not sockets, timeouts, or JSON payloads.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🧱</span> Essentials only</h4>
+          <p>You model just the concepts the caller needs. Currency and amount belong in a <code>Money</code> type; the gateway's internal transaction id does not.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🔁</span> Swappable behind it</h4>
+          <p>Because the contract is fixed, any concrete provider - Stripe, Adyen, a mock - can implement it and be substituted freely.</p>
+        </div>
+      </div>
+
+      <h3>The vocabulary of abstraction</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Term</th><th>What it means</th><th>Payments example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Abstract type</strong></td><td>A contract with no complete implementation</td><td><code>PaymentProcessor</code> interface</td></tr>
+            <tr><td><strong>Concrete type</strong></td><td>A full implementation of the contract</td><td><code>StripeProcessor</code>, <code>PaypalProcessor</code></td></tr>
+            <tr><td><strong>Abstract method</strong></td><td>A named operation with no body, filled in by subclasses</td><td><code>authorize(order)</code></td></tr>
+            <tr><td><strong>Template method</strong></td><td>Shared logic in a base that calls abstract steps</td><td><code>charge()</code> orchestrating <code>authorize</code> + <code>capture</code></td></tr>
+            <tr><td><strong>Leaky abstraction</strong></td><td>Internal details bleeding through the interface</td><td>Callers checking a raw Stripe error code</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key mental model:</strong> abstraction is a promise about <em>what</em>, deliberately silent about <em>how</em>. Good abstractions let you change every internal detail without touching a single caller.</div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="eyebrow">02 - Why</div>
+      <h2>Why abstraction matters</h2>
+      <p class="muted">Software changes constantly: providers get swapped, APIs get versioned, requirements shift. Abstraction contains that change so it does not ripple through your whole codebase.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🧩 Manages complexity</h4><p>Callers reason about a handful of methods instead of thousands of lines of gateway code. The system stays understandable as it grows.</p></div>
+        <div class="card"><h4>🔌 Enables substitution</h4><p>Add a new payment provider by writing one class that satisfies the contract. Nothing upstream changes, and tests use a fake that implements the same interface.</p></div>
+        <div class="card"><h4>🛡️ Isolates change</h4><p>When a provider renames a field or ships a new API version, the blast radius is a single adapter, not every checkout call site.</p></div>
+        <div class="card"><h4>🤝 Sharpens design conversations</h4><p>Naming the essential operations forces clarity about the domain. A good abstract type is a shared vocabulary the whole team can reason with.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALOGIES -->
+  <section id="analogies">
+    <div class="wrap">
+      <div class="eyebrow">In Plain Terms</div>
+      <h2>Abstraction explained with analogies</h2>
+      <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Abstraction is the <strong>steering wheel</strong> of an idea. You learn "turn left, turn right" without studying the rack-and-pinion gears. The simple control is the abstraction; the mechanism is hidden but real.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>It's an <strong>interface you code against</strong>. You call <code>processor.refund(payment)</code> and trust the contract; whether it hits Stripe or a sandbox mock is somebody else's problem, decided by which object was injected.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Think of a <strong>power socket</strong>. Every appliance plugs into the same shape and gets 230 volts. The grid behind the wall - coal, solar, nuclear - can change entirely and your kettle never notices.</p></div>
+        <div class="card"><h4><span class="ico">🏧</span> Everyday version</h4><p>An <strong>ATM</strong> shows you "withdraw", "deposit", "balance". You never see the ledger updates, fraud checks, or interbank settlement. The buttons are the essentials; the banking machinery is hidden.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="eyebrow">03 - How</div>
+      <h2>How abstraction works in code</h2>
+      <p class="muted">You express a contract as an <strong>abstract class</strong> or an <strong>interface/protocol</strong>, then write concrete classes that fulfill it. Callers depend only on the abstract type, so providers are interchangeable.</p>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h4><span class="ico">📜</span> Interface or protocol</h4>
+          <p>A pure contract: method names and signatures, no behavior. Use it when implementations share <em>nothing</em> but the shape - a <code>PaymentProcessor</code> that Stripe and PayPal both satisfy.</p>
+        </div>
+        <div class="card">
+          <h4><span class="ico">🏗️</span> Abstract class</h4>
+          <p>A partial implementation: shared logic plus a few abstract holes for subclasses to fill. Use it when providers share real behavior, like a <code>charge()</code> that always authorizes then captures.</p>
+        </div>
+      </div>
+
+      <h3>The class model</h3>
+      <div class="diagram">
+        <div class="cap">A stable abstract contract with interchangeable concrete providers</div>
+        <pre class="mermaid">
+classDiagram
+    class PaymentProcessor {
+        &lt;&lt;interface&gt;&gt;
+        +authorize(order) Authorization
+        +capture(auth) Receipt
+        +refund(payment) Refund
+    }
+    class BaseProcessor {
+        &lt;&lt;abstract&gt;&gt;
+        +charge(order) Receipt
+        #authorize(order) Authorization
+        #capture(auth) Receipt
+    }
+    class StripeProcessor {
+        +authorize(order) Authorization
+        +capture(auth) Receipt
+        +refund(payment) Refund
+    }
+    class PaypalProcessor {
+        +authorize(order) Authorization
+        +capture(auth) Receipt
+        +refund(payment) Refund
+    }
+    class CheckoutService {
+        +pay(order) Receipt
+    }
+    PaymentProcessor &lt;|.. BaseProcessor
+    BaseProcessor &lt;|-- StripeProcessor
+    BaseProcessor &lt;|-- PaypalProcessor
+    CheckoutService o-- PaymentProcessor
+        </pre>
+      </div>
+
+      <h3>Define a contract, create an object, call its methods</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// The abstraction: what a processor does, never how.
+interface Money { amount: number; currency: string; }
+interface Order { id: string; total: Money; }
+interface Receipt { paymentId: string; provider: string; }
+
+interface PaymentProcessor {
+  authorize(order: Order): string;         // returns an auth token
+  capture(authToken: string): Receipt;
+  refund(paymentId: string): void;
+}
+
+// A concrete provider hides all Stripe-specific detail behind the contract.
+class StripeProcessor implements PaymentProcessor {
+  constructor(private apiKey: string) {}
+
+  authorize(order: Order): string {
+    // real impl: POST /v1/payment_intents with this.apiKey, idempotency key, retries...
+    return `pi_${order.id}_auth`;
+  }
+  capture(authToken: string): Receipt {
+    // real impl: POST /v1/payment_intents/{id}/capture
+    return { paymentId: authToken.replace("_auth", ""), provider: "stripe" };
+  }
+  refund(paymentId: string): void {
+    // real impl: POST /v1/refunds { payment_intent: paymentId }
+  }
+}
+
+// The caller depends on the abstraction, not on Stripe.
+class CheckoutService {
+  constructor(private processor: PaymentProcessor) {}
+  pay(order: Order): Receipt {
+    const auth = this.processor.authorize(order);
+    return this.processor.capture(auth);
+  }
+}
+
+const checkout = new CheckoutService(new StripeProcessor("sk_live_..."));
+const receipt = checkout.pay({ id: "ord_918", total: { amount: 4999, currency: "USD" } });
+console.log(receipt.provider, receipt.paymentId); // stripe pi_ord_918
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code>from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+@dataclass
+class Money:
+    amount: int
+    currency: str
+
+@dataclass
+class Order:
+    id: str
+    total: Money
+
+@dataclass
+class Receipt:
+    payment_id: str
+    provider: str
+
+# The abstraction: an abstract base class stating what a processor must do.
+class PaymentProcessor(ABC):
+    @abstractmethod
+    def authorize(self, order: Order) -> str: ...
+    @abstractmethod
+    def capture(self, auth_token: str) -> Receipt: ...
+    @abstractmethod
+    def refund(self, payment_id: str) -> None: ...
+
+# A concrete provider fills in the hidden "how".
+class StripeProcessor(PaymentProcessor):
+    def __init__(self, api_key: str) -> None:
+        self._api_key = api_key
+
+    def authorize(self, order: Order) -> str:
+        # real impl: POST /v1/payment_intents with idempotency key + retries
+        return f"pi_{order.id}_auth"
+
+    def capture(self, auth_token: str) -> Receipt:
+        return Receipt(payment_id=auth_token.replace("_auth", ""), provider="stripe")
+
+    def refund(self, payment_id: str) -> None:
+        ...  # POST /v1/refunds
+
+# The caller only knows the contract.
+class CheckoutService:
+    def __init__(self, processor: PaymentProcessor) -> None:
+        self._processor = processor
+
+    def pay(self, order: Order) -> Receipt:
+        auth = self._processor.authorize(order)
+        return self._processor.capture(auth)
+
+checkout = CheckoutService(StripeProcessor("sk_live_..."))
+receipt = checkout.pay(Order("ord_918", Money(4999, "USD")))
+print(receipt.provider, receipt.payment_id)  # stripe pi_ord_918
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code>Money   = Struct.new(:amount, :currency)
+Order   = Struct.new(:id, :total)
+Receipt = Struct.new(:payment_id, :provider)
+
+# The abstraction: a base class that declares the contract and refuses toy calls.
+class PaymentProcessor
+  def authorize(order)   = raise NotImplementedError, "#{self.class}#authorize"
+  def capture(auth_token) = raise NotImplementedError, "#{self.class}#capture"
+  def refund(payment_id)  = raise NotImplementedError, "#{self.class}#refund"
+end
+
+# A concrete provider hides the Stripe details.
+class StripeProcessor &lt; PaymentProcessor
+  def initialize(api_key)
+    @api_key = api_key
+  end
+
+  def authorize(order)
+    # real impl: POST /v1/payment_intents with idempotency key + retries
+    "pi_#{order.id}_auth"
+  end
+
+  def capture(auth_token)
+    Receipt.new(auth_token.sub("_auth", ""), "stripe")
+  end
+
+  def refund(payment_id)
+    # POST /v1/refunds
+  end
+end
+
+# The caller depends on the abstraction only.
+class CheckoutService
+  def initialize(processor)
+    @processor = processor
+  end
+
+  def pay(order)
+    auth = @processor.authorize(order)
+    @processor.capture(auth)
+  end
+end
+
+checkout = CheckoutService.new(StripeProcessor.new("sk_live_..."))
+receipt  = checkout.pay(Order.new("ord_918", Money.new(4999, "USD")))
+puts "#{receipt.provider} #{receipt.payment_id}" # stripe pi_ord_918
+</code></pre>
+      </div>
+      <p class="muted">Notice <code>CheckoutService</code> never mentions Stripe. Swapping in a <code>PaypalProcessor</code> or an in-memory <code>FakeProcessor</code> for tests requires zero changes to the caller, because both satisfy the same abstract contract.</p>
+
+      <h3>Abstract class vs interface: sharing real behavior</h3>
+      <p class="muted">When every provider authorizes then captures, promote that orchestration into an abstract base (a template method) and leave only the provider-specific steps abstract.</p>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Abstract base: shared charge() logic, provider-specific holes.
+abstract class BaseProcessor implements PaymentProcessor {
+  // Template method - stable orchestration every provider reuses.
+  charge(order: Order): Receipt {
+    const auth = this.authorize(order);
+    return this.capture(auth);
+  }
+  abstract authorize(order: Order): string;
+  abstract capture(authToken: string): Receipt;
+  abstract refund(paymentId: string): void;
+}
+
+class PaypalProcessor extends BaseProcessor {
+  authorize(order: Order): string { return `PAY-${order.id}`; }
+  capture(authToken: string): Receipt {
+    return { paymentId: authToken, provider: "paypal" };
+  }
+  refund(paymentId: string): void { /* POST /v2/payments/refund */ }
+}
+
+const receipt = new PaypalProcessor().charge(
+  { id: "ord_918", total: { amount: 4999, currency: "USD" } }
+);
+console.log(receipt.provider); // paypal
+</code></pre>
+        <pre class="code-panel" data-lang="py" hidden><code># Abstract base: shared charge() logic, provider-specific holes.
+class BaseProcessor(PaymentProcessor):
+    # Template method - stable orchestration every provider reuses.
+    def charge(self, order: Order) -> Receipt:
+        auth = self.authorize(order)
+        return self.capture(auth)
+
+class PaypalProcessor(BaseProcessor):
+    def authorize(self, order: Order) -> str:
+        return f"PAY-{order.id}"
+    def capture(self, auth_token: str) -> Receipt:
+        return Receipt(payment_id=auth_token, provider="paypal")
+    def refund(self, payment_id: str) -> None:
+        ...  # POST /v2/payments/refund
+
+receipt = PaypalProcessor().charge(Order("ord_918", Money(4999, "USD")))
+print(receipt.provider)  # paypal
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Abstract base: shared charge logic, provider-specific holes.
+class BaseProcessor &lt; PaymentProcessor
+  # Template method - stable orchestration every provider reuses.
+  def charge(order)
+    auth = authorize(order)
+    capture(auth)
+  end
+end
+
+class PaypalProcessor &lt; BaseProcessor
+  def authorize(order)    = "PAY-#{order.id}"
+  def capture(auth_token) = Receipt.new(auth_token, "paypal")
+  def refund(payment_id)  = nil # POST /v2/payments/refund
+end
+
+receipt = PaypalProcessor.new.charge(Order.new("ord_918", Money.new(4999, "USD")))
+puts receipt.provider # paypal
+</code></pre>
+      </div>
+      <p class="muted"><strong>Rule of thumb:</strong> reach for an interface or protocol when implementations share only a shape, and an abstract class when they also share real behavior worth writing once.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAMS -->
+  <section id="diagrams">
+    <div class="wrap">
+      <div class="eyebrow">04 - Sequence Diagrams</div>
+      <h2>Detailed sequence diagrams</h2>
+      <p class="muted">Three views: a normal charge through the abstraction, swapping the concrete provider without touching the caller, and using a fake implementation in a test.</p>
+
+      <div class="diagram">
+        <div class="cap">Diagram 1 - A charge flows through the abstract contract</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 🛒 Checkout UI
+    participant C as 🧾 CheckoutService
+    participant P as 💳 PaymentProcessor
+    participant G as 🌐 Stripe gateway
+
+    U->>C: pay(order)
+    C->>P: authorize(order)
+    P->>G: POST payment_intents
+    G-->>P: auth token
+    P-->>C: auth token
+    C->>P: capture(auth token)
+    P->>G: POST capture
+    G-->>P: settled
+    P-->>C: receipt
+    C-->>U: receipt + confirmation
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 2 - Swap the concrete provider, caller code unchanged</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Cfg as ⚙️ Composition root
+    participant C as 🧾 CheckoutService
+    participant P as 💳 PaymentProcessor
+
+    Note over Cfg,P: Only the wiring picks the implementation
+    alt US region
+        Cfg->>C: new CheckoutService(StripeProcessor)
+    else EU region
+        Cfg->>C: new CheckoutService(AdyenProcessor)
+    end
+    C->>P: authorize(order)
+    P-->>C: auth token
+    C->>P: capture(auth token)
+    P-->>C: receipt
+    Note over C,P: Same calls, different provider behind the interface
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - A fake implementation makes tests fast and offline</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as 🧪 Test
+    participant C as 🧾 CheckoutService
+    participant F as 🎭 FakeProcessor
+
+    T->>C: new CheckoutService(FakeProcessor)
+    T->>C: pay(order)
+    C->>F: authorize(order)
+    F-->>C: fake auth token
+    C->>F: capture(auth token)
+    F-->>C: fake receipt
+    C-->>T: receipt
+    T->>T: assert receipt.provider == "fake"
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLOW 0-100 -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="eyebrow">05 - Step by Step</div>
+      <h2>The 0 → 100 flow</h2>
+      <p class="muted">From a tangled, provider-coupled checkout to a clean abstraction with interchangeable processors - the whole journey in order.</p>
+
+      <div class="steps">
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Symptom</span><h4>Provider code everywhere</h4><p>Checkout, refunds, and reports all call the Stripe SDK directly. Adding PayPal means editing dozens of files, and tests hit the live network.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Identify</span><h4>Find the essential operations</h4><p>List what callers actually need: authorize, capture, refund. Everything else - headers, retries, error shapes - is internal detail to hide.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Model</span><h4>Design the domain types</h4><p>Introduce small, provider-neutral types: <code>Money</code>, <code>Order</code>, <code>Receipt</code>. They carry only what the contract needs.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Contract</span><h4>Declare the abstract type</h4><p>Write the <code>PaymentProcessor</code> interface or abstract base with method signatures and no implementation. This is the promise.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Write the first concrete provider</h4><p>Create <code>StripeProcessor</code> implementing the contract. All the messy gateway code lives here, hidden behind clean method names.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Depend</span><h4>Point callers at the abstraction</h4><p>Change <code>CheckoutService</code> to accept a <code>PaymentProcessor</code>, not a Stripe object. It now speaks only the contract.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Inject</span><h4>Wire it at the composition root</h4><p>Construct the concrete processor once, at startup, and pass it in. The choice of provider lives in one place.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Extend</span><h4>Add a second provider</h4><p>Write <code>PaypalProcessor</code> against the same contract. No caller changes - the abstraction absorbed the difference.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Share</span><h4>Lift common logic into a base</h4><p>Notice both providers authorize then capture. Promote that to an abstract <code>BaseProcessor.charge()</code> template method, keeping only provider steps abstract.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Substitute a fake</h4><p>Implement <code>FakeProcessor</code> for unit tests. Checkout logic is now verifiable offline, in milliseconds, with no live charges.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Guard</span><h4>Keep the abstraction from leaking</h4><p>Review the interface for provider-specific types or error codes creeping in. A clean, minimal contract is a living asset you defend over time.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section id="pitfalls">
+    <div class="wrap">
+      <div class="eyebrow">Common Pitfalls</div>
+      <h2>Pitfalls &amp; anti-patterns</h2>
+      <p class="muted">Bad abstractions are worse than none - they add ceremony while still leaking the details they claim to hide. Watch for these.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>💧 Leaky abstraction</h4><p>The interface returns a raw Stripe error or exposes a provider-specific status enum. Callers start branching on it, and the abstraction no longer protects anyone from change.</p></div>
+        <div class="card"><h4>🕰️ Premature abstraction</h4><p>Inventing a <code>PaymentProcessor</code> when you have exactly one provider and no plans for a second adds indirection with no payoff. Abstract when the second case is real.</p></div>
+        <div class="card"><h4>🎈 God interface</h4><p>Stuffing authorize, refund, payouts, disputes, and reporting into one contract forces every implementer to stub methods it does not support. Split by capability instead.</p></div>
+        <div class="card"><h4>🪆 Wrong seam</h4><p>Abstracting the HTTP client instead of the payment concept leaves business logic still coupled to gateway quirks. Draw the boundary around the domain, not the transport.</p></div>
+        <div class="card"><h4>🧨 Over-generalized</h4><p>A <code>doOperation(type, params)</code> method that takes a string tag and a bag of options is not an abstraction - it is a switch statement in disguise, with no compile-time contract.</p></div>
+        <div class="card"><h4>🔓 Confusing it with encapsulation</h4><p>Making fields private is encapsulation, not abstraction. Hiding a variable while still exposing a provider-shaped API misses the point: model the essentials, not just the access modifier.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals">
+    <div class="wrap">
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot unit-test "good abstraction" directly, but these observable signals tell you whether your boundaries are holding.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Files touched to add a provider</strong></td><td>A clean abstraction means one new class and one wiring line. Many edits mean the details leaked into callers.</td></tr>
+            <tr><td><strong>Imports of the concrete type</strong></td><td>Count how many modules import <code>StripeProcessor</code> directly. Ideally only the composition root; everyone else imports the interface.</td></tr>
+            <tr><td><strong>Public method count on the contract</strong></td><td>A tight interface has few, cohesive methods. A ballooning surface signals a god interface that should be split.</td></tr>
+            <tr><td><strong>Provider terms in caller code</strong></td><td>Grep callers for "stripe", "paypal", raw status codes. Any hit is a leak the abstraction should have absorbed.</td></tr>
+            <tr><td><strong>Test speed and network use</strong></td><td>If unit tests can run with a fake and no network, the seam is real. If they need live credentials, the abstraction is not doing its job.</td></tr>
+            <tr><td><strong>Blast radius of a provider change</strong></td><td>When a gateway ships a breaking API change, a good abstraction confines the fix to one adapter file.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Rule of thumb:</strong> if adding or replacing a provider forces edits outside a single adapter and one wiring line, your abstraction is leaking. Fix the seam before adding more providers.</div>
+    </div>
+  </section>
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="wrap">
+      <div class="eyebrow">06 - Case Studies</div>
+      <h2>Real-world case studies</h2>
+      <p class="muted">Three production-style systems where a well-drawn abstraction was the load-bearing design decision.</p>
+
+      <div class="case">
+        <div class="hd"><span class="badge">💳</span><div><h3>1 · Payment abstraction across regions</h3><div class="role">Pattern: one contract, many gateways</div></div></div>
+        <p class="muted">A marketplace expanding internationally needed Stripe in the US, Adyen in Europe, and a local gateway in Brazil, without rewriting checkout three times.</p>
+        <ul>
+          <li>A single <code>PaymentProcessor</code> contract defined authorize, capture, and refund in provider-neutral terms.</li>
+          <li>Each region shipped one adapter class; the composition root selected it by market.</li>
+          <li>A <code>FakeProcessor</code> let the checkout flow be tested end to end with no live charges.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> New markets launched by adding an adapter, and the checkout code base never learned a single gateway's quirks.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🔔</span><div><h3>2 · NotificationSender over many channels</h3><div class="role">Pattern: uniform interface over email, SMS, and push</div></div></div>
+        <p class="muted">A product needed to send order updates by email (SendGrid), SMS (Twilio), and mobile push (APNs and FCM) from the same application code.</p>
+        <ul>
+          <li>A <code>NotificationSender</code> abstraction exposed one <code>send(message, recipient)</code> operation.</li>
+          <li>Each channel became a concrete sender; a router picked channels by user preference.</li>
+          <li>Provider outages were handled by swapping the injected sender, invisible to callers.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> Feature teams triggered notifications without knowing or caring which vendor delivered them.</div>
+      </div>
+
+      <div class="case">
+        <div class="hd"><span class="badge">🗄️</span><div><h3>3 · Storage abstraction over cloud blobs</h3><div class="role">Pattern: hide S3, GCS, and local disk behind one API</div></div></div>
+        <p class="muted">A file-upload service ran on AWS in production but needed local disk in development and Google Cloud Storage for one enterprise customer.</p>
+        <ul>
+          <li>A <code>BlobStore</code> interface exposed <code>put</code>, <code>get</code>, and <code>signedUrl</code> only.</li>
+          <li>Concrete stores wrapped the S3, GCS, and filesystem SDKs behind that contract.</li>
+          <li>Developers ran the whole app offline against the disk-backed store.</li>
+        </ul>
+        <div class="outcome">✅ <strong>Outcome:</strong> The same upload logic ran unchanged across three backends, and onboarding a new cloud was a single adapter.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap">
+      <div class="eyebrow">07 - Relevance</div>
+      <h2>Modern relevance</h2>
+      <p class="muted">Abstraction is not a legacy OOP relic. It is the mechanism behind most modern architecture, from microservices to plugin ecosystems.</p>
+      <div class="grid cols-2">
+        <div class="card"><h4>🔌 Ports &amp; adapters</h4><p>Hexagonal architecture is abstraction as a discipline: the core defines ports (interfaces) and infrastructure supplies adapters, keeping business logic vendor-free.</p></div>
+        <div class="card"><h4>🧬 Structural typing</h4><p>Go interfaces, TypeScript structural types, and Python protocols let objects satisfy a contract by shape, so abstraction no longer requires an inheritance tree.</p></div>
+        <div class="card"><h4>🧪 Testability by design</h4><p>Every fake, stub, and mock relies on an abstraction to substitute for. Clean seams are what make fast, deterministic tests possible at all.</p></div>
+        <div class="card"><h4>🧩 Plugin ecosystems</h4><p>Editors, CI systems, and payment platforms expose an abstract extension contract so third parties can add providers without touching the core.</p></div>
+        <div class="card"><h4>☁️ Multi-cloud portability</h4><p>Abstracting storage, queues, and secrets behind interfaces is how teams avoid lock-in and move workloads between cloud vendors.</p></div>
+        <div class="card"><h4>🤖 Tooling behind agents</h4><p>Agent and tool frameworks define an abstract tool interface so any capability - search, payments, storage - plugs in through one uniform contract.</p></div>
+      </div>
+      <div class="callout"><strong>Bottom line:</strong> abstraction is how you contain change. Name the essential operations, hide everything else, and depend on the contract - and providers, vendors, and implementations become details you can swap at will.</div>
+    </div>
+  </section>
+
+  <!-- RELATED -->
+  <section id="related">
+    <div class="wrap">
+      <div class="eyebrow">Keep Exploring</div>
+      <h2>Related topics</h2>
+      <p class="muted">Abstraction sits at the center of object-oriented design. These concepts build directly on it.</p>
+      <div class="topic-grid">
+        <a class="topic-card" href="../interfaces-duck-typing/"><span class="ico">📜</span><h4>Interfaces &amp; duck typing</h4><p>How contracts are expressed and satisfied by shape.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../polymorphism/"><span class="ico">🎭</span><h4>Polymorphism</h4><p>Calling one method, running many implementations.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../dependency-inversion/"><span class="ico">🔀</span><h4>Dependency inversion</h4><p>Depend on abstractions, not concrete providers.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../encapsulation/"><span class="ico">🔒</span><h4>Encapsulation</h4><p>Guarding state behind a controlled surface.</p><span class="go">Read →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p><a href="../">← Back to the Patterns hub</a></p>
+      <p>A visual guide to Abstraction · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+    </div>
+  </footer>
+
+  <script src="../assets/app.js"></script>
+</body>
+</html>

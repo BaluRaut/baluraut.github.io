@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Composition over Inheritance Explained - What, How, Why &amp; Examples</title>
-  <meta name="description" content="A deep, visual guide to composition over inheritance: is-a vs has-a, the fragile base class problem, the diamond problem, delegation, mixins and traits, Java and TypeScript examples, and when inheritance is still the right call." />
+  <title>Composition over Inheritance in OOP - What, Why, How, with TypeScript, Python &amp; Ruby</title>
+  <meta name="description" content="A deep, visual guide to composition over inheritance: has-a vs is-a, delegation, mixins and modules, the fragile base class problem, when inheritance still fits, with TypeScript, Python and Ruby examples." />
   <link rel="stylesheet" href="../assets/style.css" />
 </head>
 <body>
@@ -19,7 +19,7 @@
         <a href="#diagrams">Diagrams</a>
         <a href="#flow">0-100 Flow</a>
         <a href="#pitfalls">Pitfalls</a>
-        <a href="#metrics">Trade-offs</a>
+        <a href="#signals">Signals</a>
         <a href="#cases">Cases</a>
         <a href="#future">Future</a>
       </div>
@@ -28,17 +28,17 @@
 
   <header class="hero">
     <div class="wrap">
-      <span class="kicker">OOP Foundation</span>
-      <h1>Composition over inheritance - build behavior by assembling, not extending</h1>
-      <p class="lede">Inheritance couples a subclass to every detail of its parent, so a change high in the tree ripples down and breaks classes nobody remembers. Composition flips this: instead of <strong>being</strong> a base class, an object <strong>has</strong> collaborators it delegates to. You wire behavior together at runtime, swap pieces freely, and keep each part small and testable.</p>
+      <span class="kicker">OOP Concept</span>
+      <h1>Composition over inheritance - build behavior from collaborators</h1>
+      <p class="lede">Inheritance says an object <strong>is-a</strong> kind of its parent and copies the parent's guts into every subclass. Composition says an object <strong>has-a</strong> set of collaborators it delegates to. Favoring composition keeps behavior swappable at runtime, keeps base classes from becoming brittle, and lets you assemble features like an HTTP client from retry, auth, and logging parts instead of a deep class tree.</p>
       <div class="cta">
-        <a class="btn primary" href="#flow">See the full flow ↓</a>
+        <a class="btn primary" href="#how">See the code</a>
         <a class="btn ghost" href="#diagrams">Jump to diagrams</a>
       </div>
       <div class="pill-row">
-        <span class="pill">is-a vs has-a</span>
+        <span class="pill">Has-a vs is-a</span>
         <span class="pill">Delegation</span>
-        <span class="pill">Mixins &amp; traits</span>
+        <span class="pill">Mixins &amp; modules</span>
         <span class="pill">Fragile base class</span>
       </div>
     </div>
@@ -49,39 +49,39 @@
     <div class="wrap">
       <div class="eyebrow">01 - What</div>
       <h2>What is composition over inheritance?</h2>
-      <p class="muted"><strong>Composition over inheritance</strong> is a design guideline that says: prefer to build a type out of smaller objects it <em>holds and delegates to</em> (a has-a relationship) rather than out of a base class it <em>extends</em> (an is-a relationship). Both reuse code, but inheritance reuses by inheriting a whole implementation, while composition reuses by wiring independent pieces together. The guideline exists because deep inheritance trees turn out to be rigid, while assembled objects stay flexible.</p>
+      <p class="muted"><strong>Composition over inheritance</strong> is a design guideline: prefer assembling an object from smaller collaborators it holds and delegates to, rather than deriving it from a base class to reuse code. Instead of a <code>RetryingAuthenticatedHttpClient</code> that extends a chain of base classes, you build one <code>HttpClient</code> that <em>has a</em> retry policy, <em>has an</em> auth provider, and <em>has a</em> logger, each an independent object you can swap.</p>
 
       <div class="grid cols-3">
         <div class="card">
-          <h4><span class="ico">🧬</span> Inheritance (is-a)</h4>
-          <p>A subclass extends a base class and inherits its fields and methods. Strong, static coupling: the child depends on the parent's internals and is fixed at compile time.</p>
+          <h4><span class="ico">🧩</span> Has-a (composition)</h4>
+          <p>An object holds references to collaborators and forwards work to them. Behavior is the sum of parts you can replace one at a time.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🧩</span> Composition (has-a)</h4>
-          <p>An object holds references to collaborator objects and forwards work to them. Loose coupling through interfaces: pieces can be swapped, even at runtime.</p>
+          <h4><span class="ico">🌳</span> Is-a (inheritance)</h4>
+          <p>A subclass extends a base and inherits its fields and methods. Reuse is real but rigid: it is fixed at compile time and cuts across the whole hierarchy.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🔀</span> Delegation</h4>
-          <p>The mechanism that makes composition work: a method calls the same method on a held collaborator, so the outer object exposes behavior it did not implement itself.</p>
+          <h4><span class="ico">🔁</span> Delegation</h4>
+          <p>The mechanism that makes composition work: a method on the host calls the same or a related method on a held collaborator, passing the result back out.</p>
         </div>
       </div>
 
-      <h3>The core vocabulary</h3>
+      <h3>The vocabulary, precisely</h3>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Term</th><th>What it means</th><th>Relationship</th></tr>
+            <tr><th>Term</th><th>What it means</th><th>Concrete example</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>is-a</strong></td><td>A subtype that can stand in for its base type</td><td>Inheritance / subtyping</td></tr>
-            <tr><td><strong>has-a</strong></td><td>An object that owns and uses another object</td><td>Composition / aggregation</td></tr>
-            <tr><td><strong>Delegation</strong></td><td>Forwarding a call to a held collaborator</td><td>Runtime behavior sharing</td></tr>
-            <tr><td><strong>Mixin / trait</strong></td><td>A reusable slice of behavior mixed into a class</td><td>Horizontal reuse</td></tr>
-            <tr><td><strong>Interface</strong></td><td>A contract a collaborator promises to satisfy</td><td>Decoupling seam</td></tr>
+            <tr><td><strong>Is-a</strong></td><td>Subtype relationship; the child can stand in for the parent</td><td><code>PremiumAccount</code> is-a <code>Account</code></td></tr>
+            <tr><td><strong>Has-a</strong></td><td>Ownership or use; the host holds a collaborator</td><td><code>HttpClient</code> has-a <code>RetryPolicy</code></td></tr>
+            <tr><td><strong>Delegation</strong></td><td>Forwarding a call to a held object</td><td><code>client.send()</code> calls <code>retry.run(...)</code></td></tr>
+            <tr><td><strong>Mixin / module</strong></td><td>A bundle of behavior mixed into a class without a parent slot</td><td>Ruby <code>include Timestamps</code></td></tr>
+            <tr><td><strong>Fragile base class</strong></td><td>A base whose internal change silently breaks subclasses</td><td>Base reorders private calls, subclass overrides fail</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Key mental model:</strong> ask "is X truly a kind of Y, forever?" If yes, inheritance may fit. If X merely <em>uses</em> or <em>can</em> do Y, or the answer changes over time, model it as has-a and delegate. Inheritance is for identity, composition is for capability.</div>
+      <div class="callout"><strong>Key mental model:</strong> inheritance couples you to <em>how</em> a parent is built; composition couples you only to <em>what</em> a collaborator promises. Program to the interface a collaborator exposes and you can reshape behavior by swapping parts, not by rewriting a class tree.</div>
     </div>
   </section>
 
@@ -89,13 +89,13 @@
   <section id="why">
     <div class="wrap">
       <div class="eyebrow">02 - Why</div>
-      <h2>Why prefer composition</h2>
-      <p class="muted">Inheritance is the tightest coupling in object-oriented programming: a subclass sees protected members, depends on call order, and inherits everything whether it wants it or not. That is exactly what makes deep hierarchies fragile. Composition trades that rigidity for flexibility.</p>
+      <h2>Why favor composition</h2>
+      <p class="muted">Inheritance is the tightest coupling in object orientation: a subclass depends on the base's public API, its protected members, and often its private call order. Composition trades that hidden coupling for explicit, swappable collaborators.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🧱 Escapes the fragile base class</h4><p>When behavior lives in collaborators behind interfaces, editing one does not silently break subclasses. A change is contained to the piece that owns it instead of rippling down a tree.</p></div>
-        <div class="card"><h4>🔧 Flexible at runtime</h4><p>You can swap a collaborator, or stack several, while the program runs. Inheritance is fixed the moment you compile; composition lets configuration and dependency injection decide behavior.</p></div>
-        <div class="card"><h4>🚫 Sidesteps the diamond problem</h4><p>Single inheritance forces awkward hierarchies and multiple inheritance creates ambiguous method resolution. Holding several collaborators gives you many behaviors with zero ambiguity.</p></div>
-        <div class="card"><h4>🧪 Easier to test</h4><p>Each collaborator is small and mockable through its interface. You test a unit in isolation instead of dragging in a five-level base class with hidden state and setup.</p></div>
+        <div class="card"><h4>🔧 Swappable at runtime</h4><p>Give an <code>HttpClient</code> a <code>NoRetry</code> policy in tests and an <code>ExponentialBackoff</code> policy in production without touching the client. Inheritance would force a new subclass per combination.</p></div>
+        <div class="card"><h4>🧱 No combinatorial explosion</h4><p>Retry, auth, and logging as three collaborators compose into any mix. As subclasses they multiply: authenticated-retrying, logged-retrying, logged-authenticated, and so on.</p></div>
+        <div class="card"><h4>🛡️ Avoids the fragile base class</h4><p>Collaborators only see each other's public contract, so an internal refactor of one cannot silently break another the way a base class change breaks its subclasses.</p></div>
+        <div class="card"><h4>🧪 Easy to test in isolation</h4><p>Pass a fake auth provider or a recording logger straight into the constructor. No subclassing the unit under test, no overriding protected hooks just to observe it.</p></div>
       </div>
     </div>
   </section>
@@ -107,10 +107,10 @@
       <h2>Composition over inheritance explained with analogies</h2>
       <p class="muted">Same idea, four ways to picture it, so it clicks whoever you are.</p>
       <div class="grid cols-2">
-        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Inheritance is <strong>copying a whole essay</strong> and tweaking a few lines - if the original had a mistake, so does yours. Composition is <strong>citing sources</strong>: you pull in exactly the paragraphs you need and swap a source without rewriting the paper.</p></div>
-        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>Inheritance is <code>extends BaseController</code> and hoping the base does what you expect. Composition is injecting a <code>Logger</code>, a <code>Validator</code>, and a <code>Repository</code> - each an interface you can mock, replace, or reorder without touching the rest.</p></div>
-        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Inheritance is a rigid <strong>org chart</strong> where everyone reports up a fixed chain. Composition is a <strong>project team</strong> assembled from specialists: you bring in the right people for the job and disband when done.</p></div>
-        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>A phone with a <strong>soldered-in battery</strong> is inheritance: cheap until something needs to change, then you replace the whole device. A phone with <strong>plug-in accessories</strong> is composition: click in a new charger, case, or lens whenever you like.</p></div>
+        <div class="card"><h4><span class="ico">🎓</span> For a student</h4><p>Inheritance is inheriting a family recipe you cannot change without affecting every cousin who also inherited it. Composition is <strong>keeping separate spice jars</strong>: you pick which ones go in this dish and can swap salt for pepper any time.</p></div>
+        <div class="card"><h4><span class="ico">👩‍💻</span> For a developer</h4><p>An <code>HttpClient</code> that <em>extends</em> a retry base is welded to it. An <code>HttpClient</code> that <em>takes a</em> <code>RetryPolicy</code> in its constructor is <strong>wired, not welded</strong>: you rewire it per environment.</p></div>
+        <div class="card"><h4><span class="ico">🏢</span> For a professional</h4><p>Inheritance is a rigid org chart where every team must do what the parent department dictates. Composition is <strong>hiring specialist contractors</strong>: the project holds a security firm, an auditor, and a courier, and can replace any one without reorganizing the company.</p></div>
+        <div class="card"><h4><span class="ico">🔌</span> Everyday version</h4><p>A power strip does not inherit from a lamp. It <strong>plugs devices in</strong>. Composition is the socket: whatever you plug in provides the behavior, and unplugging one thing never breaks the others.</p></div>
       </div>
     </div>
   </section>
@@ -120,84 +120,250 @@
     <div class="wrap">
       <div class="eyebrow">03 - How</div>
       <h2>How it works under the hood</h2>
-      <p class="muted">The move is mechanical: take the behavior that used to live in a base class, put it behind an <strong>interface</strong>, implement it in small classes, and have the outer object <strong>hold and delegate</strong> to one of them instead of extending a parent.</p>
+      <p class="muted">The core move is to name each cross-cutting concern as its own small interface, then hold instances of those interfaces inside the host and <strong>delegate</strong> to them. The host orchestrates; the collaborators do the specialized work.</p>
 
       <div class="grid cols-2">
         <div class="card">
-          <h4><span class="ico">🧬</span> The inheritance design</h4>
-          <p>A <code>Bird</code> base class defines <code>fly()</code>. Then a penguin arrives that cannot fly, an ostrich that runs, a bird that swims. The hierarchy fractures into special cases and overrides that throw exceptions.</p>
+          <h4><span class="ico">📇</span> Define collaborator contracts</h4>
+          <p>Each concern gets a narrow interface: <code>RetryPolicy.run(op)</code>, <code>AuthProvider.authorize(req)</code>, <code>RequestLogger.log(req, res)</code>. The host depends on these, not on concrete classes.</p>
         </div>
         <div class="card">
-          <h4><span class="ico">🧩</span> The composition design</h4>
-          <p>Define <code>FlyBehavior</code>, <code>SwimBehavior</code> interfaces. A bird <em>has</em> a fly strategy and a swim strategy. A penguin gets <code>NoFly</code> and <code>StrongSwim</code> - no exceptions, no broken contracts.</p>
+          <h4><span class="ico">🔗</span> Inject and delegate</h4>
+          <p>The host receives collaborators through its constructor and calls them in <code>send()</code>. Swapping behavior means passing a different implementation, never editing the host.</p>
         </div>
       </div>
 
-      <h3>Structure: inheritance tree vs composed object</h3>
+      <h3>The class structure at a glance</h3>
       <div class="diagram">
-        <div class="cap">Structure - a rigid tree on the left, an object holding swappable behaviors on the right</div>
+        <div class="cap">HttpClient has-a auth, retry, and logger; each is an interface with concrete implementations</div>
         <pre class="mermaid">
 classDiagram
-    class Bird {
-        +eat()
-        +fly()
+    class HttpClient {
+      -AuthProvider auth
+      -RetryPolicy retry
+      -RequestLogger logger
+      +send(req) Response
     }
-    class Duck
-    class Penguin {
-        +fly() throws
+    class AuthProvider {
+      &lt;&lt;interface&gt;&gt;
+      +authorize(req) Request
     }
-    Bird &lt;|-- Duck
-    Bird &lt;|-- Penguin
-
-    class Animal {
-        -FlyBehavior fly
-        -SwimBehavior swim
-        +move()
+    class RetryPolicy {
+      &lt;&lt;interface&gt;&gt;
+      +run(op) Response
     }
-    class FlyBehavior {
-        &lt;&lt;interface&gt;&gt;
-        +fly()
+    class RequestLogger {
+      &lt;&lt;interface&gt;&gt;
+      +log(req, res) void
     }
-    class SwimBehavior {
-        &lt;&lt;interface&gt;&gt;
-        +swim()
+    class BearerTokenAuth {
+      +authorize(req) Request
     }
-    Animal o-- FlyBehavior
-    Animal o-- SwimBehavior
-    FlyBehavior &lt;|.. WingFly
-    FlyBehavior &lt;|.. NoFly
-    SwimBehavior &lt;|.. StrongSwim
+    class ExponentialBackoff {
+      +run(op) Response
+    }
+    class ConsoleLogger {
+      +log(req, res) void
+    }
+    HttpClient o-- AuthProvider
+    HttpClient o-- RetryPolicy
+    HttpClient o-- RequestLogger
+    AuthProvider &lt;|.. BearerTokenAuth
+    RetryPolicy &lt;|.. ExponentialBackoff
+    RequestLogger &lt;|.. ConsoleLogger
         </pre>
       </div>
 
-      <h3>The same problem, two designs in TypeScript</h3>
-      <pre><code>// INHERITANCE: rigid, and Penguin is forced to lie about fly()
-abstract class Bird {
-  eat(): string { return "peck peck"; }
-  fly(): string { return "flap and take off"; }
-}
-class Duck extends Bird {}
-class Penguin extends Bird {
-  // A penguin is-a Bird, but cannot fly -> the contract breaks
-  override fly(): string { throw new Error("penguins can't fly"); }
-}
+      <h3>Composition vs inheritance, three languages</h3>
+      <div class="code-tabs">
+        <div class="code-tabbar">
+          <button class="code-tab active" data-lang="ts">TypeScript</button>
+          <button class="code-tab" data-lang="py">Python</button>
+          <button class="code-tab" data-lang="rb">Ruby</button>
+        </div>
+        <pre class="code-panel" data-lang="ts"><code>// Collaborator contracts
+interface AuthProvider { authorize(req: Request): Request; }
+interface RetryPolicy { run&lt;T&gt;(op: () =&gt; Promise&lt;T&gt;): Promise&lt;T&gt;; }
+interface RequestLogger { log(req: Request, res: Response): void; }
 
-// COMPOSITION: behavior is injected, so no class ever lies
-interface FlyBehavior { fly(): string; }
-class WingFly  implements FlyBehavior { fly() { return "flap and take off"; } }
-class NoFly    implements FlyBehavior { fly() { return "stays grounded"; } }
-
-class Animal {
-  // has-a, not is-a: the fly behavior is a collaborator
-  constructor(private readonly flyer: FlyBehavior) {}
-  move(): string { return this.flyer.fly(); }   // delegation
-  setFlyer(f: FlyBehavior) { /* swap at runtime */ }
+class BearerTokenAuth implements AuthProvider {
+  constructor(private token: string) {}
+  authorize(req: Request): Request {
+    req.headers.set("Authorization", `Bearer ${this.token}`);
+    return req;
+  }
 }
 
-const duck    = new Animal(new WingFly());   // "flap and take off"
-const penguin = new Animal(new NoFly());     // "stays grounded" - honest, no throw
+class ExponentialBackoff implements RetryPolicy {
+  constructor(private tries = 3, private baseMs = 100) {}
+  async run&lt;T&gt;(op: () =&gt; Promise&lt;T&gt;): Promise&lt;T&gt; {
+    for (let attempt = 1; ; attempt++) {
+      try { return await op(); }
+      catch (err) {
+        if (attempt &gt;= this.tries) throw err;
+        await new Promise(r =&gt; setTimeout(r, this.baseMs * 2 ** attempt));
+      }
+    }
+  }
+}
+
+class ConsoleLogger implements RequestLogger {
+  log(req: Request, res: Response): void {
+    console.log(`${req.method} ${req.url} -&gt; ${res.status}`);
+  }
+}
+
+// The host HAS-A each collaborator and delegates to it.
+class HttpClient {
+  constructor(
+    private auth: AuthProvider,
+    private retry: RetryPolicy,
+    private logger: RequestLogger,
+  ) {}
+
+  async send(req: Request): Promise&lt;Response&gt; {
+    const authed = this.auth.authorize(req);              // delegate auth
+    const res = await this.retry.run(() =&gt; fetch(authed)); // delegate retry
+    this.logger.log(authed, res);                         // delegate logging
+    return res;
+  }
+}
+
+// Assemble by wiring parts; swap any part without a new subclass.
+const client = new HttpClient(
+  new BearerTokenAuth(process.env.API_TOKEN!),
+  new ExponentialBackoff(4, 200),
+  new ConsoleLogger(),
+);
+const res = await client.send(new Request("https://api.example.com/v1/orders"));
+
+// Contrast: the inheritance version welds everything into one tree.
+// class RetryingClient extends BaseClient { ... }
+// class AuthedRetryingClient extends RetryingClient { ... }  // combinatorial
 </code></pre>
-      <p class="muted">Notice that the composed <code>Animal</code> never overrides anything and never throws. Behavior is supplied through the constructor and can be swapped with <code>setFlyer</code> - the exact flexibility a fixed <code>extends</code> relationship cannot offer.</p>
+        <pre class="code-panel" data-lang="py" hidden><code>from __future__ import annotations
+from typing import Protocol, Callable, TypeVar
+import os, time
+
+T = TypeVar("T")
+
+# Collaborator contracts
+class AuthProvider(Protocol):
+    def authorize(self, req: Request) -&gt; Request: ...
+
+class RetryPolicy(Protocol):
+    def run(self, op: Callable[[], T]) -&gt; T: ...
+
+class RequestLogger(Protocol):
+    def log(self, req: Request, res: Response) -&gt; None: ...
+
+class BearerTokenAuth:
+    def __init__(self, token: str) -&gt; None:
+        self._token = token
+    def authorize(self, req: Request) -&gt; Request:
+        req.headers["Authorization"] = f"Bearer {self._token}"
+        return req
+
+class ExponentialBackoff:
+    def __init__(self, tries: int = 3, base_ms: int = 100) -&gt; None:
+        self._tries, self._base_ms = tries, base_ms
+    def run(self, op: Callable[[], T]) -&gt; T:
+        attempt = 1
+        while True:
+            try:
+                return op()
+            except Exception:
+                if attempt &gt;= self._tries:
+                    raise
+                time.sleep(self._base_ms * 2 ** attempt / 1000)
+                attempt += 1
+
+class ConsoleLogger:
+    def log(self, req: Request, res: Response) -&gt; None:
+        print(f"{req.method} {req.url} -&gt; {res.status}")
+
+# The host HAS-A each collaborator and delegates to it.
+class HttpClient:
+    def __init__(self, auth: AuthProvider, retry: RetryPolicy, logger: RequestLogger) -&gt; None:
+        self._auth, self._retry, self._logger = auth, retry, logger
+
+    def send(self, req: Request) -&gt; Response:
+        authed = self._auth.authorize(req)                 # delegate auth
+        res = self._retry.run(lambda: do_fetch(authed))    # delegate retry
+        self._logger.log(authed, res)                      # delegate logging
+        return res
+
+# Assemble by wiring parts; swap any part without a new subclass.
+client = HttpClient(
+    BearerTokenAuth(os.environ["API_TOKEN"]),
+    ExponentialBackoff(tries=4, base_ms=200),
+    ConsoleLogger(),
+)
+res = client.send(Request("GET", "https://api.example.com/v1/orders"))
+
+# Contrast: inheritance would force AuthedRetryingClient(RetryingClient(BaseClient))
+</code></pre>
+        <pre class="code-panel" data-lang="rb" hidden><code># Collaborator contracts are duck-typed: any object answering the
+# right message plays the role. No base class needed.
+
+class BearerTokenAuth
+  def initialize(token) = @token = token
+  def authorize(req)
+    req.headers["Authorization"] = "Bearer #{@token}"
+    req
+  end
+end
+
+class ExponentialBackoff
+  def initialize(tries: 3, base_ms: 100)
+    @tries, @base_ms = tries, base_ms
+  end
+
+  def run
+    attempt = 1
+    begin
+      yield
+    rescue =&gt; e
+      raise e if attempt &gt;= @tries
+      sleep(@base_ms * 2**attempt / 1000.0)
+      attempt += 1
+      retry
+    end
+  end
+end
+
+class ConsoleLogger
+  def log(req, res) = puts("#{req.method} #{req.url} -&gt; #{res.status}")
+end
+
+# The host HAS-A each collaborator and delegates to it.
+class HttpClient
+  def initialize(auth:, retry:, logger:)
+    @auth, @retry, @logger = auth, retry, logger
+  end
+
+  def send(req)
+    authed = @auth.authorize(req)            # delegate auth
+    res = @retry.run { do_fetch(authed) }    # delegate retry
+    @logger.log(authed, res)                 # delegate logging
+    res
+  end
+end
+
+# Assemble by wiring parts; swap any part without a new subclass.
+client = HttpClient.new(
+  auth:   BearerTokenAuth.new(ENV.fetch("API_TOKEN")),
+  retry:  ExponentialBackoff.new(tries: 4, base_ms: 200),
+  logger: ConsoleLogger.new,
+)
+res = client.send(Request.new(:get, "https://api.example.com/v1/orders"))
+
+# Ruby also offers mixins for shared behavior without an is-a tree:
+# module Instrumented; def timed(&amp;blk) = ...; end
+# class HttpClient; include Instrumented; end
+</code></pre>
+      </div>
+      <p class="muted">The host <code>send()</code> never knows <em>which</em> retry or auth strategy it holds; it only knows the message to send. That is delegation: behavior is chosen by wiring, so the same class covers test, staging, and production by swapping constructor arguments rather than growing a subclass for each combination.</p>
     </div>
   </section>
 
@@ -206,68 +372,70 @@ const penguin = new Animal(new NoFly());     // "stays grounded" - honest, no th
     <div class="wrap">
       <div class="eyebrow">04 - Sequence Diagrams</div>
       <h2>Detailed sequence diagrams</h2>
-      <p class="muted">Three views: a delegated call at runtime, swapping a collaborator live, and how the diamond ambiguity is avoided by composition.</p>
+      <p class="muted">Three views: the composed happy path, a retry with delegation, and the contrast against a rigid inheritance chain.</p>
 
       <div class="diagram">
-        <div class="cap">Diagram 1 - Delegation: the outer object forwards work to a held collaborator</div>
+        <div class="cap">Diagram 1 - Composed request: the host delegates to each collaborator in turn</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant C as 👤 Client
-    participant A as 🧩 Animal
-    participant F as 🪶 FlyBehavior
+    participant Caller as 🧑 Caller
+    participant Client as 🖥️ HttpClient
+    participant Auth as 🔑 BearerTokenAuth
+    participant Retry as 🔁 ExponentialBackoff
+    participant Log as 📝 ConsoleLogger
 
-    C->>A: move()
-    Note over A: Animal has no fly logic of its own
-    A->>F: fly()
-    F-->>A: "flap and take off"
-    A-->>C: return result
+    Caller->>Client: send(request)
+    Client->>Auth: authorize(request)
+    Auth-->>Client: request with Bearer header
+    Client->>Retry: run(fetch operation)
+    Retry-->>Client: response 200
+    Client->>Log: log(request, response)
+    Log-->>Client: written
+    Client-->>Caller: response
         </pre>
       </div>
 
       <div class="diagram">
-        <div class="cap">Diagram 2 - Runtime swap: change behavior without touching the class</div>
+        <div class="cap">Diagram 2 - Retry delegation: the policy owns the loop, the client stays unaware</div>
         <pre class="mermaid">
 sequenceDiagram
     autonumber
-    participant C as 👤 Client
-    participant A as 🧩 Animal
-    participant Old as 🪶 WingFly
-    participant New as 🚫 NoFly
+    participant Client as 🖥️ HttpClient
+    participant Retry as 🔁 ExponentialBackoff
+    participant Net as 🌐 Network fetch
 
-    C->>A: move()
-    A->>Old: fly()
-    Old-->>A: "flap and take off"
-    A-->>C: result
-    C->>A: setFlyer(NoFly)
-    Note over A,New: collaborator replaced, no recompile
-    C->>A: move()
-    A->>New: fly()
-    New-->>A: "stays grounded"
-    A-->>C: new result
-        </pre>
-      </div>
-
-      <div class="diagram">
-        <div class="cap">Diagram 3 - Avoiding the diamond: two capabilities, no ambiguity</div>
-        <pre class="mermaid">
-sequenceDiagram
-    autonumber
-    participant C as 👤 Client
-    participant W as 🦆 Waterfowl
-    participant F as 🪶 Flyer
-    participant S as 🏊 Swimmer
-
-    C->>W: travel()
-    alt over land
-        W->>F: fly()
-        F-->>W: airborne
-    else over water
-        W->>S: swim()
-        S-->>W: paddling
+    Client->>Retry: run(fetch operation)
+    loop up to N attempts
+        Retry->>Net: attempt fetch
+        alt transient failure
+            Net-->>Retry: 503 error
+            Note over Retry: sleep base * 2^attempt
+        else success
+            Net-->>Retry: 200 response
+        end
     end
-    Note over W: two held behaviors, resolution is explicit not inherited
-    W-->>C: journey done
+    Retry-->>Client: final response or raised error
+        </pre>
+      </div>
+
+      <div class="diagram">
+        <div class="cap">Diagram 3 - Fragile base class: an internal change in the base breaks the subclass</div>
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Caller as 🧑 Caller
+    participant Sub as 🧱 AuthedRetryingClient
+    participant Base as 🌳 BaseClient
+
+    Caller->>Sub: send(request)
+    Sub->>Sub: override adds auth header
+    Sub->>Base: super send(request)
+    Note over Base: base refactor now calls<br/>an internal hook first
+    Base->>Sub: prepare() hook fires early
+    Note over Sub: override assumed header<br/>was already set, now it is not
+    Base-->>Sub: unauthorized 401
+    Sub-->>Caller: broken by a change it never saw
         </pre>
       </div>
     </div>
@@ -278,20 +446,20 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">05 - Step by Step</div>
       <h2>The 0 → 100 flow</h2>
-      <p class="muted">From a fragile inheritance tree to a clean composed design - the refactor in order.</p>
+      <p class="muted">From a tangled class tree to a cleanly composed client, the whole refactor in order.</p>
 
       <div class="steps">
-        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Spot</span><h4>Notice the smell</h4><p>A base class keeps growing, subclasses override methods to throw or no-op, and a small parent change breaks distant children. That is fragile-base-class pain asking for composition.</p></div></div>
-        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Question</span><h4>Test the is-a claim</h4><p>Ask whether the subclass truly is a kind of its parent in every context, permanently. If it only uses or can do some of the behavior, it is a has-a in disguise.</p></div></div>
-        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Isolate</span><h4>Find the varying behavior</h4><p>Identify the parts that differ across subclasses - the fly, the pay, the render. Those variations are the pieces to pull out of the hierarchy.</p></div></div>
-        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Interface</span><h4>Define a contract</h4><p>Create an interface for each varying behavior, for example <code>FlyBehavior</code>. This becomes the decoupling seam the outer object depends on.</p></div></div>
-        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Implement</span><h4>Write small strategies</h4><p>Provide concrete classes per variation: <code>WingFly</code>, <code>NoFly</code>, <code>JetFly</code>. Each is tiny, single-purpose, and independently testable.</p></div></div>
-        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Hold</span><h4>Add a field, not a parent</h4><p>Give the outer class a field of the interface type instead of extending a base. The object now has-a behavior rather than is-a subclass.</p></div></div>
-        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Delegate</span><h4>Forward the call</h4><p>In the outer method, call the collaborator: <code>move()</code> simply invokes <code>flyer.fly()</code>. The class exposes behavior it does not implement itself.</p></div></div>
-        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Inject</span><h4>Wire it from outside</h4><p>Pass collaborators through the constructor or a DI container. Now configuration, not a class name, decides behavior.</p></div></div>
-        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Swap</span><h4>Change behavior at runtime</h4><p>Expose a setter so a running object can trade one strategy for another. This is the flexibility inheritance can never give you.</p></div></div>
-        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Combine</span><h4>Layer with mixins or decorators</h4><p>Stack multiple capabilities by holding several collaborators or wrapping with decorators, gaining rich behavior without a combinatorial class explosion.</p></div></div>
-        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Judge</span><h4>Keep inheritance where it fits</h4><p>Retain inheritance for genuine, stable is-a subtyping and template methods. The goal is the right tool, not zero inheritance.</p></div></div>
+        <div class="step"><div class="num">00</div><div class="body"><span class="tag">Smell</span><h4>Spot the growing hierarchy</h4><p>You notice classes like <code>AuthedRetryingLoggingClient</code> extending three levels deep, with each new mix demanding another subclass.</p></div></div>
+        <div class="step"><div class="num">10</div><div class="body"><span class="tag">Name concerns</span><h4>Separate the cross-cutting jobs</h4><p>List what the tree conflates: authentication, retry, and logging are three independent responsibilities, not one lineage.</p></div></div>
+        <div class="step"><div class="num">20</div><div class="body"><span class="tag">Define contracts</span><h4>Write a narrow interface per concern</h4><p><code>AuthProvider.authorize</code>, <code>RetryPolicy.run</code>, <code>RequestLogger.log</code>. Each promises one small behavior.</p></div></div>
+        <div class="step"><div class="num">30</div><div class="body"><span class="tag">Extract</span><h4>Move behavior into collaborators</h4><p>Pull the auth logic out of the base and into <code>BearerTokenAuth</code>; do the same for retry and logging. Each becomes a standalone class.</p></div></div>
+        <div class="step"><div class="num">40</div><div class="body"><span class="tag">Hold</span><h4>Give the host has-a fields</h4><p><code>HttpClient</code> now stores an <code>auth</code>, a <code>retry</code>, and a <code>logger</code> field typed to the interfaces, not concretes.</p></div></div>
+        <div class="step"><div class="num">50</div><div class="body"><span class="tag">Inject</span><h4>Accept collaborators in the constructor</h4><p>The host takes its parts as arguments, so the caller decides which implementations to wire in.</p></div></div>
+        <div class="step"><div class="num">60</div><div class="body"><span class="tag">Delegate</span><h4>Forward work in send()</h4><p><code>send()</code> calls <code>auth.authorize</code>, then <code>retry.run</code>, then <code>logger.log</code>. The host orchestrates; parts do the work.</p></div></div>
+        <div class="step"><div class="num">70</div><div class="body"><span class="tag">Delete</span><h4>Collapse the subclass tree</h4><p>The special-case subclasses vanish. One <code>HttpClient</code> now covers every combination via wiring.</p></div></div>
+        <div class="step"><div class="num">80</div><div class="body"><span class="tag">Swap</span><h4>Reconfigure per environment</h4><p>Wire <code>NoRetry</code> and a <code>NullLogger</code> in tests, <code>ExponentialBackoff</code> and a structured logger in production. Same class throughout.</p></div></div>
+        <div class="step"><div class="num">90</div><div class="body"><span class="tag">Test</span><h4>Inject fakes and assert</h4><p>Pass a recording logger and a stub auth to verify the client without subclassing or touching the network.</p></div></div>
+        <div class="step"><div class="num">100</div><div class="body"><span class="tag">Judge</span><h4>Keep inheritance where it earns it</h4><p>For genuine is-a subtypes with a stable, thin base and true substitutability, inheritance still fits. Reach for it deliberately, not by default.</p></div></div>
       </div>
     </div>
   </section>
@@ -301,40 +469,40 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">Common Pitfalls</div>
       <h2>Pitfalls &amp; anti-patterns</h2>
-      <p class="muted">Both inheritance and composition can be misused. These are the traps that show up most in real code.</p>
+      <p class="muted">Composition is not free; done carelessly it swaps one mess for another. Watch for these.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🕳️ Deep inheritance hierarchies</h4><p>Five or six levels of <code>extends</code> mean a single method call runs code scattered across the tree. Nobody can reason about it, and any base edit is a landmine. Flatten it with composition.</p></div>
-        <div class="card"><h4>🧱 Fragile base class</h4><p>Changing a base method or its call order silently breaks subclasses that relied on the old behavior. The parent cannot evolve safely because it is coupled to every child.</p></div>
-        <div class="card"><h4>💎 Reaching for the diamond</h4><p>Multiple inheritance where two paths reach the same ancestor creates ambiguous method and state resolution. Languages ban or complicate it for good reason - compose instead.</p></div>
-        <div class="card"><h4>🎭 Inheritance for code reuse only</h4><p>Extending a class just to grab a helper method forces an is-a claim you do not mean. You inherit its whole surface and coupling. Prefer holding it as a collaborator.</p></div>
-        <div class="card"><h4>🧨 Liskov violations</h4><p>Overriding a method to throw or weaken the contract, like <code>Penguin.fly()</code> throwing, breaks substitutability. Callers of the base type get surprises. That is a sign the is-a was wrong.</p></div>
-        <div class="card"><h4>🍝 Delegation boilerplate</h4><p>Composition can drift the other way: dozens of one-line pass-through methods just to forward calls. Use language delegation features, interfaces, or a decorator base to keep it lean.</p></div>
+        <div class="card"><h4>🏗️ Inheritance for reuse only</h4><p>Subclassing just to borrow a few methods, with no real is-a relationship, is the classic misuse. If the child is not substitutable for the parent, it should hold the behavior, not inherit it.</p></div>
+        <div class="card"><h4>🧨 The fragile base class</h4><p>A base that calls its own overridable methods internally lets a private refactor break every subclass silently. The more subclasses reach into protected internals, the worse it gets.</p></div>
+        <div class="card"><h4>🪆 Deep hierarchies</h4><p>Four or five levels of extends make behavior impossible to trace: you must read the whole chain to know what one call does. Flatten into collaborators.</p></div>
+        <div class="card"><h4>🕸️ God object via composition</h4><p>Composition can hide a monolith too: a host holding fifteen collaborators and coordinating them all is just a big ball of mud with extra indirection. Keep hosts focused.</p></div>
+        <div class="card"><h4>🔁 Boilerplate delegation</h4><p>Forwarding twenty methods by hand to a held object is tedious and error prone. Use language delegation features (Ruby <code>Forwardable</code>, Kotlin <code>by</code>) or a thin facade instead.</p></div>
+        <div class="card"><h4>🧬 Mixin collisions</h4><p>Two mixins that both define <code>save</code> or both touch the same state create surprising method resolution order bugs. Keep mixins small, orthogonal, and namespaced.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- METRICS -->
-  <section id="metrics">
+  <!-- SIGNALS -->
+  <section id="signals">
     <div class="wrap">
-      <div class="eyebrow">Trade-offs</div>
-      <h2>Trade-offs &amp; when to use</h2>
-      <p class="muted">Composition is a default, not a law. Weigh these before you refactor a hierarchy or reach for a base class.</p>
+      <div class="eyebrow">Signals &amp; Metrics</div>
+      <h2>Signals &amp; how to measure</h2>
+      <p class="muted">You cannot unit-test a design guideline, but these signals tell you whether a hierarchy has gone wrong and composition would help.</p>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Aspect</th><th>Detail</th></tr>
+            <tr><th>Signal</th><th>What it tells you</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Pros</strong></td><td>Loose coupling, runtime flexibility, small testable units, no fragile base class, sidesteps the diamond problem, honors the open-closed principle.</td></tr>
-            <tr><td><strong>Cons</strong></td><td>More classes and interfaces up front, delegation boilerplate, indirection can obscure a simple flow, wiring moves to constructors or a DI container.</td></tr>
-            <tr><td><strong>Use when</strong></td><td>Behavior varies across cases, needs to change at runtime, would create a deep or fragile tree, or the relationship is really has-a or can-do.</td></tr>
-            <tr><td><strong>Avoid when</strong></td><td>The subtype is a genuine, stable is-a, you need real polymorphic substitutability, or a template-method framework expects you to extend a base class.</td></tr>
-            <tr><td><strong>Complexity</strong></td><td>Low conceptually, moderate in wiring. Trades a few extra types for far easier change later - usually a good bargain past trivial cases.</td></tr>
-            <tr><td><strong>Related</strong></td><td>Strategy, Decorator, Bridge, and Adapter are all composition in action; SOLID's dependency-inversion and open-closed principles motivate it.</td></tr>
+            <tr><td><strong>Inheritance depth (DIT)</strong></td><td>Deep trees are hard to reason about; a jump past three or four levels often signals reuse-by-inheritance that composition would flatten.</td></tr>
+            <tr><td><strong>Subclass count for combinations</strong></td><td>If N features produce roughly 2^N subclasses, you are paying the combinatorial tax that composition removes.</td></tr>
+            <tr><td><strong>Overrides that call super in a fixed order</strong></td><td>Subclasses depending on the base's internal call sequence are fragile-base-class risk waiting to fire.</td></tr>
+            <tr><td><strong>Protected member surface</strong></td><td>A wide protected API means subclasses reach into internals; the base cannot evolve safely. Narrow it and prefer composition.</td></tr>
+            <tr><td><strong>Test setup complexity</strong></td><td>If testing a class requires subclassing it or overriding protected hooks, its behavior is not injectable and composition would simplify it.</td></tr>
+            <tr><td><strong>Change ripple across the tree</strong></td><td>One base edit forcing edits in many subclasses shows tight structural coupling that swappable collaborators avoid.</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>Rule of thumb:</strong> reach for inheritance only when the subtype is a true, permanent is-a that you would substitute for its base without surprise. For everything that merely reuses or varies behavior, compose and delegate. Favor composition by default, allow inheritance by justification.</div>
+      <div class="callout"><strong>Rule of thumb:</strong> if a proposed subclass would fail the Liskov test (it cannot be used everywhere the base is expected), or exists only to reuse code, model it as a has-a collaborator instead. Keep inheritance for true, thin, stable is-a subtypes.</div>
     </div>
   </section>
 
@@ -343,39 +511,39 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">06 - Case Studies</div>
       <h2>Real-world case studies</h2>
-      <p class="muted">Three places where choosing composition over inheritance changed the outcome.</p>
+      <p class="muted">Three production-style systems where composition beat a class hierarchy.</p>
 
       <div class="case">
-        <div class="hd"><span class="badge">🎮</span><div><h3>1 · Game entities via component systems</h3><div class="role">Pattern: entity-component composition</div></div></div>
-        <p class="muted">Early game engines used deep class trees like <code>Enemy extends Character extends GameObject</code>, then broke when a crate needed physics but not AI.</p>
+        <div class="hd"><span class="badge">🔌</span><div><h3>1 · An HTTP API client SDK</h3><div class="role">Pattern: assemble the client from retry, auth, and logging collaborators</div></div></div>
+        <p class="muted">A payments SDK started with <code>BaseClient</code> subclassed for every combination of auth scheme and retry behavior, and the tree became unmaintainable.</p>
         <ul>
-          <li>Behavior split into components: <code>Position</code>, <code>Render</code>, <code>Physics</code>, <code>AI</code>, each held by an entity.</li>
-          <li>A new entity type is a new bag of components, not a new subclass in a rigid tree.</li>
-          <li>Designers mix capabilities at runtime without a programmer editing the hierarchy.</li>
+          <li>Auth, retry, and instrumentation were extracted into injectable interfaces the client holds.</li>
+          <li>Sandbox and live modes became two wirings of one <code>HttpClient</code>, not two subclasses.</li>
+          <li>New auth schemes shipped as new <code>AuthProvider</code> implementations with zero client changes.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> Entity-component-system architecture became the industry norm because composition scaled where inheritance combinatorially exploded.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> The subclass tree collapsed to a single client class, and adding features became wiring rather than inheritance surgery.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">☕</span><div><h3>2 · Java I/O streams</h3><div class="role">Pattern: Decorator, composition by wrapping</div></div></div>
-        <p class="muted">Java needed buffering, compression, and encryption over any stream without a class per combination.</p>
+        <div class="hd"><span class="badge">📊</span><div><h3>2 · A reporting and export engine</h3><div class="role">Pattern: a Report has-a datasource and a formatter</div></div></div>
+        <p class="muted">An analytics platform first modeled reports as <code>PdfSalesReport</code> extending <code>SalesReport</code> extending <code>Report</code>, exploding as formats and sources multiplied.</p>
         <ul>
-          <li><code>BufferedInputStream</code> wraps another <code>InputStream</code> and delegates to it.</li>
-          <li>You stack wrappers: buffer around gzip around a file stream, composed at runtime.</li>
-          <li>Adding a capability is a new decorator, not a subclass of every stream type.</li>
+          <li>A <code>Report</code> now holds a <code>DataSource</code> and an <code>OutputFormatter</code>, delegating fetch and render to them.</li>
+          <li>CSV, PDF, and XLSX became three formatters; warehouse and API became two datasources.</li>
+          <li>Any source pairs with any format at runtime, no new class per pairing.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> A handful of composable decorators cover every combination, avoiding a huge inheritance matrix of stream subclasses.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Format-times-source combinations became a small set of parts, and a new export format was one class instead of a new branch of the tree.</div>
       </div>
 
       <div class="case">
-        <div class="hd"><span class="badge">🛒</span><div><h3>3 · Payment and pricing strategies</h3><div class="role">Pattern: Strategy, injected behavior</div></div></div>
-        <p class="muted">A checkout service started with <code>CreditCardOrder extends Order</code> and gained a subclass per payment and discount rule until the tree was unmanageable.</p>
+        <div class="hd"><span class="badge">🔔</span><div><h3>3 · A notification service</h3><div class="role">Pattern: mixins and channel collaborators over a channel hierarchy</div></div></div>
+        <p class="muted">A messaging system had an <code>EmailNotification</code> extending <code>Notification</code> tree, with retry and templating duplicated or awkwardly pushed into the base.</p>
         <ul>
-          <li><code>PaymentMethod</code> and <code>DiscountPolicy</code> became interfaces the order holds.</li>
-          <li>An order is configured with a payment strategy and a discount strategy at creation.</li>
-          <li>New promotions and providers are new strategy classes, injected without touching <code>Order</code>.</li>
+          <li>Channels (email, SMS, push) became interchangeable <code>Channel</code> collaborators the sender holds.</li>
+          <li>Cross-cutting concerns like timestamping and rate limiting became small mixins, not base methods.</li>
+          <li>A digest sender simply held several channels and fanned out, no new subclass required.</li>
         </ul>
-        <div class="outcome">✅ <strong>Outcome:</strong> The order class stopped changing, tests mocked each strategy in isolation, and new payment options shipped without regression risk.</div>
+        <div class="outcome">✅ <strong>Outcome:</strong> Adding a Slack channel was one new <code>Channel</code> class, and shared behavior lived in focused mixins instead of a swelling base.</div>
       </div>
     </div>
   </section>
@@ -385,16 +553,16 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">07 - Relevance</div>
       <h2>Modern relevance</h2>
-      <p class="muted">Far from dated, composition over inheritance underpins how modern languages, frameworks, and paradigms are designed.</p>
+      <p class="muted">Composition over inheritance is older than most frameworks, yet modern language and platform design keeps pushing it further into the mainstream.</p>
       <div class="grid cols-2">
-        <div class="card"><h4>🧵 Traits and mixins mainstream</h4><p>Rust traits, Scala traits, and TypeScript mixins let you compose horizontal behavior without a base class, making composition the ergonomic default.</p></div>
-        <div class="card"><h4>🚫 Go and Rust drop inheritance</h4><p>Go has struct embedding and interfaces, Rust has traits, and neither offers class inheritance at all - a deliberate bet on composition.</p></div>
-        <div class="card"><h4>⚛️ React chose composition</h4><p>React explicitly recommends composition over inheritance for reuse, using hooks and child components instead of extending base components.</p></div>
-        <div class="card"><h4>💉 Dependency injection everywhere</h4><p>Spring, Angular, and NestJS wire collaborators through constructors, making has-a design the default way frameworks assemble apps.</p></div>
-        <div class="card"><h4>🧩 Patterns are composition</h4><p>Strategy, Decorator, Bridge, and Adapter, the workhorses of the Gang of Four, are all composition dressed for a specific job.</p></div>
-        <div class="card"><h4>🔬 Testability demands it</h4><p>Modern testing culture rewards small, mockable units behind interfaces, which is exactly what composition produces and inheritance resists.</p></div>
+        <div class="card"><h4>🧵 Traits and protocols</h4><p>Rust traits, Swift protocol extensions, and Go's interface embedding give composition-style reuse without a class hierarchy at all, making has-a the default.</p></div>
+        <div class="card"><h4>💉 Dependency injection everywhere</h4><p>DI containers in Spring, NestJS, and .NET exist precisely to wire collaborators into hosts, industrializing the composition pattern across whole codebases.</p></div>
+        <div class="card"><h4>🎛️ Delegation as a keyword</h4><p>Kotlin's <code>by</code> and Ruby's <code>Forwardable</code> make delegation first class, removing the boilerplate that once made composition feel heavier than inheritance.</p></div>
+        <div class="card"><h4>⚛️ Composition in UI frameworks</h4><p>React and modern component systems replaced inheritance-based UI with composed components and hooks, a large-scale endorsement of has-a over is-a.</p></div>
+        <div class="card"><h4>🧩 Entity-component systems</h4><p>Game and simulation engines build entities from attached components rather than deep class trees, the purest form of composition at runtime.</p></div>
+        <div class="card"><h4>🌳 Inheritance, kept deliberate</h4><p>Sealed classes and interfaces keep a place for true is-a modeling, so the future is not zero inheritance but inheritance used on purpose.</p></div>
       </div>
-      <div class="callout"><strong>Bottom line:</strong> inheritance still earns its place for true, stable is-a subtyping and template methods, but composition is the default that keeps systems flexible, testable, and safe to change. Reach for has-a first, and let inheritance prove it belongs.</div>
+      <div class="callout"><strong>Bottom line:</strong> favor composition to keep behavior swappable, testable, and safe from fragile-base-class breakage, and reserve inheritance for genuine, thin, substitutable is-a relationships. Assemble objects from collaborators first; extend a base only when the subtype relationship is real.</div>
     </div>
   </section>
 
@@ -403,12 +571,12 @@ sequenceDiagram
     <div class="wrap">
       <div class="eyebrow">Keep Exploring</div>
       <h2>Related topics</h2>
-      <p class="muted">Composition sits at the center of object-oriented design. These pair naturally with it.</p>
+      <p class="muted">Composition sits in a web of related design ideas. These pair naturally with it.</p>
       <div class="topic-grid">
-        <a class="topic-card" href="../oop-core/"><span class="ico">🧱</span><h4>OOP core concepts</h4><p>Encapsulation, polymorphism, and the is-a relationship in context.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../solid/"><span class="ico">📐</span><h4>SOLID principles</h4><p>Open-closed and dependency inversion that motivate composing.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator pattern</h4><p>Adding behavior by wrapping and delegating at runtime.</p><span class="go">Read →</span></a>
-        <a class="topic-card" href="../strategy/"><span class="ico">♟️</span><h4>Strategy pattern</h4><p>Injecting interchangeable behavior instead of subclassing.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../inheritance/"><span class="ico">🌳</span><h4>Inheritance</h4><p>The is-a mechanism, and when it genuinely fits.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../dependency-injection/"><span class="ico">💉</span><h4>Dependency injection</h4><p>How collaborators get wired into their hosts.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../single-responsibility/"><span class="ico">🎯</span><h4>Single responsibility</h4><p>Why each collaborator should do one job well.</p><span class="go">Read →</span></a>
+        <a class="topic-card" href="../decorator/"><span class="ico">🎁</span><h4>Decorator</h4><p>Composition applied to wrap and extend behavior.</p><span class="go">Read →</span></a>
       </div>
     </div>
   </section>
@@ -416,7 +584,7 @@ sequenceDiagram
   <footer>
     <div class="wrap">
       <p><a href="../">← Back to the Patterns hub</a></p>
-      <p>A visual guide to composition over inheritance · What · Why · How · Diagrams · Flow · Case Studies · Relevance</p>
+      <p>A visual guide to composition over inheritance · What · Why · How · Diagrams · Flow · Case Studies · Future</p>
     </div>
   </footer>
 

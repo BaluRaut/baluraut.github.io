@@ -147,6 +147,20 @@
     pre.appendChild(btn);
   });
 
+  /* ---------- Tabbed multi-language code blocks ---------- */
+  var codeTabGroups = document.querySelectorAll('.code-tabs');
+  Array.prototype.forEach.call(codeTabGroups, function (group) {
+    var tabs = group.querySelectorAll('.code-tab');
+    var panels = group.querySelectorAll('.code-panel');
+    Array.prototype.forEach.call(tabs, function (tab) {
+      tab.addEventListener('click', function () {
+        var lang = tab.getAttribute('data-lang');
+        Array.prototype.forEach.call(tabs, function (t) { t.classList.toggle('active', t === tab); });
+        Array.prototype.forEach.call(panels, function (p) { p.hidden = (p.getAttribute('data-lang') !== lang); });
+      });
+    });
+  });
+
   /* ---------- Mermaid: load from CDN + render once on a fixed light panel ---------- */
   var diagrams = Array.prototype.slice.call(document.querySelectorAll('.mermaid'));
   if (diagrams.length) {
